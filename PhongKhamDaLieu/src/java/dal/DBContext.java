@@ -32,7 +32,7 @@ public class DBContext {
             String user = properties.getProperty("userID");
             String pass = properties.getProperty("password");
             String url = properties.getProperty("url");
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(url, user, pass);
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
