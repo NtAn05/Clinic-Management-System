@@ -4,22 +4,12 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/controller/DoctorDashboardServlet.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/controller/RegisterServlet.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/model/Status.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/META-INF/context.xml</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/login.jsp</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/model/Doctor.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/doctorDashboard.jsp</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/ConnectDB.properties</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/dal/UserDAO.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/register.jsp</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/dal/DBContext.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/home.jsp</file>
             <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/controller/LoginServlet.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/admin-users.jsp</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/controller/LogoutServlet.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/model/User.java</file>
-            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/model/Role.java</file>
+            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/META-INF/context.xml</file>
+            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/model/Doctor.java</file>
+            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/model/QueuePatient.java</file>
+            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/web/doctorDashboard.jsp</file>
+            <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/dal/UserDAO.java</file>
             <file>file:/C:/Users/anngu/Documents/GitHub/Clinic-Management-System/PhongKhamDaLieu/src/java/dal/DoctorDAO.java</file>
         </group>
     </open-files>
