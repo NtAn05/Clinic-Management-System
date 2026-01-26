@@ -5,6 +5,7 @@
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -22,7 +23,7 @@
         <th>Trạng thái</th>
     </tr>
 
-    <c:forEach var="q" items="${queue}">
+    <c:forEach var="q" items="${queueList}">
         <tr>
             <td>${q.queuePosition}</td>
             <td>${q.patientName}</td>
