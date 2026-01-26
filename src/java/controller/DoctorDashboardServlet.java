@@ -86,7 +86,7 @@ public class DoctorDashboardServlet extends HttpServlet {
         request.setAttribute("queueList", queueList);
         request.setAttribute("shifts", shifts);
 
-        request.getRequestDispatcher("/doctor/dashboard.jsp")
+        request.getRequestDispatcher("/doctorDashboard.jsp")
                 .forward(request, response);
 
     }
