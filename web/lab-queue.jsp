@@ -957,8 +957,15 @@
     document.getElementById('filterDepartment').addEventListener('change', () => {
       document.getElementById('filterForm').submit();
     });
-    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
+        document.getElementById('filterForm').submit();
+      }
+    });
+    // Khi clear ô search (xóa hết text) thì tự động clear filter search
+    searchInput.addEventListener('input', (e) => {
+      if (!e.target.value.trim()) {
         document.getElementById('filterForm').submit();
       }
     });

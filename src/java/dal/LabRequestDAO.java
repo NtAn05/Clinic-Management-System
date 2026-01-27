@@ -413,13 +413,14 @@ public class LabRequestDAO extends DBContext {
         StringBuilder sql = new StringBuilder("""
             SELECT
                 COUNT(*) as total,
-                SUM(CASE WHEN lr.status = 'pending' THEN 1 ELSE 0 END) as pending,
-                SUM(CASE WHEN lr.status = 'processing' THEN 1 ELSE 0 END) as processing,
-                SUM(CASE WHEN lr.status = 'completed' THEN 1 ELSE 0 END) as completed
+                COALESCE(SUM(CASE WHEN lr.status = 'pending' THEN 1 ELSE 0 END), 0) as pending,
+                COALESCE(SUM(CASE WHEN lr.status = 'processing' THEN 1 ELSE 0 END), 0) as processing,
+                COALESCE(SUM(CASE WHEN lr.status = 'completed' THEN 1 ELSE 0 END), 0) as completed
             FROM lab_requests lr
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
+            JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
         """);
 
