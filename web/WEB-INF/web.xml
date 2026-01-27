@@ -36,8 +36,12 @@
         <servlet-name>AdminUserServlet</servlet-name>
         <url-pattern>/admin-users</url-pattern>
     </servlet-mapping>
+    <servlet>
+        <servlet-name>LabQueueServlet</servlet-name>
+        <servlet-class>controller.LabQueueServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
-        <servlet-name>DoctorDashboardServlet</servlet-name>
-        <url-pattern>/DoctorDashboardServlet</url-pattern>
+        <servlet-name>LabQueueServlet</servlet-name>
+        <url-pattern>/lab-queue</url-pattern>
     </servlet-mapping>
 </web-app>
