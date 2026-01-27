@@ -30,8 +30,8 @@ public class UserDAO extends DBContext {
                 User u = new User();
                 u.setId(rs.getInt("user_id")); // đúng tên cột
                 u.setPhone(rs.getString("phone"));
-                u.setRole(Role.valueOf(rs.getString("role").toUpperCase()));
-                u.setStatus(Status.valueOf(rs.getString("status").toUpperCase()));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
                 return u;
             }
         } catch (SQLException e) {
