@@ -15,22 +15,26 @@ import java.time.LocalDateTime;
 public class QueuePatient {
     private int queueId;
     private long appointmentId;
-    private String patientName;
-    private String status;
+    private int doctorId;
     private int queuePosition;
+    private String status; // waiting / examining / done
     private LocalDateTime createdAt;
 
-    public QueuePatient() {
-    }
+    // join
+    private String patientName;
 
-    public QueuePatient(int queueId, long appointmentId, String patientName, String status, int queuePosition, LocalDateTime createdAt) {
+    public QueuePatient() {}
+
+    public QueuePatient(int queueId, long appointmentId, int doctorId, int queuePosition, String status, LocalDateTime createdAt, String patientName) {
         this.queueId = queueId;
         this.appointmentId = appointmentId;
-        this.patientName = patientName;
-        this.status = status;
+        this.doctorId = doctorId;
         this.queuePosition = queuePosition;
+        this.status = status;
         this.createdAt = createdAt;
+        this.patientName = patientName;
     }
+
 
     public int getQueueId() {
         return queueId;
@@ -80,6 +84,14 @@ public class QueuePatient {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(int doctorId) {
+        this.doctorId = doctorId;
     }
     
     
