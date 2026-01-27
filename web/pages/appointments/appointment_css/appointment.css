@@ -1,0 +1,164 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f6fb;
+}
+
+.page {
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* headers */
+.header {
+  background: #fff;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user img {
+  border-radius: 50%;
+}
+
+/* CONTENT */
+.content {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.main {
+  flex: 3;
+}
+
+/* STEPS */
+.steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.step {
+  text-align: center;
+  color: #aaa;
+}
+
+.step.active {
+  color: #2f80ed;
+  font-weight: bold;
+}
+
+/*card */
+.card-box {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.card-box h3 {
+  margin-top: 0;
+}
+
+/* FORM */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+label {
+  font-size: 13px;
+  color: #555;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+textarea {
+  margin-top: 10px;
+}
+
+/* TIME SLOT */
+.time-slots {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.slot {
+  flex: 1;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.slot.active {
+  border: 2px solid #2f80ed;
+  background: #eef4ff;
+}
+
+/* action */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-outline {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  border: none;
+  background: #2f80ed;
+  color: #fff;
+  border-radius: 6px;
+}
+
+/* DOCTOR BOX */
+.doctor-box {
+  flex: 1;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  height: fit-content;
+}
+
+.doctor-box img {
+  border-radius: 50%;
+}
+
+.doctor-box .price {
+  margin-top: 15px;
+  background: #fff4e5;
+  color: #f2994a;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+
