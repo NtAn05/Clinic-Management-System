@@ -57,7 +57,7 @@ public class LabQueueServlet extends HttpServlet {
         );
         
         // Get statistics
-        int[] stats = labRequestDAO.getLabRequestStatistics();
+        int[] stats = labRequestDAO.getLabRequestStatisticsWithFilter(status, department, search);
         
         // Get all specializations for filter dropdown
         List<String> specializations = labRequestDAO.getAllSpecializations();

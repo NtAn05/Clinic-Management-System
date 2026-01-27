@@ -511,7 +511,7 @@
         <div class="queue-summary">
           <div class="chip">
             <span class="chip-dot dot-all"></span>
-            <span><strong>${stats[0]}</strong> phiếu / hôm nay</span>
+            <span><strong>${stats[0]}</strong> phiếu</span>
           </div>
           <div class="chip">
             <span class="chip-dot dot-pending"></span>
