@@ -1,4 +1,7 @@
 /build/
-/dist/
-/nbproject/private/
-/*.class
+/target/
+/out/
+/.idea/
+/.vscode/
+/nbproject/
+/*.log
