@@ -75,7 +75,7 @@ public class LabQueueServlet extends HttpServlet {
         request.setAttribute("pageSize", PAGE_SIZE);
         
         // Forward to JSP
-        request.getRequestDispatcher("/lab-queue.jsp").forward(request, response);
+        request.getRequestDispatcher("/pages/lab/lab-queue.jsp").forward(request, response);
     }
 
     @Override

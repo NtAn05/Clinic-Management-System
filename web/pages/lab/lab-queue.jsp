@@ -37,60 +37,6 @@
       color: var(--text-main);
     }
 
-    /* Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 50px;
-      background: white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    
-    .logo {
-      font-weight: bold;
-      color: var(--primary);
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .logo i {
-      font-size: 24px;
-    }
-    
-    .nav {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    
-    .nav a {
-      text-decoration: none;
-      color: var(--text-main);
-      font-weight: 500;
-      transition: color 0.3s;
-    }
-    
-    .nav a:hover {
-      color: var(--primary);
-    }
-    
-    .btn-header {
-      text-decoration: none;
-      background: var(--primary);
-      color: white;
-      padding: 8px 20px;
-      border-radius: 5px;
-      font-weight: 500;
-      transition: background 0.3s;
-    }
-    
-    .btn-header:hover {
-      background: #1d4ed8;
-    }
-
     .page {
       padding: 20px 24px 32px;
     }
@@ -449,11 +395,9 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo"><i class="fas fa-heartbeat"></i> Phòng Khám ABC</div>
-  </header>
+  <jsp:include page="../../common/header.jsp" />
 
-  <div class="page">
+  <div class="page" style="max-width: 1280px; margin: 0 auto;">
 
     <div class="layout">
       <!-- CỘT TRÁI: DANH SÁCH HÀNG ĐỢI -->
@@ -1022,6 +966,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   </script>
+  
+  <jsp:include page="../../common/footer.jsp" />
 </body>
 </html>
-
