@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 import model.Doctor;
 import model.DoctorShift;
-import model.QueuePatient;
+import model.DoctorQueueItem;
 import model.User;
 
 /**
@@ -70,13 +70,13 @@ public class DoctorDashboardServlet extends HttpServlet {
             return;
         }
 
-        int doctorId = (int) session.getAttribute("doctorId");
+        int doctorId = (int) session.getAttribute("3");
 
         DoctorDAO doctorDAO = new DoctorDAO();
 
         // 1️⃣ Danh sách bệnh nhân đang chờ khám
-        List<QueuePatient> queueList
-                = doctorDAO.getTodayQueueByDoctor(doctorId);
+        List<DoctorQueueItem> queueList
+                = doctorDAO.getTodayQueueByDoctor(doctorId); // đang test id doctor =3
 
         // 2️⃣ Ca làm việc hôm nay
         int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // CN = 0
@@ -86,7 +86,7 @@ public class DoctorDashboardServlet extends HttpServlet {
         request.setAttribute("queueList", queueList);
         request.setAttribute("shifts", shifts);
 
-        request.getRequestDispatcher("/doctorDashboard.jsp")
+        request.getRequestDispatcher("../doctors/doctorDashboard.jsp")
                 .forward(request, response);
 
     }

@@ -2,7 +2,7 @@ package dal;
 
 import model.Doctor;
 import model.DoctorShift;
-import model.QueuePatient;
+import model.DoctorQueueItem;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -77,46 +77,6 @@ public class DoctorDAO extends DBContext {
     }
 
     /* =========================
-       DANH SÁCH CHỜ KHÁM
-       (Doctor Dashboard)
-       ========================= */
-    public List<QueuePatient> getWaitingQueue(int doctorId) {
-        List<QueuePatient> list = new ArrayList<>();
-
-        String sql = """
-            SELECT q.appointment_id,
-                   p.full_name AS patient_name,
-                   q.status,
-                   q.queue_position,
-                   q.created_at
-            FROM exam_queue q
-            JOIN appointments a ON q.appointment_id = a.appointment_id
-            JOIN patients p ON a.patient_id = p.patient_id
-            WHERE q.doctor_id = ?
-              AND q.status IN ('waiting', 'examining')
-            ORDER BY q.queue_position
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            ResultSet rs = st.executeQuery();
-
-            while (rs.next()) {
-                QueuePatient qp = new QueuePatient();
-                qp.setAppointmentId(rs.getLong("appointment_id"));
-                qp.setPatientName(rs.getString("patient_name"));
-                qp.setStatus(rs.getString("status"));
-                qp.setQueuePosition(rs.getInt("queue_position"));
-                qp.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-                list.add(qp);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    /* =========================
        CẬP NHẬT TRẠNG THÁI HÀNG ĐỢI
        ========================= */
     public void updateQueueStatus(long appointmentId, String status) {
@@ -171,44 +131,45 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    public List<QueuePatient> getTodayQueueByDoctor(int doctorId) {
-        List<QueuePatient> list = new ArrayList<>();
+    // DANH SÁCH CHỜ KHÁM CỦA BÁC SĨ
+    
+    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) {
+    List<DoctorQueueItem> list = new ArrayList<>();
 
-        String sql = """
+    String sql = """
         SELECT 
-            eq.queue_id,
-            eq.queue_position,
-            eq.status,
-            eq.created_at,
-            a.appointment_id,
+            q.queue_position,
             p.full_name AS patient_name,
-            p.phone
-        FROM exam_queue eq
-        JOIN appointments a ON eq.appointment_id = a.appointment_id
+            p.gender,
+            p.dob,
+            a.symptom,
+            q.status
+        FROM exam_queue q
+        JOIN appointments a ON q.appointment_id = a.appointment_id
         JOIN patients p ON a.patient_id = p.patient_id
-        WHERE eq.doctor_id = ?
-        ORDER BY eq.queue_position
+        WHERE q.doctor_id = ?
+        ORDER BY q.queue_position
     """;
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            ResultSet rs = st.executeQuery();
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setInt(1, doctorId);
+        ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                QueuePatient qp = new QueuePatient();
-                qp.setQueueId(rs.getInt("queue_id"));
-                qp.setAppointmentId(rs.getLong("appointment_id"));
-                qp.setPatientName(rs.getString("patient_name"));
-                qp.setQueuePosition(rs.getInt("queue_position"));
-                qp.setStatus(rs.getString("status"));
-                qp.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-                list.add(qp);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        while (rs.next()) {
+            DoctorQueueItem item = new DoctorQueueItem();
+            item.setQueuePosition(rs.getInt("queue_position"));
+            item.setPatientName(rs.getString("patient_name"));
+            item.setGender(rs.getString("gender"));
+            item.setDob(rs.getDate("dob"));
+            item.setSymptom(rs.getString("symptom"));
+            item.setStatus(rs.getString("status"));
+            list.add(item);
         }
-        return list;
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+    return list;
+}
 
     public List<DoctorShift> getShiftsByDoctorAndDay(int doctorId, int dayOfWeek) {
         List<DoctorShift> list = new ArrayList<>();

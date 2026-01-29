@@ -5,3 +5,6 @@
 /.vscode/
 /nbproject/
 /*.log
+*.class
+/build
+/dist
