@@ -1,0 +1,208 @@
+/* ===== RESET ===== */
+* {
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background: #f5f7fb;
+    margin: 0;
+    padding: 20px;
+}
+
+/* ===== LAYOUT ===== */
+.container {
+    display: flex;
+    gap: 20px;
+    max-width: 1200px;
+    margin: auto;
+    align-items: flex-start;
+}
+
+/* ===== DANH SÁCH BÁC SĨ ===== */
+.doctor-list {
+    flex: 3;
+}
+
+.doctor-list h2 {
+    margin-bottom: 15px;
+}
+
+/* Cards grid */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+/* Card bác sĩ */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 15px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Avatar */
+.card img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 12px;
+}
+
+/* Tên */
+.card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 5px 0;
+    color: #222;
+}
+
+/* Học vị */
+.card .degree {
+    font-size: 13px;
+    color: #2f80ed;
+    margin-bottom: 4px;
+}
+
+/* Chuyên khoa */
+.card .desc {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 12px;
+}
+
+/* Info */
+.card .info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 12px;
+}
+
+/* Giá */
+.card .price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff5722;
+    margin: 10px 0 15px;
+}
+
+/* Button */
+.card button {
+    width: 100%;
+    padding: 10px 0;
+    background: #2f80ed;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.card button:hover {
+    background: #1c6ed5;
+}
+
+/* ===== FILTER ===== */
+.filter {
+    margin-top: 50px;
+    width: 300px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 18px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    position: sticky;
+    top: 20px;
+}
+
+/* Tiêu đề filter */
+.filter h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2f80ed;
+    margin-bottom: 16px;
+}
+
+/* Label */
+.filter label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    display: block;
+    margin-bottom: 6px;
+    margin-top: 14px;
+}
+
+/* Input & Select */
+.filter select {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 13px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter input:focus,
+.filter select:focus {
+    border-color: #2f80ed;
+    box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.15);
+}
+
+.price-range {
+    width: 100px;
+    gap: 10px;
+}
+
+.price-range input {
+        margin-top: 8px;
+
+    flex: 1;
+}
+
+.filter-btn {
+    margin-top: 18px;
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 10px;
+    border: 1px solid #2f80ed;
+    background: #fff;
+    color: #2f80ed;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background: #2f80ed;
+    color: #fff;
+}
+
+/* ===== RESPONSIVE (OPTIONAL) ===== */
+@media (max-width: 992px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .filter {
+        width: 100%;
+        position: relative;
+        top: unset;
+    }
+}
