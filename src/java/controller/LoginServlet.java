@@ -9,10 +9,18 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Role;
 import model.Status;
 
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Forward to login page
+        request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
+    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -36,13 +44,13 @@ public class LoginServlet extends HttpServlet {
             if (selectedRole.equals("staff")) {
                 // Tab này chấp nhận: Admin (0), Bác sĩ (2), Nhân viên (3)
                 // CHỈ CHẶN Bệnh nhân (1)
-                if ("patient".equals(u.getRole())) {
+                if (u.getRole() == Role.patient) {
                     error = "Tài khoản Bệnh nhân không được đăng nhập ở khu vực này!";
                 }
             } // 2: Đang đứng ở tab "Bệnh nhân" (patient)
             else if (selectedRole.equals("patient")) {
                 // Chỉ cho phép Role 1 vào
-                if (!"patient".equals(u.getRole())) {
+                if (u.getRole() != Role.patient) {
                     error = "Admin/Nhân viên vui lòng đăng nhập ở tab bên cạnh!";
                 }
             }
@@ -57,7 +65,7 @@ public class LoginServlet extends HttpServlet {
             // nếu có lỗi
             request.setAttribute("error", error);
             request.setAttribute("phone", phone); // Giữ lại SĐT để không phải nhập lại
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
         } else {
             // đăng nhập thành công
             HttpSession session = request.getSession();
@@ -66,7 +74,11 @@ public class LoginServlet extends HttpServlet {
             // (Tuỳ chọn) Điều hướng riêng cho Nhân viên nếu muốn
             // if (u.getRoleId() == 3) response.sendRedirect("staff-dashboard.jsp");
             // else 
-            response.sendRedirect("home.jsp");
+            if (u.getRole() == Role.technician) {
+                response.sendRedirect(request.getContextPath() + "/technician-dashboard");
+            } else {
+                response.sendRedirect("home.jsp");
+            }
         }
     }
 }

@@ -83,6 +83,8 @@ public class LabQueueServlet extends HttpServlet {
             throws ServletException, IOException {
         
         String action = request.getParameter("action");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         
         if ("updateStatus".equals(action)) {
             int requestId = Integer.parseInt(request.getParameter("requestId"));
@@ -95,7 +97,6 @@ public class LabQueueServlet extends HttpServlet {
             } else {
                 response.getWriter().write("{\"success\": false, \"message\": \"Cập nhật thất bại\"}");
             }
-            response.setContentType("application/json");
             
         } else if ("updateNotes".equals(action)) {
             int requestId = Integer.parseInt(request.getParameter("requestId"));
@@ -108,7 +109,53 @@ public class LabQueueServlet extends HttpServlet {
             } else {
                 response.getWriter().write("{\"success\": false, \"message\": \"Lưu ghi chú thất bại\"}");
             }
-            response.setContentType("application/json");
+            
+        } else if ("sendResult".equals(action)) {
+            // Get technician ID from session
+            jakarta.servlet.http.HttpSession session = request.getSession();
+            model.User account = (model.User) session.getAttribute("account");
+            
+            if (account == null || account.getRole() == null || !account.getRole().name().equals("technician")) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Không có quyền thực hiện\"}");
+                return;
+            }
+            
+            try {
+                // Parse request ID from request code (LAB-2026-0001) or direct ID
+                String requestIdParam = request.getParameter("requestId");
+                int requestId;
+                
+                if (requestIdParam.contains("LAB-")) {
+                    // Extract ID from code format LAB-YYYY-XXXX
+                    String[] parts = requestIdParam.split("-");
+                    if (parts.length >= 3) {
+                        requestId = Integer.parseInt(parts[2]);
+                    } else {
+                        response.getWriter().write("{\"success\": false, \"message\": \"Mã phiếu không hợp lệ\"}");
+                        return;
+                    }
+                } else {
+                    requestId = Integer.parseInt(requestIdParam);
+                }
+                
+                String notes = request.getParameter("notes");
+                String resultFile = request.getParameter("resultFile"); // In real app, handle file upload
+                
+                Integer technicianId = account.getId();
+                
+                boolean success = labRequestDAO.sendLabResult(requestId, technicianId, resultFile, notes);
+                
+                if (success) {
+                    response.getWriter().write("{\"success\": true, \"message\": \"Gửi kết quả thành công\"}");
+                } else {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Gửi kết quả thất bại\"}");
+                }
+            } catch (NumberFormatException e) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Mã phiếu không hợp lệ\"}");
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.getWriter().write("{\"success\": false, \"message\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+            }
             
         } else {
             // Default: redirect to GET

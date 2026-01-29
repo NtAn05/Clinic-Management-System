@@ -33,8 +33,31 @@
 
     body {
       margin: 0;
+      padding-top: 60px; /* Space for fixed header */
       background: var(--bg);
       color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      margin-top: 0;
+    }
+
+    .content-wrapper {
+      flex: 1;
+      margin-left: 260px; /* Sidebar width */
+      min-height: calc(100vh - 60px);
+    }
+
+    /* Responsive: Hide sidebar on mobile */
+    @media (max-width: 768px) {
+      .content-wrapper {
+        margin-left: 0;
+      }
     }
 
     .page {
@@ -397,7 +420,13 @@
 <body>
   <jsp:include page="../../common/header.jsp" />
 
-  <div class="page" style="max-width: 1280px; margin: 0 auto;">
+  <div class="main-container">
+    <!-- Include Sidebar -->
+    <jsp:include page="../../common/sidebar.jsp" />
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+      <div class="page" style="max-width: 1280px; margin: 0 auto;">
 
     <div class="layout">
       <!-- CỘT TRÁI: DANH SÁCH HÀNG ĐỢI -->

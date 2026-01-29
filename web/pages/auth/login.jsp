@@ -168,7 +168,7 @@
                     <p style="color: #666; font-size: 14px;">Hệ thống quản lý phòng khám</p>
                 </div>
 
-                <form action="login" method="POST">
+                <form action="${pageContext.request.contextPath}/login" method="POST">
                     <div class="role-switch">
                         <button type="button" id="btn-staff" class="active" onclick="selectRole('staff')">Nhân viên / Bác sĩ</button>
                         <button type="button" id="btn-patient" onclick="selectRole('patient')">Bệnh nhân</button>
@@ -184,7 +184,7 @@
 
                     <div class="form-group">
                         <label>Số điện thoại</label>
-                        <input type="text" name="phone" placeholder="Nhập số điện thoại" required>
+                        <input type="text" name="phone" placeholder="Nhập số điện thoại" value="${phone != null ? phone : ''}" required>
                     </div>
                     <div class="form-group">
                         <label>Mật khẩu</label>
