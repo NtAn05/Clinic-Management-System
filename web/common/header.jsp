@@ -6,15 +6,22 @@
         font-family: sans-serif;
         margin: 0;
         padding: 0;
+        padding-top: 60px; /* Space for fixed header */
         background: #f4f7fe;
     }
     .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         background: white;
         padding: 15px 40px;
         border-bottom: 1px solid #ddd;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     .logo a {
         font-weight: bold;
@@ -38,28 +45,32 @@
 
 <div class="header">
     <div class="logo">
-        <a href="index.jsp">PHÒNG KHÁM ABC</a>
+        <a href="${pageContext.request.contextPath}/index.jsp">PHÒNG KHÁM ABC</a>
     </div>
 
     <div class="menu">
-        <a href="index.jsp">Trang chủ</a>
+        <a href="${pageContext.request.contextPath}/index.jsp">Trang chủ</a>
 
         <c:if test="${sessionScope.account == null}">
-            <a href="login.jsp">Đăng nhập</a>
-            <a href="register.jsp" style="background: #0061ff; color: white; padding: 8px 15px; border-radius: 20px;">Đăng ký</a>
+            <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
+            <a href="${pageContext.request.contextPath}/register.jsp" style="background: #0061ff; color: white; padding: 8px 15px; border-radius: 20px;">Đăng ký</a>
         </c:if>
 
         <c:if test="${sessionScope.account != null}">
-            <c:if test="${sessionScope.account.roleId == 0}">
-                <a href="admin-users">Quản lý</a>
+            <c:if test="${sessionScope.account.role.name() == 'admin'}">
+                <a href="${pageContext.request.contextPath}/admin-users">Quản lý</a>
             </c:if>
 
-            <c:if test="${sessionScope.account.roleId == 2}">
-                <a href="doctor-schedule.jsp">Lịch làm việc</a>
+            <c:if test="${sessionScope.account.role.name() == 'doctor'}">
+                <a href="${pageContext.request.contextPath}/doctor-schedule.jsp">Lịch làm việc</a>
+            </c:if>
+
+            <c:if test="${sessionScope.account.role.name() == 'technician'}">
+                <a href="${pageContext.request.contextPath}/technician-dashboard">Dashboard</a>
             </c:if>
 
             <span style="margin-left: 15px; color: #666;">Hi, ${sessionScope.account.fullName}</span>
-            <a href="logout" class="btn-logout">(Thoát)</a>
+            <a href="${pageContext.request.contextPath}/logout" class="btn-logout">(Thoát)</a>
         </c:if>
     </div>
 </div>
