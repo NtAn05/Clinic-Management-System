@@ -9,7 +9,9 @@
     }
     
     model.User account = (model.User) session.getAttribute("account");
-    String userRole = account.getRole() != null ? account.getRole().name() : "";
+    Object roleObj = account.getRole();
+    String userRole = roleObj != null ? roleObj.toString().toLowerCase() : "";
+    request.setAttribute("userRole", userRole);
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -183,7 +185,7 @@
 
     <jsp:include page="footer.jsp" />
 
-    <c:if test="${sessionScope.account.role.name() == 'technician'}">
+    <c:if test="${userRole == 'technician'}">
         <script>
             // Load statistics
             async function loadStatistics() {

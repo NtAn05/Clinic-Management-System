@@ -35,8 +35,8 @@ public class TechnicianDashboardServlet extends HttpServlet {
             return;
         }
         
-        // Check role
-        if (account.getRole() == null || !account.getRole().name().equals("technician")) {
+        // Check role (dùng RoleHelper để tương thích User có getRole() hoặc getRoleId())
+        if (!RoleHelper.isTechnician(account)) {
             response.sendRedirect(request.getContextPath() + "/pages/home/home.jsp");
             return;
         }

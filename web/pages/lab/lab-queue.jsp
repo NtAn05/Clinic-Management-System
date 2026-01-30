@@ -113,10 +113,19 @@
       border-color: var(--border);
     }
 
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .btn-success:hover {
+      filter: brightness(1.05);
+    }
+
     .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
-      gap: 20px;
+      display: block;
+      width: 100%;
     }
 
     /* Card chung */
@@ -428,9 +437,8 @@
     <div class="content-wrapper">
       <div class="page" style="max-width: 1280px; margin: 0 auto;">
 
-    <div class="layout">
-      <!-- CỘT TRÁI: DANH SÁCH HÀNG ĐỢI -->
-      <div class="card">
+    <!-- Danh sách Lab Queue Full Width -->
+    <div class="card">
         <div class="card-header">
           <div>
             <div class="card-title">
@@ -438,7 +446,7 @@
               <span>Danh sách xét nghiệm chờ</span>
             </div>
             <div class="card-subtitle">
-              Chọn một dòng để xem chi tiết bệnh nhân và chỉ định xét nghiệm
+              Nhấp vào phiếu để xem chi tiết và gửi kết quả xét nghiệm
             </div>
           </div>
           <div class="text-right text-muted">
@@ -538,7 +546,7 @@
                     <c:set var="genderText" value="${request.patient.gender == 'male' ? 'Nam' : (request.patient.gender == 'female' ? 'Nữ' : 'Khác')}" />
                     <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : 'Đã có kết quả')}" />
                     <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : 'status-done')}" />
-                    <tr class="queue-row" data-request-id="${request.requestId}" onclick="selectRequest(${request.requestId})">
+                    <tr class="queue-row" data-request-id="${request.requestId}" onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
                       <td>${requestCode}</td>
                       <td>
                         ${request.patient.fullName}<br />
@@ -646,109 +654,11 @@
             </c:if>
           </div>
         </c:if>
-      </div>
-
-      <!-- CỘT PHẢI: CHI TIẾT PHIẾU ĐANG CHỌN -->
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">
-              <span class="card-title-icon">👤</span>
-              <span>Chi tiết bệnh nhân & phiếu xét nghiệm</span>
-            </div>
-            <div class="card-subtitle">
-              Thông tin hiển thị cho phiếu đang chọn trong danh sách bên trái
-            </div>
-          </div>
-          <div class="text-right">
-            <div class="text-muted" style="font-size: 11px;">Mã phiếu</div>
-            <strong id="detailRequestId">-</strong>
-          </div>
-        </div>
-
-        <!-- THÔNG TIN BỆNH NHÂN -->
-        <div class="section">
-          <div class="section-title">
-            Thông tin bệnh nhân
-          </div>
-          <div class="section-body" id="patientInfoSection">
-            <div style="text-align: center; padding: 20px; color: var(--text-sub);">
-              Chọn một bệnh nhân từ danh sách để xem chi tiết
-            </div>
-          </div>
-        </div>
-
-        <!-- THÔNG TIN XÉT NGHIỆM -->
-        <div class="section">
-          <div class="section-title">
-            Thông tin chỉ định xét nghiệm
-          </div>
-          <div class="section-body" id="labTestSection">
-            <div style="text-align: center; padding: 20px; color: var(--text-sub);">
-              Chọn một bệnh nhân từ danh sách để xem chi tiết
-            </div>
-          </div>
-        </div>
-
-        <!-- GHI CHÚ VÀ HÀNH ĐỘNG -->
-        <div class="section">
-          <div class="section-title">
-            Ghi chú nội bộ / lưu ý khi lấy mẫu
-          </div>
-          <form id="updateForm" method="POST" action="${pageContext.request.contextPath}/lab-queue">
-            <input type="hidden" name="action" id="actionInput" value="updateStatus" />
-            <input type="hidden" name="requestId" id="requestIdInput" />
-            <input type="hidden" name="status" id="statusInput" />
-            <textarea
-              class="note-box"
-              id="noteTextarea"
-              name="notes"
-              placeholder="Ví dụ: Bệnh nhân đang dùng thuốc hạ đường huyết, lấy mẫu trước khi ăn sáng..."
-              disabled
-            ></textarea>
-            <div class="detail-footer">
-              <button type="button" class="btn btn-outline" id="markSampleBtn" disabled>Đánh dấu đã lấy mẫu</button>
-              <button type="button" class="btn btn-primary" id="updateStatusBtn" disabled>Cập nhật trạng thái</button>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
   </div>
 
   <script>
-    // Store lab requests data from server
-      const labRequestsData = [
-      <c:forEach var="request" items="${labRequests}" varStatus="loop">
-      {
-        requestId: ${request.requestId},
-        appointmentId: ${request.appointmentId},
-        doctorId: ${request.doctorId},
-        status: '${request.status}',
-        createdAt: '<fmt:formatDate value="${request.createdAt}" pattern="yyyy-MM-dd'T'HH:mm:ss" />',
-        patient: {
-          patientId: ${request.patient.patientId},
-          fullName: '${fn:replace(request.patient.fullName, "'", "\\'")}',
-          phone: '${request.patient.phone != null ? fn:replace(request.patient.phone, "'", "\\'") : ""}',
-          dob: '${request.patient.dob != null ? request.patient.dob : ""}',
-          gender: '${request.patient.gender}',
-          email: '${request.patient.email != null ? fn:replace(request.patient.email, "'", "\\'") : ""}'
-        },
-        doctor: {
-          doctorId: ${request.doctor.doctorId},
-          specialization: '${fn:replace(request.doctor.specialization, "'", "\\'")}',
-          fullName: '${fn:replace(request.doctor.fullName, "'", "\\'")}'
-        },
-        appointment: {
-          appointmentId: ${request.appointment.appointmentId},
-          symptom: '${request.appointment.symptom != null ? fn:replace(request.appointment.symptom, "'", "\\'") : ""}'
-        },
-        notes: '${request.notes != null ? fn:replace(request.notes, "'", "\\'") : ""}'
-      }<c:if test="${!loop.last}">,</c:if>
-      </c:forEach>
-    ];
-
-    let selectedRequest = null;
+    // Filter and search handlers
 
     // Utility functions
     function formatDate(dateString) {
@@ -907,8 +817,19 @@
       // Update notes
       document.getElementById('noteTextarea').value = selectedRequest.notes || '';
       document.getElementById('noteTextarea').disabled = false;
-      document.getElementById('markSampleBtn').disabled = false;
+      document.getElementById('markSampleBtn').disabled = selectedRequest.status !== 'pending';
       document.getElementById('updateStatusBtn').disabled = false;
+      
+      const sendResultLink = document.getElementById('sendResultLink');
+      if (selectedRequest.status === 'processing') {
+        sendResultLink.href = '${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=' + selectedRequest.requestId;
+        sendResultLink.style.pointerEvents = 'auto';
+        sendResultLink.style.opacity = '1';
+      } else {
+        sendResultLink.href = '#';
+        sendResultLink.style.pointerEvents = 'none';
+        sendResultLink.style.opacity = '0.5';
+      }
     }
 
     function getExpectedCompletionTime(request) {
@@ -923,76 +844,28 @@
       return 'Trước ' + formatTime(expectedTime.toISOString()) + ' hôm nay';
     }
 
-    // Event listeners
+    // Filter change handlers
     document.getElementById('filterStatus').addEventListener('change', () => {
       document.getElementById('filterForm').submit();
     });
+    
     document.getElementById('filterDepartment').addEventListener('change', () => {
       document.getElementById('filterForm').submit();
     });
+    
+    // Search handlers
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         document.getElementById('filterForm').submit();
       }
     });
-    // Khi clear ô search (xóa hết text) thì tự động clear filter search
+    
+    // Auto-submit when search is cleared
     searchInput.addEventListener('input', (e) => {
       if (!e.target.value.trim()) {
         document.getElementById('filterForm').submit();
       }
-    });
-
-    document.getElementById('markSampleBtn').addEventListener('click', () => {
-      if (selectedRequest && selectedRequest.status === 'pending') {
-        if (confirm('Xác nhận đã lấy mẫu xét nghiệm?')) {
-          document.getElementById('actionInput').value = 'updateStatus';
-          document.getElementById('statusInput').value = 'processing';
-          document.getElementById('updateForm').submit();
-        }
-      }
-    });
-
-    document.getElementById('updateStatusBtn').addEventListener('click', () => {
-      if (!selectedRequest) return;
-      
-      const currentStatus = selectedRequest.status;
-      let newStatus;
-      
-      if (currentStatus === 'pending') {
-        newStatus = 'processing';
-      } else if (currentStatus === 'processing') {
-        newStatus = 'completed';
-      } else {
-        alert('Phiếu này đã hoàn thành.');
-        return;
-      }
-      
-      // Save notes first
-      document.getElementById('actionInput').value = 'updateNotes';
-      const formData = new FormData(document.getElementById('updateForm'));
-      fetch('${pageContext.request.contextPath}/lab-queue', {
-        method: 'POST',
-        body: formData
-      }).then(() => {
-        // Then update status
-        document.getElementById('actionInput').value = 'updateStatus';
-        document.getElementById('statusInput').value = newStatus;
-        document.getElementById('updateForm').submit();
-      });
-    });
-
-    document.getElementById('startTestBtn').addEventListener('click', () => {
-      const pendingRequests = labRequestsData.filter(r => r.status === 'pending');
-      if (pendingRequests.length === 0) {
-        alert('Không có phiếu nào đang chờ lấy mẫu.');
-        return;
-      }
-      
-      // Select first pending request
-      selectRequest(pendingRequests[0].requestId);
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   </script>
   

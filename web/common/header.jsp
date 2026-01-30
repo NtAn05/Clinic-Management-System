@@ -1,6 +1,13 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
+<%
+    String roleName = "";
+    if (session.getAttribute("account") != null) {
+        Object r = ((model.User) session.getAttribute("account")).getRole();
+        roleName = r != null ? r.toString().toLowerCase() : "";
+    }
+    pageContext.setAttribute("roleName", roleName);
+%>
 <style>
     body {
         font-family: sans-serif;
@@ -57,15 +64,15 @@
         </c:if>
 
         <c:if test="${sessionScope.account != null}">
-            <c:if test="${sessionScope.account.role.name() == 'admin'}">
+            <c:if test="${roleName == 'admin'}">
                 <a href="${pageContext.request.contextPath}/admin-users">Quản lý</a>
             </c:if>
 
-            <c:if test="${sessionScope.account.role.name() == 'doctor'}">
+            <c:if test="${roleName == 'doctor'}">
                 <a href="${pageContext.request.contextPath}/doctor-schedule.jsp">Lịch làm việc</a>
             </c:if>
 
-            <c:if test="${sessionScope.account.role.name() == 'technician'}">
+            <c:if test="${roleName == 'technician'}">
                 <a href="${pageContext.request.contextPath}/technician-dashboard">Dashboard</a>
             </c:if>
 
