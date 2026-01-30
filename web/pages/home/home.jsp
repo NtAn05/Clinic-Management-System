@@ -1,10 +1,14 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page import="model.User"%>
+
 <%
+    // Kiểm tra đăng nhập
     if (session.getAttribute("account") == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 %>
+
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -26,9 +30,7 @@
                 width: 500px;
                 text-align: center;
             }
-            h1 {
-                color: #0061ff;
-            }
+            h1 { color: #0061ff; }
             .role-badge {
                 display: inline-block;
                 padding: 5px 15px;
@@ -37,19 +39,10 @@
                 font-weight: bold;
                 margin-top: 10px;
             }
-            
-            .role-patient {
-                background: #e3f2fd;
-                color: #0d47a1;
-            } 
-            .role-doctor {
-                background: #e8f5e9;
-                color: #1b5e20;
-            }  /* Xanh lá */
-            .role-staff {
-                background: #fff3e0;
-                color: #e65100;
-            }   
+            .role-admin { background: #000; color: #fff; }
+            .role-patient { background: #e3f2fd; color: #0d47a1; } 
+            .role-doctor { background: #e8f5e9; color: #1b5e20; }
+            .role-staff { background: #fff3e0; color: #e65100; }    
 
             .btn-logout {
                 display: inline-block;
@@ -60,9 +53,7 @@
                 text-decoration: none;
                 border-radius: 6px;
             }
-            .btn-logout:hover {
-                background: #e84118;
-            }
+            .btn-logout:hover { background: #e84118; }
         </style>
     </head>
     <body>
@@ -70,36 +61,43 @@
             <h1>Đăng nhập thành công!</h1>
             <p>Xin chào, <strong>${sessionScope.account.fullName}</strong></p>
 
-            <style> .role-admin { background: #000; color: #fff; } </style> <div class="role-badge ${sessionScope.account.roleId == 0 ? 'role-admin' : 
-                                (sessionScope.account.roleId == 1 ? 'role-patient' : 
-                                (sessionScope.account.roleId == 2 ? 'role-doctor' : 'role-staff'))}">
-            Vai trò: 
-            ${sessionScope.account.roleId == 0 ? "Quản Trị Viên (Admin)" : 
-             (sessionScope.account.roleId == 1 ? "Bệnh nhân" : 
-             (sessionScope.account.roleId == 2 ? "Bác sĩ" : "Nhân viên"))}
-        </div>
+            <div class="role-badge ${sessionScope.account.role == 'admin' ? 'role-admin' : 
+                                    (sessionScope.account.role == 'patient' ? 'role-patient' : 
+                                    (sessionScope.account.role == 'doctor' ? 'role-doctor' : 'role-staff'))}">
+                
+                Vai trò: 
+                ${sessionScope.account.role == 'admin' ? "Quản Trị Viên (Admin)" : 
+                 (sessionScope.account.role == 'patient' ? "Bệnh nhân" : 
+                 (sessionScope.account.role == 'doctor' ? "Bác sĩ" : "Nhân viên"))}
+            </div>
 
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-        
-        <div style="text-align: left; margin-bottom: 20px;">
-            <% 
-                model.User u = (model.User)session.getAttribute("account");
-               
-                if(u.getRoleId() == 0) { 
-            %>
-                <p>⭐ <a href="admin-users">Quản lý Nhân sự (Bác sĩ/Nhân viên)</a></p>
-                <p>⭐ <a href="service-manager">Quản lý Dịch vụ & Giá tiền</a></p>
-                <p>⭐ <a href="#">Quản lý Lịch làm việc</a></p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            
+            <div style="text-align: left; margin-bottom: 20px;">
+                <% 
+                    // PHẦN 2: LOGIC HIỂN THỊ MENU (SỬA LẠI JAVA CODE)
+                    User u = (User)session.getAttribute("account");
+                    String role = u.getRole(); // Lấy role dạng chuỗi (admin, patient...)
+                    
+                    // So sánh chuỗi thay vì so sánh số (0, 1, 2)
+                    if(role.equals("admin")) { 
+                %>
+                    <p>⭐️ <a href="admin-users">Quản lý Nhân sự (Bác sĩ/Nhân viên)</a></p>
+                    <p>⭐️ <a href="service-manager">Quản lý Dịch vụ & Giá tiền</a></p>
+                    <p>⭐️ <a href="#">Quản lý Lịch làm việc</a></p>
 
-            <% } else if(u.getRoleId() == 1) { %>
-                <p>👉 <a href="#">Đặt lịch khám mới</a></p>
-                <p>👉 <a href="#">Xem hồ sơ bệnh án</a></p>
-            <% } else if(u.getRoleId() == 2) { %>
-                <p>👉 <a href="#">Danh sách bệnh nhân</a></p>
-            <% } else if(u.getRoleId() == 3) { %>
-                <p>👉 <a href="#">Tiếp đón / Thu ngân</a></p>
-            <% } %>
-        </div>
+                <% } else if(role.equals("patient")) { %>
+                    <p>👉 <a href="#">Đặt lịch khám mới</a></p>
+                    <p>👉 <a href="#">Xem hồ sơ bệnh án</a></p>
+                    
+                <% } else if(role.equals("doctor")) { %>
+                    <p>👉 <a href="#">Danh sách bệnh nhân</a></p>
+                    <p>👉 <a href="#">Lịch làm việc cá nhân</a></p>
+                    
+                <% } else { // Các role còn lại (staff/receptionist...) %>
+                    <p>👉 <a href="#">Tiếp đón / Thu ngân</a></p>
+                <% } %>
+            </div>
 
             <a href="logout" class="btn-logout">Đăng xuất</a>
         </div>

@@ -13,29 +13,25 @@ public class UserDAO extends DBContext {
 
     // Hàm kiểm tra đăng nhập
     public User checkLogin(String phone, String password) {
-        String sql = """
-        SELECT user_id, phone, role, status
-        FROM users
-        WHERE phone = ?
-          AND password_hash = ?
-          AND status = 'active'
-    """;
+        String sql = "SELECT user_id, full_name, role, status FROM users WHERE phone = ? AND password_hash = ? AND status = 'active'";
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
+        try {
+            PreparedStatement st = connection.prepareStatement(sql);
             st.setString(1, phone);
-            st.setString(2, password); // sau này hash
+            st.setString(2, password);
 
             ResultSet rs = st.executeQuery();
             if (rs.next()) {
                 User u = new User();
-                u.setId(rs.getInt("user_id")); // đúng tên cột
-                u.setPhone(rs.getString("phone"));
-                u.setRole(Role.valueOf(rs.getString("role")));
-                u.setStatus(Status.valueOf(rs.getString("status")));
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+               u.setRole(rs.getString("role")); 
+                u.setStatus(rs.getString("status"));
+                
                 return u;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e);
         }
         return null;
     }
