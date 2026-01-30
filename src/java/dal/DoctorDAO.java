@@ -7,6 +7,7 @@ import model.DoctorQueueItem;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import model.doctorExamination.DoctorDashboardStats;
 
 public class DoctorDAO extends DBContext {
 
@@ -132,11 +133,10 @@ public class DoctorDAO extends DBContext {
     }
 
     // DANH SÁCH CHỜ KHÁM CỦA BÁC SĨ
-    
-    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) {
-    List<DoctorQueueItem> list = new ArrayList<>();
+    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) { // được thay thế bởi getqueuewithfilter
+        List<DoctorQueueItem> list = new ArrayList<>();
 
-    String sql = """
+        String sql = """
         SELECT 
             q.queue_position,
             p.full_name AS patient_name,
@@ -151,25 +151,25 @@ public class DoctorDAO extends DBContext {
         ORDER BY q.queue_position
     """;
 
-    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-        ps.setInt(1, doctorId);
-        ResultSet rs = ps.executeQuery();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ResultSet rs = ps.executeQuery();
 
-        while (rs.next()) {
-            DoctorQueueItem item = new DoctorQueueItem();
-            item.setQueuePosition(rs.getInt("queue_position"));
-            item.setPatientName(rs.getString("patient_name"));
-            item.setGender(rs.getString("gender"));
-            item.setDob(rs.getDate("dob"));
-            item.setSymptom(rs.getString("symptom"));
-            item.setStatus(rs.getString("status"));
-            list.add(item);
+            while (rs.next()) {
+                DoctorQueueItem item = new DoctorQueueItem();
+                item.setQueuePosition(rs.getInt("queue_position"));
+                item.setPatientName(rs.getString("patient_name"));
+                item.setGender(rs.getString("gender"));
+                item.setDob(rs.getDate("dob"));
+                item.setSymptom(rs.getString("symptom"));
+                item.setStatus(rs.getString("status"));
+                list.add(item);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+        return list;
     }
-    return list;
-}
 
     public List<DoctorShift> getShiftsByDoctorAndDay(int doctorId, int dayOfWeek) {
         List<DoctorShift> list = new ArrayList<>();
@@ -199,4 +199,93 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
+    public DoctorDashboardStats getDashboardStats(int doctorId) {
+        DoctorDashboardStats stats = new DoctorDashboardStats();
+        String sql = """
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
+            SUM(CASE WHEN status = 'examining' THEN 1 ELSE 0 END) AS examining,
+            SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS done
+        FROM exam_queue
+        WHERE doctor_id = ?
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                stats.setTotal(rs.getInt("total"));
+                stats.setWaiting(rs.getInt("waiting"));
+                stats.setExamining(rs.getInt("examining"));
+                stats.setDone(rs.getInt("done"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return stats;
+    }
+
+    public List<DoctorQueueItem> getQueueByDoctorWithFilter(
+        int doctorId,
+        String status,
+        String keyword
+) {
+    List<DoctorQueueItem> list = new ArrayList<>();
+
+    StringBuilder sql = new StringBuilder("""
+        SELECT 
+            q.queue_position,
+            p.full_name AS patient_name,
+            p.gender,
+            p.dob,
+            a.symptom,
+            q.status
+        FROM exam_queue q
+        JOIN appointments a ON q.appointment_id = a.appointment_id
+        JOIN patients p ON a.patient_id = p.patient_id
+        WHERE q.doctor_id = ?
+    """);
+
+    if (status != null && !status.equals("all")) {
+        sql.append(" AND q.status = ? ");
+    }
+
+    if (keyword != null && !keyword.isBlank()) {
+        sql.append(" AND p.full_name LIKE ? ");
+    }
+
+    sql.append(" ORDER BY q.queue_position ");
+
+    try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+        int index = 1;
+        ps.setInt(index++, doctorId);
+
+        if (status != null && !status.equals("all")) {
+            ps.setString(index++, status);
+        }
+
+        if (keyword != null && !keyword.isBlank()) {
+            ps.setString(index++, "%" + keyword + "%");
+        }
+
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            DoctorQueueItem item = new DoctorQueueItem();
+            item.setQueuePosition(rs.getInt("queue_position"));
+            item.setPatientName(rs.getString("patient_name"));
+            item.setGender(rs.getString("gender"));
+            item.setDob(rs.getDate("dob"));
+            item.setSymptom(rs.getString("symptom"));
+            item.setStatus(rs.getString("status"));
+            list.add(item);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return list;
+}
+
+    
+    
 }
