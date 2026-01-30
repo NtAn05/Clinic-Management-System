@@ -15,10 +15,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.List;
-import model.Doctor;
-import model.DoctorShift;
 import model.DoctorQueueItem;
+import model.DoctorShift;
+import model.Doctor;
 import model.User;
+import model.doctorExamination.DoctorDashboardStats;
 
 /**
  *
@@ -64,19 +65,24 @@ public class DoctorDashboardServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("doctorId") == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+//        HttpSession session = request.getSession(false);
+//        if (session == null || session.getAttribute("doctorId") == null) {
+//            response.sendRedirect(request.getContextPath() + "/login");
+//            return;
+//        }
+//
+//        int doctorId = (int) session.getAttribute("doctorId");
 
-        int doctorId = (int) session.getAttribute("3");
-
+        int doctorId = 3;// test
         DoctorDAO doctorDAO = new DoctorDAO();
 
         // 1️⃣ Danh sách bệnh nhân đang chờ khám
         List<DoctorQueueItem> queueList
-                = doctorDAO.getTodayQueueByDoctor(doctorId); // đang test id doctor =3
+                = doctorDAO.getTodayQueueByDoctor(doctorId);
+
+        // 2. Thống kê
+        DoctorDashboardStats stats
+                = doctorDAO.getDashboardStats(doctorId);
 
         // 2️⃣ Ca làm việc hôm nay
         int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // CN = 0
@@ -84,9 +90,10 @@ public class DoctorDashboardServlet extends HttpServlet {
                 = doctorDAO.getShiftsByDoctorAndDay(doctorId, dayOfWeek);
 
         request.setAttribute("queueList", queueList);
+        request.setAttribute("stats", stats);
         request.setAttribute("shifts", shifts);
 
-        request.getRequestDispatcher("../doctors/doctorDashboard.jsp")
+        request.getRequestDispatcher("pages/doctors/doctorDashboard.jsp")
                 .forward(request, response);
 
     }
