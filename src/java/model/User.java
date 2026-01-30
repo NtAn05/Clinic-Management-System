@@ -8,21 +8,13 @@ public class User {
     private String phone;
     private String email;
     private String passwordHash;
-    private String role; 
-    private String status; 
+    private Role role; 
+    private Status status; 
 
     public User() {
     }
 
-    public User(int userId, String fullName, String phone, String email, String passwordHash, String role, String status) {
-        this.userId = userId;
-        this.fullName = fullName;
-        this.phone = phone;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.role = role;
-        this.status = status;
-    }
+   
     public int getUserId() {
         return userId;
     }
@@ -63,19 +55,20 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
-    public String getStatus() {
+
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 }

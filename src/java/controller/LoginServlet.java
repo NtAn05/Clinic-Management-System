@@ -2,6 +2,7 @@ package controller;
 
 import dal.UserDAO;
 import model.User;
+import model.Role; // Import Enum Role
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,34 +20,30 @@ public class LoginServlet extends HttpServlet {
 
         String phone = request.getParameter("phone");
         String pass = request.getParameter("password");
-        String selectedRole = request.getParameter("role");
+        String selectedRole = request.getParameter("role"); 
 
         UserDAO dao = new UserDAO();
-        User u = dao.checkLogin(phone, pass);
+        User u = dao.checkLogin(phone, pass); // 
         String error = null;
 
         if (u == null) {
             error = "Sai thông tin đăng nhập!";
         } else {
             
-            
-            // Lấy role ra (đang là String)
-            String userRole = u.getRole(); 
+            String roleName = u.getRole().toString().toLowerCase(); 
+            String status = u.getStatus().toString().toLowerCase(); 
 
             if (selectedRole.equals("staff")) {
-                // Nếu là patient -> Chặn
-                if (userRole.equals("patient")) {
+                if (roleName.equals("patient")) {
                     error = "Bệnh nhân vui lòng sang tab Bệnh nhân!";
                 }
             } else if (selectedRole.equals("patient")) {
-                // Nếu KHÔNG PHẢI patient -> Chặn
-                if (!userRole.equals("patient")) {
+                if (!roleName.equals("patient")) {
                     error = "Nhân viên vui lòng sang tab Nhân viên!";
                 }
             }
 
-            // So sánh status (String)
-            if (u.getStatus().equals("inactive")) {
+            if (!status.equals("active")) {
                 error = "Tài khoản bị khóa!";
             }
         }
@@ -54,16 +51,19 @@ public class LoginServlet extends HttpServlet {
         if (error != null) {
             request.setAttribute("error", error);
             request.setAttribute("phone", phone);
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            
+            request.getRequestDispatcher("pages/auth/login.jsp").forward(request, response);
         } else {
             HttpSession session = request.getSession();
             session.setAttribute("account", u);
             
             // Điều hướng
-            if (u.getRole().equals("admin")) {
+            String roleName = u.getRole().toString().toLowerCase();
+            if (roleName.equals("admin")) {
                  response.sendRedirect("admin-dashboard.jsp");
             } else {
-                 response.sendRedirect("home.jsp");
+                 // Đường dẫn trang home của bạn
+                 response.sendRedirect("pages/home/home.jsp");
             }
         }
     }

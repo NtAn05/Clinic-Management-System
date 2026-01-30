@@ -4,7 +4,7 @@
 <%
     // Kiểm tra đăng nhập
     if (session.getAttribute("account") == null) {
-        response.sendRedirect("login.jsp");
+        response.sendRedirect("pages/auth/login.jsp");
         return;
     }
 %>
