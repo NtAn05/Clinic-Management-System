@@ -485,6 +485,12 @@
               <label class="field-label">Tìm theo tên BN / Mã BN / Mã phiếu</label>
               <input class="input" name="search" id="searchInput" placeholder="Nhập từ khóa tìm kiếm..." value="${searchTerm}" />
             </div>
+
+            <div class="field-group" style="flex: 0 0 auto; align-self: flex-end;">
+              <button type="button" id="clearFiltersBtn" class="btn btn-outline" style="white-space: nowrap;">
+                <i class="fas fa-times-circle"></i> Xóa bộ lọc
+              </button>
+            </div>
           </div>
         </form>
 
@@ -866,6 +872,17 @@
       if (!e.target.value.trim()) {
         document.getElementById('filterForm').submit();
       }
+    });
+
+    // Clear all filters button
+    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+      // Reset all filter fields
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterDepartment').value = '';
+      document.getElementById('searchInput').value = '';
+      
+      // Redirect to base URL without parameters
+      window.location.href = '${pageContext.request.contextPath}/lab-queue';
     });
   </script>
   
