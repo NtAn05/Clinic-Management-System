@@ -44,4 +44,12 @@
         <servlet-name>LabQueueServlet</servlet-name>
         <url-pattern>/lab-queue</url-pattern>
     </servlet-mapping>
+    <servlet>
+        <servlet-name>TechnicianDashboardServlet</servlet-name>
+        <servlet-class>controller.TechnicianDashboardServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TechnicianDashboardServlet</servlet-name>
+        <url-pattern>/technician-dashboard</url-pattern>
+    </servlet-mapping>
 </web-app>
