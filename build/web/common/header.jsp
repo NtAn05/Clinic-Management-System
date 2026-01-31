@@ -52,8 +52,8 @@
         <a href="${pageContext.request.contextPath}/index.jsp">Trang chủ</a>
 
         <c:if test="${sessionScope.account == null}">
-            <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
-            <a href="${pageContext.request.contextPath}/register.jsp" style="background: #0061ff; color: white; padding: 8px 15px; border-radius: 20px;">Đăng ký</a>
+            <a href="pages/auth/login.jsp">Đăng nhập</a>
+            <a href="pages/auth/register.jsp" style="background: #0061ff; color: white; padding: 8px 15px; border-radius: 20px;">Đăng ký</a>
         </c:if>
 
         <c:if test="${sessionScope.account != null}">

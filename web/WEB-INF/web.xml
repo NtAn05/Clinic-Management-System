@@ -20,6 +20,10 @@
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <servlet-class>controller.DoctorDashboardServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ListOfDoctorServlet</servlet-name>
+        <servlet-class>controller.appointments.ListOfDoctorServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>RegisterServlet</servlet-name>
         <url-pattern>/register</url-pattern>
@@ -51,5 +55,9 @@
     <servlet-mapping>
         <servlet-name>TechnicianDashboardServlet</servlet-name>
         <url-pattern>/technician-dashboard</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ListOfDoctorServlet</servlet-name>
+        <url-pattern>/listofdoctorservlet</url-pattern>
     </servlet-mapping>
 </web-app>

@@ -16,7 +16,8 @@
 
 <div class="page">
 
- 
+ <jsp:include page="/common/header.jsp" />
+
 
   <div class="content">
 
@@ -113,6 +114,8 @@
     </aside>
 
   </div>
+ <jsp:include page="/common/footer.jsp" />
+
 </div>
 
 </body>

@@ -12,7 +12,12 @@ public class Doctor {
     private int doctorId;
     private int userId;
     private String specialization;
-
+    private String image;
+    private String qualification;
+    private String clinic_address;
+    private int experience_years;
+    private double rating ;
+    private double price;
     // join từ users
     private String fullName;
     private String phone;
@@ -21,16 +26,20 @@ public class Doctor {
     public Doctor() {
     }
 
-    public Doctor(int doctorId, int userId, String specialization, String fullName, String phone, String email) {
+    public Doctor(int doctorId, int userId, String specialization, String image, String qualification, String clinic_address, int experience_years, double rating, double price, String fullName, String phone, String email) {
         this.doctorId = doctorId;
         this.userId = userId;
         this.specialization = specialization;
+        this.image = image;
+        this.qualification = qualification;
+        this.clinic_address = clinic_address;
+        this.experience_years = experience_years;
+        this.rating = rating;
+        this.price = price;
         this.fullName = fullName;
         this.phone = phone;
         this.email = email;
     }
-
-   
 
     public int getDoctorId() {
         return doctorId;
@@ -48,20 +57,68 @@ public class Doctor {
         this.userId = userId;
     }
 
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
     public String getSpecialization() {
         return specialization;
     }
 
     public void setSpecialization(String specialization) {
         this.specialization = specialization;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getQualification() {
+        return qualification;
+    }
+
+    public void setQualification(String qualification) {
+        this.qualification = qualification;
+    }
+
+    public String getClinic_address() {
+        return clinic_address;
+    }
+
+    public void setClinic_address(String clinic_address) {
+        this.clinic_address = clinic_address;
+    }
+
+    public int getExperience_years() {
+        return experience_years;
+    }
+
+    public void setExperience_years(int experience_years) {
+        this.experience_years = experience_years;
+    }
+
+    public double getRating() {
+        return rating;
+    }
+
+    public void setRating(double rating) {
+        this.rating = rating;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getPhone() {
@@ -79,6 +136,6 @@ public class Doctor {
     public void setEmail(String email) {
         this.email = email;
     }
-    
+
     
 }
