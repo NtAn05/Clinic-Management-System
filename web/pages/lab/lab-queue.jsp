@@ -123,6 +123,10 @@
       filter: brightness(1.05);
     }
 
+    .btn i {
+      margin-right: 2px;
+    }
+
     .layout {
       display: block;
       width: 100%;
@@ -285,7 +289,10 @@
 
     tbody tr:hover {
       background: #e0edff;
-      cursor: pointer;
+    }
+
+    tbody tr:hover td button {
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
     }
 
     .status-pill {
@@ -526,13 +533,14 @@
                 <th>Triệu chứng</th>
                 <th>Giờ chỉ định</th>
                 <th>Trạng thái</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody id="labQueueTableBody">
               <c:choose>
                 <c:when test="${empty labRequests}">
                   <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-sub);">
+                    <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-sub);">
                       Không có dữ liệu
                     </td>
                   </tr>
@@ -552,22 +560,39 @@
                     <c:set var="genderText" value="${request.patient.gender == 'male' ? 'Nam' : (request.patient.gender == 'female' ? 'Nữ' : 'Khác')}" />
                     <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : 'Đã có kết quả')}" />
                     <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : 'status-done')}" />
-                    <tr class="queue-row" data-request-id="${request.requestId}" onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
-                      <td>${requestCode}</td>
-                      <td>
+                    <tr class="queue-row" data-request-id="${request.requestId}">
+                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${requestCode}</td>
+                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
                         ${request.patient.fullName}<br />
                         <span class="text-muted">${patientCode}</span>
                       </td>
-                      <td>${age} / ${genderText}</td>
-                      <td>${request.doctor.specialization}</td>
-                      <td>${request.appointment.symptom != null ? request.appointment.symptom : '-'}</td>
-                      <td>
+                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${age} / ${genderText}</td>
+                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${request.doctor.specialization}</td>
+                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${request.appointment.symptom != null ? request.appointment.symptom : '-'}</td>
+                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
                         <fmt:formatDate value="${request.createdAt}" pattern="HH:mm" />
                       </td>
-                      <td>
+                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
                         <span class="status-pill ${statusClass}">
                           ● ${statusText}
                         </span>
+                      </td>
+                      <td>
+                        <c:choose>
+                          <c:when test="${request.status == 'pending'}">
+                            <button class="btn btn-success" onclick="event.stopPropagation(); updateStatusToProcessing(${request.requestId});" style="font-size: 12px; padding: 6px 12px;">
+                              <i class="fas fa-play"></i> Bắt đầu XN
+                            </button>
+                          </c:when>
+                          <c:when test="${request.status == 'processing'}">
+                            <button class="btn btn-primary" onclick="event.stopPropagation(); window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}';" style="font-size: 12px; padding: 6px 12px;">
+                              <i class="fas fa-paper-plane"></i> Gửi KQ
+                            </button>
+                          </c:when>
+                          <c:otherwise>
+                            <span class="text-muted" style="font-size: 12px;">Đã hoàn thành</span>
+                          </c:otherwise>
+                        </c:choose>
                       </td>
                     </tr>
                   </c:forEach>
@@ -665,6 +690,34 @@
 
   <script>
     // Filter and search handlers
+
+    // Update status to processing
+    function updateStatusToProcessing(requestId) {
+      if (!confirm('Bạn có chắc chắn muốn bắt đầu xét nghiệm cho phiếu này?')) {
+        return;
+      }
+
+      fetch('${pageContext.request.contextPath}/lab-queue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=updateStatus&requestId=' + requestId + '&status=processing'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Đã cập nhật trạng thái thành công!');
+          location.reload();
+        } else {
+          alert('Cập nhật thất bại: ' + (data.message || 'Lỗi không xác định'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Đã xảy ra lỗi khi cập nhật trạng thái');
+      });
+    }
 
     // Utility functions
     function formatDate(dateString) {
