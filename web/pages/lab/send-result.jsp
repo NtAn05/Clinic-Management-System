@@ -284,6 +284,7 @@
 </head>
 <body>
   <jsp:include page="../../common/header.jsp" />
+  <jsp:include page="../../common/modal-alert.jsp" />
   <jsp:include page="../../common/sidebar.jsp" />
 
   <div class="main-container">
@@ -468,46 +469,49 @@
       
       const fileInput = document.getElementById('resultFile');
       if (!fileInput.files || fileInput.files.length === 0) {
-        alert('Vui lòng chọn file kết quả xét nghiệm!');
+        showAlert('Vui lòng chọn file kết quả xét nghiệm!', 'warning');
         return;
       }
 
       const file = fileInput.files[0];
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (file.size > maxSize) {
-        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 5MB.');
+        showAlert('File quá lớn! Vui lòng chọn file nhỏ hơn 5MB.', 'warning');
         return;
       }
 
-      if (!confirm('Xác nhận gửi kết quả xét nghiệm?\n\nBệnh nhân sẽ được chuyển về danh sách chờ khám.')) {
-        return;
-      }
+      showConfirm(
+        'Xác nhận gửi kết quả xét nghiệm?\n\nBệnh nhân sẽ được chuyển về danh sách chờ khám.',
+        function() {
+          const form = document.getElementById('sendResultForm');
+          const formData = new FormData(form);
+          const submitBtn = form.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
 
-      const formData = new FormData(this);
-      const submitBtn = this.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
-
-      fetch('${pageContext.request.contextPath}/lab-queue', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert('Gửi kết quả thành công!');
-          window.location.href = '${pageContext.request.contextPath}/lab-queue';
-        } else {
-          alert(data.message || 'Gửi kết quả thất bại.');
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi kết quả xét nghiệm';
+          fetch('${pageContext.request.contextPath}/lab-queue', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              showAlert('Gửi kết quả thành công!', 'success', function() {
+                window.location.href = '${pageContext.request.contextPath}/lab-queue';
+              });
+            } else {
+              showAlert(data.message || 'Gửi kết quả thất bại.', 'error');
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi kết quả xét nghiệm';
+            }
+          })
+          .catch(err => {
+            showAlert('Có lỗi xảy ra: ' + err.message, 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi kết quả xét nghiệm';
+          });
         }
-      })
-      .catch(err => {
-        alert('Có lỗi xảy ra: ' + err.message);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Gửi kết quả xét nghiệm';
-      });
+      );
     });
   </script>
 </body>

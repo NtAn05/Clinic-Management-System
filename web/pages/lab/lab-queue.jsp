@@ -435,6 +435,7 @@
 </head>
 <body>
   <jsp:include page="../../common/header.jsp" />
+  <jsp:include page="../../common/modal-alert.jsp" />
 
   <div class="main-container">
     <!-- Include Sidebar -->
@@ -693,29 +694,26 @@
 
     // Update status to processing
     function updateStatusToProcessing(requestId) {
-      if (!confirm('Bạn có chắc chắn muốn bắt đầu xét nghiệm cho phiếu này?')) {
-        return;
-      }
-
-      fetch('${pageContext.request.contextPath}/lab-queue', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'action=updateStatus&requestId=' + requestId + '&status=processing'
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert('Đã cập nhật trạng thái thành công!');
-          location.reload();
-        } else {
-          alert('Cập nhật thất bại: ' + (data.message || 'Lỗi không xác định'));
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Đã xảy ra lỗi khi cập nhật trạng thái');
+      showConfirm('Bạn có chắc chắn muốn bắt đầu xét nghiệm cho phiếu này?', function() {
+        fetch('${pageContext.request.contextPath}/lab-queue', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'action=updateStatus&requestId=' + requestId + '&status=processing'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showAlert('Đã cập nhật trạng thái thành công!', 'success', function() { location.reload(); });
+          } else {
+            showAlert('Cập nhật thất bại: ' + (data.message || 'Lỗi không xác định'), 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showAlert('Đã xảy ra lỗi khi cập nhật trạng thái', 'error');
+        });
       });
     }
 
