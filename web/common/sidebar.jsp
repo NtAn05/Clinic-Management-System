@@ -1,6 +1,13 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-
+<%
+    String roleName = "";
+    if (session.getAttribute("account") != null) {
+        Object r = ((model.User) session.getAttribute("account")).getRole();
+        roleName = r != null ? r.toString().toLowerCase() : "";
+    }
+    pageContext.setAttribute("roleName", roleName);
+%>
 <style>
     :root {
         --sidebar-width: 260px;
@@ -94,7 +101,7 @@
     </div>
     <ul class="sidebar-menu">
         <c:choose>
-            <c:when test="${sessionScope.account.role.name() == 'technician'}">
+            <c:when test="${roleName == 'technician'}">
                 <!-- Technician Menu -->
                 <li class="sidebar-menu-item">
                     <a href="${pageContext.request.contextPath}/lab-queue" 
@@ -104,7 +111,7 @@
                     </a>
                 </li>
             </c:when>
-            <c:when test="${sessionScope.account.role.name() == 'doctor'}">
+            <c:when test="${roleName == 'doctor'}">
                 <!-- Doctor Menu -->
                 <li class="sidebar-menu-item">
                     <a href="${pageContext.request.contextPath}/DoctorDashboardServlet" 
@@ -114,7 +121,7 @@
                     </a>
                 </li>
             </c:when>
-            <c:when test="${sessionScope.account.role.name() == 'admin'}">
+            <c:when test="${roleName == 'admin'}">
                 <!-- Admin Menu -->
                 <li class="sidebar-menu-item">
                     <a href="${pageContext.request.contextPath}/admin-users" 
@@ -124,7 +131,7 @@
                     </a>
                 </li>
             </c:when>
-            <c:when test="${sessionScope.account.role.name() == 'receptionist'}">
+            <c:when test="${roleName == 'receptionist'}">
                 <!-- Receptionist Menu -->
                 <li class="sidebar-menu-item">
                     <a href="${pageContext.request.contextPath}/receptionist-dashboard" 

@@ -376,6 +376,106 @@ public class LabRequestDAO extends DBContext {
     }
 
     /**
+     * Gửi kết quả xét nghiệm: lưu lab_result, đổi trạng thái lab_request -> completed,
+     * đổi trạng thái appointment -> waiting, đưa bệnh nhân trở lại danh sách chờ khám (exam_queue).
+     */
+    public boolean sendLabResult(int requestId, Integer technicianId, String resultFile, String notes) {
+        try {
+            connection.setAutoCommit(false);
+
+            // 1) Lấy appointment_id, doctor_id từ lab_requests
+            long appointmentId;
+            int doctorId;
+            String getSql = "SELECT appointment_id, doctor_id FROM lab_requests WHERE request_id = ?";
+            try (PreparedStatement st = connection.prepareStatement(getSql)) {
+                st.setInt(1, requestId);
+                ResultSet rs = st.executeQuery();
+                if (!rs.next()) {
+                    connection.rollback();
+                    return false;
+                }
+                appointmentId = rs.getLong("appointment_id");
+                doctorId = rs.getInt("doctor_id");
+            }
+
+            // 2) Insert hoặc update lab_results
+            String checkResult = "SELECT result_id FROM lab_results WHERE request_id = ?";
+            try (PreparedStatement checkSt = connection.prepareStatement(checkResult)) {
+                checkSt.setInt(1, requestId);
+                ResultSet rs = checkSt.executeQuery();
+                if (rs.next()) {
+                    String updateResult = "UPDATE lab_results SET technician_id = ?, result_file = ?, notes = ?, completed_at = NOW() WHERE request_id = ?";
+                    try (PreparedStatement up = connection.prepareStatement(updateResult)) {
+                        up.setObject(1, technicianId);
+                        up.setString(2, resultFile != null ? resultFile : "");
+                        up.setString(3, notes != null ? notes : "");
+                        up.setInt(4, requestId);
+                        up.executeUpdate();
+                    }
+                } else {
+                    String insertResult = "INSERT INTO lab_results (request_id, technician_id, result_file, notes, completed_at) VALUES (?, ?, ?, ?, NOW())";
+                    try (PreparedStatement ins = connection.prepareStatement(insertResult)) {
+                        ins.setInt(1, requestId);
+                        ins.setObject(2, technicianId);
+                        ins.setString(3, resultFile != null ? resultFile : "");
+                        ins.setString(4, notes != null ? notes : "");
+                        ins.executeUpdate();
+                    }
+                }
+            }
+
+            // 3) Cập nhật lab_requests.status = 'completed'
+            try (PreparedStatement st = connection.prepareStatement("UPDATE lab_requests SET status = 'completed' WHERE request_id = ?")) {
+                st.setInt(1, requestId);
+                st.executeUpdate();
+            }
+
+            // 4) Cập nhật appointments.status = 'waiting' (trả về danh sách chờ khám)
+            try (PreparedStatement st = connection.prepareStatement("UPDATE appointments SET status = 'waiting' WHERE appointment_id = ?")) {
+                st.setLong(1, appointmentId);
+                st.executeUpdate();
+            }
+
+            // 5) Đưa vào exam_queue (chờ khám): INSERT hoặc UPDATE status = 'waiting'
+            String checkQueue = "SELECT queue_id FROM exam_queue WHERE appointment_id = ?";
+            try (PreparedStatement checkSt = connection.prepareStatement(checkQueue)) {
+                checkSt.setLong(1, appointmentId);
+                ResultSet rs = checkSt.executeQuery();
+                if (rs.next()) {
+                    try (PreparedStatement up = connection.prepareStatement("UPDATE exam_queue SET status = 'waiting' WHERE appointment_id = ?")) {
+                        up.setLong(1, appointmentId);
+                        up.executeUpdate();
+                    }
+                } else {
+                    // Lấy queue_position tiếp theo cho doctor
+                    int nextPos = 1;
+                    String maxSql = "SELECT COALESCE(MAX(queue_position), 0) + 1 AS np FROM exam_queue WHERE doctor_id = ?";
+                    try (PreparedStatement maxSt = connection.prepareStatement(maxSql)) {
+                        maxSt.setInt(1, doctorId);
+                        ResultSet maxRs = maxSt.executeQuery();
+                        if (maxRs.next()) nextPos = maxRs.getInt("np");
+                    }
+                    try (PreparedStatement ins = connection.prepareStatement("INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) VALUES (?, ?, ?, 'waiting')")) {
+                        ins.setLong(1, appointmentId);
+                        ins.setInt(2, doctorId);
+                        ins.setInt(3, nextPos);
+                        ins.executeUpdate();
+                    }
+                }
+            }
+
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            try { connection.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { connection.setAutoCommit(true); } catch (SQLException e) { e.printStackTrace(); }
+        }
+    }
+
+    /**
      * Lấy danh sách các khoa/phòng (specializations)
      */
     public List<String> getAllSpecializations() {
