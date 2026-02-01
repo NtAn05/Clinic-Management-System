@@ -1,10 +1,9 @@
 package controller;
 
 import dal.UserDAO;
-import model.User;
 import java.io.IOException;
 import java.sql.Date;
-import java.util.regex.Pattern; // Thêm thư viện này để check Email
+import java.util.regex.Pattern;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -23,20 +22,25 @@ public class RegisterServlet extends HttpServlet {
         String fullName = request.getParameter("fullname");
         String dob = request.getParameter("dob");
         String genderRaw = request.getParameter("gender");
-        String gender;
-        switch (genderRaw) {
-            case "Nam":
-                gender = "male";
-                break;
-            case "Nữ":
-                gender = "female";
-                break;
-            default:
-                gender = "other";
-        }
+        String gender = "other";
+        if ("Nam".equals(genderRaw)) gender = "male";
+        if ("Nữ".equals(genderRaw)) gender = "female";
+        
         String phone = request.getParameter("phone");
         String email = request.getParameter("email");
-        String address = request.getParameter("address");
+        
+        
+        String city = request.getParameter("city");     
+        String ward = request.getParameter("ward");     
+        String street = request.getParameter("street"); 
+        
+        
+        if (city == null) city = "";
+        if (ward == null) ward = "";
+        if (street == null) street = "";
+        String finalAddress = street + " - " + ward + " - " + city;
+        
+
         String password = request.getParameter("password");
         String confirm = request.getParameter("confirmPassword");
 
@@ -55,12 +59,19 @@ public class RegisterServlet extends HttpServlet {
 
         if (error != null) {
             request.setAttribute("error", error);
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.setAttribute("fullname", fullName);
+            request.setAttribute("phone", phone);
+            request.setAttribute("email", email);
+            request.setAttribute("dob", dob);
+            request.setAttribute("city", city);
+            request.setAttribute("ward", ward);
+            request.setAttribute("street", street);
+            request.getRequestDispatcher("/pages/auth/register.jsp").forward(request, response);
             return;
         }
 
-        Date dobSql = null;
         try {
+            Date dobSql = null;
             if (dob != null && !dob.isEmpty()) {
                 dobSql = Date.valueOf(dob);
             }
@@ -69,20 +80,19 @@ public class RegisterServlet extends HttpServlet {
                     phone,
                     email,
                     password,
-                    Date.valueOf(dob),
-                    address,
+                    dobSql,
+                    finalAddress, // Truyền chuỗi đã ghép vào đây
                     gender
             );
-            response.sendRedirect("login.jsp");
+            
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
         } catch (Exception e) {
-            System.out.println(" LỖI KHI ĐĂNG KÝ");
             e.printStackTrace();
-            request.setAttribute("error", "Lỗi hệ thống");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.setAttribute("error", "Lỗi hệ thống: " + e.getMessage());
+            request.getRequestDispatcher("/pages/auth/register.jsp").forward(request, response);
         }
     }
 
-    // Hàm phụ trợ để check Email bằng Regex
     public boolean isValidEmail(String email) {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         Pattern pat = Pattern.compile(emailRegex);

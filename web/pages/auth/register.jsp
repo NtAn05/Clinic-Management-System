@@ -131,7 +131,7 @@
                     <p style="color: #666;">Tạo tài khoản bệnh nhân mới</p>
                 </div>
 
-                <form action="register" method="POST">
+                <form action="${pageContext.request.contextPath}/register" method="POST">
                     <% if(request.getAttribute("error") != null) { %>
                     <p style="color: red; text-align: center; background: #ffe6e6; padding: 10px; border-radius: 5px; border: 1px solid #ffcccc;">
                         <i class="fas fa-exclamation-triangle"></i> <%= request.getAttribute("error") %>
@@ -169,9 +169,22 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tỉnh / Thành phố *</label>
+                            <input type="text" name="city" value="${city}" placeholder="Ví dụ: Hà Nội, TP.HCM" required 
+                                   style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phường / Xã (Quận / Huyện) *</label>
+                            <input type="text" name="ward" value="${ward}" placeholder="Ví dụ: Quận Cầu Giấy" required>
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label>Địa chỉ *</label>
-                        <input type="text" name="address" value="${address}" placeholder="Số nhà, đường, phường/xã..." required>
+                        <label>Số nhà, Tên đường / phố, Thôn *</label>
+                        <input type="text" name="street" value="${street}" placeholder="Ví dụ: Số 123 đường Xuân Thủy" required>
                     </div>
 
                     <div class="form-group">
@@ -189,7 +202,7 @@
                     </div>
 
                     <button type="submit" class="btn-submit">Tiếp tục</button>
-                    <a href="login.jsp" class="back-link">← Quay lại đăng nhập</a>
+                    <a href="${pageContext.request.contextPath}/pages/auth/login.jsp" class="back-link">← Quay lại đăng nhập</a>
                 </form>
             </div>
 

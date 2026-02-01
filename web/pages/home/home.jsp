@@ -77,13 +77,11 @@
                 <% 
                     // PHẦN 2: LOGIC HIỂN THỊ MENU (SỬA LẠI JAVA CODE)
                     User u = (User)session.getAttribute("account");
-                    String role = u.getRole(); // Lấy role dạng chuỗi (admin, patient...)
-                    
-                    // So sánh chuỗi thay vì so sánh số (0, 1, 2)
+                    String role = u.getRole().name();
                     if(role.equals("admin")) { 
                 %>
-                    <p>⭐️ <a href="admin-users">Quản lý Nhân sự (Bác sĩ/Nhân viên)</a></p>
-                    <p>⭐️ <a href="service-manager">Quản lý Dịch vụ & Giá tiền</a></p>
+                    <p>⭐️ <a href="${pageContext.request.contextPath}/admin-users">Quản lý Nhân sự (Bác sĩ/Nhân viên)</a></p>
+                    <p>⭐️ <a href="${pageContext.request.contextPath}/service-manager">Quản lý Dịch vụ & Giá tiền</a></p>
                     <p>⭐️ <a href="#">Quản lý Lịch làm việc</a></p>
 
                 <% } else if(role.equals("patient")) { %>
@@ -94,12 +92,12 @@
                     <p>👉 <a href="#">Danh sách bệnh nhân</a></p>
                     <p>👉 <a href="#">Lịch làm việc cá nhân</a></p>
                     
-                <% } else { // Các role còn lại (staff/receptionist...) %>
+                <% } else {  %>
                     <p>👉 <a href="#">Tiếp đón / Thu ngân</a></p>
                 <% } %>
             </div>
 
-            <a href="logout" class="btn-logout">Đăng xuất</a>
+            <a href="${pageContext.request.contextPath}/logout" class="btn-logout">Đăng xuất</a>
         </div>
     </body>
 </html>
