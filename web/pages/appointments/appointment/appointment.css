@@ -1,0 +1,320 @@
+/* RESET */
+* {
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    margin: 0;
+    background: #f4f6fb;
+}
+
+/* PAGE */
+.page {
+    max-width: 1350px;
+    margin: auto;
+}
+
+/* HEADER */
+.header {
+    background: #fff;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #eee;
+}
+
+.user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user img {
+    border-radius: 50%;
+}
+
+/* CONTENT */
+.content {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+}
+
+.main {
+    flex: 3;
+}
+
+/* ================= STEPS ================= */
+.steps-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.step-circle {
+    width: 120px;
+    text-align: center;
+    color: #999;
+}
+
+.step-circle span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    font-weight: bold;
+    background: #fff;
+    margin-bottom: 6px;
+}
+
+.step-circle.active span {
+    background: #2f80ed;
+    border-color: #2f80ed;
+    color: #fff;
+}
+
+.step-circle p {
+    font-size: 13px;
+    margin: 0;
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background: #ddd;
+}
+
+/* ================= SECTION BOX ================= */
+.section-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.section-box h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #2f80ed;
+}
+
+/* ================= FORM ================= */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+label {
+    font-size: 13px;
+    color: #555;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #f9fafc;
+}
+
+textarea {
+    margin-top: 10px;
+    min-height: 80px;
+}
+
+/* ================= TIME SLOT ================= */
+.time-slots {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.slot {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.2s;
+}
+
+.slot:hover {
+    border-color: #2f80ed;
+}
+
+.slot.active {
+    border: 2px solid #2f80ed;
+    background: #eef4ff;
+}
+
+/* ================= ACTION BUTTONS ================= */
+.actions-box {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.btn-outline {
+    padding: 10px 20px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    padding: 10px 20px;
+    border: none;
+    background: #2f80ed;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* ================= DOCTOR CARD (RIGHT) ================= */
+.card {
+    width: 320px;
+    background: #fff;
+    height: 500px;
+    border-radius: 14px;
+    padding: 22px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: 0.2s;
+    margin-left: 50px;
+    position: sticky;
+    top: 20px;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.card img {
+    width: 200px;
+    height: 210px;
+    border-radius: 10%;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.card h3 {
+    margin: 8px 0 4px;
+    font-size: 17px;
+}
+
+.degree {
+    color: #2f80ed;
+    font-size: 13px;
+}
+
+.desc {
+    font-size: 13px;
+    color: #555;
+    margin: 6px 0;
+}
+
+.info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin: 12px 0;
+    color: #777;
+}
+
+.price {
+    width: 120px;
+    background-color: #f2994a;
+    color: #fff;
+    font-weight: bold;
+    margin: 12px auto;
+    border-radius: 5px;
+    padding: 6px;
+}
+.card-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.card-box h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #2f80ed;
+}
+
+/* Gộp cảm giác các card-box thành 1 form */
+.card-box + .card-box {
+    margin-top: -10px;
+}
+
+/* ================= ACTIONS ================= */
+.actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 6px 10px rgba(0,0,0,0.06);
+}
+
+/* ================= SLOT CLICK FEEL ================= */
+.slot {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.slot span {
+    font-size: 13px;
+    color: #555;
+}
+.slot.active {
+    border: 2px solid #2f80ed;
+    background: #eef4ff;
+}
+
+/* ================= FORM FEEL ================= */
+.card-box input,
+.card-box select,
+.card-box textarea {
+    margin-top: 4px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1024px) {
+    .content {
+        flex-direction: column;
+    }
+
+    .card {
+        margin-left: 0;
+        width: 100%;
+        position: relative;
+        height: auto;
+    }
+
+    .steps-wrapper {
+        flex-wrap: wrap;
+    }
+
+    .step-line {
+        display: none;
+    }
+}

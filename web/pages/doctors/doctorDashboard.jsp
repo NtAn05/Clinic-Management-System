@@ -6,7 +6,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Doctor Dashboard</title>
-        <link rel="stylesheet" href="../pages/doctors/doctorDashboard.css">
+        <link rel="stylesheet" href="doctorDashboard.css">
     </head>
     <body>
 

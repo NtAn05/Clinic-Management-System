@@ -24,6 +24,10 @@
         <servlet-name>ListOfDoctorServlet</servlet-name>
         <servlet-class>controller.appointments.ListOfDoctorServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>AppointmentServlet</servlet-name>
+        <servlet-class>controller.appointments.AppointmentServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>RegisterServlet</servlet-name>
         <url-pattern>/register</url-pattern>
@@ -59,5 +63,9 @@
     <servlet-mapping>
         <servlet-name>ListOfDoctorServlet</servlet-name>
         <url-pattern>/listofdoctorservlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AppointmentServlet</servlet-name>
+        <url-pattern>/appointmentservlet</url-pattern>
     </servlet-mapping>
 </web-app>
