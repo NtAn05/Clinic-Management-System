@@ -20,6 +20,10 @@
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <servlet-class>controller.DoctorDashboardServlet</servlet-class>
     </servlet>
+    <servlet-mapping>
+        <servlet-name>DoctorDashboardServlet</servlet-name>
+        <url-pattern>/doctorDashboard</url-pattern>
+    </servlet-mapping>
     <servlet>
         <servlet-name>ListOfDoctorServlet</servlet-name>
         <servlet-class>controller.appointments.ListOfDoctorServlet</servlet-class>

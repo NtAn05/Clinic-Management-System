@@ -89,6 +89,7 @@
                     <p>👉 <a href="#">Xem hồ sơ bệnh án</a></p>
                     
                 <% } else if(role.equals("doctor")) { %>
+                <a href="${pageContext.request.contextPath}/doctorDashboard">Dashboard</a>
                     <p>👉 <a href="#">Danh sách bệnh nhân</a></p>
                     <p>👉 <a href="#">Lịch làm việc cá nhân</a></p>
                     

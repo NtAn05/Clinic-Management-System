@@ -69,7 +69,11 @@
             </c:if>
 
             <c:if test="${roleName == 'doctor'}">
-                <a href="${pageContext.request.contextPath}/doctor-schedule.jsp">Lịch làm việc</a>
+                <a href="${pageContext.request.contextPath}/doctorDashboard">Dashboard</a>
+                <div class="doctor-info">
+                    <span>Bác sĩ</span>
+                    <strong>${sessionScope.doctorName}</strong>
+                </div>
             </c:if>
 
             <c:if test="${roleName == 'technician'}">
