@@ -132,6 +132,45 @@ public class DoctorDAO extends DBContext {
         }
     }
 
+    // DANH SÁCH CHỜ KHÁM CỦA BÁC SĨ
+    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) { // được thay thế bởi getqueuewithfilter
+        List<DoctorQueueItem> list = new ArrayList<>();
+
+        String sql = """
+        SELECT 
+            q.queue_position,
+            p.full_name AS patient_name,
+            p.gender,
+            p.dob,
+            a.symptom,
+            q.status
+        FROM exam_queue q
+        JOIN appointments a ON q.appointment_id = a.appointment_id
+        JOIN patients p ON a.patient_id = p.patient_id
+        WHERE q.doctor_id = ?
+        ORDER BY q.queue_position
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                DoctorQueueItem item = new DoctorQueueItem();
+                item.setQueuePosition(rs.getInt("queue_position"));
+                item.setPatientName(rs.getString("patient_name"));
+                item.setGender(rs.getString("gender"));
+                item.setDob(rs.getDate("dob"));
+                item.setSymptom(rs.getString("symptom"));
+                item.setStatus(rs.getString("status"));
+                list.add(item);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public List<DoctorShift> getShiftsByDoctorAndDay(int doctorId, int dayOfWeek) {
         List<DoctorShift> list = new ArrayList<>();
 
