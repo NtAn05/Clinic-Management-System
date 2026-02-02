@@ -14,138 +14,34 @@ public class DoctorDAO extends DBContext {
     /* =========================
        LẤY DOCTOR THEO USER_ID
        ========================= */
-    public List<Doctor> getAllDoctors() {
-    List<Doctor> list = new ArrayList<>();
+    public Doctor getDoctorByUserId(int userId) {
+        String sql = """
+            SELECT d.doctor_id, d.user_id, d.specialization,
+                   u.full_name, u.phone, u.email
+            FROM doctors d
+            JOIN users u ON d.user_id = u.user_id
+            WHERE d.user_id = ?
+        """;
 
-    String sql = """
-        SELECT 
-            d.doctor_id,
-            d.specialization,
-            d.qualification,
-            d.experience_years,
-            d.rating,
-            d.price_booking,
-            d.image_url,
-            d.clinic_address,
-            u.full_name
-        FROM doctors d
-        JOIN users u ON d.user_id = u.user_id
-    """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
 
-    try (PreparedStatement st = connection.prepareStatement(sql);
-         ResultSet rs = st.executeQuery()) {
-
-        while (rs.next()) {
-            Doctor d = new Doctor();
-            d.setDoctorId(rs.getInt("doctor_id"));
-            d.setFullName(rs.getString("full_name"));
-            d.setSpecialization(rs.getString("specialization"));
-            d.setQualification(rs.getString("qualification"));
-            d.setExperience_years(rs.getInt("experience_years"));
-            d.setRating(rs.getDouble("rating"));
-            d.setPrice(rs.getDouble("price_booking"));
-            d.setImage(rs.getString("image_url"));
-            d.setClinic_address(rs.getString("clinic_address"));
-
-            list.add(d);
+            if (rs.next()) {
+                Doctor d = new Doctor();
+                d.setDoctorId(rs.getInt("doctor_id"));
+                d.setUserId(rs.getInt("user_id"));
+                d.setSpecialization(rs.getString("specialization"));
+                d.setFullName(rs.getString("full_name"));
+                d.setPhone(rs.getString("phone"));
+                d.setEmail(rs.getString("email"));
+                return d;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-
-    return list;
-}
-
-    public List<Doctor> filterDoctors(
-        String name,
-        String priceFrom,
-        String priceTo,
-        String experience,
-        String sort
-) {
-
-    List<Doctor> list = new ArrayList<>();
-
-    StringBuilder sql = new StringBuilder("""
-        SELECT 
-            d.doctor_id,
-            d.specialization,
-            d.qualification,
-            d.experience_years,
-            d.rating,
-            d.price_booking,
-            d.image_url,
-            d.clinic_address,
-            u.full_name
-        FROM doctors d
-        JOIN users u ON d.user_id = u.user_id
-        WHERE 1 = 1
-    """);
-
-    // ===== build điều kiện =====
-    if (name != null && !name.trim().isEmpty()) {
-        sql.append(" AND u.full_name LIKE ? ");
-    }
-
-    if (priceFrom != null && !priceFrom.isEmpty()) {
-        sql.append(" AND d.price_booking >= ? ");
-    }
-
-    if (priceTo != null && !priceTo.isEmpty()) {
-        sql.append(" AND d.price_booking <= ? ");
-    }
-
-    if (experience != null && !experience.isEmpty()) {
-        sql.append(" AND d.experience_years >= ? ");
-    }
-
-    if ("priceAsc".equals(sort)) {
-        sql.append(" ORDER BY d.price_booking ASC ");
-    } else if ("priceDesc".equals(sort)) {
-        sql.append(" ORDER BY d.price_booking DESC ");
-    } else if ("rating".equals(sort)) {
-        sql.append(" ORDER BY d.rating DESC ");
-    }
-
-    try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
-
-        int index = 1;
-
-        if (name != null && !name.trim().isEmpty()) {
-            st.setString(index++, "%" + name + "%");
-        }
-        if (priceFrom != null && !priceFrom.isEmpty()) {
-            st.setDouble(index++, Double.parseDouble(priceFrom));
-        }
-        if (priceTo != null && !priceTo.isEmpty()) {
-            st.setDouble(index++, Double.parseDouble(priceTo));
-        }
-        if (experience != null && !experience.isEmpty()) {
-            st.setInt(index++, Integer.parseInt(experience));
-        }
-
-        ResultSet rs = st.executeQuery();
-        while (rs.next()) {
-            Doctor d = new Doctor();
-            d.setDoctorId(rs.getInt("doctor_id"));
-            d.setFullName(rs.getString("full_name"));
-            d.setSpecialization(rs.getString("specialization"));
-            d.setQualification(rs.getString("qualification"));
-            d.setExperience_years(rs.getInt("experience_years"));
-            d.setRating(rs.getDouble("rating"));
-            d.setPrice(rs.getDouble("price_booking"));
-            d.setImage(rs.getString("image_url"));
-            d.setClinic_address(rs.getString("clinic_address"));
-
-            list.add(d);
-        }
-
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-
-    return list;
-}
 
     /* =========================
        LỊCH LÀM VIỆC BÁC SĨ
