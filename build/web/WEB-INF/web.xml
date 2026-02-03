@@ -17,6 +17,10 @@
         <servlet-class>controller.AdminUserServlet</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>AdminServiceServlet</servlet-name>
+        <servlet-class>controller.AdminServiceServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <servlet-class>controller.DoctorDashboardServlet</servlet-class>
     </servlet>
@@ -47,6 +51,10 @@
     <servlet-mapping>
         <servlet-name>AdminUserServlet</servlet-name>
         <url-pattern>/admin-users</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AdminServiceServlet</servlet-name>
+        <url-pattern>/admin-services</url-pattern>
     </servlet-mapping>
     <servlet>
         <servlet-name>LabQueueServlet</servlet-name>

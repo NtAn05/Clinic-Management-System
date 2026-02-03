@@ -103,7 +103,7 @@ public class ServiceDAO extends DBContext {
 
     //xoa dich vu
     public void deleteService(int serviceId) {
-        String sql = "DELETE FROM service_price WHERE service_id = ?";
+        String sql = "DELETE FROM service_prices WHERE service_id = ?";
         
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, serviceId);

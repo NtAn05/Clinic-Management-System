@@ -62,7 +62,7 @@ public class LoginServlet extends HttpServlet {
                     break;
 
                 case "admin":
-                    response.sendRedirect(request.getContextPath() + "/pages/admin/admin-users.jsp");
+                    response.sendRedirect(request.getContextPath() + "/index.jsp");
                     break;
 
                 case "patient":

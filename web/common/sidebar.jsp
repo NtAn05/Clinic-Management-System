@@ -125,7 +125,7 @@
                 <!-- Admin Menu -->
                 <li class="sidebar-menu-item">
                     <a href="${pageContext.request.contextPath}/admin-users" 
-                       class="sidebar-menu-link ${pageContext.request.requestURI.contains('admin-users') ? 'active' : ''}">
+                       class="sidebar-menu-link ${pageContext.request.requestURI.contains('accounts') ? 'active' : ''}">
                         <i class="fas fa-users-cog"></i>
                         <span>Quản lý người dùng</span>
                     </a>

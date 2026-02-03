@@ -52,7 +52,7 @@
 
 <div class="header">
     <div class="logo">
-        <a href="${pageContext.request.contextPath}/index.jsp">PHÒNG KHÁM ABC</a>
+        <a href="${pageContext.request.contextPath}/index.jsp">PHÒNG KHÁM </a>
     </div>
 
     <div class="menu">
@@ -65,7 +65,8 @@
 
         <c:if test="${sessionScope.account != null}">
             <c:if test="${roleName == 'admin'}">
-                <a href="${pageContext.request.contextPath}/admin-users">Quản lý</a>
+                <a href="${pageContext.request.contextPath}/admin-users">Quản lý Tài khoản</a>
+                <a href="${pageContext.request.contextPath}/admin-services">Quản lý Dịch vụ</a>
             </c:if>
 
             <c:if test="${roleName == 'doctor'}">

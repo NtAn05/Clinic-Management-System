@@ -119,9 +119,79 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Lấy danh sách người dùng theo vai trò
+    public List<User> getUsersByRole(Role role) {
+        String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE role = ? ORDER BY full_name";
+        List<User> users = new ArrayList<>();
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, role.toString());
+            ResultSet rs = st.executeQuery();
+            
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                users.add(u);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return users;
+    }
+
+    // Tạo người dùng mới
+    public void createUser(User user) throws SQLException {
+        String sql = "INSERT INTO users (full_name, phone, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?, ?)";
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, user.getFullName());
+            st.setString(2, user.getPhone());
+            st.setString(3, user.getEmail());
+            st.setString(4, user.getPasswordHash());
+            st.setString(5, user.getRole().toString());
+            st.setString(6, user.getStatus().toString());
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
+    // Cập nhật thông tin người dùng
+    public void updateUser(User user) throws SQLException {
+        String sql = "UPDATE users SET full_name = ?, email = ?, status = ? WHERE phone = ?";
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, user.getFullName());
+            st.setString(2, user.getEmail());
+            st.setString(3, user.getStatus().toString());
+            st.setString(4, user.getPhone());
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
+    // Bật/Tắt trạng thái người dùng
+    public void toggleUserStatus(String phone) throws SQLException {
+        String sql = "UPDATE users SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE phone = ?";
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, phone);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
     // Xóa User (Thực tế nên là Khóa tài khoản thay vì xóa hẳn)
     public void deleteUser(String phone) {
-        String sql = "DELETE FROM Users WHERE Phone = ?";
+        String sql = "DELETE FROM users WHERE phone = ?";
         try {
             PreparedStatement st = connection.prepareStatement(sql);
             st.setString(1, phone);
