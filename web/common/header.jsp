@@ -52,7 +52,7 @@
 
 <div class="header">
     <div class="logo">
-        <a href="${pageContext.request.contextPath}/index.jsp">PHÒNG KHÁM ABC</a>
+        <a href="${pageContext.request.contextPath}/index.jsp">PHÒNG KHÁM </a>
     </div>
 
     <div class="menu">
