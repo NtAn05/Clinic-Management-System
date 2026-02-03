@@ -5,23 +5,19 @@
 package controller.appointments;
 
 import dal.AppointmentDAO;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.List;
 import model.Doctor;
 
 /**
  *
  * @author Admin
  */
-@WebServlet("/listOfDoctor") 
-public class ListOfDoctorServlet extends HttpServlet {
+public class AppointmentServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -40,10 +36,10 @@ public class ListOfDoctorServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet ListOfDoctorServlet</title>");
+            out.println("<title>Servlet AppointmentServlet</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet ListOfDoctorServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet AppointmentServlet at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -61,55 +57,49 @@ public class ListOfDoctorServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String doctorName = request.getParameter("doctorName");
-    String priceFrom = request.getParameter("priceFrom");
-    String priceTo = request.getParameter("priceTo");
-    String experience = request.getParameter("experience");
-    String sort = request.getParameter("sort");
+        String doctorID = request.getParameter("btnDoctorID");
 
-    AppointmentDAO dao = new AppointmentDAO();
-    List<Doctor> doctors;
-    String error="";
-    boolean hasFilter =
-            (doctorName != null && !doctorName.isEmpty()) ||
-            (priceFrom != null && !priceFrom.isEmpty()) ||
-            (priceTo != null && !priceTo.isEmpty()) ||
-            (experience != null && !experience.isEmpty()) ||
-            (sort != null && !sort.isEmpty());
-   
-      if (hasFilter) {
-         if(priceTo != null && !priceTo.isEmpty() && priceFrom != null && !priceFrom.isEmpty() && checkPrice(priceFrom,priceTo)){
-        error="Giá từ phải nhỏ hơn giá cao";
-        doctors = dao.getAllDoctors();
+        AppointmentDAO dao = new AppointmentDAO();
+        Doctor doctor;
+        String error = "";
+        doctor = dao.getDoctorById(doctorID);
+        request.setAttribute("error", error);
+        request.setAttribute("doctor", doctor);
 
-    }else{
-        doctors = dao.filterDoctors(doctorName, priceFrom, priceTo, experience, sort);}
-      }  
-     else {
-        doctors = dao.getAllDoctors();
-    }
-    request.setAttribute("doctors", doctors);
-    request.setAttribute("error", error);
-    request.setAttribute("doctorName", doctorName);
-    request.setAttribute("priceFrom", priceFrom);
-    request.setAttribute("priceTo", priceTo);
- 
-request.getRequestDispatcher("/pages/appointments/listOfDoctors.jsp")
-       .forward(request, response);
+        request.getRequestDispatcher("/pages/appointments/appointment/appointmentFirst.jsp")
+                .forward(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        String userID = request.getParameter("userID");
+        String doctorID = request.getParameter("btnDoctorID");
+        String name = request.getParameter("name");
+        String sdt = request.getParameter("sdt");
+        String email = request.getParameter("email");
+        String dateofbirth = request.getParameter("dateofbirth");
+        String gender = request.getParameter("gender");
+        String address = request.getParameter("address");
+        String note = request.getParameter("note");
+        String date = request.getParameter("date");
+        String time = request.getParameter("time");
+    
+            AppointmentDAO dao = new AppointmentDAO();
+            
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     }
 
     /**
@@ -120,13 +110,6 @@ request.getRequestDispatcher("/pages/appointments/listOfDoctors.jsp")
     @Override
     public String getServletInfo() {
         return "Short description";
-    }
-
-private boolean checkPrice(String priceFrom, String priceTo) {
-    double from = Double.parseDouble(priceFrom.trim());
-    double to = Double.parseDouble(priceTo.trim());
-
-    return from > to;
-}
+    }// </editor-fold>
 
 }

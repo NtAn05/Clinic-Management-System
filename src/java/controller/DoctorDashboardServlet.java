@@ -73,19 +73,27 @@ public class DoctorDashboardServlet extends HttpServlet {
 //
 //        int doctorId = (int) session.getAttribute("doctorId");
 
-        int doctorId = 3;// test
+        int doctorId = 3;// test 
+        //lấy thông tin lọc
+        String status = request.getParameter("status");
+        String keyword = request.getParameter("keyword");
+
+        if (status == null || status.isBlank()) {
+            status = "all";
+        }
         DoctorDAO doctorDAO = new DoctorDAO();
 
-        // 1️⃣ Danh sách bệnh nhân đang chờ khám
+        //1️⃣ Danh sách bệnh nhân đang chờ khám
         List<DoctorQueueItem> queueList
-                = doctorDAO.getTodayQueueByDoctor(doctorId);
+                = doctorDAO.getQueueByDoctorWithFilter(doctorId, status, keyword);
 
-        // 2. Thống kê
+        // Thống kê số liệu
         DoctorDashboardStats stats
                 = doctorDAO.getDashboardStats(doctorId);
 
-        // 2️⃣ Ca làm việc hôm nay
-        int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // CN = 0
+        //Ca làm việc trong ngày
+//        int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // CN = 0
+        int dayOfWeek = 1; // test 
         List<DoctorShift> shifts
                 = doctorDAO.getShiftsByDoctorAndDay(doctorId, dayOfWeek);
 
@@ -98,18 +106,11 @@ public class DoctorDashboardServlet extends HttpServlet {
 
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        request.getRequestDispatcher("pages/doctors/doctorDashboard.jsp")
+                .forward(request, response);
     }
 
     /**

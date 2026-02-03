@@ -6,25 +6,12 @@
     <head>
         <meta charset="UTF-8">
         <title>Doctor Dashboard</title>
-        <link rel="stylesheet" href="../pages/doctors/doctorDashboard.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/pages/doctors/doctorDashboard.css">
     </head>
     <body>
 
         <div class="dashboard-container">
-
-            <!-- ===== HEADER ===== -->
-            <div class="dashboard-header">
-                <div class="clinic-info">
-                    <h2>Phòng Khám ABC</h2>
-                    <span>Hệ thống quản lý phòng khám</span>
-                </div>
-
-                <div class="doctor-info">
-                    <span>Bác sĩ</span>
-                    <strong>${sessionScope.doctorName}</strong>
-                </div>
-            </div>
-
+            <jsp:include page="/common/header.jsp" />
             <!-- ===== SUMMARY ===== -->
             <div class="summary-cards">
                 <div class="card">
@@ -49,7 +36,7 @@
                 <!-- ===== QUEUE LIST ===== -->
                 <div class="queue-section">
                     <h3>Danh sách bệnh nhân chờ khám</h3>
-                    
+
                     <div class="queue-filter">
                         <form method="get" action="">
                             <input type="text"
@@ -127,7 +114,9 @@
                 </div>
 
             </div>
+                                
         </div>
 
     </body>
+    <jsp:include page="/common/footer.jsp" />
 </html>
