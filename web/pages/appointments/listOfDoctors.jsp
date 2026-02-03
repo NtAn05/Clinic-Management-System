@@ -36,9 +36,19 @@
                             <p class="price">
                                 <fmt:formatNumber value="${d.price}" type="number"/>đ
                             </p>
-                            <form method="get" action="${pageContext.request.contextPath}/appointmentservlet">
-                                <button name="btnDoctorID" value="${d.doctorId}">Đặt dịch vụ</button>
-                            </form>
+                            <c:if test="${sessionScope.account == null}">
+                                <a href="${pageContext.request.contextPath}/pages/auth/login.jsp"
+                                   class="btn-primary">
+                                    Đặt dịch vụ
+                                </a>
+                            </c:if>
+
+                            <c:if test="${sessionScope.account != null}">
+                                <form method="get" action="${pageContext.request.contextPath}/appointmentservlet">
+                                    <button name="btnDoctorID" value="${d.doctorId}">Đặt dịch vụ</button>
+                                </form>
+                            </c:if>
+
 
                         </div>
                     </c:forEach>

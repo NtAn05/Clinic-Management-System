@@ -99,7 +99,15 @@ body {
     border-radius: 8px;
     cursor: pointer;
 }
-
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: #2f80ed;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
 /* ===== RIGHT: FILTER ===== */
 .filter {
     width: 350px; 
