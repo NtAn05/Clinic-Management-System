@@ -464,6 +464,31 @@ public class LabRequestDAO extends DBContext {
                 }
             }
 
+            // 6) Create payment record for this completed lab request (using existing payments table)
+            String checkPayment = "SELECT payment_id FROM payments WHERE appointment_id = ?";
+            try (PreparedStatement checkSt = connection.prepareStatement(checkPayment)) {
+                checkSt.setLong(1, appointmentId);
+                ResultSet rs = checkSt.executeQuery();
+                if (!rs.next()) {
+                    // Get lab test price from service_prices
+                    java.math.BigDecimal labPrice = new java.math.BigDecimal("150000");
+                    String priceSql = "SELECT price FROM service_prices WHERE service_type = 'lab' LIMIT 1";
+                    try (PreparedStatement priceSt = connection.prepareStatement(priceSql)) {
+                        ResultSet priceRs = priceSt.executeQuery();
+                        if (priceRs.next()) {
+                            labPrice = priceRs.getBigDecimal("price");
+                        }
+                    }
+                    // Insert payment record into existing payments table
+                    String insertPayment = "INSERT INTO payments (appointment_id, amount, method, status, created_at) VALUES (?, ?, 'cash', 'pending', NOW())";
+                    try (PreparedStatement ins = connection.prepareStatement(insertPayment)) {
+                        ins.setLong(1, appointmentId);
+                        ins.setBigDecimal(2, labPrice);
+                        ins.executeUpdate();
+                    }
+                }
+            }
+
             connection.commit();
             return true;
         } catch (SQLException e) {

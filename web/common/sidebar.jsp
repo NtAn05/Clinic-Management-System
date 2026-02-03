@@ -104,10 +104,17 @@
             <c:when test="${roleName == 'technician'}">
                 <!-- Technician Menu -->
                 <li class="sidebar-menu-item">
-                    <a href="${pageContext.request.contextPath}/lab-queue" 
-                       class="sidebar-menu-link ${pageContext.request.requestURI.contains('lab-queue') ? 'active' : ''}">
+                    <a href="${pageContext.request.contextPath}/lab-queue"
+                       class="sidebar-menu-link ${pageContext.request.requestURI.contains('lab-queue') && !pageContext.request.requestURI.contains('lab-payment') ? 'active' : ''}">
                         <i class="fas fa-list"></i>
                         <span>Xem danh sách yêu cầu xét nghiệm</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="${pageContext.request.contextPath}/lab-payment"
+                       class="sidebar-menu-link ${pageContext.request.requestURI.contains('lab-payment') ? 'active' : ''}">
+                        <i class="fas fa-cash-register"></i>
+                        <span>Kiểm tra thanh toán xét nghiệm</span>
                     </a>
                 </li>
             </c:when>
