@@ -28,9 +28,9 @@ public class LoginServlet extends HttpServlet {
         if (u == null) {
             error = "Sai số điện thoại hoặc mật khẩu!";
         } else {
-            
-            String roleName = u.getRole().name().toLowerCase(); 
-            String status = u.getStatus().name().toLowerCase(); 
+
+            String roleName = u.getRole().name().toLowerCase();
+            String status = u.getStatus().name().toLowerCase();
             if (selectedRole.equals("staff")) {
                 if (roleName.equals("patient")) {
                     error = "Bệnh nhân vui lòng đăng nhập bên tab Bệnh nhân!";
@@ -47,17 +47,37 @@ public class LoginServlet extends HttpServlet {
         }
 
         if (error != null) {
-            
+
             request.setAttribute("error", error);
             request.setAttribute("phone", phone);
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
         } else {
             HttpSession session = request.getSession();
             session.setAttribute("account", u);
-            
-           
-            response.sendRedirect(request.getContextPath() + "/pages/home/home.jsp");
-            // ----------------------------------------------------
+            String roleName = u.getRole().name().toLowerCase();
+
+            switch (roleName) {
+                case "doctor":
+                    response.sendRedirect(request.getContextPath() + "/doctorDashboard");
+                    break;
+
+                case "admin":
+                    response.sendRedirect(request.getContextPath() + "/admin-users");
+                    break;
+
+                case "patient":
+                    response.sendRedirect(request.getContextPath() + "/pages/home/home.jsp");
+                    break;
+
+                case "staff":
+                    response.sendRedirect(request.getContextPath() + "/staff-dashboard");
+                    break;
+
+                default:
+                    response.sendRedirect(request.getContextPath() + "/pages/home/home.jsp");
+                    break;
+            }
+
         }
     }
 }
