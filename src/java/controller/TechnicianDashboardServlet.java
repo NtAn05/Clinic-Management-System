@@ -37,7 +37,7 @@ public class TechnicianDashboardServlet extends HttpServlet {
         
         // Check role (dùng RoleHelper để tương thích User có getRole() hoặc getRoleId())
         if (!RoleHelper.isTechnician(account)) {
-            response.sendRedirect(request.getContextPath() + "/pages/home/home.jsp");
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
         
