@@ -274,24 +274,39 @@ textarea {
     padding: 8px;
     border-radius: 6px;
 }
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 1024px) {
-    .content {
-        flex-direction: column;
-    }
-
-    .card {
-        width: 100%;
-        position: static;
-    }
-
-    .steps-wrapper {
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .step-line {
-        display: none;
-    }
+/* step done */
+.step-circle.done span {
+    background: #27ae60;
+    border-color: #27ae60;
+    color: #fff;
 }
+
+/* confirm view */
+.confirm-view p {
+    background: #f9fafc;
+    padding: 9px 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    margin: 0;
+    font-size: 14px;
+}
+
+
+/* note */
+.note-box {
+    margin-top: 8px;
+    padding: 12px;
+    background: #f9fafc;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+.time-slots input {
+    display: none;
+}
+
+.time-slots input:checked + .slot {
+    border: 2px solid #2f80ed;
+    background: #eef4ff;
+}
+
+

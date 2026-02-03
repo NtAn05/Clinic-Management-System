@@ -73,9 +73,20 @@ public class AppointmentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String userID = request.getParameter("userID");
         String doctorID = request.getParameter("btnDoctorID");
+        String name = request.getParameter("name");
+        String sdt = request.getParameter("sdt");
+        String email = request.getParameter("email");
+        String dateofbirth = request.getParameter("dateofbirth");
+        String gender = request.getParameter("gender");
+        String address = request.getParameter("address");
+        String note = request.getParameter("note");
+        String date = request.getParameter("date");
+        String time = request.getParameter("time");
     
-    
+            AppointmentDAO dao = new AppointmentDAO();
+            
     
     
     

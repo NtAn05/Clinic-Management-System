@@ -51,13 +51,8 @@
 
 
                     <!-- FORM -->
-                    <div class="section-box">
-                        <h3>Chọn đối tượng đặt khám</h3>
-                        <label><input type="radio" name="type" checked> Đặt cho tôi</label>
-                        <label><input type="radio" name="type"> Đặt cho người thân</label>
-                    </div>
+
                     <form method="get" action="${pageContext.request.contextPath}/appointmentservlet">
-                        <!-- FORM ĐẶT CHO TÔI -->
                         <div id="formSelf">
                             <div class="card-box">
                                 <h3>Thông tin của bạn</h3>
@@ -73,7 +68,7 @@
                                     </div>
 
                                     <div>
-                                        <label>Email</label>
+                                        <label>Email *</label>
                                         <input type="email" name="email" value="${user.email}" required>
                                     </div>
                                     <div>
@@ -99,98 +94,41 @@
                                 <textarea placeholder="Nhập triệu chứng nếu có" name="note"></textarea>
                             </div>
                         </div>
-                        <!-- FORM ĐẶT CHO NGƯỜI THÂN -->
-                        <div id="formRelative" style="display:none">
-                            <div class="card-box">
-                                <h3>Thông tin người đặt</h3>
-
-                                <div class="form-grid">
-                                    <div>
-                                        <label>Họ và tên *</label>
-                                        <input type="text" value="Nguyễn Văn An">
-                                    </div>
-                                    <div>
-                                        <label>Số điện thoại *</label>
-                                        <input type="text" value="0912345678">
-                                    </div>
-
-                                    <div>
-                                        <label>Email</label>
-                                        <input type="email" value="nguyenvanan@gmail.com">
-                                    </div>
-
-                                </div>
-
-                                <div class="card-box">
-                                    <h3>Thông tin bệnh nhân</h3>
-
-                                    <div class="form-grid">
-                                        <div>
-                                            <label>Họ và tên *</label>
-                                            <input type="text" value="Nguyễn Văn An">
-                                        </div>
-                                        <div>
-                                            <label>Số điện thoại *</label>
-                                            <input type="text" value="0912345678">
-                                        </div>
-
-                                        <div>
-                                            <label>Email</label>
-                                            <input type="email" value="nguyenvanan@gmail.com">
-                                        </div>
-                                        <div>
-                                            <label>Ngày sinh *</label>
-                                            <input type="date">
-                                        </div>
-
-                                        <div>
-                                            <label>Giới tính *</label>
-                                            <select>
-                                                <option>Nam</option>
-                                                <option>Nữ</option>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label>Địa chỉ</label>
-                                            <input type="text" value="123 Lê Lợi, Q1, TP.HCM">
-                                        </div>
-                                    </div>
-
-                                    <label>Ghi chú bệnh lý</label>
-                                    <textarea placeholder="Nhập triệu chứng nếu có"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
 
                         <div class="card-box">
                             <h3>Chọn ngày và ca khám</h3>
 
                             <label>Ngày khám *</label>
-                            <input type="date">
+                            <div class="time-slots" id="dateRadios"></div>
 
                             <div class="time-slots">
-                                <div class="slot active">
+                                <input type="radio" name="time" id="morning" value="morning" checked>
+                                <label for="morning" class="slot">
                                     <strong>Ca sáng</strong>
                                     <span>07:00 - 11:30</span>
-                                </div>
-                                <div class="slot">
+                                </label>
+
+                                <input type="radio" name="time" id="afternoon" value="afternoon">
+                                <label for="afternoon" class="slot">
                                     <strong>Ca chiều</strong>
                                     <span>13:30 - 17:00</span>
-                                </div>
+                                </label>
                             </div>
                         </div>
                     </form>
                     <div class="actions">
-                        <button class="btn-outline"
+                        <button type="button" class="btn-outline"
                                 onclick="location.href = '${pageContext.request.contextPath}/listofdoctorservlet'">
                             Quay lại
                         </button>
 
-                        <button class="btn-primary">
+
+                        <button type="button"
+                                class="btn-primary"
+                                onclick="location.href = '${pageContext.request.contextPath}/pages/appointments/appointment/appointmentSecond.jsp'">
                             Tiếp tục
                         </button>
+
                     </div>
 
                 </div>
@@ -221,16 +159,24 @@
             <jsp:include page="/common/footer.jsp" />
 
             <script>
-                function toggleForm() {
-                    const type = document.querySelector('input[name="type"]:checked').value;
+                const container = document.getElementById("dateRadios");
+                const today = new Date();
 
-                    document.getElementById("formSelf").style.display =
-                            type === "self" ? "block" : "none";
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(today);
+                    d.setDate(today.getDate() + i);
 
-                    document.getElementById("formRelative").style.display =
-                            type === "relative" ? "block" : "none";
+                    const value = d.toISOString().split("T")[0];
+                    const label = d.toLocaleDateString("vi-VN");
+
+                    container.innerHTML +=
+                            '<input type="radio" name="date" id="d' + i + '" value="' + value + '"' + (i === 0 ? ' checked' : '') + '>' +
+                            '<label for="d' + i + '" class="slot">' +
+                            '<strong>' + label + '</strong>' +
+                            '</label>';
                 }
             </script>
+
 
     </body>
 </html>
