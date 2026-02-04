@@ -1,15 +1,33 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f7fb;
+/* 🔥 PHẦN QUAN TRỌNG NHẤT ĐỂ ĐẨY FOOTER XUỐNG 🔥 */
+html, body {
+    height: 100%; /* Bắt buộc trang web cao full màn hình */
     margin: 0;
     padding: 0;
 }
 
+body {
+    font-family: 'Segoe UI', Arial, sans-serif; /* Thêm font đẹp hơn chút */
+    background: #f5f7fb;
+    
+    /* Biến body thành cột dọc flex */
+    display: flex;
+    flex-direction: column;
+}
+
 .dashboard-container {
     max-width: 1200px;
-    margin: auto;
+    width: 100%; /* Đảm bảo rộng full nếu màn hình nhỏ */
+    margin: 0 auto; /* Căn giữa */
     padding: 20px;
+    
+    /* Mấu chốt: Tự động giãn ra chiếm hết khoảng trống */
+    flex: 1; 
+    
+    display: flex; 
+    flex-direction: column;
 }
+/* 🔥 HẾT PHẦN SỬA 🔥 */
+
 
 /* ===== HEADER ===== */
 .dashboard-header {
@@ -20,6 +38,7 @@ body {
     padding: 15px 20px;
     border-radius: 10px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Thêm bóng đổ nhẹ cho đẹp */
 }
 
 .clinic-info h2 {
@@ -46,20 +65,28 @@ body {
 
 .card {
     background: #ffffff;
-    padding: 15px;
+    padding: 20px;
     border-radius: 10px;
     text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.card p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
 }
 
 .card h3 {
-    margin: 5px 0 0;
+    margin: 10px 0 0;
     color: #2563eb;
+    font-size: 28px;
 }
 
 /* ===== CONTENT ===== */
 .content {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 2fr 1fr; /* Chia cột: Danh sách 2 phần, Lịch 1 phần */
     gap: 20px;
 }
 
@@ -78,27 +105,33 @@ body {
 .queue-filter input[type="text"] {
     flex: 1;
     min-width: 220px;
-    padding: 8px 10px;
-    border: 1px solid #ccc;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
     border-radius: 6px;
     font-size: 14px;
+    outline: none;
+}
+.queue-filter input[type="text"]:focus {
+    border-color: #2563eb;
 }
 
 .queue-filter select {
-    padding: 8px 10px;
-    border: 1px solid #ccc;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
     border-radius: 6px;
     font-size: 14px;
     background-color: #fff;
+    outline: none;
 }
 
 .queue-filter button {
-    padding: 8px 16px;
+    padding: 10px 20px;
     background-color: #2563eb; /* xanh dương */
     color: white;
     border: none;
     border-radius: 6px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
@@ -110,56 +143,74 @@ body {
 /* ===== QUEUE ===== */
 .queue-section {
     background: #ffffff;
-    padding: 15px;
+    padding: 20px;
     border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
+
+.queue-section h3 { margin-top: 0; }
 
 .queue-section table {
     width: 100%;
     border-collapse: collapse;
+    margin-top: 10px;
 }
 
 .queue-section th,
 .queue-section td {
-    padding: 10px;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
     text-align: left;
+    font-size: 14px;
 }
 
 .queue-section th {
-    background: #f3f4f6;
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
 }
 
 .status {
-    padding: 4px 8px;
-    border-radius: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
     font-size: 12px;
+    font-weight: 600;
 }
 
 .status.waiting {
-    background: #fde68a;
+    background: #fffbeb;
+    color: #b45309;
 }
 
 .status.examining {
-    background: #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
 }
 
 .status.done {
-    background: #86efac;
+    background: #f0fdf4;
+    color: #15803d;
 }
 
 /* ===== SHIFT ===== */
 .shift-section {
     background: #ffffff;
-    padding: 15px;
+    padding: 20px;
     border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    height: fit-content; /* Để nó không bị giãn quá dài */
 }
+
+.shift-section h3 { margin-top: 0; }
 
 .shift-item {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
 }
 
-
+.shift-item:last-child {
+    border-bottom: none;
+}

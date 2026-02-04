@@ -73,7 +73,7 @@ public class DoctorDashboardServlet extends HttpServlet {
 //
 //        int doctorId = (int) session.getAttribute("doctorId");
 
-        int doctorId = 3;// test 
+        int doctorId = 1;// test 
         //lấy thông tin lọc
         String status = request.getParameter("status");
         String keyword = request.getParameter("keyword");
