@@ -30,6 +30,7 @@
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
+                position: relative; 
             }
             .logo-area {
                 text-align: center;
@@ -157,11 +158,33 @@
                 color: #666;
                 line-height: 1.5;
             }
+            .btn-back-home {
+                position: absolute;
+                top: 25px;          
+                left: 30px;         
+                text-decoration: none;
+                color: #666;
+                font-size: 14px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 8px; 
+                transition: 0.3s;
+            }
+            
+            .btn-back-home:hover {
+                color: var(--primary); 
+                transform: translateX(-3px); 
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="auth-form-side">
+                
+                <a href="${pageContext.request.contextPath}/index.jsp" class="btn-back-home">
+                    <i class="fas fa-arrow-left"></i> Quay lại trang chủ
+                </a>
                 <div class="logo-area">
                     <i class="fas fa-heartbeat"></i>
                     <h2>Phòng Khám ABC</h2>
