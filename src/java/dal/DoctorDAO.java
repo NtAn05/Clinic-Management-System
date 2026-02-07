@@ -11,9 +11,7 @@ import model.doctorExamination.DoctorDashboardStats;
 
 public class DoctorDAO extends DBContext {
 
-    /* =========================
-       LẤY DOCTOR THEO USER_ID
-       ========================= */
+    /* get doctor by id*/
     public Doctor getDoctorByUserId(int userId) {
         String sql = """
             SELECT d.doctor_id, d.user_id, d.specialization,
@@ -43,9 +41,7 @@ public class DoctorDAO extends DBContext {
         return null;
     }
 
-    /* =========================
-       LỊCH LÀM VIỆC BÁC SĨ
-       ========================= */
+    // lịch làm việc
     public List<DoctorShift> getDoctorShifts(int doctorId) {
         List<DoctorShift> list = new ArrayList<>();
 
@@ -77,9 +73,7 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
-    /* =========================
-       CẬP NHẬT TRẠNG THÁI HÀNG ĐỢI
-       ========================= */
+    /* CẬP NHẬT TRẠNG THÁI HÀNG ĐỢI */
     public void updateQueueStatus(long appointmentId, String status) {
         String sql = """
             UPDATE exam_queue
@@ -114,9 +108,6 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    /* =========================
-       KẾT THÚC KHÁM
-       ========================= */
     public void finishExamination(long appointmentId) {
         String sql = """
             UPDATE exam_queue
@@ -199,6 +190,7 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
+    //thống kê số liệu 
     public DoctorDashboardStats getDashboardStats(int doctorId) {
         DoctorDashboardStats stats = new DoctorDashboardStats();
         String sql = """
@@ -226,6 +218,7 @@ public class DoctorDAO extends DBContext {
         return stats;
     }
 
+    // lọc theo keyword , trạng thái
     public List<DoctorQueueItem> getQueueByDoctorWithFilter(
         int doctorId,
         String status,
