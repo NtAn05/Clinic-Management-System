@@ -11,7 +11,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Date;
+import model.Appointment;
 import model.Doctor;
+import model.Patient;
+import static org.apache.coyote.http11.Constants.a;
 
 /**
  *
@@ -74,32 +80,58 @@ public class AppointmentServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String userID = request.getParameter("userID");
+        int useId = Integer.parseInt(userID);
         String doctorID = request.getParameter("btnDoctorID");
+        long doctorId = Long.parseLong(doctorID);
         String name = request.getParameter("name");
         String sdt = request.getParameter("sdt");
         String email = request.getParameter("email");
         String dateofbirth = request.getParameter("dateofbirth");
+        LocalDate localDate = LocalDate.parse(dateofbirth);
+        java.sql.Date birthDate = java.sql.Date.valueOf(localDate);
         String gender = request.getParameter("gender");
         String address = request.getParameter("address");
         String note = request.getParameter("note");
         String date = request.getParameter("date");
         String time = request.getParameter("time");
+        String continues = request.getParameter("btnSubmit");
+        Patient patient = new Patient(doctorId, useId, name, sdt, birthDate, address, email, gender);
+        Appointment app = new Appointment(0, time, date, note);
+        AppointmentDAO dao = new AppointmentDAO();
+        String errorPhone = "";
+        String errorEmail = "";
+        String role = "";
+        if (!checkPhone(sdt)) {
+            errorPhone = "Phone must form 0xxx xxx xxx";
+        } else if (!checkEmail(email)) {
+            errorEmail = "abc@xxx.com";
+        } else{
+            role= "oke";
+        }
+         request.setAttribute("errorPhone", errorPhone);
+        request.setAttribute("errorEmail", errorEmail);
+        request.setAttribute("app", app);
+        request.setAttribute("patient", patient);   
+            if(continues.equalsIgnoreCase("submit")){
+            Appointment ap = dao.addAppointment(app);
+            Patient p = dao.addPatient(patient);
+            role = "set";
+            }
     
-            AppointmentDAO dao = new AppointmentDAO();
-            
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+        if (role.equals("ok")) {
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentSecond.jsp")
+        
+                    .forward(request, response);
+        } else if (role.equals("set")) {
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentPayment.jsp")
+        
+                    .forward(request, response);
+        }  else {
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentFirst.jsp")
+                    .forward(request, response);
+        }
+
     }
 
     /**
@@ -111,5 +143,19 @@ public class AppointmentServlet extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
+
+    private boolean checkPhone(String sdt) {
+        if (sdt == null) {
+            return false;
+        }
+        return sdt.matches("^0\\d{9}$");
+    }
+
+    private boolean checkEmail(String email) {
+        if (email == null) {
+            return false;
+        }
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+    }
 
 }

@@ -9,7 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import model.Appointment;
 import model.Doctor;
+import model.Patient;
 
 /**
  *
@@ -190,5 +192,13 @@ public class AppointmentDAO extends DBContext{
 
     return null; 
 }
+
+    public Appointment addAppointment(Appointment Appointments) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public Patient addPatient(Patient patient) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
     
 }

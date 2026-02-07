@@ -60,20 +60,20 @@
                                 <div class="form-grid">
                                     <div>
                                         <label>Họ và tên *</label>
-                                        <input type="text" name="name" value="${user.fullName}" required>
+                                        <input type="text" name="name" value="${patient .fullName}" required>
                                     </div>
                                     <div>
                                         <label>Số điện thoại *</label>
-                                        <input type="text" name="sdt" value="${user.phone}" required>
+                                        <input type="text" name="sdt" value="${patient .phone}" required>
                                     </div>
 
                                     <div>
                                         <label>Email *</label>
-                                        <input type="email" name="email" value="${user.email}" required>
+                                        <input type="email" name="email" value="${patient.email}" required>
                                     </div>
                                     <div>
                                         <label>Ngày sinh *</label>
-                                        <input type="date" name="dateofbirth"  >
+                                        <input type="date" name="dateofbirth" value="${patient.dateofbirth}" >
                                     </div>
 
                                     <div>
@@ -86,12 +86,12 @@
 
                                     <div>
                                         <label>Địa chỉ</label>
-                                        <input type="text" name="address">
+                                        <input type="text" name="address" value="${patient.address}">
                                     </div>
                                 </div>
 
                                 <label>Ghi chú bệnh lý</label>
-                                <textarea placeholder="Nhập triệu chứng nếu có" name="note"></textarea>
+                                <textarea placeholder="Nhập triệu chứng nếu có" name="note" value="${patient.note}"></textarea>
                             </div>
                         </div>
 
@@ -99,7 +99,7 @@
                             <h3>Chọn ngày và ca khám</h3>
 
                             <label>Ngày khám *</label>
-                            <div class="time-slots" id="dateRadios"></div>
+                            <div class="time-slots" id="dateRadios" name="date"></div>
 
                             <div class="time-slots">
                                 <input type="radio" name="time" id="morning" value="morning" checked>
@@ -156,7 +156,7 @@
 
 
             </div>
-            <jsp:include page="/common/footer.jsp" />
+            
 
             <script>
                 const container = document.getElementById("dateRadios");
@@ -177,6 +177,6 @@
                 }
             </script>
 
-
+            <jsp:include page="/common/footer.jsp" />
     </body>
 </html>
