@@ -251,6 +251,10 @@
       background: var(--success);
     }
 
+    .dot-cancelled {
+      background: var(--text-sub);
+    }
+
     /* Bảng queue */
     .table-wrapper {
       border-radius: 12px;
@@ -317,6 +321,11 @@
     .status-done {
       background: #dcfce7;
       color: #166534;
+    }
+
+    .status-cancelled {
+      background: #f3f4f6;
+      color: #6b7280;
     }
 
     .badge-priority {
@@ -476,6 +485,7 @@
                 <option value="pending" ${filterStatus == 'pending' ? 'selected' : ''}>Chờ lấy mẫu</option>
                 <option value="processing" ${filterStatus == 'processing' ? 'selected' : ''}>Đang xét nghiệm</option>
                 <option value="completed" ${filterStatus == 'completed' ? 'selected' : ''}>Đã có kết quả</option>
+                <option value="cancelled" ${filterStatus == 'cancelled' ? 'selected' : ''}>Đã hủy</option>
               </select>
             </div>
 
@@ -520,6 +530,10 @@
             <span class="chip-dot dot-done"></span>
             <span>Đã có kết quả: <strong>${stats[3]}</strong></span>
           </div>
+          <div class="chip">
+            <span class="chip-dot dot-cancelled"></span>
+            <span>Đã hủy: <strong>${stats[4]}</strong></span>
+          </div>
         </div>
 
         <!-- BẢNG HÀNG ĐỢI -->
@@ -559,8 +573,8 @@
                       <c:set var="age" value="${currentYear - birthYear}" />
                     </c:if>
                     <c:set var="genderText" value="${request.patient.gender == 'male' ? 'Nam' : (request.patient.gender == 'female' ? 'Nữ' : 'Khác')}" />
-                    <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : 'Đã có kết quả')}" />
-                    <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : 'status-done')}" />
+                    <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : (request.status == 'cancelled' ? 'Đã hủy' : 'Đã có kết quả'))}" />
+                    <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : (request.status == 'cancelled' ? 'status-cancelled' : 'status-done'))}" />
                     <tr class="queue-row" data-request-id="${request.requestId}">
                       <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${requestCode}</td>
                       <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
@@ -584,11 +598,27 @@
                             <button class="btn btn-success" onclick="event.stopPropagation(); updateStatusToProcessing(${request.requestId});" style="font-size: 12px; padding: 6px 12px;">
                               <i class="fas fa-play"></i> Bắt đầu XN
                             </button>
+                            <button class="btn btn-outline" onclick="event.stopPropagation(); cancelRequest(${request.requestId});" style="font-size: 12px; padding: 6px 12px; margin-left: 4px;">
+                              <i class="fas fa-times"></i> Hủy phiếu
+                            </button>
                           </c:when>
                           <c:when test="${request.status == 'processing'}">
                             <button class="btn btn-primary" onclick="event.stopPropagation(); window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}';" style="font-size: 12px; padding: 6px 12px;">
                               <i class="fas fa-paper-plane"></i> Gửi KQ
                             </button>
+                            <button class="btn btn-outline" onclick="event.stopPropagation(); cancelRequest(${request.requestId});" style="font-size: 12px; padding: 6px 12px; margin-left: 4px;">
+                              <i class="fas fa-times"></i> Hủy phiếu
+                            </button>
+                          </c:when>
+                          <c:when test="${request.status == 'completed'}">
+                            <a href="${pageContext.request.contextPath}/lab-queue?action=viewDetail&requestId=${request.requestId}" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
+                              <i class="fas fa-eye"></i> Xem chi tiết
+                            </a>
+                          </c:when>
+                          <c:when test="${request.status == 'cancelled'}">
+                            <a href="${pageContext.request.contextPath}/lab-queue?action=viewDetail&requestId=${request.requestId}" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
+                              <i class="fas fa-eye"></i> Xem chi tiết
+                            </a>
                           </c:when>
                           <c:otherwise>
                             <span class="text-muted" style="font-size: 12px;">Đã hoàn thành</span>
@@ -753,7 +783,8 @@
       const statusMap = {
         'pending': 'Chờ lấy mẫu',
         'processing': 'Đang xét nghiệm',
-        'completed': 'Đã có kết quả'
+        'completed': 'Đã có kết quả',
+        'cancelled': 'Đã hủy'
       };
       return statusMap[status] || status;
     }
@@ -762,9 +793,31 @@
       const classMap = {
         'pending': 'status-pending',
         'processing': 'status-inprogress',
-        'completed': 'status-done'
+        'completed': 'status-done',
+        'cancelled': 'status-cancelled'
       };
       return classMap[status] || 'status-pending';
+    }
+
+    function cancelRequest(requestId) {
+      showConfirm('Bạn có chắc muốn hủy phiếu xét nghiệm này? Bệnh nhân sẽ trở lại danh sách chờ khám.', function() {
+        fetch('${pageContext.request.contextPath}/lab-queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'action=cancelRequest&requestId=' + requestId
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            showAlert(data.message || 'Đã hủy phiếu.', 'success', function() { location.reload(); });
+          } else {
+            showAlert(data.message || 'Hủy phiếu thất bại.', 'error');
+          }
+        })
+        .catch(err => {
+          showAlert('Đã xảy ra lỗi.', 'error');
+        });
+      });
     }
 
     function getGenderText(gender) {

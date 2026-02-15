@@ -229,6 +229,7 @@ public class DoctorDAO extends DBContext {
     StringBuilder sql = new StringBuilder("""
         SELECT 
             q.queue_position,
+            q.appointment_id,
             p.full_name AS patient_name,
             p.gender,
             p.dob,
@@ -266,6 +267,7 @@ public class DoctorDAO extends DBContext {
         while (rs.next()) {
             DoctorQueueItem item = new DoctorQueueItem();
             item.setQueuePosition(rs.getInt("queue_position"));
+            item.setAppointmentId(rs.getLong("appointment_id"));
             item.setPatientName(rs.getString("patient_name"));
             item.setGender(rs.getString("gender"));
             item.setDob(rs.getDate("dob"));

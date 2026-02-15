@@ -8,6 +8,7 @@ import model.Appointment;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Statement;
 
 public class LabRequestDAO extends DBContext {
 
@@ -323,6 +324,115 @@ public class LabRequestDAO extends DBContext {
     }
 
     /**
+     * Tạo phiếu chỉ định xét nghiệm (bác sĩ). Trả về requestId nếu thành công, 0 nếu thất bại.
+     * Xóa bệnh nhân khỏi exam_queue (DELETE) để họ chuyển sang hàng đợi xét nghiệm (schema exam_queue chỉ có waiting/examining/done).
+     */
+    public int insertLabRequest(long appointmentId, int doctorId) {
+        String checkSql = "SELECT request_id FROM lab_requests WHERE appointment_id = ?";
+        try (PreparedStatement checkSt = connection.prepareStatement(checkSql)) {
+            checkSt.setLong(1, appointmentId);
+            ResultSet rs = checkSt.executeQuery();
+            if (rs.next()) {
+                return 0; // Đã có phiếu xét nghiệm cho appointment này
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        }
+        String insertSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
+        try (PreparedStatement st = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            st.setLong(1, appointmentId);
+            st.setInt(2, doctorId);
+            st.executeUpdate();
+            ResultSet keys = st.getGeneratedKeys();
+            if (keys.next()) {
+                int requestId = keys.getInt(1);
+                // Chuyển bệnh nhân sang hàng đợi xét nghiệm: xóa khỏi exam_queue (schema không có status 'lab')
+                String deleteQueue = "DELETE FROM exam_queue WHERE appointment_id = ?";
+                try (PreparedStatement del = connection.prepareStatement(deleteQueue)) {
+                    del.setLong(1, appointmentId);
+                    del.executeUpdate();
+                }
+                return requestId;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Hủy phiếu xét nghiệm (chỉ khi pending hoặc processing). Đưa bệnh nhân trở lại danh sách chờ khám (INSERT lại exam_queue).
+     */
+    public boolean cancelLabRequest(int requestId) {
+        String getSql = "SELECT appointment_id, doctor_id, status FROM lab_requests WHERE request_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(getSql)) {
+            st.setInt(1, requestId);
+            ResultSet rs = st.executeQuery();
+            if (!rs.next()) return false;
+            long appointmentId = rs.getLong("appointment_id");
+            int doctorId = rs.getInt("doctor_id");
+            String status = rs.getString("status");
+            if ("completed".equals(status)) return false; // Không hủy khi đã hoàn thành
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement up = connection.prepareStatement("UPDATE lab_requests SET status = 'cancelled' WHERE request_id = ?")) {
+                    up.setInt(1, requestId);
+                    up.executeUpdate();
+                }
+                // Bệnh nhân đã bị xóa khỏi exam_queue khi tạo lab request → INSERT lại với status = 'waiting'
+                int nextPos = 1;
+                String maxSql = "SELECT COALESCE(MAX(queue_position), 0) + 1 AS np FROM exam_queue WHERE doctor_id = ?";
+                try (PreparedStatement maxSt = connection.prepareStatement(maxSql)) {
+                    maxSt.setInt(1, doctorId);
+                    ResultSet maxRs = maxSt.executeQuery();
+                    if (maxRs.next()) nextPos = maxRs.getInt("np");
+                }
+                try (PreparedStatement ins = connection.prepareStatement("INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) VALUES (?, ?, ?, 'waiting')")) {
+                    ins.setLong(1, appointmentId);
+                    ins.setInt(2, doctorId);
+                    ins.setInt(3, nextPos);
+                    ins.executeUpdate();
+                }
+                connection.commit();
+                return true;
+            } catch (SQLException e) {
+                try { connection.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+                return false;
+            } finally {
+                try { connection.setAutoCommit(true); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Lấy kết quả xét nghiệm theo request_id (để hiển thị file đã upload).
+     */
+    public model.LabResult getLabResultByRequestId(int requestId) {
+        String sql = "SELECT result_id, request_id, technician_id, result_file, notes, completed_at FROM lab_results WHERE request_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, requestId);
+            ResultSet rs = st.executeQuery();
+            if (rs.next()) {
+                model.LabResult r = new model.LabResult();
+                r.setResultId(rs.getInt("result_id"));
+                r.setRequestId(rs.getInt("request_id"));
+                r.setTechnicianId(rs.getObject("technician_id", Integer.class));
+                r.setResultFile(rs.getString("result_file"));
+                r.setNotes(rs.getString("notes"));
+                r.setCompletedAt(rs.getTimestamp("completed_at"));
+                return r;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * Cập nhật trạng thái lab request
      */
     public boolean updateLabRequestStatus(int requestId, String status) {
@@ -533,14 +643,15 @@ public class LabRequestDAO extends DBContext {
      * @return stats [total, pending, processing, completed]
      */
     public int[] getLabRequestStatisticsWithFilter(String status, String department, String searchTerm) {
-        int[] stats = new int[4]; // [total, pending, processing, completed]
+        int[] stats = new int[5]; // [total, pending, processing, completed, cancelled]
 
         StringBuilder sql = new StringBuilder("""
             SELECT
                 COUNT(*) as total,
                 COALESCE(SUM(CASE WHEN lr.status = 'pending' THEN 1 ELSE 0 END), 0) as pending,
                 COALESCE(SUM(CASE WHEN lr.status = 'processing' THEN 1 ELSE 0 END), 0) as processing,
-                COALESCE(SUM(CASE WHEN lr.status = 'completed' THEN 1 ELSE 0 END), 0) as completed
+                COALESCE(SUM(CASE WHEN lr.status = 'completed' THEN 1 ELSE 0 END), 0) as completed,
+                COALESCE(SUM(CASE WHEN lr.status = 'cancelled' THEN 1 ELSE 0 END), 0) as cancelled
             FROM lab_requests lr
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
@@ -580,6 +691,7 @@ public class LabRequestDAO extends DBContext {
                 stats[1] = rs.getInt("pending");
                 stats[2] = rs.getInt("processing");
                 stats[3] = rs.getInt("completed");
+                stats[4] = rs.getInt("cancelled");
             }
         } catch (SQLException e) {
             e.printStackTrace();
