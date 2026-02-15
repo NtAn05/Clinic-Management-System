@@ -214,3 +214,20 @@ body {
 .shift-item:last-child {
     border-bottom: none;
 }
+
+/* Nút chỉ định xét nghiệm */
+.btn-order-lab {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #0d9488;
+    background: #ccfbf1;
+    border: 1px solid #5eead4;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-order-lab:hover {
+    background: #0d9488;
+    color: #fff;
+}

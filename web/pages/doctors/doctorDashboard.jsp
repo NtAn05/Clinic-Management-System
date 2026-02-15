@@ -64,11 +64,12 @@
                                 <th>Ngày sinh</th>
                                 <th>Triệu chứng</th>
                                 <th>Trạng thái</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             <c:forEach var="q" items="${queueList}">
-                                <tr>
+                                <tr data-appointment-id="${q.appointmentId}">
                                     <td>${q.queuePosition}</td>
                                     <td>${q.patientName}</td>
                                     <td>${q.gender}</td>
@@ -79,12 +80,19 @@
                                             ${q.status}
                                         </span>
                                     </td>
+                                    <td>
+                                        <c:if test="${q.status == 'waiting' || q.status == 'examining'}">
+                                            <button type="button" class="btn-order-lab" onclick="orderLab(${q.appointmentId})" title="Chỉ định xét nghiệm">
+                                                Chỉ định XN
+                                            </button>
+                                        </c:if>
+                                    </td>
                                 </tr>
                             </c:forEach>
 
                             <c:if test="${empty queueList}">
                                 <tr>
-                                    <td colspan="6" style="text-align:center">
+                                    <td colspan="7" style="text-align:center">
                                         Không có bệnh nhân chờ khám
                                     </td>
                                 </tr>
@@ -116,6 +124,29 @@
             </div>
                                 
         </div>
+<jsp:include page="/common/modal-alert.jsp" />
+    <script>
+        function orderLab(appointmentId) {
+            showConfirm('Chỉ định xét nghiệm cho bệnh nhân này? Bệnh nhân sẽ chuyển sang hàng đợi xét nghiệm.', function() {
+                var formData = new FormData();
+                formData.append('action', 'createLabRequest');
+                formData.append('appointmentId', appointmentId);
+                fetch('${pageContext.request.contextPath}/lab-queue', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        showAlert(data.message || 'Đã chỉ định xét nghiệm.', 'success', function() { location.reload(); });
+                    } else {
+                        showAlert(data.message || 'Thất bại.', 'error');
+                    }
+                })
+                .catch(function() { showAlert('Lỗi kết nối.', 'error'); });
+            });
+        }
+    </script>
 <jsp:include page="/common/footer.jsp" />
     </body>
     

@@ -38,4 +38,8 @@ public final class RoleHelper {
     public static boolean isTechnician(User u) {
         return "technician".equals(getRoleName(u));
     }
+
+    public static boolean isDoctor(User u) {
+        return "doctor".equals(getRoleName(u));
+    }
 }
