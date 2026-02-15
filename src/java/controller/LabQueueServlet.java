@@ -1,5 +1,6 @@
 package controller;
 
+import dal.DoctorDAO;
 import dal.LabRequestDAO;
 import model.LabRequest;
 
@@ -53,6 +54,22 @@ public class LabQueueServlet extends HttpServlet {
         
         // Check if viewing send result page
         String action = request.getParameter("action");
+        if ("viewDetail".equals(action)) {
+            String requestIdParam = request.getParameter("requestId");
+            if (requestIdParam != null) {
+                try {
+                    int requestId = Integer.parseInt(requestIdParam);
+                    LabRequest labRequest = labRequestDAO.getLabRequestById(requestId);
+                    if (labRequest != null) {
+                        request.setAttribute("labRequest", labRequest);
+                        model.LabResult labResult = labRequestDAO.getLabResultByRequestId(requestId);
+                        request.setAttribute("labResult", labResult);
+                    }
+                } catch (NumberFormatException e) { }
+            }
+            request.getRequestDispatcher("/pages/lab/view-detail.jsp").forward(request, response);
+            return;
+        }
         if ("viewSendResult".equals(action)) {
             String requestIdParam = request.getParameter("requestId");
             if (requestIdParam != null) {
@@ -141,7 +158,7 @@ public class LabQueueServlet extends HttpServlet {
                 response.getWriter().write("{\"success\": false, \"message\": \"Cập nhật thất bại\"}");
             }
             
-        } else if ("updateNotes".equals(action)) {
+        } else         if ("updateNotes".equals(action)) {
             int requestId = Integer.parseInt(request.getParameter("requestId"));
             String notes = request.getParameter("notes");
             
@@ -153,6 +170,50 @@ public class LabQueueServlet extends HttpServlet {
                 response.getWriter().write("{\"success\": false, \"message\": \"Lưu ghi chú thất bại\"}");
             }
             
+        } else if ("createLabRequest".equals(action)) {
+            jakarta.servlet.http.HttpSession session = request.getSession();
+            model.User account = (model.User) session.getAttribute("account");
+            if (account == null || !RoleHelper.isDoctor(account)) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Chỉ bác sĩ mới được chỉ định xét nghiệm\"}");
+                return;
+            }
+            try {
+                long appointmentId = Long.parseLong(request.getParameter("appointmentId"));
+                DoctorDAO doctorDAO = new DoctorDAO();
+                model.Doctor doctor = doctorDAO.getDoctorByUserId(account.getUserId());
+                if (doctor == null) {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Không tìm thấy thông tin bác sĩ\"}");
+                    return;
+                }
+                int requestId = labRequestDAO.insertLabRequest(appointmentId, doctor.getDoctorId());
+                if (requestId > 0) {
+                    response.getWriter().write("{\"success\": true, \"message\": \"Đã chỉ định xét nghiệm. Bệnh nhân đã chuyển sang hàng đợi xét nghiệm.\", \"requestId\": " + requestId + "}");
+                } else {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Đã có phiếu xét nghiệm cho bệnh nhân này hoặc không thể tạo\"}");
+                }
+            } catch (NumberFormatException e) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Mã lịch hẹn không hợp lệ\"}");
+            }
+
+        } else if ("cancelRequest".equals(action)) {
+            jakarta.servlet.http.HttpSession session = request.getSession();
+            model.User account = (model.User) session.getAttribute("account");
+            if (account == null || (!RoleHelper.isTechnician(account) && !RoleHelper.isDoctor(account))) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Không có quyền hủy phiếu\"}");
+                return;
+            }
+            try {
+                int requestId = Integer.parseInt(request.getParameter("requestId"));
+                boolean success = labRequestDAO.cancelLabRequest(requestId);
+                if (success) {
+                    response.getWriter().write("{\"success\": true, \"message\": \"Đã hủy phiếu xét nghiệm. Bệnh nhân đã trở lại danh sách chờ khám.\"}");
+                } else {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Không thể hủy (phiếu đã hoàn thành hoặc không tồn tại)\"}");
+                }
+            } catch (NumberFormatException e) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Mã phiếu không hợp lệ\"}");
+            }
+
         } else if ("sendResult".equals(action)) {
             // Get technician ID from session
             jakarta.servlet.http.HttpSession session = request.getSession();
