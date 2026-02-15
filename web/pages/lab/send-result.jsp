@@ -412,12 +412,12 @@
                   id="resultFile" 
                   name="resultFile" 
                   class="form-control"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.doc,.docx,.xls,.xlsx"
                   required
                   ${labRequest.status != 'processing' ? 'disabled' : ''}
                 />
                 <small class="form-help">
-                  <i class="fas fa-info-circle"></i> Định dạng: PDF, JPG, PNG (tối đa 5MB)
+                  <i class="fas fa-info-circle"></i> Định dạng cho phép: PDF, ảnh (JPG, PNG, GIF, WebP, BMP), tài liệu (DOC, DOCX, XLS, XLSX). <strong>Giới hạn dung lượng: 10MB</strong>.
                 </small>
               </div>
 
@@ -464,21 +464,39 @@
   <jsp:include page="../../common/footer.jsp" />
 
   <script>
-    document.getElementById('sendResultForm')?.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const fileInput = document.getElementById('resultFile');
-      if (!fileInput.files || fileInput.files.length === 0) {
-        showAlert('Vui lòng chọn file kết quả xét nghiệm!', 'warning');
-        return;
+    (function() {
+      var MAX_FILE_SIZE_MB = 10;
+      var MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+      var ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'doc', 'docx', 'xls', 'xlsx'];
+
+      function getFileExtension(fileName) {
+        var i = fileName.lastIndexOf('.');
+        return i >= 0 ? fileName.substring(i + 1).toLowerCase() : '';
       }
 
-      const file = fileInput.files[0];
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        showAlert('File quá lớn! Vui lòng chọn file nhỏ hơn 5MB.', 'warning');
-        return;
+      function isAllowedFile(file) {
+        var ext = getFileExtension(file.name);
+        return ALLOWED_EXTENSIONS.indexOf(ext) !== -1;
       }
+
+      document.getElementById('sendResultForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        var fileInput = document.getElementById('resultFile');
+        if (!fileInput.files || fileInput.files.length === 0) {
+          showAlert('Vui lòng chọn file kết quả xét nghiệm!', 'warning');
+          return;
+        }
+
+        var file = fileInput.files[0];
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          showAlert('File quá lớn! Dung lượng tối đa là ' + MAX_FILE_SIZE_MB + 'MB. File của bạn: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB.', 'warning');
+          return;
+        }
+        if (!isAllowedFile(file)) {
+          showAlert('Định dạng file không được phép. Chỉ chấp nhận: ' + ALLOWED_EXTENSIONS.join(', ') + '.', 'warning');
+          return;
+        }
 
       showConfirm(
         'Xác nhận gửi kết quả xét nghiệm?\n\nBệnh nhân sẽ được chuyển về danh sách chờ khám.',
@@ -513,6 +531,7 @@
         }
       );
     });
+    })();
   </script>
 </body>
 </html>

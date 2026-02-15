@@ -15,15 +15,27 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @MultipartConfig(
     fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
-    maxFileSize = 1024 * 1024 * 5,        // 5MB
-    maxRequestSize = 1024 * 1024 * 10     // 10MB
+    maxFileSize = 1024 * 1024 * 10,       // 10MB
+    maxRequestSize = 1024 * 1024 * 12     // 12MB (file + form)
 )
 public class LabQueueServlet extends HttpServlet {
+
+    /** Giới hạn dung lượng file kết quả (10MB). */
+    private static final long MAX_RESULT_FILE_SIZE = 10L * 1024 * 1024;
+
+    /** Các phần mở rộng file được phép upload (kết quả xét nghiệm). */
+    private static final Set<String> ALLOWED_RESULT_EXTENSIONS = Arrays.stream(
+            new String[]{"pdf", "jpg", "jpeg", "png", "gif", "webp", "bmp", "doc", "docx", "xls", "xlsx"}
+    ).collect(Collectors.toSet());
 
     private LabRequestDAO labRequestDAO;
 
@@ -175,20 +187,36 @@ public class LabQueueServlet extends HttpServlet {
                 String resultFilePath = null;
                 Part filePart = request.getPart("resultFile");
                 if (filePart != null && filePart.getSize() > 0) {
-                    String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-                    String fileExtension = fileName.substring(fileName.lastIndexOf("."));
+                    long fileSize = filePart.getSize();
+                    if (fileSize > MAX_RESULT_FILE_SIZE) {
+                        response.getWriter().write("{\"success\": false, \"message\": \"File quá lớn. Dung lượng tối đa 10MB.\"}");
+                        return;
+                    }
+                    String submittedName = filePart.getSubmittedFileName();
+                    if (submittedName == null || submittedName.trim().isEmpty()) {
+                        response.getWriter().write("{\"success\": false, \"message\": \"Tên file không hợp lệ.\"}");
+                        return;
+                    }
+                    String fileName = Paths.get(submittedName).getFileName().toString();
+                    int lastDot = fileName.lastIndexOf('.');
+                    String fileExtension = lastDot >= 0 ? fileName.substring(lastDot).toLowerCase(Locale.ROOT) : "";
+                    String extOnly = lastDot >= 0 ? fileName.substring(lastDot + 1).toLowerCase(Locale.ROOT) : "";
+                    if (!ALLOWED_RESULT_EXTENSIONS.contains(extOnly)) {
+                        response.getWriter().write("{\"success\": false, \"message\": \"Định dạng file không được phép. Chỉ chấp nhận: PDF, ảnh (JPG, PNG, GIF, WebP, BMP), tài liệu (DOC, DOCX, XLS, XLSX).\"}");
+                        return;
+                    }
                     String uniqueFileName = "LAB_" + requestId + "_" + UUID.randomUUID().toString().substring(0, 8) + fileExtension;
-                    
+
                     // Lưu file vào thư mục uploads/lab-results (tạo thư mục nếu chưa có)
                     String uploadPath = getServletContext().getRealPath("") + File.separator + "uploads" + File.separator + "lab-results";
                     File uploadDir = new File(uploadPath);
                     if (!uploadDir.exists()) {
                         uploadDir.mkdirs();
                     }
-                    
+
                     String fullPath = uploadPath + File.separator + uniqueFileName;
                     Files.copy(filePart.getInputStream(), Paths.get(fullPath), StandardCopyOption.REPLACE_EXISTING);
-                    
+
                     // Lưu path tương đối vào database (để có thể truy cập qua URL)
                     resultFilePath = "uploads/lab-results/" + uniqueFileName;
                 }
