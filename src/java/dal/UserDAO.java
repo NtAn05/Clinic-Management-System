@@ -201,4 +201,136 @@ public class UserDAO extends DBContext {
         }
     }
 
+    // Lấy thông tin user theo ID
+    public User getUserById(int userId) {
+        String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE user_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
+            
+            if (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                return u;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // Lấy danh sách bệnh nhân
+    public List<User> getPatientList() {
+        String sql = """
+        SELECT u.user_id, u.full_name, u.phone, u.email, u.role, u.status 
+        FROM users u 
+        WHERE u.role = 'patient' 
+        ORDER BY u.full_name
+    """;
+        List<User> users = new ArrayList<>();
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            ResultSet rs = st.executeQuery();
+            
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                users.add(u);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return users;
+    }
+
+    // Cập nhật role của người dùng
+    public void updateUserRole(int userId, Role role) throws SQLException {
+        String sql = "UPDATE users SET role = ? WHERE user_id = ?";
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, role.toString());
+            st.setInt(2, userId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
+    // Tìm kiếm người dùng theo tên hoặc số điện thoại
+    public List<User> searchUsers(String keyword, Role role) {
+        String sql = """
+        SELECT user_id, full_name, phone, email, role, status 
+        FROM users 
+        WHERE (full_name LIKE ? OR phone LIKE ?) AND role = ? 
+        ORDER BY full_name
+    """;
+        List<User> users = new ArrayList<>();
+        keyword = "%" + keyword + "%";
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, keyword);
+            st.setString(2, keyword);
+            st.setString(3, role.toString());
+            ResultSet rs = st.executeQuery();
+            
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                users.add(u);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return users;
+    }
+
+    // Lọc người dùng theo trạng thái
+    public List<User> getUsersByStatus(Role role, Status status) {
+        String sql = """
+        SELECT user_id, full_name, phone, email, role, status 
+        FROM users 
+        WHERE role = ? AND status = ? 
+        ORDER BY full_name
+    """;
+        List<User> users = new ArrayList<>();
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, role.toString());
+            st.setString(2, status.toString());
+            ResultSet rs = st.executeQuery();
+            
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                users.add(u);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return users;
+    }
+
 }

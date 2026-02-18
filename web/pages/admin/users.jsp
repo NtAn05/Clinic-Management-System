@@ -4,7 +4,7 @@
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
-        <title>Quản lý Nhân sự</title>
+        <title>Quản lý Tài khoản</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <style>
             * {
@@ -42,6 +42,7 @@
                 padding: 8px 12px;
                 border-radius: 4px;
                 transition: all 0.3s ease;
+                margin-left: 10px;
             }
 
             header a:hover {
@@ -50,7 +51,7 @@
 
             .container {
                 padding: 30px 50px;
-                max-width: 1200px;
+                max-width: 1400px;
                 margin: 0 auto;
             }
 
@@ -87,48 +88,180 @@
                 }
             }
 
+            /* TAB NAVIGATION */
+            .tab-navigation {
+                display: flex;
+                gap: 0;
+                margin-bottom: 30px;
+                background: white;
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .tab-button {
+                flex: 1;
+                padding: 18px 20px;
+                text-align: center;
+                background: #f5f5f5;
+                border: none;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 600;
+                color: #666;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                border-bottom: 3px solid transparent;
+            }
+
+            .tab-button:hover {
+                background: #e8e8e8;
+            }
+
+            .tab-button.active {
+                background: #0061ff;
+                color: white;
+                border-bottom-color: #0061ff;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            /* TOOLBAR */
+            .toolbar {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                display: flex;
+                gap: 15px;
+                align-items: flex-end;
+                flex-wrap: wrap;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .search-box {
+                flex: 1;
+                min-width: 250px;
+            }
+
+            .search-box label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #333;
+                font-size: 13px;
+            }
+
+            .search-box input {
+                width: 100%;
+                padding: 10px 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                transition: all 0.3s ease;
+            }
+
+            .search-box input:focus {
+                outline: none;
+                border-color: #0061ff;
+                box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
+            }
+
+            .filter-box {
+                min-width: 200px;
+            }
+
+            .filter-box label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #333;
+                font-size: 13px;
+            }
+
+            .filter-box select {
+                width: 100%;
+                padding: 10px 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+                background: white;
+                transition: all 0.3s ease;
+            }
+
+            .filter-box select:focus {
+                outline: none;
+                border-color: #0061ff;
+                box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
+            }
+
+            .toolbar-buttons {
+                display: flex;
+                gap: 10px;
+            }
+
+            .btn-search, .btn-reset, .btn-add {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 14px;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .btn-search {
+                background: #0061ff;
+                color: white;
+            }
+
+            .btn-search:hover {
+                background: #0052cc;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 97, 255, 0.3);
+            }
+
+            .btn-reset {
+                background: #f0f0f0;
+                color: #333;
+            }
+
+            .btn-reset:hover {
+                background: #e0e0e0;
+            }
+
+            .btn-add {
+                background: #4caf50;
+                color: white;
+                margin-left: auto;
+            }
+
+            .btn-add:hover {
+                background: #45a049;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            }
+
+            /* TABLE */
             .table-container {
                 background: white;
                 padding: 25px;
                 border-radius: 10px;
-                margin-bottom: 30px;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
                 overflow-x: auto;
-            }
-
-            .table-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 20px;
-                border-bottom: 2px solid #f0f0f0;
-                padding-bottom: 15px;
-            }
-
-            .table-header h3 {
-                font-size: 18px;
-                color: #333;
-            }
-
-            .btn-submit {
-                background: #0061ff;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .btn-submit:hover {
-                background: #0052cc;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 97, 255, 0.3);
             }
 
             table {
@@ -143,12 +276,14 @@
                 font-weight: 600;
                 color: #333;
                 border-bottom: 2px solid #e0e0e0;
+                font-size: 14px;
             }
 
             td {
                 padding: 15px;
                 border-bottom: 1px solid #f0f0f0;
                 color: #555;
+                font-size: 14px;
             }
 
             tr:hover {
@@ -161,11 +296,7 @@
                 border-radius: 20px;
                 font-size: 12px;
                 font-weight: 600;
-            }
-
-            .badge-doctor {
-                background: #e3f2fd;
-                color: #1976d2;
+                white-space: nowrap;
             }
 
             .badge-receptionist {
@@ -176,6 +307,11 @@
             .badge-technician {
                 background: #f3e5f5;
                 color: #7b1fa2;
+            }
+
+            .badge-patient {
+                background: #e1f5fe;
+                color: #0277bd;
             }
 
             .badge-active {
@@ -194,7 +330,7 @@
                 flex-wrap: wrap;
             }
 
-            .btn-edit, .btn-delete, .btn-toggle {
+            .btn-action {
                 border: none;
                 background: none;
                 cursor: pointer;
@@ -207,20 +343,28 @@
                 gap: 4px;
             }
 
-            .btn-edit {
+            .btn-view {
                 color: #1976d2;
             }
 
-            .btn-edit:hover {
+            .btn-view:hover {
                 background: #e3f2fd;
             }
 
-            .btn-toggle {
+            .btn-edit {
                 color: #f57c00;
             }
 
-            .btn-toggle:hover {
+            .btn-edit:hover {
                 background: #fff3e0;
+            }
+
+            .btn-toggle {
+                color: #7b1fa2;
+            }
+
+            .btn-toggle:hover {
+                background: #f3e5f5;
             }
 
             .btn-delete {
@@ -231,18 +375,19 @@
                 background: #ffebee;
             }
 
-            .empty-state {
+            .no-data {
                 text-align: center;
                 padding: 40px;
                 color: #999;
             }
 
-            .empty-state i {
+            .no-data i {
                 font-size: 48px;
                 margin-bottom: 15px;
                 opacity: 0.5;
             }
 
+            /* MODAL */
             .modal {
                 display: none;
                 position: fixed;
@@ -253,6 +398,7 @@
                 height: 100%;
                 background-color: rgba(0, 0, 0, 0.5);
                 animation: fadeIn 0.3s ease;
+                overflow-y: auto;
             }
 
             @keyframes fadeIn {
@@ -270,7 +416,7 @@
                 padding: 30px;
                 border-radius: 10px;
                 width: 90%;
-                max-width: 500px;
+                max-width: 550px;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                 animation: slideUp 0.3s ease;
             }
@@ -290,14 +436,31 @@
                 font-size: 20px;
                 font-weight: 600;
                 color: #0061ff;
-                margin-bottom: 20px;
+                margin-bottom: 25px;
                 display: flex;
                 align-items: center;
                 gap: 10px;
+                border-bottom: 2px solid #f0f0f0;
+                padding-bottom: 15px;
+            }
+
+            .modal-close {
+                margin-left: auto;
+                cursor: pointer;
+                font-size: 24px;
+                line-height: 1;
+                background: none;
+                border: none;
+                color: #999;
+                transition: all 0.3s ease;
+            }
+
+            .modal-close:hover {
+                color: #333;
             }
 
             .form-group {
-                margin-bottom: 15px;
+                margin-bottom: 18px;
             }
 
             .form-group label {
@@ -305,12 +468,14 @@
                 font-weight: 600;
                 margin-bottom: 8px;
                 color: #333;
+                font-size: 14px;
             }
 
             .form-group input,
-            .form-group select {
+            .form-group select,
+            .form-group textarea {
                 width: 100%;
-                padding: 10px;
+                padding: 10px 15px;
                 border: 1px solid #ddd;
                 border-radius: 6px;
                 font-size: 14px;
@@ -319,10 +484,16 @@
             }
 
             .form-group input:focus,
-            .form-group select:focus {
+            .form-group select:focus,
+            .form-group textarea:focus {
                 outline: none;
                 border-color: #0061ff;
                 box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
+            }
+
+            .form-group textarea {
+                resize: vertical;
+                min-height: 80px;
             }
 
             .modal-footer {
@@ -343,13 +514,16 @@
                 cursor: pointer;
                 font-weight: 600;
                 transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
 
             .btn-cancel:hover {
                 background: #e0e0e0;
             }
 
-            .btn-submit-modal {
+            .btn-submit {
                 padding: 10px 20px;
                 background: #0061ff;
                 color: white;
@@ -358,74 +532,85 @@
                 cursor: pointer;
                 font-weight: 600;
                 transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
 
-            .btn-submit-modal:hover {
+            .btn-submit:hover {
                 background: #0052cc;
             }
 
-            .no-data {
-                text-align: center;
-                padding: 30px;
-                color: #999;
-            }
-
-            .admin-menu {
-                display: flex;
-                gap: 0;
-                margin-bottom: 30px;
-                background: white;
-                border-radius: 10px;
-                overflow: hidden;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            }
-
-            .menu-item {
-                flex: 1;
-                padding: 15px 20px;
-                text-align: center;
-                background: #f5f5f5;
-                border: none;
-                cursor: pointer;
+            .form-info {
+                background: #f5f7fa;
+                padding: 15px;
+                border-radius: 6px;
+                margin-bottom: 15px;
                 font-size: 14px;
-                font-weight: 600;
-                color: #666;
-                transition: all 0.3s ease;
+                color: #555;
+                line-height: 1.6;
+            }
+
+            .form-info-item {
                 display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid #e0e0e0;
             }
 
-            .menu-item:hover {
-                background: #e8e8e8;
+            .form-info-item:last-child {
+                border-bottom: none;
             }
 
-            .menu-item.active {
-                background: #0061ff;
-                color: white;
+            .form-info-item strong {
+                color: #333;
             }
 
-            .content-section {
-                display: none;
-            }
+            @media (max-width: 768px) {
+                .container {
+                    padding: 20px;
+                }
 
-            .content-section.active {
-                display: block;
+                .toolbar {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .search-box,
+                .filter-box {
+                    width: 100%;
+                    min-width: unset;
+                }
+
+                .toolbar-buttons {
+                    justify-content: space-between;
+                }
+
+                .btn-add {
+                    margin-left: 0;
+                }
+
+                table {
+                    font-size: 13px;
+                }
+
+                th, td {
+                    padding: 10px;
+                }
             }
         </style>
     </head>
     <body>
         <header>
-            <div class="title">👨‍💼 ADMIN - QUẢN LÝ NHÂN SỰ</div>
+            <div class="title">👤 ADMIN - QUẢN LÝ TÀI KHOẢN</div>
             <div>
                 <a href="${pageContext.request.contextPath}/index.jsp"><i class="fas fa-arrow-left"></i> Quay lại</a>
-                <a href="${pageContext.request.contextPath}/"><i class="fas fa-home"></i> Về trang chủ</a>
+                <a href="${pageContext.request.contextPath}/"><i class="fas fa-home"></i> Trang chủ</a>
             </div>
         </header>
 
         <div class="container">
-            <!-- Thông báo thành công -->
+            <!-- THÔNG BÁO THÀNH CÔNG -->
             <c:if test="${not empty success}">
                 <div class="alert success">
                     <i class="fas fa-check-circle"></i>
@@ -433,7 +618,7 @@
                 </div>
             </c:if>
 
-            <!-- Thông báo lỗi -->
+            <!-- THÔNG BÁO LỖI -->
             <c:if test="${not empty error}">
                 <div class="alert error">
                     <i class="fas fa-exclamation-circle"></i>
@@ -441,145 +626,279 @@
                 </div>
             </c:if>
 
-            <!-- DANH SÁCH BÁC SĨ -->
-            <div class="table-container">
-                <div class="table-header">
-                    <h3><i class="fas fa-stethoscope"></i> Danh sách Bác sĩ</h3>
-                    <button class="btn-submit" onclick="openAddModal(2)">
-                        <i class="fas fa-plus"></i> Thêm Bác sĩ
-                    </button>
-                </div>
-                <c:choose>
-                    <c:when test="${not empty doctors}">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Họ và tên</th>
-                                    <th>Số điện thoại</th>
-                                    <th>Trạng thái</th>
-                                    <th style="width: 120px;">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach items="${doctors}" var="d">
-                                    <tr>
-                                        <td><strong>${d.fullName}</strong></td>
-                                        <td>${d.phone}</td>
-                                        <td>
-                                            <span class="badge ${d.status.toString() == 'active' ? 'badge-active' : 'badge-inactive'}">
-                                                ${d.status.toString() == 'active' ? 'Hoạt động' : 'Khóa'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn-toggle" onclick="toggleStatus('${d.phone}', '${d.fullName}')" title="Bật/Tắt">
-                                                    <i class="fas fa-toggle-on"></i>
-                                                </button>
-                                                <button class="btn-delete" onclick="deleteUser('${d.phone}', '${d.fullName}')" title="Xóa">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="no-data">
-                            <i class="fas fa-user-md"></i>
-                            <p>Chưa có bác sĩ nào</p>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+            <!-- TAB NAVIGATION -->
+            <div class="tab-navigation">
+                <button class="tab-button active" onclick="switchTab(event, 'staff')">
+                    <i class="fas fa-users"></i> Tài khoản Nhân viên
+                </button>
+                <button class="tab-button" onclick="switchTab(event, 'patient')">
+                    <i class="fas fa-user-md"></i> Tài khoản Bệnh nhân
+                </button>
             </div>
 
-            <!-- DANH SÁCH NHÂN VIÊN -->
-            <div class="table-container">
-                <div class="table-header">
-                    <h3><i class="fas fa-users"></i> Danh sách Nhân viên</h3>
-                    <button class="btn-submit" onclick="openAddModal(3)">
-                        <i class="fas fa-plus"></i> Thêm Nhân viên
-                    </button>
+            <!-- TAB 1: NHÂN VIÊN -->
+            <div id="staff" class="tab-content active">
+                <!-- TOOLBAR -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <label><i class="fas fa-search"></i> Tìm kiếm</label>
+                        <input type="text" id="staffSearch" placeholder="Nhập tên hoặc số điện thoại...">
+                    </div>
+                    <div class="filter-box">
+                        <label><i class="fas fa-filter"></i> Lọc theo trạng thái</label>
+                        <select id="staffFilter">
+                            <option value="all">-- Tất cả --</option>
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Khóa</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-buttons">
+                        <button class="btn-search" onclick="searchStaff()">
+                            <i class="fas fa-search"></i> Tìm
+                        </button>
+                        <button class="btn-reset" onclick="resetStaffFilter()">
+                            <i class="fas fa-redo"></i> Đặt lại
+                        </button>
+                        <button class="btn-add" onclick="openAddModal('staff')">
+                            <i class="fas fa-plus"></i> Thêm tài khoản
+                        </button>
+                    </div>
                 </div>
-                <c:choose>
-                    <c:when test="${not empty staffs}">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Họ và tên</th>
-                                    <th>Số điện thoại</th>
-                                    <th>Trạng thái</th>
-                                    <th style="width: 120px;">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach items="${staffs}" var="s">
+
+                <!-- TABLE NHÂN VIÊN -->
+                <div class="table-container">
+                    <c:choose>
+                        <c:when test="${not empty staffs}">
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td><strong>${s.fullName}</strong></td>
-                                        <td>${s.phone}</td>
-                                        <td>
-                                            <span class="badge ${s.status.toString() == 'active' ? 'badge-active' : 'badge-inactive'}">
-                                                ${s.status.toString() == 'active' ? 'Hoạt động' : 'Khóa'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn-toggle" onclick="toggleStatus('${s.phone}', '${s.fullName}')" title="Bật/Tắt">
-                                                    <i class="fas fa-toggle-on"></i>
-                                                </button>
-                                                <button class="btn-delete" onclick="deleteUser('${s.phone}', '${s.fullName}')" title="Xóa">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <th>Tên</th>
+                                        <th>Số điện thoại</th>
+                                        <th>Email</th>
+                                        <th>Vai trò</th>
+                                        <th>Trạng thái</th>
+                                        <th style="width: 180px; text-align: center;">Thao tác</th>
                                     </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="no-data">
-                            <i class="fas fa-user-tie"></i>
-                            <p>Chưa có nhân viên nào</p>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${staffs}" var="staff">
+                                        <tr>
+                                            <td><strong>${staff.fullName}</strong></td>
+                                            <td>${staff.phone}</td>
+                                            <td>${not empty staff.email ? staff.email : '<em>Chưa cập nhật</em>'}</td>
+                                            <td>
+                                                <span class="badge ${staff.role.toString() == 'receptionist' ? 'badge-receptionist' : 'badge-technician'}">
+                                                    ${staff.role.toString() == 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge ${staff.status.toString() == 'active' ? 'badge-active' : 'badge-inactive'}">
+                                                    ${staff.status.toString() == 'active' ? 'Hoạt động' : 'Khóa'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons" style="justify-content: center;">
+                                                    <button class="btn-action btn-view" onclick="viewAccount(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}')" title="Xem chi tiết">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-edit" onclick="openEditModal(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}', 'staff')" title="Sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-toggle" onclick="toggleStatus('${staff.phone}', '${staff.fullName}')" title="Kích hoạt/Vô hiệu hóa">
+                                                        <i class="fas fa-toggle-on"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-delete" onclick="deleteAccount('${staff.phone}', '${staff.fullName}')" title="Xóa">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="no-data">
+                                <i class="fas fa-inbox"></i>
+                                <p>Chưa có tài khoản nhân viên nào</p>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+
+            <!-- TAB 2: BỆNH NHÂN -->
+            <div id="patient" class="tab-content">
+                <!-- TOOLBAR -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <label><i class="fas fa-search"></i> Tìm kiếm</label>
+                        <input type="text" id="patientSearch" placeholder="Nhập tên hoặc số điện thoại...">
+                    </div>
+                    <div class="filter-box">
+                        <label><i class="fas fa-filter"></i> Lọc theo trạng thái</label>
+                        <select id="patientFilter">
+                            <option value="all">-- Tất cả --</option>
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Khóa</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-buttons">
+                        <button class="btn-search" onclick="searchPatient()">
+                            <i class="fas fa-search"></i> Tìm
+                        </button>
+                        <button class="btn-reset" onclick="resetPatientFilter()">
+                            <i class="fas fa-redo"></i> Đặt lại
+                        </button>
+                        <button class="btn-add" onclick="openAddModal('patient')">
+                            <i class="fas fa-plus"></i> Thêm tài khoản
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TABLE BỆNH NHÂN -->
+                <div class="table-container">
+                    <c:choose>
+                        <c:when test="${not empty patients}">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Tên</th>
+                                        <th>Số điện thoại</th>
+                                        <th>Email</th>
+                                        <th>Trạng thái</th>
+                                        <th style="width: 180px; text-align: center;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${patients}" var="patient">
+                                        <tr>
+                                            <td><strong>${patient.fullName}</strong></td>
+                                            <td>${patient.phone}</td>
+                                            <td>${not empty patient.email ? patient.email : '<em>Chưa cập nhật</em>'}</td>
+                                            <td>
+                                                <span class="badge ${patient.status.toString() == 'active' ? 'badge-active' : 'badge-inactive'}">
+                                                    ${patient.status.toString() == 'active' ? 'Hoạt động' : 'Khóa'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons" style="justify-content: center;">
+                                                    <button class="btn-action btn-view" onclick="viewAccount(${patient.userId}, '${patient.fullName}', '${patient.phone}', '${patient.email}', '${patient.role}', '${patient.status}')" title="Xem chi tiết">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-edit" onclick="openEditModal(${patient.userId}, '${patient.fullName}', '${patient.phone}', '${patient.email}', '${patient.role}', '${patient.status}', 'patient')" title="Sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-toggle" onclick="toggleStatus('${patient.phone}', '${patient.fullName}')" title="Kích hoạt/Vô hiệu hóa">
+                                                        <i class="fas fa-toggle-on"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-delete" onclick="deleteAccount('${patient.phone}', '${patient.fullName}')" title="Xóa">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="no-data">
+                                <i class="fas fa-inbox"></i>
+                                <p>Chưa có tài khoản bệnh nhân nào</p>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
             </div>
         </div>
 
-        <!-- MODAL THÊM NGƯỜI DÙNG MỚI -->
-        <div id="addUserModal" class="modal">
+        <!-- MODAL XEM CHI TIẾT TÀI KHOẢN -->
+        <div id="viewAccountModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Chi tiết tài khoản</span>
+                    <button class="modal-close" onclick="closeModal('viewAccountModal')">×</button>
+                </div>
+
+                <div class="form-info">
+                    <div class="form-info-item">
+                        <strong>Họ và tên:</strong>
+                        <span id="viewFullName"></span>
+                    </div>
+                    <div class="form-info-item">
+                        <strong>Số điện thoại:</strong>
+                        <span id="viewPhone"></span>
+                    </div>
+                    <div class="form-info-item">
+                        <strong>Email:</strong>
+                        <span id="viewEmail"></span>
+                    </div>
+                    <div class="form-info-item" id="viewRoleItem" style="display: none;">
+                        <strong>Vai trò:</strong>
+                        <span id="viewRole"></span>
+                    </div>
+                    <div class="form-info-item">
+                        <strong>Trạng thái:</strong>
+                        <span id="viewStatus"></span>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-cancel" onclick="closeModal('viewAccountModal')">
+                        <i class="fas fa-times"></i> Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL THÊM TÀI KHOẢN -->
+        <div id="addAccountModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <i class="fas fa-user-plus"></i>
-                    <span id="modalTitle">Thêm Bác sĩ Mới</span>
+                    <span id="addModalTitle">Thêm tài khoản Nhân viên</span>
+                    <button class="modal-close" onclick="closeModal('addAccountModal')">×</button>
                 </div>
 
-                <form action="admin-users" method="POST" id="addUserForm">
+                <form action="admin-users" method="POST" id="addAccountForm">
                     <input type="hidden" name="action" value="add">
-                    <input type="hidden" name="role" id="roleInput">
+                    <input type="hidden" name="role" id="addRoleInput">
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="fullname" required placeholder="Nhập họ và tên">
+                        <input type="text" name="fullname" id="addFullName" required placeholder="Nhập họ và tên">
                     </div>
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="phone" required placeholder="Nhập số điện thoại">
+                        <input type="tel" name="phone" id="addPhone" required placeholder="Nhập số điện thoại">
                     </div>
 
                     <div class="form-group">
-                        <label>Mật khẩu mặc định</label>
-                        <input type="text" name="password" id="password" value="123456" placeholder="Mật khẩu">
+                        <label>Email</label>
+                        <input type="email" name="email" id="addEmail" placeholder="Nhập email">
+                    </div>
+
+                    <div id="addRoleGroup" class="form-group" style="display: none;">
+                        <label>Vai trò <span style="color: red;">*</span></label>
+                        <select name="staffRole" id="addStaffRole">
+                            <option value="receptionist">Tiếp tân</option>
+                            <option value="technician">Kỹ thuật viên</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mật khẩu <span style="color: red;">*</span></label>
+                        <input type="password" name="password" id="addPassword" value="123456" placeholder="Mật khẩu">
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn-cancel" onclick="closeAddModal()">
+                        <button type="button" class="btn-cancel" onclick="closeModal('addAccountModal')">
                             <i class="fas fa-times"></i> Hủy
                         </button>
-                        <button type="submit" class="btn-submit-modal">
+                        <button type="submit" class="btn-submit">
                             <i class="fas fa-save"></i> Tạo tài khoản
                         </button>
                     </div>
@@ -587,38 +906,55 @@
             </div>
         </div>
 
-        <!-- MODAL CHỈNH SỬA DỊCH VỤ -->
-        <div id="editServiceModal" class="modal">
+        <!-- MODAL CHỈNH SỬA TÀI KHOẢN -->
+        <div id="editAccountModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <i class="fas fa-edit"></i>
-                    <span>Chỉnh sửa Dịch vụ</span>
+                    <span>Chỉnh sửa tài khoản</span>
+                    <button class="modal-close" onclick="closeModal('editAccountModal')">×</button>
                 </div>
 
-                <form action="${pageContext.request.contextPath}/admin/services" method="POST">
-                    <input type="hidden" name="action" value="update">
-                    <input type="hidden" name="serviceId" id="editServiceId">
+                <form action="admin-users" method="POST" id="editAccountForm">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="userId" id="editUserId">
 
                     <div class="form-group">
-                        <label>Tên dịch vụ <span style="color: red;">*</span></label>
-                        <input type="text" name="name" id="editServiceName" required placeholder="Nhập tên dịch vụ">
+                        <label>Họ và tên <span style="color: red;">*</span></label>
+                        <input type="text" name="fullname" id="editFullName" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Danh mục <span style="color: red;">*</span></label>
-                        <input type="text" name="serviceType" id="editServiceType" required placeholder="Ví dụ: Khám tổng quát">
+                        <label>Số điện thoại <span style="color: red;">*</span></label>
+                        <input type="tel" name="phone" id="editPhone" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Giá (VNĐ) <span style="color: red;">*</span></label>
-                        <input type="number" name="price" id="editServicePrice" min="0" required placeholder="0">
+                        <label>Email</label>
+                        <input type="email" name="email" id="editEmail">
+                    </div>
+
+                    <div id="editRoleGroup" class="form-group" style="display: none;">
+                        <label>Vai trò <span style="color: red;">*</span></label>
+                        <select name="role" id="editRole">
+                            <option value="receptionist">Tiếp tân</option>
+                            <option value="technician">Kỹ thuật viên</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Trạng thái <span style="color: red;">*</span></label>
+                        <select name="status" id="editStatus">
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Khóa</option>
+                        </select>
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button" class="btn-cancel" onclick="closeEditServiceModal()">
+                        <button type="button" class="btn-cancel" onclick="closeModal('editAccountModal')">
                             <i class="fas fa-times"></i> Hủy
                         </button>
-                        <button type="submit" class="btn-submit-modal">
+                        <button type="submit" class="btn-submit">
                             <i class="fas fa-save"></i> Lưu thay đổi
                         </button>
                     </div>
@@ -627,33 +963,123 @@
         </div>
 
         <script>
-            // Mở modal thêm người dùng
-            function openAddModal(role) {
-                document.getElementById('roleInput').value = role;
-                if (role === 2) {
-                    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-stethoscope"></i> Thêm Bác sĩ Mới';
-                } else if (role === 3) {
-                    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-tie"></i> Thêm Nhân viên Mới';
+            let currentTab = 'staff';
+
+            // Chuyển tab
+            function switchTab(event, tab) {
+                currentTab = tab;
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+
+                document.getElementById(tab).classList.add('active');
+                event.target.classList.add('active');
+            }
+
+            // Xem chi tiết tài khoản
+            function viewAccount(userId, fullName, phone, email, role, status) {
+                document.getElementById('viewFullName').innerText = fullName;
+                document.getElementById('viewPhone').innerText = phone;
+                document.getElementById('viewEmail').innerText = email || 'Chưa cập nhật';
+                
+                const roleItem = document.getElementById('viewRoleItem');
+                if (role !== 'patient') {
+                    roleItem.style.display = 'flex';
+                    const roleText = role === 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên';
+                    document.getElementById('viewRole').innerText = roleText;
+                } else {
+                    roleItem.style.display = 'none';
                 }
-                document.getElementById('addUserModal').style.display = 'block';
+
+                const statusBadge = status === 'active' ? '<span class="badge badge-active">Hoạt động</span>' : '<span class="badge badge-inactive">Khóa</span>';
+                document.getElementById('viewStatus').innerHTML = statusBadge;
+
+                openModal('viewAccountModal');
+            }
+
+            // Mở modal thêm tài khoản
+            function openAddModal(type) {
+                const form = document.getElementById('addAccountForm');
+                form.reset();
+                
+                const roleGroup = document.getElementById('addRoleGroup');
+                if (type === 'staff') {
+                    document.getElementById('addModalTitle').innerText = 'Thêm tài khoản Nhân viên';
+                    document.getElementById('addRoleInput').value = '3'; // receptionist
+                    roleGroup.style.display = 'block';
+                } else {
+                    document.getElementById('addModalTitle').innerText = 'Thêm tài khoản Bệnh nhân';
+                    document.getElementById('addRoleInput').value = 'patient';
+                    roleGroup.style.display = 'none';
+                }
+
+                openModal('addAccountModal');
+            }
+
+            // Mở modal chỉnh sửa
+            function openEditModal(userId, fullName, phone, email, role, status, type) {
+                document.getElementById('editUserId').value = userId;
+                document.getElementById('editFullName').value = fullName;
+                document.getElementById('editPhone').value = phone;
+                document.getElementById('editEmail').value = email;
+                document.getElementById('editStatus').value = status;
+
+                const roleGroup = document.getElementById('editRoleGroup');
+                if (type === 'staff') {
+                    roleGroup.style.display = 'block';
+                    document.getElementById('editRole').value = role;
+                } else {
+                    roleGroup.style.display = 'none';
+                }
+
+                openModal('editAccountModal');
+            }
+
+            // Mở modal
+            function openModal(modalId) {
+                document.getElementById(modalId).style.display = 'block';
             }
 
             // Đóng modal
-            function closeAddModal() {
-                document.getElementById('addUserModal').style.display = 'none';
-                document.getElementById('addUserForm').reset();
+            function closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
             }
 
             // Đóng modal khi click bên ngoài
             window.onclick = function(event) {
-                const modal = document.getElementById('addUserModal');
-                if (event.target === modal) {
-                    modal.style.display = 'none';
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+
+            // Kích hoạt/Vô hiệu hóa
+            function toggleStatus(phone, name) {
+                if (confirm(`Thay đổi trạng thái của ${name}?`)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'admin-users';
+
+                    const actionInput = document.createElement('input');
+                    actionInput.type = 'hidden';
+                    actionInput.name = 'action';
+                    actionInput.value = 'toggleStatus';
+
+                    const phoneInput = document.createElement('input');
+                    phoneInput.type = 'hidden';
+                    phoneInput.name = 'phone';
+                    phoneInput.value = phone;
+
+                    form.appendChild(actionInput);
+                    form.appendChild(phoneInput);
+                    document.body.appendChild(form);
+                    form.submit();
                 }
             }
 
-            // Xóa người dùng
-            function deleteUser(phone, name) {
+            // Xóa tài khoản
+            function deleteAccount(phone, name) {
                 if (confirm(`Bạn chắc chắn muốn xóa tài khoản của ${name}?`)) {
                     const form = document.createElement('form');
                     form.method = 'POST';
@@ -676,28 +1102,38 @@
                 }
             }
 
-            // Bật/Tắt trạng thái
-            function toggleStatus(phone, name) {
-                if (confirm(`Thay đổi trạng thái của ${name}?`)) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = 'admin-users';
-
-                    const actionInput = document.createElement('input');
-                    actionInput.type = 'hidden';
-                    actionInput.name = 'action';
-                    actionInput.value = 'toggleStatus';
-
-                    const phoneInput = document.createElement('input');
-                    phoneInput.type = 'hidden';
-                    phoneInput.name = 'phone';
-                    phoneInput.value = phone;
-
-                    form.appendChild(actionInput);
-                    form.appendChild(phoneInput);
-                    document.body.appendChild(form);
-                    form.submit();
+            // Tìm kiếm nhân viên
+            function searchStaff() {
+                const keyword = document.getElementById('staffSearch').value;
+                if (!keyword.trim()) {
+                    alert('Vui lòng nhập từ khóa tìm kiếm');
+                    return;
                 }
+                window.location.href = 'admin-users?action=search&keyword=' + encodeURIComponent(keyword) + '&tab=staff';
+            }
+
+            // Tìm kiếm bệnh nhân
+            function searchPatient() {
+                const keyword = document.getElementById('patientSearch').value;
+                if (!keyword.trim()) {
+                    alert('Vui lòng nhập từ khóa tìm kiếm');
+                    return;
+                }
+                window.location.href = 'admin-users?action=search&keyword=' + encodeURIComponent(keyword) + '&tab=patient';
+            }
+
+            // Đặt lại bộ lọc nhân viên
+            function resetStaffFilter() {
+                document.getElementById('staffSearch').value = '';
+                document.getElementById('staffFilter').value = 'all';
+                window.location.href = 'admin-users';
+            }
+
+            // Đặt lại bộ lọc bệnh nhân
+            function resetPatientFilter() {
+                document.getElementById('patientSearch').value = '';
+                document.getElementById('patientFilter').value = 'all';
+                window.location.href = 'admin-users';
             }
 
             // Tự động đóng thông báo sau 5 giây
