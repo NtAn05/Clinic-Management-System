@@ -4,6 +4,7 @@
     Author     : Admin
 --%>
 
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
@@ -59,42 +60,39 @@
                         <div class="form-grid confirm-view">
                             <div>
                                 <label>Họ và tên</label>
-                                <p>${name}</p>
+                                <p>${patient.getFullName()}</p>
                             </div>
 
                             <div>
                                 <label>Số điện thoại</label>
-                                <p>${sdt}</p>
+                                <p>${patient.getPhone()}</p>
                             </div>
 
                             <div>
                                 <label>Email</label>
-                                <p>${email}</p>
+                                <p>${patient.getEmail()}</p>
                             </div>
 
                             <div>
                                 <label>Ngày sinh</label>
-                                <p>${dateofbirth}</p>
+                                <p>${patient.getDob()}</p>
                             </div>
 
                             <div>
                                 <label>Giới tính</label>
                                 <p>
-                                <c:choose>
-                                    <c:when test="${gender == 'MALE'}">Nam</c:when>
-                                    <c:otherwise>Nữ</c:otherwise>
-                                </c:choose>
+                                ${patient.getGender()}
                                 </p>
                             </div>
 
                             <div>
                                 <label>Địa chỉ</label>
-                                <p>${address}</p>
+                                <p>${patient.getAddress()}</p>
                             </div>
                         </div>
 
                         <label>Ghi chú bệnh lý</label>
-                        <p class="note-box">${note}</p>
+                        <p class="note-box">${appointment.getSymptom()}</p>
                     </div>
 
                     <!-- NGÀY + CA KHÁM -->
@@ -104,46 +102,62 @@
                         <div class="form-grid confirm-view">
                             <div>
                                 <label>Ngày khám</label>
-                                <p>${appointmentDate}</p>
+                                <c:if test="${appointment.getPatientName() == 'morning'}">
+                                    <p>
+                                        <strong>Ca sáng</strong>
+                                    <span>07:00 - 11:30</span>
+                                    </p>
+                                </c:if>
+                                <c:if test="${appointment.getPatientName() == 'afternoon'}">
+                                    <p>
+                                        <strong>Ca chiều</strong>
+                                    <span>13:30 - 17:00</span>
+                                    </p>
+                                </c:if>
                             </div>
 
                             <div>
                                 <label>Ca khám</label>
-                                <p>${timeSlot}</p>
+                                <p>${appointment.getStatus()}</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- ACTION -->
                     <div class="actions">
-                        <button class="btn-outline"
-                                onclick="history.back()">
+                           <button  class="btn-outline"
+                                     onclick="history.back()">
                             Quay lại
-                        </button>
+                            </button>
 
-                        <button class="btn-primary"
-                                onclick="location.href = '${pageContext.request.contextPath}/payment'">
-                            Xác nhận & Thanh toán
-                        </button>
+                                
+                        
+                        <button type="submit" name="btnSubmit" value="step2" class="btn-primary">
+                                Xác nhận & Thanh toán
+                            </button>
+                        
                     </div>
                 </div>
 
                 <!-- RIGHT (GIỮ NGUYÊN) -->
                 <div class="card">
-                    <img src="${doctor.image}" alt="Doctor">
-                    <h3>${doctor.fullName}</h3>
-                    <p class="degree">${doctor.qualification}</p>
-                    <p class="desc">${doctor.specialization}</p>
-                    <p class="desc">${doctor.clinic_address}</p>
+                    <img src="${doctor.getImage()}" alt="Doctor">
 
+                    <h3>${doctor.getFullName()}</h3>
+                    <p class="degree">${doctor.getQualification()}</p>
+                    <p class="desc">${doctor.getSpecialization()}</p>
+                    <p class="desc">${doctor.getClinic_address()}</p>
+                    <br>
                     <div class="info">
-                        <span>⏱ ${doctor.experience_years} năm</span>
-                        <span>⭐ ${doctor.rating}</span>
+                        <span>⏱ ${doctor.getExperience_years()} năm</span>
+                        <span>⭐ ${doctor.getRating()}</span>
                     </div>
-
+                    <br>
                     <p class="price">
                         <fmt:formatNumber value="${doctor.price}" type="number"/>đ
                     </p>
+
+
                 </div>
 
             </div>

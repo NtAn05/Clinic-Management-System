@@ -9,24 +9,21 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
+        <title>Appointment</title>
         <link rel="stylesheet"
               href="${pageContext.request.contextPath}/pages/appointments/appointment/appointment.css">
-
     </head>
     <body>
-
 
         <jsp:include page="/common/header.jsp" />
 
         <div class="page">
-
             <div class="content">
 
-                <!-- LEFT -->
+                <!-- Trái và giữa -->
                 <div class="main">
 
-                    <!-- STEPS -->
+                    <!-- thanh các bước -->
                     <div class="steps-wrapper">
                         <div class="step-circle active">
                             <span>1</span>
@@ -49,57 +46,61 @@
                         </div>
                     </div>
 
+                    <!-- FORM thông tin -->
+                    <form method="post" action="${pageContext.request.contextPath}/appointmentservlet">
 
-                    <!-- FORM -->
+                        <!-- hidden an toàn -->
+                        <input type="hidden" name="doctorID" value="${doctor.doctorId}">
+                        <input type="hidden" name="userID" value="${sessionScope.account.userId}">
 
-                    <form method="get" action="${pageContext.request.contextPath}/appointmentservlet">
-                        <div id="formSelf">
-                            <div class="card-box">
-                                <h3>Thông tin của bạn</h3>
+                        <div class="card-box">
+                            <h3>Thông tin của bạn</h3>
 
-                                <div class="form-grid">
-                                    <div>
-                                        <label>Họ và tên *</label>
-                                        <input type="text" name="name" value="${patient .fullName}" required>
-                                    </div>
-                                    <div>
-                                        <label>Số điện thoại *</label>
-                                        <input type="text" name="sdt" value="${patient .phone}" required>
-                                    </div>
-
-                                    <div>
-                                        <label>Email *</label>
-                                        <input type="email" name="email" value="${patient.email}" required>
-                                    </div>
-                                    <div>
-                                        <label>Ngày sinh *</label>
-                                        <input type="date" name="dateofbirth" value="${patient.dateofbirth}" >
-                                    </div>
-
-                                    <div>
-                                        <label >Giới tính *</label>
-                                        <select name="gender" required>
-                                            <option value="MALE">Nam</option>
-                                            <option value="FEMALE">Nữ</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label>Địa chỉ</label>
-                                        <input type="text" name="address" value="${patient.address}">
-                                    </div>
+                            <div class="form-grid">
+                                <div>
+                                    <label>Họ và tên *</label>
+                                    <input type="text" name="name" value="${patient.fullName}" required>
                                 </div>
 
-                                <label>Ghi chú bệnh lý</label>
-                                <textarea placeholder="Nhập triệu chứng nếu có" name="note" value="${patient.note}"></textarea>
+                                <div>
+                                    <label>Số điện thoại *</label>
+                                    <input type="text" name="sdt" value="${patient.phone}" required>
+                                </div>
+
+                                <div>
+                                    <label>Email *</label>
+                                    <input type="email" name="email" value="${patient.email}" required>
+                                </div>
+
+                                <div>
+                                    <label>Ngày sinh *</label>
+                                    <input type="date" name="dateofbirth" value="${patient.dateofbirth}">
+                                </div>
+
+                                <div>
+                                    <label>Giới tính *</label>
+                                    <select name="gender" required>
+                                        <option value="MALE">Nam</option>
+                                        <option value="FEMALE">Nữ</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label>Địa chỉ</label>
+                                    <input type="text" name="address" value="${patient.address}">
+                                </div>
                             </div>
+
+                            <label>Ghi chú bệnh lý</label>
+                            <textarea name="note" placeholder="Nhập triệu chứng nếu có">${patient.note}</textarea>
                         </div>
 
+                        <!-- DATE & TIME -->
                         <div class="card-box">
                             <h3>Chọn ngày và ca khám</h3>
 
                             <label>Ngày khám *</label>
-                            <div class="time-slots" id="dateRadios" name="date"></div>
+                            <div class="time-slots" id="dateRadios"></div>
 
                             <div class="time-slots">
                                 <input type="radio" name="time" id="morning" value="morning" checked>
@@ -115,68 +116,61 @@
                                 </label>
                             </div>
                         </div>
+
+                        <div class="actions">
+                            <button type="button" class="btn-outline"
+                                    onclick="location.href = '${pageContext.request.contextPath}/listofdoctorservlet'">
+                                Quay lại
+                            </button>
+
+                                <button type="submit" name="btnSubmit" value="step1" class="btn-primary">
+                                Tiếp tục
+                            </button>
+                        </div>
+
                     </form>
-                    <div class="actions">
-                        <button type="button" class="btn-outline"
-                                onclick="location.href = '${pageContext.request.contextPath}/listofdoctorservlet'">
-                            Quay lại
-                        </button>
-
-
-                        <button type="button"
-                                class="btn-primary"
-                                onclick="location.href = '${pageContext.request.contextPath}/pages/appointments/appointment/appointmentSecond.jsp'">
-                            Tiếp tục
-                        </button>
-
-                    </div>
-
                 </div>
 
-                <!-- RIGHT -->
+                <!-- bãc sĩ -->
                 <div class="card">
-                    <img src="${doctor.getImage()}" alt="Doctor">
+                    <img src="${doctor.image}" alt="Doctor">
 
-                    <h3>${doctor.getFullName()}</h3>
-                    <p class="degree">${doctor.getQualification()}</p>
-                    <p class="desc">${doctor.getSpecialization()}</p>
-                    <p class="desc">${doctor.getClinic_address()}</p>
-                    <br>
+                    <h3>${doctor.fullName}</h3>
+                    <p class="degree">${doctor.qualification}</p>
+                    <p class="desc">${doctor.specialization}</p>
+                    <p class="desc">${doctor.clinic_address}</p>
+
                     <div class="info">
-                        <span>⏱ ${doctor.getExperience_years()} năm</span>
-                        <span>⭐ ${doctor.getRating()}</span>
+                        <span>⏱ ${doctor.experience_years} năm</span>
+                        <span>⭐ ${doctor.rating}</span>
                     </div>
-                    <br>
+
                     <p class="price">
                         <fmt:formatNumber value="${doctor.price}" type="number"/>đ
                     </p>
-
-
                 </div>
 
-
             </div>
-            
+        </div>
 
-            <script>
-                const container = document.getElementById("dateRadios");
-                const today = new Date();
+        <script>
+            const container = document.getElementById("dateRadios");
+            const today = new Date();
 
-                for (let i = 0; i < 7; i++) {
-                    const d = new Date(today);
-                    d.setDate(today.getDate() + i);
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
 
-                    const value = d.toISOString().split("T")[0];
-                    const label = d.toLocaleDateString("vi-VN");
+                const value = d.toISOString().split("T")[0];
+                const label = d.toLocaleDateString("vi-VN");
 
-                    container.innerHTML +=
-                            '<input type="radio" name="date" id="d' + i + '" value="' + value + '"' + (i === 0 ? ' checked' : '') + '>' +
-                            '<label for="d' + i + '" class="slot">' +
-                            '<strong>' + label + '</strong>' +
-                            '</label>';
-                }
-            </script>
+                container.innerHTML +=
+                        '<input type="radio" name="date" id="d' + i + '" value="' + value + '"' +
+                        (i === 0 ? ' checked' : '') + '>' +
+                        '<label for="d' + i + '" class="slot"><strong>' + label + '</strong></label>';
+            }
+        </script>
 
-            <jsp:include page="/common/footer.jsp" />
+        <jsp:include page="/common/footer.jsp" />
     </body>
 </html>

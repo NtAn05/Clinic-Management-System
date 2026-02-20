@@ -67,9 +67,7 @@ public class AppointmentServlet extends HttpServlet {
 
         AppointmentDAO dao = new AppointmentDAO();
         Doctor doctor;
-        String error = "";
         doctor = dao.getDoctorById(doctorID);
-        request.setAttribute("error", error);
         request.setAttribute("doctor", doctor);
 
         request.getRequestDispatcher("/pages/appointments/appointment/appointmentFirst.jsp")
@@ -79,55 +77,66 @@ public class AppointmentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+//nhận thông tin
         String userID = request.getParameter("userID");
         int useId = Integer.parseInt(userID);
-        String doctorID = request.getParameter("btnDoctorID");
+        
+        String doctorID = request.getParameter("doctorID");
         long doctorId = Long.parseLong(doctorID);
+        
         String name = request.getParameter("name");
         String sdt = request.getParameter("sdt");
         String email = request.getParameter("email");
+        
         String dateofbirth = request.getParameter("dateofbirth");
         LocalDate localDate = LocalDate.parse(dateofbirth);
         java.sql.Date birthDate = java.sql.Date.valueOf(localDate);
+        
         String gender = request.getParameter("gender");
         String address = request.getParameter("address");
         String note = request.getParameter("note");
         String date = request.getParameter("date");
         String time = request.getParameter("time");
-        String continues = request.getParameter("btnSubmit");
+        String submit = request.getParameter("btnSubmit");
+        
+// tạo đối tượng 
         Patient patient = new Patient(doctorId, useId, name, sdt, birthDate, address, email, gender);
-        Appointment app = new Appointment(0, time, date, note);
+        Appointment appointment = new Appointment(0, time, date, note);
         AppointmentDAO dao = new AppointmentDAO();
         String errorPhone = "";
         String errorEmail = "";
-        String role = "";
+        String status = "";
+// check thông tin 
         if (!checkPhone(sdt)) {
             errorPhone = "Phone must form 0xxx xxx xxx";
         } else if (!checkEmail(email)) {
             errorEmail = "abc@xxx.com";
         } else{
-            role= "oke";
+            status= "yes";
         }
-         request.setAttribute("errorPhone", errorPhone);
+        request.setAttribute("errorPhone", errorPhone);
         request.setAttribute("errorEmail", errorEmail);
-        request.setAttribute("app", app);
+        request.setAttribute("appointment", appointment);
         request.setAttribute("patient", patient);   
-            if(continues.equalsIgnoreCase("submit")){
-            Appointment ap = dao.addAppointment(app);
+// tạo đơn appointment
+            if(submit !=null && submit.equalsIgnoreCase("step2")){
+            Appointment ap = dao.addAppointment(appointment);
             Patient p = dao.addPatient(patient);
-            role = "set";
+            status = "set";
             }
-    
-
-        if (role.equals("ok")) {
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentSecond.jsp")
-        
+        // Doctor
+        Doctor doctor;
+        doctor = dao.getDoctorById(doctorID);
+        request.setAttribute("doctor", doctor);
+        // chuyển thông tin sang để xác nhận
+        if (status.equals("yes")) {          
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentSecond.jsp")      
                     .forward(request, response);
-        } else if (role.equals("set")) {
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentPayment.jsp")
-        
+         }else if (status.equals("set")) {          
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentThird.jsp")      
                     .forward(request, response);
-        }  else {
+         }
+          else {
             request.getRequestDispatcher("/pages/appointments/appointment/appointmentFirst.jsp")
                     .forward(request, response);
         }
