@@ -189,23 +189,35 @@ public class UserDAO extends DBContext {
         }
     }
 
-    // Xóa User (Thực tế nên là Khóa tài khoản thay vì xóa hẳn)
-    public void deleteUser(String phone) {
-        String sql = "DELETE FROM users WHERE phone = ?";
-        try {
-            PreparedStatement st = connection.prepareStatement(sql);
-            st.setString(1, phone);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e);
-        }
-    }
 
     // Lấy thông tin user theo ID
     public User getUserById(int userId) {
         String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE user_id = ?";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
+            
+            if (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                return u;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // Lấy thông tin user theo số điện thoại
+    public User getUserByPhone(String phone) {
+        String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE phone = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, phone);
             ResultSet rs = st.executeQuery();
             
             if (rs.next()) {
@@ -301,8 +313,44 @@ public class UserDAO extends DBContext {
         return users;
     }
 
-    // Lọc người dùng theo trạng thái
-    public List<User> getUsersByStatus(Role role, Status status) {
+    // Lấy danh sách tất cả nhân viên (bao gồm bác sĩ, tiếp tân, kỹ thuật viên) và admin
+    public List<User> getAllStaffAndAdmin() {
+        String sql = """
+        SELECT user_id, full_name, phone, email, role, status 
+        FROM users 
+        WHERE role IN ('admin', 'doctor', 'receptionist', 'technician') 
+        ORDER BY 
+            CASE 
+                WHEN role = 'admin' THEN 1
+                WHEN role = 'doctor' THEN 2
+                WHEN role = 'receptionist' THEN 3
+                WHEN role = 'technician' THEN 4
+            END, full_name
+    """;
+        List<User> users = new ArrayList<>();
+        
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            ResultSet rs = st.executeQuery();
+            
+            while (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                users.add(u);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return users;
+    }
+
+    // Lọc người dùng theo role và status
+    public List<User> getUsersByRoleAndStatus(Role role, Status status) {
         String sql = """
         SELECT user_id, full_name, phone, email, role, status 
         FROM users 

@@ -299,6 +299,16 @@
                 white-space: nowrap;
             }
 
+            .badge-admin {
+                background: #ffebee;
+                color: #c62828;
+            }
+
+            .badge-doctor {
+                background: #e3f2fd;
+                color: #1976d2;
+            }
+
             .badge-receptionist {
                 background: #fff3e0;
                 color: #f57c00;
@@ -365,14 +375,6 @@
 
             .btn-toggle:hover {
                 background: #f3e5f5;
-            }
-
-            .btn-delete {
-                color: #d32f2f;
-            }
-
-            .btn-delete:hover {
-                background: #ffebee;
             }
 
             .no-data {
@@ -645,8 +647,18 @@
                         <input type="text" id="staffSearch" placeholder="Nhập tên hoặc số điện thoại...">
                     </div>
                     <div class="filter-box">
+                        <label><i class="fas fa-filter"></i> Lọc theo vai trò</label>
+                        <select id="staffRoleFilter">
+                            <option value="all">-- Tất cả --</option>
+                            <option value="admin">Admin</option>
+                            <option value="doctor">Bác sĩ</option>
+                            <option value="receptionist">Tiếp tân</option>
+                            <option value="technician">Kỹ thuật viên</option>
+                        </select>
+                    </div>
+                    <div class="filter-box">
                         <label><i class="fas fa-filter"></i> Lọc theo trạng thái</label>
-                        <select id="staffFilter">
+                        <select id="staffStatusFilter">
                             <option value="all">-- Tất cả --</option>
                             <option value="active">Hoạt động</option>
                             <option value="inactive">Khóa</option>
@@ -668,7 +680,7 @@
                 <!-- TABLE NHÂN VIÊN -->
                 <div class="table-container">
                     <c:choose>
-                        <c:when test="${not empty staffs}">
+                        <c:when test="${not empty allStaff}">
                             <table>
                                 <thead>
                                     <tr>
@@ -677,18 +689,18 @@
                                         <th>Email</th>
                                         <th>Vai trò</th>
                                         <th>Trạng thái</th>
-                                        <th style="width: 180px; text-align: center;">Thao tác</th>
+                                        <th style="width: 150px; text-align: center;">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <c:forEach items="${staffs}" var="staff">
+                                    <c:forEach items="${allStaff}" var="staff">
                                         <tr>
                                             <td><strong>${staff.fullName}</strong></td>
                                             <td>${staff.phone}</td>
                                             <td>${not empty staff.email ? staff.email : '<em>Chưa cập nhật</em>'}</td>
                                             <td>
-                                                <span class="badge ${staff.role.toString() == 'receptionist' ? 'badge-receptionist' : 'badge-technician'}">
-                                                    ${staff.role.toString() == 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên'}
+                                                <span class="badge ${staff.role.toString() == 'admin' ? 'badge-admin' : staff.role.toString() == 'doctor' ? 'badge-doctor' : staff.role.toString() == 'receptionist' ? 'badge-receptionist' : 'badge-technician'}">
+                                                    ${staff.role.toString() == 'admin' ? 'Admin' : staff.role.toString() == 'doctor' ? 'Bác sĩ' : staff.role.toString() == 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên'}
                                                 </span>
                                             </td>
                                             <td>
@@ -701,15 +713,14 @@
                                                     <button class="btn-action btn-view" onclick="viewAccount(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}')" title="Xem chi tiết">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    <button class="btn-action btn-edit" onclick="openEditModal(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}', 'staff')" title="Sửa">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button class="btn-action btn-toggle" onclick="toggleStatus('${staff.phone}', '${staff.fullName}')" title="Kích hoạt/Vô hiệu hóa">
-                                                        <i class="fas fa-toggle-on"></i>
-                                                    </button>
-                                                    <button class="btn-action btn-delete" onclick="deleteAccount('${staff.phone}', '${staff.fullName}')" title="Xóa">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                                    <c:if test="${staff.role.toString() != 'admin'}">
+                                                        <button class="btn-action btn-edit" onclick="openEditModal(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}', 'staff')" title="Sửa">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn-action btn-toggle" onclick="toggleStatus('${staff.phone}', '${staff.fullName}')" title="Kích hoạt/Vô hiệu hóa">
+                                                            <i class="fas fa-toggle-on"></i>
+                                                        </button>
+                                                    </c:if>
                                                 </div>
                                             </td>
                                         </tr>
@@ -767,7 +778,7 @@
                                         <th>Số điện thoại</th>
                                         <th>Email</th>
                                         <th>Trạng thái</th>
-                                        <th style="width: 180px; text-align: center;">Thao tác</th>
+                                        <th style="width: 150px; text-align: center;">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -791,9 +802,6 @@
                                                     </button>
                                                     <button class="btn-action btn-toggle" onclick="toggleStatus('${patient.phone}', '${patient.fullName}')" title="Kích hoạt/Vô hiệu hóa">
                                                         <i class="fas fa-toggle-on"></i>
-                                                    </button>
-                                                    <button class="btn-action btn-delete" onclick="deleteAccount('${patient.phone}', '${patient.fullName}')" title="Xóa">
-                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
                                             </td>
@@ -884,6 +892,7 @@
                     <div id="addRoleGroup" class="form-group" style="display: none;">
                         <label>Vai trò <span style="color: red;">*</span></label>
                         <select name="staffRole" id="addStaffRole">
+                            <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
                             <option value="technician">Kỹ thuật viên</option>
                         </select>
@@ -937,6 +946,7 @@
                     <div id="editRoleGroup" class="form-group" style="display: none;">
                         <label>Vai trò <span style="color: red;">*</span></label>
                         <select name="role" id="editRole">
+                            <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
                             <option value="technician">Kỹ thuật viên</option>
                         </select>
@@ -980,11 +990,11 @@
                 document.getElementById('viewFullName').innerText = fullName;
                 document.getElementById('viewPhone').innerText = phone;
                 document.getElementById('viewEmail').innerText = email || 'Chưa cập nhật';
-                
+
                 const roleItem = document.getElementById('viewRoleItem');
                 if (role !== 'patient') {
                     roleItem.style.display = 'flex';
-                    const roleText = role === 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên';
+                    const roleText = role === 'admin' ? 'Admin' : role === 'doctor' ? 'Bác sĩ' : role === 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên';
                     document.getElementById('viewRole').innerText = roleText;
                 } else {
                     roleItem.style.display = 'none';
@@ -1000,7 +1010,7 @@
             function openAddModal(type) {
                 const form = document.getElementById('addAccountForm');
                 form.reset();
-                
+
                 const roleGroup = document.getElementById('addRoleGroup');
                 if (type === 'staff') {
                     document.getElementById('addModalTitle').innerText = 'Thêm tài khoản Nhân viên';
@@ -1078,54 +1088,39 @@
                 }
             }
 
-            // Xóa tài khoản
-            function deleteAccount(phone, name) {
-                if (confirm(`Bạn chắc chắn muốn xóa tài khoản của ${name}?`)) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = 'admin-users';
-
-                    const actionInput = document.createElement('input');
-                    actionInput.type = 'hidden';
-                    actionInput.name = 'action';
-                    actionInput.value = 'delete';
-
-                    const phoneInput = document.createElement('input');
-                    phoneInput.type = 'hidden';
-                    phoneInput.name = 'phone';
-                    phoneInput.value = phone;
-
-                    form.appendChild(actionInput);
-                    form.appendChild(phoneInput);
-                    document.body.appendChild(form);
-                    form.submit();
+            // Filter nhân viên
+            function filterStaff() {
+                const role = document.getElementById('staffRoleFilter').value;
+                const status = document.getElementById('staffStatusFilter').value;
+                
+                let url = 'admin-users?action=filter&tab=staff';
+                if (role !== 'all') {
+                    url += '&role=' + role;
                 }
+                if (status !== 'all') {
+                    url += '&status=' + status;
+                }
+                
+                window.location.href = url;
             }
 
-            // Tìm kiếm nhân viên
-            function searchStaff() {
-                const keyword = document.getElementById('staffSearch').value;
-                if (!keyword.trim()) {
-                    alert('Vui lòng nhập từ khóa tìm kiếm');
-                    return;
+            // Filter bệnh nhân
+            function filterPatient() {
+                const status = document.getElementById('patientFilter').value;
+                
+                let url = 'admin-users?action=filter&tab=patient';
+                if (status !== 'all') {
+                    url += '&status=' + status;
                 }
-                window.location.href = 'admin-users?action=search&keyword=' + encodeURIComponent(keyword) + '&tab=staff';
-            }
-
-            // Tìm kiếm bệnh nhân
-            function searchPatient() {
-                const keyword = document.getElementById('patientSearch').value;
-                if (!keyword.trim()) {
-                    alert('Vui lòng nhập từ khóa tìm kiếm');
-                    return;
-                }
-                window.location.href = 'admin-users?action=search&keyword=' + encodeURIComponent(keyword) + '&tab=patient';
+                
+                window.location.href = url;
             }
 
             // Đặt lại bộ lọc nhân viên
             function resetStaffFilter() {
                 document.getElementById('staffSearch').value = '';
-                document.getElementById('staffFilter').value = 'all';
+                document.getElementById('staffRoleFilter').value = 'all';
+                document.getElementById('staffStatusFilter').value = 'all';
                 window.location.href = 'admin-users';
             }
 
@@ -1136,7 +1131,7 @@
                 window.location.href = 'admin-users';
             }
 
-            // Tự động đóng thông báo sau 5 giây
+            // Tự động đóng thông báo sau 5 giây và thêm event listeners cho filter
             document.addEventListener('DOMContentLoaded', function() {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(alert => {
@@ -1145,6 +1140,11 @@
                         setTimeout(() => alert.remove(), 300);
                     }, 5000);
                 });
+
+                // Thêm event listeners cho filter dropdowns
+                document.getElementById('staffRoleFilter').addEventListener('change', filterStaff);
+                document.getElementById('staffStatusFilter').addEventListener('change', filterStaff);
+                document.getElementById('patientFilter').addEventListener('change', filterPatient);
             });
         </script>
     </body>

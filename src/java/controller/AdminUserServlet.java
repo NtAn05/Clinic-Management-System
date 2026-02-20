@@ -176,8 +176,15 @@ public class AdminUserServlet extends HttpServlet {
         
         UserDAO userDAO = new UserDAO();
         try {
+            User user = userDAO.getUserByPhone(phone);
+            if (user == null) {
+                request.setAttribute("error", "Không tìm thấy người dùng");
+                loadUsers(request, response);
+                return;
+            }
+            
             userDAO.toggleUserStatus(phone);
-            request.setAttribute("success", "Cập nhật trạng thái thành công");
+            request.setAttribute("success", "Cập nhật trạng thái của " + user.getFullName() + " thành công");
         } catch (Exception e) {
             request.setAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
         }
@@ -189,15 +196,9 @@ public class AdminUserServlet extends HttpServlet {
             throws SQLException, ServletException, IOException {
         UserDAO userDAO = new UserDAO();
         
-        // Lấy danh sách nhân viên (receptionist + technician)
-        List<User> receptionists = userDAO.getUsersByRole(Role.receptionist);
-        List<User> technicians = userDAO.getUsersByRole(Role.technician);
-        
-        List<User> allStaff = new ArrayList<>();
-        if (receptionists != null) allStaff.addAll(receptionists);
-        if (technicians != null) allStaff.addAll(technicians);
-        
-        request.setAttribute("staffs", allStaff);
+        // Lấy danh sách tất cả nhân viên và admin
+        List<User> allStaff = userDAO.getAllStaffAndAdmin();
+        request.setAttribute("allStaff", allStaff);
         
         // Lấy danh sách bệnh nhân
         List<User> patients = userDAO.getPatientList();
@@ -251,19 +252,24 @@ public class AdminUserServlet extends HttpServlet {
         UserDAO userDAO = new UserDAO();
         
         if ("staff".equals(tab)) {
+            // Tìm kiếm trong tất cả staff và admin
+            List<User> admins = userDAO.searchUsers(keyword, Role.admin);
+            List<User> doctors = userDAO.searchUsers(keyword, Role.doctor);
             List<User> receptionists = userDAO.searchUsers(keyword, Role.receptionist);
             List<User> technicians = userDAO.searchUsers(keyword, Role.technician);
             
             List<User> allStaff = new ArrayList<>();
+            if (admins != null) allStaff.addAll(admins);
+            if (doctors != null) allStaff.addAll(doctors);
             if (receptionists != null) allStaff.addAll(receptionists);
             if (technicians != null) allStaff.addAll(technicians);
             
-            request.setAttribute("staffs", allStaff);
+            request.setAttribute("allStaff", allStaff);
             request.setAttribute("patients", new ArrayList<>());
         } else {
             List<User> patients = userDAO.searchUsers(keyword, Role.patient);
             request.setAttribute("patients", patients != null ? patients : new ArrayList<>());
-            request.setAttribute("staffs", new ArrayList<>());
+            request.setAttribute("allStaff", new ArrayList<>());
         }
         
         request.setAttribute("currentTab", tab);
@@ -274,38 +280,68 @@ public class AdminUserServlet extends HttpServlet {
     private void handleFilter(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
         String statusStr = request.getParameter("status");
+        String roleStr = request.getParameter("role");
         String tab = request.getParameter("tab");
         
         if (statusStr == null || statusStr.isEmpty()) statusStr = "all";
+        if (roleStr == null || roleStr.isEmpty()) roleStr = "all";
         if (tab == null) tab = "staff";
         
         UserDAO userDAO = new UserDAO();
         
-        if ("all".equals(statusStr)) {
-            loadUsers(request, response);
-            return;
-        }
-        
-        Status status = Status.valueOf(statusStr);
-        
         if ("staff".equals(tab)) {
-            List<User> receptionists = userDAO.getUsersByStatus(Role.receptionist, status);
-            List<User> technicians = userDAO.getUsersByStatus(Role.technician, status);
+            List<User> filteredStaff = new ArrayList<>();
             
-            List<User> allStaff = new ArrayList<>();
-            if (receptionists != null) allStaff.addAll(receptionists);
-            if (technicians != null) allStaff.addAll(technicians);
+            if ("all".equals(statusStr) && "all".equals(roleStr)) {
+                // Không filter gì cả
+                filteredStaff = userDAO.getAllStaffAndAdmin();
+            } else if ("all".equals(statusStr)) {
+                // Chỉ filter theo role
+                if ("admin".equals(roleStr)) {
+                    filteredStaff = userDAO.getUsersByRole(Role.admin);
+                } else if ("doctor".equals(roleStr)) {
+                    filteredStaff = userDAO.getUsersByRole(Role.doctor);
+                } else if ("receptionist".equals(roleStr)) {
+                    filteredStaff = userDAO.getUsersByRole(Role.receptionist);
+                } else if ("technician".equals(roleStr)) {
+                    filteredStaff = userDAO.getUsersByRole(Role.technician);
+                }
+            } else if ("all".equals(roleStr)) {
+                // Chỉ filter theo status
+                Status status = Status.valueOf(statusStr);
+                List<User> admins = userDAO.getUsersByRoleAndStatus(Role.admin, status);
+                List<User> doctors = userDAO.getUsersByRoleAndStatus(Role.doctor, status);
+                List<User> receptionists = userDAO.getUsersByRoleAndStatus(Role.receptionist, status);
+                List<User> technicians = userDAO.getUsersByRoleAndStatus(Role.technician, status);
+                
+                filteredStaff.addAll(admins);
+                filteredStaff.addAll(doctors);
+                filteredStaff.addAll(receptionists);
+                filteredStaff.addAll(technicians);
+            } else {
+                // Filter cả role và status
+                Status status = Status.valueOf(statusStr);
+                Role role = Role.valueOf(roleStr);
+                filteredStaff = userDAO.getUsersByRoleAndStatus(role, status);
+            }
             
-            request.setAttribute("staffs", allStaff);
+            request.setAttribute("allStaff", filteredStaff);
             request.setAttribute("patients", new ArrayList<>());
         } else {
-            List<User> patients = userDAO.getUsersByStatus(Role.patient, status);
-            request.setAttribute("patients", patients != null ? patients : new ArrayList<>());
-            request.setAttribute("staffs", new ArrayList<>());
+            if ("all".equals(statusStr)) {
+                List<User> patients = userDAO.getPatientList();
+                request.setAttribute("patients", patients != null ? patients : new ArrayList<>());
+            } else {
+                Status status = Status.valueOf(statusStr);
+                List<User> patients = userDAO.getUsersByRoleAndStatus(Role.patient, status);
+                request.setAttribute("patients", patients != null ? patients : new ArrayList<>());
+            }
+            request.setAttribute("allStaff", new ArrayList<>());
         }
         
         request.setAttribute("currentTab", tab);
         request.setAttribute("filterStatus", statusStr);
+        request.setAttribute("filterRole", roleStr);
         request.getRequestDispatcher("pages/admin/users.jsp").forward(request, response);
     }
 
