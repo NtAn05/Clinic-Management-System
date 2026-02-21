@@ -3,11 +3,12 @@ package dal;
 import model.Doctor;
 import model.DoctorShift;
 import model.DoctorQueueItem;
+import model.DoctorDashboardStats;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import model.doctorExamination.DoctorDashboardStats;
+import model.DoctorDashboardStats;
 
 public class DoctorDAO extends DBContext {
 

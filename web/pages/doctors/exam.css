@@ -1,0 +1,65 @@
+body {
+    background: #f5f7fb;
+    font-family: Arial, sans-serif;
+}
+
+.exam-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+.exam-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.actions button {
+    margin-left: 10px;
+}
+
+.tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 2px solid #e5e7eb;
+    margin-top: 20px;
+}
+
+.tab {
+    background: none;
+    border: none;
+    padding: 10px 5px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.tab.active {
+    color: #2563eb;
+    border-bottom: 3px solid #2563eb;
+}
+
+.tab-content {
+    display: none;
+    margin-top: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+input, textarea {
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+}

@@ -34,6 +34,18 @@ public class UserDAO extends DBContext {
         }
         return null;
     }
+    
+    // Xóa User (Thực tế nên là Khóa tài khoản thay vì xóa hẳn)
+    public void deleteUser(String phone) {
+        String sql = "DELETE FROM users WHERE phone = ?";
+        try {
+            PreparedStatement st = connection.prepareStatement(sql);
+            st.setString(1, phone);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+    }
 
     public void registerPatient(
             String fullName,

@@ -2,30 +2,21 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
-package controller;
+package controller.doctor;
 
-import model.Appointment;
-import dal.DoctorDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.LocalDate;
-import java.util.List;
-import model.DoctorQueueItem;
-import model.DoctorShift;
-import model.Doctor;
-import model.User;
-import model.doctorExamination.DoctorDashboardStats;
+import model.Patient;
 
 /**
  *
  * @author anngu
  */
-public class DoctorDashboardServlet extends HttpServlet {
+public class DoctorExamServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -44,10 +35,10 @@ public class DoctorDashboardServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet DoctorDashboardServlet</title>");
+            out.println("<title>Servlet DoctorExamServlet</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet DoctorDashboardServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet DoctorExamServlet at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -65,52 +56,24 @@ public class DoctorDashboardServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-//        HttpSession session = request.getSession(false);
-//        if (session == null || session.getAttribute("doctorId") == null) {
-//            response.sendRedirect(request.getContextPath() + "/login");
-//            return;
-//        }
-//
-//        int doctorId = (int) session.getAttribute("doctorId");
+        String queueId = request.getParameter("queueId");
+        request.setAttribute("queueId", queueId); // tạm thời giữ lại để sau dùng
 
-        int doctorId = 1;// test 
-        //lấy thông tin lọc
-        String status = request.getParameter("status");
-        String keyword = request.getParameter("keyword");
-
-        if (status == null || status.isBlank()) {
-            status = "all";
-        }
-        DoctorDAO doctorDAO = new DoctorDAO();
-
-        //1️⃣ Danh sách bệnh nhân đang chờ khám
-        List<DoctorQueueItem> queueList
-                = doctorDAO.getQueueByDoctorWithFilter(doctorId, status, keyword);
-
-        // Thống kê số liệu
-        DoctorDashboardStats stats
-                = doctorDAO.getDashboardStats(doctorId);
-
-        //Ca làm việc trong ngày
-//        int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // CN = 0
-        int dayOfWeek = 1; // test 
-        List<DoctorShift> shifts
-                = doctorDAO.getShiftsByDoctorAndDay(doctorId, dayOfWeek);
-
-        request.setAttribute("queueList", queueList);
-        request.setAttribute("stats", stats);
-        request.setAttribute("shifts", shifts);
-
-        request.getRequestDispatcher("pages/doctors/doctorDashboard.jsp")
-                .forward(request, response);
-
+        request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
     }
 
+    /**
+     * Handles the HTTP <code>POST</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("pages/doctors/doctorDashboard.jsp")
-                .forward(request, response);
+        processRequest(request, response);
     }
 
     /**
