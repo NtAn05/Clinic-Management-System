@@ -1,286 +1,335 @@
-
 html, body {
-    height: 100%; /* Bắt buộc trang web cao full màn hình */
+    height: 100%;
     margin: 0;
     padding: 0;
 }
 
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
-    background: #f5f7fb;
-    
-    /* Biến body thành cột dọc flex */
+    background: linear-gradient(145deg, #eef4ff, #f9fbff 40%, #f0fdfa);
     display: flex;
     flex-direction: column;
+    color: #1f2937;
 }
 
 .dashboard-container {
     max-width: 1200px;
     width: 100%;
-    margin: 0 auto; /* Căn giữa */
+    margin: 0 auto;
     padding: 20px;
-    flex: 1; 
-    
-    display: flex; 
-    flex-direction: column;
-}
-
-/* ===== HEADER ===== */
-.dashboard-header {
+    flex: 1;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #ffffff;
-    padding: 15px 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Thêm bóng đổ nhẹ cho đẹp */
+    flex-direction: column;
+    gap: 20px;
 }
 
-.clinic-info h2 {
-    margin: 0;
-    color: #2563eb;
-}
-
-.clinic-info span {
-    font-size: 13px;
-    color: #6b7280;
-}
-
-.doctor-info {
-    text-align: right;
-}
-
-/* ===== SUMMARY ===== */
 .summary-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-bottom: 20px;
+    gap: 16px;
 }
 
 .card {
     background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid #e6edf8;
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);
 }
 
-.card p {
+.summary-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-left p {
     margin: 0;
-    color: #6b7280;
+    color: #64748b;
     font-size: 14px;
 }
 
-.card h3 {
-    margin: 10px 0 0;
-    color: #2563eb;
-    font-size: 28px;
+.summary-left h3 {
+    margin: 8px 0 0;
+    font-size: 30px;
+    color: #0f172a;
 }
 
-/* ===== CONTENT ===== */
+.summary-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+}
+
+.summary-icon.blue { background: #dbeafe; }
+.summary-icon.yellow { background: #fef3c7; }
+.summary-icon.green { background: #dcfce7; }
+
 .content {
     display: grid;
-    grid-template-columns: 2fr 1fr; /* Chia cột: Danh sách 2 phần, Lịch 1 phần */
+    grid-template-columns: 2fr 1fr;
     gap: 20px;
 }
 
-/* ===== QUEUE FILTER ===== */
+.queue-section,
+.shift-section {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 18px;
+    border: 1px solid #e6edf8;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+}
+
+.section-heading h3 {
+    margin: 0;
+}
+
+.section-heading p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
 .queue-filter {
-    margin: 15px 0 20px;
+    margin: 16px 0 20px;
 }
 
 .queue-filter form {
     display: flex;
-    gap: 12px;
-    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
-.queue-filter input[type="text"] {
-    flex: 1;
-    min-width: 220px;
-    padding: 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+.queue-filter input[type="text"],
+.queue-filter select {
+    padding: 10px 12px;
+    border: 1px solid #dbe3f1;
+    border-radius: 10px;
     font-size: 14px;
     outline: none;
-}
-.queue-filter input[type="text"]:focus {
-    border-color: #2563eb;
+    background: #fff;
 }
 
-.queue-filter select {
-    padding: 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    font-size: 14px;
-    background-color: #fff;
-    outline: none;
+.queue-filter input[type="text"] {
+    min-width: 240px;
+    flex: 1;
+}
+
+.queue-filter input[type="text"]:focus,
+.queue-filter select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
 .queue-filter button {
-    padding: 10px 20px;
-    background-color: #2563eb; /* xanh dương */
-    color: white;
+    padding: 10px 18px;
+    background: #2563eb;
+    color: #fff;
     border: none;
-    border-radius: 6px;
-    font-size: 14px;
+    border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s ease;
 }
 
-.queue-filter button:hover {
-    background-color: #1e40af;
+.queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* ===== QUEUE ===== */
-.queue-section {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+.queue-card {
+    border: 1px solid #e6edf8;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s ease;
+    background: linear-gradient(140deg, #ffffff, #f8fbff);
 }
 
-.queue-section h3 { margin-top: 0; }
-
-.queue-section table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+.queue-card:hover {
+    transform: translateY(-1px);
+    border-color: #93c5fd;
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
 }
 
-.queue-section th,
-.queue-section td {
-    padding: 12px;
-    border-bottom: 1px solid #f3f4f6;
-    text-align: left;
+.queue-name {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.queue-info,
+.queue-symptom,
+.empty-state {
+    color: #64748b;
     font-size: 14px;
 }
 
-.queue-section th {
-    background: #f9fafb;
+.queue-cta {
+    font-size: 13px;
+    color: #2563eb;
     font-weight: 600;
-    color: #374151;
+    margin-top: 8px;
+    display: inline-block;
 }
 
-.status {
+.queue-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.queue-status,
+.status-badge {
     padding: 4px 10px;
-    border-radius: 20px;
+    border-radius: 999px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
+    text-transform: capitalize;
+    width: fit-content;
 }
 
-.status.waiting {
-    background: #fffbeb;
-    color: #b45309;
-}
-
-.status.examining {
-    background: #eff6ff;
-    color: #1d4ed8;
-}
-
-.status.done {
-    background: #f0fdf4;
-    color: #15803d;
-}
-
-/* ===== SHIFT ===== */
-.shift-section {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    height: fit-content; /* Để nó không bị giãn quá dài */
-}
-
-.shift-section h3 { margin-top: 0; }
+.waiting { background: #fffbeb; color: #b45309; }
+.examining { background: #eff6ff; color: #1d4ed8; }
+.done { background: #f0fdf4; color: #15803d; }
 
 .shift-item {
     display: flex;
     justify-content: space-between;
     padding: 12px 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px dashed #dbe3f1;
     font-size: 14px;
 }
 
-.shift-item:last-child {
-    border-bottom: none;
+.shift-item:last-child { border-bottom: none; }
+
+.popup-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s;
+    z-index: 99;
 }
 
-/* Nút chỉ định xét nghiệm */
-.btn-order-lab {
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #0d9488;
-    background: #ccfbf1;
-    border: 1px solid #5eead4;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-.btn-order-lab:hover {
-    background: #0d9488;
-    color: #fff;
+.control-panel-popup {
+    position: fixed;
+    top: 50%;
+    right: 24px;
+    width: min(380px, calc(100% - 32px));
+    transform: translateY(-50%) translateX(120%);
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.32);
+    padding: 18px;
+    z-index: 100;
+    transition: transform 0.25s ease;
 }
 
-/* ===== PATIENT DETAIL ===== */
-.patient-detail .actions {
-    margin-top: 15px;
+.popup-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.control-panel-popup.open {
+    transform: translateY(-50%) translateX(0);
+}
+
+.control-panel-header {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
 }
-.patient-detail button {
-    padding: 10px;
-    border-radius: 8px;
+
+.panel-kicker {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.control-panel-header h3 {
+    margin: 4px 0 0;
+}
+
+.btn-close {
     border: none;
-    background: #2563eb;
-    color: white;
+    background: #e2e8f0;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     cursor: pointer;
 }
-.patient-detail button:hover {
-    background: #1e40af;
+
+.panel-meta,
+.panel-symptom {
+    margin-top: 12px;
+    background: #f8fafc;
+    border: 1px solid #e6edf8;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.panel-meta p,
+.panel-symptom p {
+    margin: 6px 0;
+    font-size: 14px;
 }
 
 .actions {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 14px;
 }
 
 .actions .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
     border: none;
+    border-radius: 10px;
+    padding: 11px;
+    font-weight: 700;
     cursor: pointer;
-    transition: 0.2s ease;
 }
 
 .actions .btn-primary {
     background: #2563eb;
     color: #fff;
 }
-.actions .btn-primary:hover {
-    background: #1e40af;
-}
 
-.actions .btn-success {
-    background: #16a34a;
+.actions .btn-lab {
+    background: #0f766e;
     color: #fff;
 }
-.actions .btn-success:hover {
-    background: #15803d;
+
+.actions .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 992px) {
+    .summary-cards,
+    .content {
+        grid-template-columns: 1fr;
+    }
+
+    .control-panel-popup {
+        right: 16px;
+        top: auto;
+        bottom: 16px;
+        transform: translateY(120%);
+    }
+
+    .control-panel-popup.open {
+        transform: translateY(0);
+    }
 }

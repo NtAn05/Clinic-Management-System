@@ -11,16 +11,13 @@
         <div class="dashboard-container">
             <jsp:include page="/common/header.jsp" />
 
-            <!-- ===== SUMMARY ===== -->
             <div class="summary-cards">
                 <div class="card summary-card total">
                     <div class="summary-left">
                         <p>Tổng bệnh nhân</p>
                         <h3>${stats.total}</h3>
                     </div>
-                    <div class="summary-icon blue">
-                        👥
-                    </div>
+                    <div class="summary-icon blue">👥</div>
                 </div>
 
                 <div class="card summary-card waiting">
@@ -28,9 +25,7 @@
                         <p>Đang chờ</p>
                         <h3>${stats.waiting}</h3>
                     </div>
-                    <div class="summary-icon yellow">
-                        ⏰
-                    </div>
+                    <div class="summary-icon yellow">⏰</div>
                 </div>
 
                 <div class="card summary-card examining">
@@ -38,18 +33,16 @@
                         <p>Đang khám</p>
                         <h3>${stats.done}</h3>
                     </div>
-                    <div class="summary-icon green">
-                        ❤️
-                    </div>
+                    <div class="summary-icon green">❤️</div>
                 </div>
             </div>
 
-            <!-- ===== MAIN CONTENT ===== -->
             <div class="content">
-
-                <!-- ===== QUEUE LIST ===== -->
                 <div class="queue-section">
-                    <h3>Danh sách bệnh nhân</h3>
+                    <div class="section-heading">
+                        <h3>Danh sách bệnh nhân hôm nay</h3>
+                        <p>Click vào bệnh nhân để mở popup bảng điều khiển.</p>
+                    </div>
 
                     <div class="queue-filter">
                         <form method="get">
@@ -67,83 +60,37 @@
                             <button type="submit">Lọc</button>
                         </form>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>STT</th>
-                                <th>Bệnh nhân</th>
-                                <th>Giới tính</th>
-                                <th>Ngày sinh</th>
-                                <th>Triệu chứng</th>
-                                <th>Trạng thái</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="q" items="${queueList}">
-                                <tr data-appointment-id="${q.appointmentId}">
-                                    <td>${q.queuePosition}</td>
-                                    <td>${q.patientName}</td>
-                                    <td>${q.gender}</td>
-                                    <td>${q.dob}</td>
-                                    <td>${q.symptom}</td>
-                                    <td>
-                                        <span class="status ${q.status}">
-                                            ${q.status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <c:if test="${q.status == 'waiting' || q.status == 'examining'}">
-                                            <button type="button" class="btn-order-lab" onclick="orderLab(${q.appointmentId})" title="Chỉ định xét nghiệm">
-                                                Chỉ định XN
-                                            </button>
-                                        </c:if>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-
-                            <c:if test="${empty queueList}">
-                                <tr>
-                                    <td colspan="7" style="text-align:center">
-                                        Không có bệnh nhân chờ khám
-                                    </td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
 
                     <div class="queue-list">
                         <c:forEach var="q" items="${queueList}">
                             <div class="queue-card queue-row"
+                                 data-appointment-id="${q.appointmentId}"
                                  data-name="${q.patientName}"
                                  data-gender="${q.gender}"
                                  data-dob="${q.dob}"
                                  data-symptom="${q.symptom}"
-                                 data-status="${q.status}">
+                                 data-status="${q.status}"
+                                 data-position="${q.queuePosition}">
 
                                 <div class="queue-left">
                                     <div class="queue-name">#${q.queuePosition} ${q.patientName}</div>
-                                    <div class="queue-info">
-                                        Mã: BN00${q.queuePosition} · ${q.gender} · ${q.dob}
-                                    </div>
+                                    <div class="queue-info">${q.gender} · ${q.dob}</div>
                                     <div class="queue-symptom">${q.symptom}</div>
                                 </div>
 
                                 <div class="queue-right">
-                                    <span class="queue-status ${q.status}">
-                                        ${q.status}
-                                    </span>
+                                    <span class="queue-status ${q.status}">${q.status}</span>
+                                    <span class="queue-cta">Mở điều khiển →</span>
                                 </div>
                             </div>
                         </c:forEach>
 
                         <c:if test="${empty queueList}">
-                            <p style="text-align:center">Không có bệnh nhân</p>
+                            <p class="empty-state">Không có bệnh nhân chờ khám</p>
                         </c:if>
                     </div>
                 </div>
 
-                <!-- Workc SHIFT  -->
                 <div class="shift-section">
                     <h3>Lịch làm việc hôm nay</h3>
 
@@ -157,27 +104,34 @@
                         <p>Hôm nay không có ca làm việc</p>
                     </c:if>
                 </div>
+            </div>
+        </div>
 
-                <!--  PATIENT DETAIL -->
-                <div class="patient-detail" id="patientDetail" style="display:none;">
-                    <h3>Thông tin bệnh nhân</h3>
-                    <p><b>Tên:</b> <span id="d-name"></span></p>
-                    <p><b>Giới tính:</b> <span id="d-gender"></span></p>
-                    <p><b>Ngày sinh:</b> <span id="d-dob"></span></p>
-                    <p><b>Triệu chứng:</b> <span id="d-symptom"></span></p>
-                    <p><b>Trạng thái:</b> <span id="d-status"></span></p>
-
-                    <div class="actions">
-                        <button id="btnStart" class="btn btn-primary"
-                                onclick="location.href = '${pageContext.request.contextPath}/doctor/exam?queueId=${q.id}'">
-                            ▶ Bắt đầu khám
-                        </button>
-                        <button id="btnDone" class="btn btn-success">
-                            ✓ Hoàn thành
-                        </button>
-                    </div>
+        <div id="controlPanelBackdrop" class="popup-backdrop"></div>
+        <div id="controlPanel" class="control-panel-popup" role="dialog" aria-modal="true" aria-hidden="true">
+            <div class="control-panel-header">
+                <div>
+                    <p class="panel-kicker">Bảng điều khiển khám</p>
+                    <h3 id="d-name">Chưa chọn bệnh nhân</h3>
                 </div>
+                <button type="button" class="btn-close" onclick="closeControlPanel()">✕</button>
+            </div>
 
+            <div class="panel-meta">
+                <p><b>STT:</b> <span id="d-position"></span></p>
+                <p><b>Giới tính:</b> <span id="d-gender"></span></p>
+                <p><b>Ngày sinh:</b> <span id="d-dob"></span></p>
+                <p><b>Trạng thái:</b> <span id="d-status" class="status-badge"></span></p>
+            </div>
+
+            <div class="panel-symptom">
+                <p><b>Triệu chứng:</b></p>
+                <p id="d-symptom"></p>
+            </div>
+
+            <div class="actions">
+                <button id="btnStart" class="btn btn-primary" type="button">▶ Bắt đầu khám</button>
+                <button id="btnLab" class="btn btn-lab" type="button">🧪 Chỉ định xét nghiệm</button>
             </div>
         </div>
 
@@ -209,20 +163,57 @@
                             });
                 });
             }
-        </script>
-        <script>
-            document.querySelectorAll(".queue-row").forEach(row => {
-                row.addEventListener("click", function () {
-                    document.querySelectorAll(".queue-row").forEach(r => r.classList.remove("active"));
-                    this.classList.add("active");
 
-                    document.getElementById("patientDetail").style.display = "block";
-                    document.getElementById("d-name").innerText = this.dataset.name;
-                    document.getElementById("d-gender").innerText = this.dataset.gender;
-                    document.getElementById("d-dob").innerText = this.dataset.dob;
-                    document.getElementById("d-symptom").innerText = this.dataset.symptom;
-                    document.getElementById("d-status").innerText = this.dataset.status;
+            const panel = document.getElementById('controlPanel');
+            const backdrop = document.getElementById('controlPanelBackdrop');
+            const dName = document.getElementById('d-name');
+            const dGender = document.getElementById('d-gender');
+            const dDob = document.getElementById('d-dob');
+            const dSymptom = document.getElementById('d-symptom');
+            const dStatus = document.getElementById('d-status');
+            const dPosition = document.getElementById('d-position');
+            const btnStart = document.getElementById('btnStart');
+            const btnLab = document.getElementById('btnLab');
+
+            function closeControlPanel() {
+                panel.classList.remove('open');
+                backdrop.classList.remove('open');
+                panel.setAttribute('aria-hidden', 'true');
+            }
+
+            document.querySelectorAll('.queue-row').forEach(row => {
+                row.addEventListener('click', function () {
+                    const appointmentId = this.dataset.appointmentId;
+                    const status = this.dataset.status;
+
+                    dName.innerText = this.dataset.name;
+                    dGender.innerText = this.dataset.gender;
+                    dDob.innerText = this.dataset.dob;
+                    dSymptom.innerText = this.dataset.symptom;
+                    dStatus.innerText = status;
+                    dPosition.innerText = this.dataset.position;
+                    dStatus.className = 'status-badge ' + status;
+
+                    btnStart.onclick = function () {
+                        location.href = '${pageContext.request.contextPath}/doctor/exam?appointmentId=' + appointmentId;
+                    };
+
+                    btnLab.disabled = !(status === 'waiting' || status === 'examining');
+                    btnLab.onclick = function () {
+                        orderLab(appointmentId);
+                    };
+
+                    panel.classList.add('open');
+                    backdrop.classList.add('open');
+                    panel.setAttribute('aria-hidden', 'false');
                 });
+            });
+
+            backdrop.addEventListener('click', closeControlPanel);
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    closeControlPanel();
+                }
             });
         </script>
 
