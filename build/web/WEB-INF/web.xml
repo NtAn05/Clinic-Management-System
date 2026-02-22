@@ -22,7 +22,11 @@
     </servlet>
     <servlet>
         <servlet-name>DoctorDashboardServlet</servlet-name>
-        <servlet-class>controller.DoctorDashboardServlet</servlet-class>
+        <servlet-class>controller.doctor.DoctorDashboardServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>DoctorExamServlet</servlet-name>
+        <servlet-class>controller.doctor.DoctorExamServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
@@ -79,5 +83,9 @@
     <servlet-mapping>
         <servlet-name>AppointmentServlet</servlet-name>
         <url-pattern>/appointmentservlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DoctorExamServlet</servlet-name>
+        <url-pattern>/doctor/exam</url-pattern>
     </servlet-mapping>
 </web-app>
