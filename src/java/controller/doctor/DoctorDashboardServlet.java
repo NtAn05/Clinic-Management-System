@@ -104,10 +104,10 @@ public class DoctorDashboardServlet extends HttpServlet {
 
         request.getRequestDispatcher("/pages/doctors/doctorDashboard.jsp")
                 .forward(request, response);
-        String queueId = request.getParameter("queueId");
-        request.setAttribute("queueId", queueId); // tạm thời giữ lại để sau dùng
-
-        request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+//        String queueId = request.getParameter("queueId");
+//        request.setAttribute("queueId", queueId); //  để sau dùng
+//
+//        request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
     }
 
     /**

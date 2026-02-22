@@ -124,16 +124,16 @@ public class AppointmentServlet extends HttpServlet {
             Patient p = dao.addPatient(patient);
             status = "set";
             }
-        // Doctor
+// Doctor
         Doctor doctor;
         doctor = dao.getDoctorById(doctorID);
         request.setAttribute("doctor", doctor);
-        // chuyển thông tin sang để xác nhận
+// chuyển thông tin sang để xác nhận
         if (status.equals("yes")) {          
             request.getRequestDispatcher("/pages/appointments/appointment/appointmentSecond.jsp")      
                     .forward(request, response);
          }else if (status.equals("set")) {          
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentThird.jsp")      
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentPayment.jsp")      
                     .forward(request, response);
          }
           else {
@@ -143,11 +143,7 @@ public class AppointmentServlet extends HttpServlet {
 
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
+   
     @Override
     public String getServletInfo() {
         return "Short description";

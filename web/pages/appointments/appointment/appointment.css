@@ -310,3 +310,42 @@ textarea {
 }
 
 
+/*============== Payment ================*/
+.payment-qr-box {
+    width: 320px;
+    margin: 30px auto;
+    padding: 25px;
+    text-align: center;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+}
+
+.payment-qr-box h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.payment-qr {
+    width: 220px;
+    height: 220px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 12px;
+    border: 2px dashed #4CAF50;
+    transition: 0.3s ease;
+}
+
+.payment-qr:hover {
+    transform: scale(1.05);
+}
+
+.amount {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #e53935;
+}
+
