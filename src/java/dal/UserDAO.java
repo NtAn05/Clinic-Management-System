@@ -35,18 +35,6 @@ public class UserDAO extends DBContext {
         return null;
     }
     
-    // Xóa User (Thực tế nên là Khóa tài khoản thay vì xóa hẳn)
-    public void deleteUser(String phone) {
-        String sql = "DELETE FROM users WHERE phone = ?";
-        try {
-            PreparedStatement st = connection.prepareStatement(sql);
-            st.setString(1, phone);
-            st.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println(e);
-        }
-    }
-
     public void registerPatient(
             String fullName,
             String phone,
@@ -296,7 +284,7 @@ public class UserDAO extends DBContext {
         String sql = """
         SELECT user_id, full_name, phone, email, role, status 
         FROM users 
-        WHERE (full_name LIKE ? OR phone LIKE ?) AND role = ? 
+        WHERE (full_name LIKE ? OR phone LIKE ? OR email LIKE ?) AND role = ? 
         ORDER BY full_name
     """;
         List<User> users = new ArrayList<>();
@@ -305,7 +293,8 @@ public class UserDAO extends DBContext {
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, keyword);
             st.setString(2, keyword);
-            st.setString(3, role.toString());
+            st.setString(3, keyword);
+            st.setString(4, role.toString());
             ResultSet rs = st.executeQuery();
             
             while (rs.next()) {

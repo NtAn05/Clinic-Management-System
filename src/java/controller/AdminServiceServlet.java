@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 import model.ServicePrice;
 import model.User;
 import model.Role;
@@ -32,7 +34,51 @@ public class AdminServiceServlet extends HttpServlet {
             return;
         }
         
-        req.setAttribute("services", serviceDAO.getAllServices());
+        // Xử lý search và filter
+        String search = req.getParameter("search");
+        String category = req.getParameter("category");
+        String minPriceStr = req.getParameter("minPrice");
+        String maxPriceStr = req.getParameter("maxPrice");
+        
+        List<ServicePrice> services = serviceDAO.getAllServices();
+        
+        // Áp dụng filter
+        if (search != null && !search.trim().isEmpty()) {
+            services = services.stream()
+                .filter(s -> s.getName().toLowerCase().contains(search.toLowerCase().trim()))
+                .collect(Collectors.toList());
+        }
+        
+        if (category != null && !category.trim().isEmpty() && !"all".equals(category)) {
+            services = services.stream()
+                .filter(s -> category.equals(s.getServiceType()))
+                .collect(Collectors.toList());
+        }
+        
+        if (minPriceStr != null && !minPriceStr.trim().isEmpty()) {
+            try {
+                java.math.BigDecimal minPrice = new java.math.BigDecimal(minPriceStr);
+                services = services.stream()
+                    .filter(s -> s.getPrice().compareTo(minPrice) >= 0)
+                    .collect(Collectors.toList());
+            } catch (NumberFormatException e) {
+                // Ignore invalid minPrice
+            }
+        }
+        
+        if (maxPriceStr != null && !maxPriceStr.trim().isEmpty()) {
+            try {
+                java.math.BigDecimal maxPrice = new java.math.BigDecimal(maxPriceStr);
+                services = services.stream()
+                    .filter(s -> s.getPrice().compareTo(maxPrice) <= 0)
+                    .collect(Collectors.toList());
+            } catch (NumberFormatException e) {
+                // Ignore invalid maxPrice
+            }
+        }
+        
+        req.setAttribute("filterCategory", category != null && !category.trim().isEmpty() ? category : "all");
+        req.setAttribute("services", services);
         req.getRequestDispatcher("/pages/admin/services.jsp").forward(req, resp);
     }
     

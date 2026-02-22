@@ -7,6 +7,7 @@
         <title>Trang Chủ</title>
     </head>
     <style>
+        /* --- CẤU HÌNH CHUNG --- */
         :root {
             --primary: #0061ff;       /* Màu xanh chủ đạo */
             --primary-dark: #004ecc;
