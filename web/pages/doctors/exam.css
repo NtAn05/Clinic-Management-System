@@ -211,3 +211,17 @@ textarea {
         align-items: flex-start;
     }
 }
+
+.actions form {
+    margin: 0;
+}
+
+.alert-success {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    color: #166534;
+    font-weight: 600;
+}

@@ -281,5 +281,44 @@ public class DoctorDAO extends DBContext {
 }
 
     
+    public DoctorQueueItem getQueueItemByAppointment(int doctorId, long appointmentId) {
+        String sql = """
+            SELECT
+                q.queue_position,
+                q.appointment_id,
+                p.full_name AS patient_name,
+                p.gender,
+                p.dob,
+                a.symptom,
+                q.status
+            FROM exam_queue q
+            JOIN appointments a ON q.appointment_id = a.appointment_id
+            JOIN patients p ON a.patient_id = p.patient_id
+            WHERE q.doctor_id = ? AND q.appointment_id = ?
+            LIMIT 1
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, doctorId);
+            ps.setLong(2, appointmentId);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                DoctorQueueItem item = new DoctorQueueItem();
+                item.setQueuePosition(rs.getInt("queue_position"));
+                item.setAppointmentId(rs.getLong("appointment_id"));
+                item.setPatientName(rs.getString("patient_name"));
+                item.setGender(rs.getString("gender"));
+                item.setDob(rs.getDate("dob"));
+                item.setSymptom(rs.getString("symptom"));
+                item.setStatus(rs.getString("status"));
+                return item;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
     
 }

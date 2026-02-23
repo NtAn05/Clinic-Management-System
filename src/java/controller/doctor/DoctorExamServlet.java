@@ -4,13 +4,18 @@
  */
 package controller.doctor;
 
+import dal.DoctorDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
+import model.Doctor;
+import model.DoctorQueueItem;
 import model.Patient;
+import model.User;
 
 /**
  *
@@ -30,20 +35,34 @@ public class DoctorExamServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet DoctorExamServlet</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet DoctorExamServlet at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
+        doGet(request, response);
     }
 
+    private Doctor validateDoctor(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return null;
+        }
+
+        User account = (User) session.getAttribute("account");
+        if (account == null || account.getRole() == null || !"doctor".equalsIgnoreCase(account.getRole().name())) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return null;
+        }
+
+        DoctorDAO doctorDAO = new DoctorDAO();
+        Doctor doctor = doctorDAO.getDoctorByUserId(account.getUserId());
+        if (doctor == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return null;
+        }
+
+        session.setAttribute("doctorName", doctor.getFullName());
+        return doctor;
+    }
+    
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP <code>GET</code> method.
@@ -56,12 +75,43 @@ public class DoctorExamServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String queueId = request.getParameter("queueId");
-        request.setAttribute("queueId", queueId); // tạm thời giữ lại để sau dùng
+        Doctor doctor = validateDoctor(request, response);
+        if (doctor == null) {
+            return;
+        }
 
-        request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+        String appointmentParam = request.getParameter("appointmentId");
+        if (appointmentParam == null || appointmentParam.isBlank()) {
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=missingAppointment");
+            return;
+        }
+
+        long appointmentId;
+        try {
+            appointmentId = Long.parseLong(appointmentParam);
+        } catch (NumberFormatException ex) {
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=invalidAppointment");
+            return;
+        }
+
+        DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorQueueItem examData = doctorDAO.getQueueItemByAppointment(doctor.getDoctorId(), appointmentId);
+        if (examData == null) {
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=notInQueue");
+            return;
+        }
+
+        if ("waiting".equalsIgnoreCase(examData.getStatus())) {
+            doctorDAO.startExamination(appointmentId);
+            examData.setStatus("examining");
+        }
+
+        request.setAttribute("examData", examData);
+        request.setAttribute("success", request.getParameter("success"));
     }
 
+    
+    
     /**
      * Handles the HTTP <code>POST</code> method.
      *
@@ -73,7 +123,40 @@ public class DoctorExamServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        Doctor doctor = validateDoctor(request, response);
+        if (doctor == null) {
+            return;
+        }
+
+        String appointmentParam = request.getParameter("appointmentId");
+        String action = request.getParameter("action");
+        if (appointmentParam == null || appointmentParam.isBlank()) {
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=missingAppointment");
+            return;
+        }
+
+        long appointmentId;
+        try {
+            appointmentId = Long.parseLong(appointmentParam);
+        } catch (NumberFormatException ex) {
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=invalidAppointment");
+            return;
+        }
+
+        DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorQueueItem examData = doctorDAO.getQueueItemByAppointment(doctor.getDoctorId(), appointmentId);
+        if (examData == null) {
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=notInQueue");
+            return;
+        }
+
+        if ("finish".equalsIgnoreCase(action)) {
+            doctorDAO.finishExamination(appointmentId);
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?success=examFinished");
+            return;
+        }
+
+        response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&success=saved");
     }
 
     /**

@@ -604,7 +604,7 @@
     </head>
     <body>
         <header>
-            <div class="title">👤 ADMIN - QUẢN LÝ TÀI KHOẢN</div>
+            <div class="title">👤 QUẢN LÝ TÀI KHOẢN</div>
             <div>
                 <a href="${pageContext.request.contextPath}/index.jsp"><i class="fas fa-arrow-left"></i> Quay lại</a>
                 <a href="${pageContext.request.contextPath}/"><i class="fas fa-home"></i> Trang chủ</a>
@@ -630,38 +630,38 @@
 
             <!-- TAB NAVIGATION -->
             <div class="tab-navigation">
-                <button class="tab-button active" onclick="switchTab(event, 'staff')">
+                <button class="tab-button ${empty currentTab or currentTab == 'staff' ? 'active' : ''}" onclick="switchTab(event, 'staff')">
                     <i class="fas fa-users"></i> Tài khoản Nhân viên
                 </button>
-                <button class="tab-button" onclick="switchTab(event, 'patient')">
+                <button class="tab-button ${currentTab == 'patient' ? 'active' : ''}" onclick="switchTab(event, 'patient')">
                     <i class="fas fa-user-md"></i> Tài khoản Bệnh nhân
                 </button>
             </div>
 
             <!-- TAB 1: NHÂN VIÊN -->
-            <div id="staff" class="tab-content active">
+            <div id="staff" class="tab-content ${empty currentTab or currentTab == 'staff' ? 'active' : ''}">
                 <!-- TOOLBAR -->
                 <div class="toolbar">
                     <div class="search-box">
                         <label><i class="fas fa-search"></i> Tìm kiếm</label>
-                        <input type="text" id="staffSearch" placeholder="Nhập tên hoặc số điện thoại...">
+                        <input type="text" id="staffSearch" placeholder="Nhập tên, số điện thoại hoặc email..." value="${searchKeyword}">
                     </div>
                     <div class="filter-box">
                         <label><i class="fas fa-filter"></i> Lọc theo vai trò</label>
                         <select id="staffRoleFilter">
-                            <option value="all">-- Tất cả --</option>
-                            <option value="admin">Admin</option>
-                            <option value="doctor">Bác sĩ</option>
-                            <option value="receptionist">Tiếp tân</option>
-                            <option value="technician">Kỹ thuật viên</option>
+                            <option value="all" ${filterRole == 'all' ? 'selected' : ''}>-- Tất cả --</option>
+                            <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Admin</option>
+                            <option value="doctor" ${filterRole == 'doctor' ? 'selected' : ''}>Bác sĩ</option>
+                            <option value="receptionist" ${filterRole == 'receptionist' ? 'selected' : ''}>Tiếp tân</option>
+                            <option value="technician" ${filterRole == 'technician' ? 'selected' : ''}>Kỹ thuật viên</option>
                         </select>
                     </div>
                     <div class="filter-box">
                         <label><i class="fas fa-filter"></i> Lọc theo trạng thái</label>
                         <select id="staffStatusFilter">
-                            <option value="all">-- Tất cả --</option>
-                            <option value="active">Hoạt động</option>
-                            <option value="inactive">Khóa</option>
+                            <option value="all" ${filterStatus == 'all' ? 'selected' : ''}>-- Tất cả --</option>
+                            <option value="active" ${filterStatus == 'active' ? 'selected' : ''}>Hoạt động</option>
+                            <option value="inactive" ${filterStatus == 'inactive' ? 'selected' : ''}>Khóa</option>
                         </select>
                     </div>
                     <div class="toolbar-buttons">
@@ -739,19 +739,19 @@
             </div>
 
             <!-- TAB 2: BỆNH NHÂN -->
-            <div id="patient" class="tab-content">
+            <div id="patient" class="tab-content ${currentTab == 'patient' ? 'active' : ''}">
                 <!-- TOOLBAR -->
                 <div class="toolbar">
                     <div class="search-box">
                         <label><i class="fas fa-search"></i> Tìm kiếm</label>
-                        <input type="text" id="patientSearch" placeholder="Nhập tên hoặc số điện thoại...">
+                        <input type="text" id="patientSearch" placeholder="Nhập tên, số điện thoại hoặc email..." value="${searchKeyword}">
                     </div>
                     <div class="filter-box">
                         <label><i class="fas fa-filter"></i> Lọc theo trạng thái</label>
                         <select id="patientFilter">
-                            <option value="all">-- Tất cả --</option>
-                            <option value="active">Hoạt động</option>
-                            <option value="inactive">Khóa</option>
+                            <option value="all" ${filterPatientStatus == 'all' ? 'selected' : ''}>-- Tất cả --</option>
+                            <option value="active" ${filterPatientStatus == 'active' ? 'selected' : ''}>Hoạt động</option>
+                            <option value="inactive" ${filterPatientStatus == 'inactive' ? 'selected' : ''}>Khóa</option>
                         </select>
                     </div>
                     <div class="toolbar-buttons">
@@ -973,7 +973,7 @@
         </div>
 
         <script>
-            let currentTab = 'staff';
+            let currentTab = '${currentTab}' || 'staff';
 
             // Chuyển tab
             function switchTab(event, tab) {
@@ -1116,19 +1116,43 @@
                 window.location.href = url;
             }
 
+            // Search nhân viên
+            function searchStaff() {
+                const keyword = document.getElementById('staffSearch').value.trim();
+                
+                let url = 'admin-users?action=search&tab=staff';
+                if (keyword) {
+                    url += '&keyword=' + encodeURIComponent(keyword);
+                }
+                
+                window.location.href = url;
+            }
+
+            // Search bệnh nhân
+            function searchPatient() {
+                const keyword = document.getElementById('patientSearch').value.trim();
+                
+                let url = 'admin-users?action=search&tab=patient';
+                if (keyword) {
+                    url += '&keyword=' + encodeURIComponent(keyword);
+                }
+                
+                window.location.href = url;
+            }
+
             // Đặt lại bộ lọc nhân viên
             function resetStaffFilter() {
                 document.getElementById('staffSearch').value = '';
                 document.getElementById('staffRoleFilter').value = 'all';
                 document.getElementById('staffStatusFilter').value = 'all';
-                window.location.href = 'admin-users';
+                window.location.href = 'admin-users?tab=staff';
             }
 
             // Đặt lại bộ lọc bệnh nhân
             function resetPatientFilter() {
                 document.getElementById('patientSearch').value = '';
                 document.getElementById('patientFilter').value = 'all';
-                window.location.href = 'admin-users';
+                window.location.href = 'admin-users?tab=patient';
             }
 
             // Tự động đóng thông báo sau 5 giây và thêm event listeners cho filter
@@ -1145,6 +1169,18 @@
                 document.getElementById('staffRoleFilter').addEventListener('change', filterStaff);
                 document.getElementById('staffStatusFilter').addEventListener('change', filterStaff);
                 document.getElementById('patientFilter').addEventListener('change', filterPatient);
+                
+                // Thêm event listeners cho search inputs
+                document.getElementById('staffSearch').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchStaff();
+                    }
+                });
+                document.getElementById('patientSearch').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchPatient();
+                    }
+                });
             });
         </script>
     </body>

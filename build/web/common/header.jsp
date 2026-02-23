@@ -71,10 +71,10 @@
 
             <c:if test="${roleName == 'doctor'}">
                 <a href="${pageContext.request.contextPath}/doctorDashboard">Dashboard</a>
-                <div class="doctor-info">
+<!--                <div class="doctor-info">
                     <span>Bác sĩ</span>
                     <strong>${sessionScope.doctorName}</strong>
-                </div>
+                </div>-->
             </c:if>
 
             <c:if test="${roleName == 'technician'}">

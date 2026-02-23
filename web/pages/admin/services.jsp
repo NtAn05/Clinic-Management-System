@@ -110,7 +110,7 @@
             }
 
             .btn-submit {
-                background: #0061ff;
+                background: #4caf50;
                 color: white;
                 border: none;
                 padding: 10px 20px;
@@ -125,9 +125,9 @@
             }
 
             .btn-submit:hover {
-                background: #0052cc;
+                background: #45a049;
                 transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 97, 255, 0.3);
+                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
             }
 
             .add-form {
@@ -168,6 +168,139 @@
                 outline: none;
                 border-color: #0061ff;
                 box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
+            }
+
+            /* Search & Filter Styles */
+            .search-filter-section {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                border: 1px solid #e0e0e0;
+            }
+
+            .search-form {
+                margin: 0;
+            }
+
+            .search-grid {
+                display: grid;
+                grid-template-columns: 2fr 1fr 1fr 1fr auto;
+                gap: 15px;
+                align-items: end;
+            }
+
+            .search-group {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .search-group label {
+                font-weight: 600;
+                margin-bottom: 5px;
+                font-size: 13px;
+                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .filter-box {
+                min-width: 200px;
+            }
+
+            .filter-box label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #333;
+                font-size: 13px;
+            }
+
+            .filter-box select {
+                width: 100%;
+                padding: 10px 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+                background: white;
+                transition: all 0.3s ease;
+            }
+
+            .filter-box select:focus {
+                outline: none;
+                border-color: #0061ff;
+                box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
+            }
+
+            .search-input, .filter-select, .price-input {
+                padding: 8px 12px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-family: inherit;
+                font-size: 13px;
+            }
+
+            .search-input:focus, .filter-select:focus, .price-input:focus {
+                outline: none;
+                border-color: #0061ff;
+                box-shadow: 0 0 0 2px rgba(0, 97, 255, 0.1);
+            }
+
+            .button-group {
+                display: flex;
+                gap: 8px;
+            }
+
+            .btn-filter {
+                background: #0061ff;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                transition: all 0.3s ease;
+            }
+
+            .btn-filter:hover {
+                background: #0052cc;
+                transform: translateY(-1px);
+            }
+
+            .btn-clear {
+                color: #666;
+                text-decoration: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                transition: all 0.3s ease;
+                border: 1px solid #ddd;
+            }
+
+            .btn-clear:hover {
+                background: #f0f0f0;
+                color: #333;
+            }
+
+            @media (max-width: 768px) {
+                .search-grid {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                }
+                
+                .button-group {
+                    justify-content: center;
+                }
             }
 
             table {
@@ -384,6 +517,45 @@
                     </button>
                 </div>
 
+                <!-- Search & Filter -->
+                <div class="search-filter-section">
+                    <form method="GET" action="${pageContext.request.contextPath}/admin-services" class="search-form">
+                        <div class="search-grid">
+                            <div class="search-group">
+                                <label><i class="fas fa-search"></i> Tìm kiếm</label>
+                                <input type="text" name="search" value="${param.search}" placeholder="Tên dịch vụ..." class="search-input" onkeypress="if(event.keyCode==13) this.form.submit()">
+                            </div>
+                            <div class="filter-box">
+                                <label><i class="fas fa-filter"></i> Danh mục</label>
+                                <select name="category" class="filter-select" onchange="this.form.submit()">
+                                    <option value="all" ${filterCategory == 'all' ? 'selected' : ''}>-- Tất cả --</option>
+                                    <option value="booking_fee" ${filterCategory == 'booking_fee' ? 'selected' : ''}>Khám & tư vấn</option>
+                                    <option value="lab" ${filterCategory == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
+                                </select>
+                            </div>
+                            <div class="search-group">
+                                <label><i class="fas fa-dollar-sign"></i> Giá từ</label>
+                                <input type="number" name="minPrice" value="${param.minPrice}" min="0" placeholder="0" class="price-input" onchange="this.form.submit()">
+                            </div>
+                            <div class="search-group">
+                                <label><i class="fas fa-dollar-sign"></i> Giá đến</label>
+                                <input type="number" name="maxPrice" value="${param.maxPrice}" min="0" placeholder="Không giới hạn" class="price-input" onchange="this.form.submit()">
+                            </div>
+                            <div class="search-group">
+                                <label>&nbsp;</label>
+                                <div class="button-group">
+                                    <button type="submit" class="btn-filter">
+                                        <i class="fas fa-search"></i> Tìm
+                                    </button>
+                                    <a href="${pageContext.request.contextPath}/admin-services" class="btn-clear">
+                                        <i class="fas fa-redo"></i> Đặt lại
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
                 <!-- Danh sách dịch vụ -->
                 <c:choose>
                     <c:when test="${not empty services}">
@@ -411,7 +583,7 @@
                                         <td>${service.price}</td>
                                         <td>
                                             <div class="action-buttons">
-                                                <button class="btn-edit" onclick="openEditModal(${service.serviceId}, '${service.name}', '${service.serviceType}', '${service.price}')" title="Chỉnh sửa">
+                                                <button class="btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;${service.price}&quot;)" title="Chỉnh sửa">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                                 <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
@@ -456,7 +628,11 @@
 
                     <div class="form-group-modal">
                         <label>Danh mục <span style="color: red;">*</span></label>
-                        <input type="text" name="serviceType" required placeholder="Ví dụ: Khám tổng quát">
+                        <select name="serviceType" class="filter-select" required>
+                            <option value="">-- Chọn danh mục --</option>
+                            <option value="booking_fee">Khám & tư vấn</option>
+                            <option value="lab">Kiểm tra chuyên sâu</option>
+                        </select>
                     </div>
 
                     <div class="form-group-modal">
@@ -495,7 +671,11 @@
 
                     <div class="form-group-modal">
                         <label>Danh mục <span style="color: red;">*</span></label>
-                        <input type="text" name="serviceType" id="editServiceType" required placeholder="Ví dụ: Khám tổng quát">
+                        <select name="serviceType" id="editServiceType" class="filter-select" required>
+                            <option value="">-- Chọn danh mục --</option>
+                            <option value="booking_fee">Khám & tư vấn</option>
+                            <option value="lab">Kiểm tra chuyên sâu</option>
+                        </select>
                     </div>
 
                     <div class="form-group-modal">
