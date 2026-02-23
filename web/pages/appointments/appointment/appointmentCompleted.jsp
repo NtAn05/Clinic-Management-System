@@ -1,9 +1,3 @@
-<%-- 
-    Document   : appointmentPayment
-    Created on : Feb 22, 2026, 9:39:38 PM
-    Author     : Admin
---%>
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -14,15 +8,14 @@
               href="${pageContext.request.contextPath}/pages/appointments/appointment/appointment.css">
     </head>
     <body>
+
         <jsp:include page="/common/header.jsp" />
 
         <div class="page">
             <div class="content">
 
-                <!-- LEFT -->
                 <div class="main">
 
-                    <!-- STEPS -->
                     <div class="steps-wrapper">
                         <div class="step-circle done">
                             <span>✓</span>
@@ -36,58 +29,42 @@
                         </div>
                         <div class="step-line"></div>
 
-                        <div class="step-circle active">
-                            <span>3</span>
+                        <div class="step-circle done">
+                            <span>✓</span>
                             <p>Thanh toán</p>
                         </div>
                         <div class="step-line"></div>
 
-                        <div class="step-circle">
+                        <div class="step-circle active">
                             <span>4</span>
                             <p>Hoàn tất</p>
                         </div>
                     </div>
 
-                    <!-- Hiện QR thanh toán -->
                     <div class="card-box">
-                        <h3>QR thanh toán</h3>
+                        <h3>Cảm ơn đã đặt lịch hẹn</h3>
 
-                        <div class="qr_code form-grid confirm-view">
-                            <div class="payment-qr-box">
-                                <h3>Quét mã để thanh toán</h3>
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=ThanhToan123"
-                                     alt="QR Thanh Toán"
-                                     class="payment-qr">
-                                <p class="amount">Số tiền: 500.000 VNĐ</p>
+                        <div class="success-wrapper">
+                            <div class="success-icon-box">
+                                <img src="https://png.pngtree.com/png-vector/20250322/ourlarge/pngtree-check-mark-voting-checklist-png-image_15845205.png"
+                                     alt="Thành công"
+                                     class="success-icon">
                             </div>
-
-
                         </div>
 
-                        <label style="color: red">Vui lòng thanh toán</label>
+                        <label style="color: red">Cuộc hẹn của bạn đã được đặt thành công !!!</label>
+                        <br>
+                        <label style="color: red">Vui lòng đến cơ sở khám đúng thời gian</label>
+
+                        <div class="actions">
+                            <a href="${pageContext.request.contextPath}/index.jsp" class="btn-primary">
+                                Về trang chủ
+                            </a>
+                        </div>
                     </div>
 
-
-                    <!-- ACTION -->
-                    <div class="actions">
-                        <button  class="btn-outline"
-                                 onclick="history.back()">
-                            Quay lại
-                        </button>
-                        <a href="${pageContext.request.contextPath}/pages/appointments/appointment/appointmentCompleted.jsp"
-                           class="btn-primary">
-                            Thanh toán hoàn tất
-                        </a>
-
-                        <%--
-                        <button type="submit" name="btnSubmit" value="step2" class="btn-primary">
-                            Thanh toán hoàn tất
-                        </button>
-                        --%>
-                    </div>
                 </div>
 
-                <!-- RIGHT -->
                 <div class="card">
                     <img src="${doctor.getImage()}" alt="Doctor">
 
@@ -104,13 +81,12 @@
                     <p class="price">
                     <fmt:formatNumber value="${doctor.price}" type="number"/>đ
                     </p>
-
-
                 </div>
 
             </div>
         </div>
 
         <jsp:include page="/common/footer.jsp" />
+
     </body>
 </html>

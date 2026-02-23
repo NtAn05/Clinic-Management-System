@@ -11,7 +11,7 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>Payment</title>
+        <title>Check information</title>
         <link rel="stylesheet"
               href="${pageContext.request.contextPath}/pages/appointments/appointment/appointment.css">
     </head>
@@ -62,20 +62,20 @@
                                 <div>
                                     <label>Họ và tên</label>
                                     <p >${patient.getFullName()}</p>
-                                <input type="hidden" name="name" value="${patient.getFullName()}">
+                                    <input type="hidden" name="name" value="${patient.getFullName()}">
                                 </div>
-                                
+
 
                                 <div>
                                     <label>Số điện thoại</label>
                                     <p>${patient.getPhone()}</p>
-                                <input type="hidden" name="sdt" value="${patient.getPhone()}">
+                                    <input type="hidden" name="sdt" value="${patient.getPhone()}">
                                 </div>
 
                                 <div>
                                     <label>Email</label>
                                     <p>${patient.getEmail()}</p>
-                                <input type="hidden" name="email" value="${patient.getEmail()}">
+                                    <input type="hidden" name="email" value="${patient.getEmail()}">
                                 </div>
 
                                 <div>
@@ -96,64 +96,65 @@
                                     <input type="hidden" name="address" value="${patient.getAddress()}">
                                 </div>
                             </div>
-                                <div>
-                            <label>Ghi chú bệnh lý</label>
-                            <p  class="note-box">${appointment.getSymptom()}</p>
-                            <input type="hidden" name="note" value="${appointment.getSymptom()}">
-                            
-                        </div>
+                            <div>
+                                <label>Ghi chú bệnh lý</label>
+                                <p  class="note-box">${appointment.getSymptom()}</p>
+                                <input type="hidden" name="note" value="${appointment.getSymptom()}">
 
-                        <!-- NGÀY + CA KHÁM -->
-                        <div class="card-box">
-                            <h3>Thời gian khám</h3>
+                            </div>
 
-                            <div class="form-grid confirm-view">
-                                <div>
-                                    <label>Ca khám</label>
-                                    <c:if test="${appointment.getPatientName() == 'morning'}">
-                                        <p>
-                                            <strong>Ca sáng</strong>
-                                            <span>07:00 - 11:30</span>
-                                        </p>
-                                    </c:if>
-                                    <c:if test="${appointment.getPatientName() == 'afternoon'}">
-                                        <p>
-                                            <strong>Ca chiều</strong>
-                                            <span>13:30 - 17:00</span>
-                                        </p>
-                                    </c:if>
-                                </div>
+                            <!-- NGÀY + CA KHÁM -->
+                            <div class="card-box">
+                                <h3>Thời gian khám</h3>
 
-                                <div>
-                                    <label>Ngày khám</label>
-                                    <p>${appointment.getStatus()}</p>
+                                <div class="form-grid confirm-view">
+                                    <div>
+                                        <label>Ca khám</label>
+                                        <c:if test="${appointment.getPatientName() == 'morning'}">
+                                            <p>
+                                                <strong>Ca sáng</strong>
+                                                <span>07:00 - 11:30</span>
+                                            </p>
+                                        </c:if>
+                                        <c:if test="${appointment.getPatientName() == 'afternoon'}">
+                                            <p>
+                                                <strong>Ca chiều</strong>
+                                                <span>13:30 - 17:00</span>
+                                            </p>
+                                        </c:if>
+                                    </div>
+
+                                    <div>
+                                        <label>Ngày khám</label>
+                                        <p>${appointment.getStatus()}</p>
+                                    </div>
                                 </div>
                             </div>
+                            <input type="hidden" name="time" value="${appointment.getPatientName()}">
+                            <input type="hidden" name="date" value="${appointment.getStatus()}">
+                            <input type="hidden" name="doctorID" value="${doctor.doctorId}">
+                            <input type="hidden" name="userID" value="${sessionScope.account.userId}">
+                            </form>
+
+                            <!-- ACTION -->
+
+                            <div class="actions">
+                                <button  class="btn-outline"
+                                         onclick="history.back()">
+                                    Quay lại
+                                </button>
+
+
+
+                                <button type="submit" name="btnSubmit" value="step2" class="btn-primary">
+                                    Xác nhận & Thanh toán
+                                </button>
+
+                            </div>
+
                         </div>
-                        <input type="hidden" name="doctorID" value="${appointment.getPatientName()}">
-                        <input type="hidden" name="time" value="${appointment.getStatus()}">
-                        <input type="hidden" name="date" value="${doctor.doctorId}">
-                        <input type="hidden" name="userID" value="${sessionScope.account.userId}">
-                    </form>
-
-                    <!-- ACTION -->
-
-                    <div class="actions">
-                        <button  class="btn-outline"
-                                 onclick="history.back()">
-                            Quay lại
-                        </button>
-
-
-
-                        <button type="submit" name="btnSubmit" value="step2" class="btn-primary">
-                            Xác nhận & Thanh toán
-                        </button>
-
-                    </div>
-
                 </div>
-                <!-- RIGHT (GIỮ NGUYÊN) -->
+                <!-- RIGHT  -->
                 <div class="card">
                     <img src="${doctor.getImage()}" alt="Doctor">
 
@@ -174,9 +175,9 @@
 
                 </div>
 
+
             </div>
         </div>
-
         <jsp:include page="/common/footer.jsp" />
 
     </body>

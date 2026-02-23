@@ -123,34 +123,34 @@
                                 Quay lại
                             </button>
 
-                                <button type="submit" name="btnSubmit" value="step1" class="btn-primary">
+                            <button type="submit" name="btnSubmit" value="step1" class="btn-primary">
                                 Tiếp tục
                             </button>
                         </div>
 
                     </form>
                 </div>
+            
 
-                <!-- bãc sĩ -->
-                <div class="card">
-                    <img src="${doctor.image}" alt="Doctor">
+            <!-- bãc sĩ -->
+            <div class="card">
+                <img src="${doctor.image}" alt="Doctor">
 
-                    <h3>${doctor.fullName}</h3>
-                    <p class="degree">${doctor.qualification}</p>
-                    <p class="desc">${doctor.specialization}</p>
-                    <p class="desc">${doctor.clinic_address}</p>
+                <h3>${doctor.fullName}</h3>
+                <p class="degree">${doctor.qualification}</p>
+                <p class="desc">${doctor.specialization}</p>
+                <p class="desc">${doctor.clinic_address}</p>
 
-                    <div class="info">
-                        <span>⏱ ${doctor.experience_years} năm</span>
-                        <span>⭐ ${doctor.rating}</span>
-                    </div>
-
-                    <p class="price">
-                        <fmt:formatNumber value="${doctor.price}" type="number"/>đ
-                    </p>
+                <div class="info">
+                    <span>⏱ ${doctor.experience_years} năm</span>
+                    <span>⭐ ${doctor.rating}</span>
                 </div>
 
+                <p class="price">
+                    <fmt:formatNumber value="${doctor.price}" type="number"/>đ
+                </p>
             </div>
+                </div>
         </div>
 
         <script>

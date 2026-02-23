@@ -120,8 +120,8 @@ public class AppointmentServlet extends HttpServlet {
         request.setAttribute("patient", patient);   
 // tạo đơn appointment
             if(submit !=null && submit.equalsIgnoreCase("step2")){
-            Appointment ap = dao.addAppointment(appointment);
-            Patient p = dao.addPatient(patient);
+            //Appointment ap = dao.addAppointment(appointment);
+            //Patient p = dao.addPatient(patient);
             status = "set";
             }
 // Doctor
