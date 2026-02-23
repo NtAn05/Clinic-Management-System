@@ -41,7 +41,7 @@
                 <div class="queue-section">
                     <div class="section-heading">
                         <h3>Danh sách bệnh nhân hôm nay</h3>
-                        <p>Click vào bệnh nhân để mở popup bảng điều khiển.</p>
+<!--                        <p>Click vào bệnh nhân để mở popup bảng điều khiển.</p>-->
                     </div>
 
                     <div class="queue-filter">
@@ -62,6 +62,16 @@
                     </div>
 
                     <div class="queue-list">
+                        <div class="queue-table-header" aria-hidden="true">
+                            <span>STT</span>
+                            <span>Họ tên</span>
+                            <span>Giới tính</span>
+                            <span>Ngày sinh</span>
+                            <span>Triệu chứng</span>
+                            <span>Trạng thái</span>
+                            <span>Thao tác</span>
+                        </div>
+
                         <c:forEach var="q" items="${queueList}">
                             <div class="queue-card queue-row"
                                  data-appointment-id="${q.appointmentId}"
@@ -72,16 +82,14 @@
                                  data-status="${q.status}"
                                  data-position="${q.queuePosition}">
 
-                                <div class="queue-left">
-                                    <div class="queue-name">#${q.queuePosition} ${q.patientName}</div>
-                                    <div class="queue-info">${q.gender} · ${q.dob}</div>
-                                    <div class="queue-symptom">${q.symptom}</div>
-                                </div>
+                                <span class="queue-col queue-position">#${q.queuePosition}</span>
+                                <span class="queue-col queue-name">${q.patientName}</span>
+                                <span class="queue-col queue-info">${q.gender}</span>
+                                <span class="queue-col queue-dob">${q.dob}</span>
+                                <span class="queue-col queue-symptom">${q.symptom}</span>
+                                <span class="queue-col queue-state"><span class="queue-status ${q.status}">${q.status}</span></span>
+                                <span class="queue-col queue-action"><span class="queue-cta">Mở điều khiển →</span></span>
 
-                                <div class="queue-right">
-                                    <span class="queue-status ${q.status}">${q.status}</span>
-                                    <span class="queue-cta">Mở điều khiển →</span>
-                                </div>
                             </div>
                         </c:forEach>
 

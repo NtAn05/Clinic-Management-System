@@ -140,13 +140,26 @@ body {
     gap: 10px;
 }
 
+.queue-table-header {
+    display: grid;
+    grid-template-columns: 70px minmax(150px, 1.3fr) 120px 130px minmax(180px, 2fr) 130px 140px;
+    gap: 10px;
+    align-items: center;
+    padding: 0 14px;
+    color: #64748b;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+}
+
 .queue-card {
     border: 1px solid #e6edf8;
     border-radius: 14px;
     padding: 14px 16px;
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 70px minmax(150px, 1.3fr) 120px 130px minmax(180px, 2fr) 130px 140px;
+    gap: 10px;
     align-items: center;
     cursor: pointer;
     transition: 0.2s ease;
@@ -159,9 +172,14 @@ body {
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
 }
 
+.queue-col {
+    min-width: 0;
+}
+
+
 .queue-name {
     font-weight: 700;
-    margin-bottom: 4px;
+    color: #0f172a;
 }
 
 .queue-info,
@@ -171,18 +189,29 @@ body {
     font-size: 14px;
 }
 
+.queue-position,
+.queue-dob,
+.queue-info {
+    font-size: 14px;
+}
+
+.queue-symptom {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.queue-state,
+.queue-action {
+    justify-self: end;
+}
+
 .queue-cta {
     font-size: 13px;
     color: #2563eb;
     font-weight: 600;
-    margin-top: 8px;
-    display: inline-block;
-}
-
-.queue-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    display: inline-flex;
+    align-items: center;
 }
 
 .queue-status,
@@ -322,6 +351,53 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .queue-table-header {
+        display: none;
+    }
+
+    .queue-card {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 16px;
+        padding: 14px;
+    }
+
+    .queue-position::before,
+    .queue-name::before,
+    .queue-info::before,
+    .queue-dob::before,
+    .queue-symptom::before,
+    .queue-state::before,
+    .queue-action::before {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+        margin-bottom: 2px;
+    }
+
+    .queue-position::before { content: 'STT'; }
+    .queue-name::before { content: 'Họ tên'; }
+    .queue-info::before { content: 'Giới tính'; }
+    .queue-dob::before { content: 'Ngày sinh'; }
+    .queue-symptom::before { content: 'Triệu chứng'; }
+    .queue-state::before { content: 'Trạng thái'; }
+    .queue-action::before { content: 'Thao tác'; }
+
+    .queue-symptom,
+    .queue-action {
+        grid-column: 1 / -1;
+    }
+
+    .queue-symptom {
+        white-space: normal;
+    }
+
+    .queue-state,
+    .queue-action {
+        justify-self: start;
+    }
+    
     .control-panel-popup {
         right: 16px;
         top: auto;
