@@ -7,6 +7,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import model.DoctorDashboardStats;
+import model.ExamLabItem;
+import model.ExaminationHistoryItem;
 
 public class DoctorDAO extends DBContext {
 
@@ -229,6 +231,7 @@ public class DoctorDAO extends DBContext {
         SELECT 
             q.queue_position,
             q.appointment_id,
+            p.patient_id,
             p.full_name AS patient_name,
             p.gender,
             p.dob,
@@ -267,6 +270,7 @@ public class DoctorDAO extends DBContext {
             DoctorQueueItem item = new DoctorQueueItem();
             item.setQueuePosition(rs.getInt("queue_position"));
             item.setAppointmentId(rs.getLong("appointment_id"));
+            item.setPatientId(rs.getLong("patient_id"));
             item.setPatientName(rs.getString("patient_name"));
             item.setGender(rs.getString("gender"));
             item.setDob(rs.getDate("dob"));
@@ -286,6 +290,7 @@ public class DoctorDAO extends DBContext {
             SELECT
                 q.queue_position,
                 q.appointment_id,
+                p.patient_id,
                 p.full_name AS patient_name,
                 p.gender,
                 p.dob,
@@ -307,6 +312,7 @@ public class DoctorDAO extends DBContext {
                 DoctorQueueItem item = new DoctorQueueItem();
                 item.setQueuePosition(rs.getInt("queue_position"));
                 item.setAppointmentId(rs.getLong("appointment_id"));
+                item.setPatientId(rs.getLong("patient_id"));
                 item.setPatientName(rs.getString("patient_name"));
                 item.setGender(rs.getString("gender"));
                 item.setDob(rs.getDate("dob"));
@@ -319,6 +325,83 @@ public class DoctorDAO extends DBContext {
         }
 
         return null;
+    }
+
+    public List<ExamLabItem> getLabResultsByAppointment(long appointmentId) {
+        List<ExamLabItem> list = new ArrayList<>();
+        String sql = """
+            SELECT
+                lr.request_id,
+                lr.status,
+                lr.created_at,
+                res.result_file,
+                res.notes,
+                res.completed_at
+            FROM lab_requests lr
+            LEFT JOIN lab_results res ON lr.request_id = res.request_id
+            WHERE lr.appointment_id = ?
+            ORDER BY lr.created_at DESC
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                ExamLabItem item = new ExamLabItem();
+                item.setRequestId(rs.getInt("request_id"));
+                item.setStatus(rs.getString("status"));
+                item.setRequestedAt(rs.getTimestamp("created_at"));
+                item.setResultFile(rs.getString("result_file"));
+                item.setNotes(rs.getString("notes"));
+                item.setCompletedAt(rs.getTimestamp("completed_at"));
+                list.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<ExaminationHistoryItem> getExaminationHistoryByAppointment(long appointmentId) {
+        List<ExaminationHistoryItem> list = new ArrayList<>();
+
+        String sql = """
+            SELECT
+                a.appointment_id,
+                a.appointment_date,
+                a.appointment_time,
+                a.symptom,
+                a.status AS appointment_status,
+                COALESCE(eq.status, 'N/A') AS queue_status
+            FROM appointments current_ap
+            JOIN appointments a ON a.patient_id = current_ap.patient_id
+            LEFT JOIN exam_queue eq ON eq.appointment_id = a.appointment_id
+            WHERE current_ap.appointment_id = ?
+              AND a.appointment_id <> current_ap.appointment_id
+            ORDER BY a.appointment_date DESC, a.appointment_time DESC
+            LIMIT 10
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                ExaminationHistoryItem item = new ExaminationHistoryItem();
+                item.setAppointmentId(rs.getLong("appointment_id"));
+                item.setAppointmentDate(rs.getDate("appointment_date"));
+                item.setAppointmentTime(rs.getTime("appointment_time"));
+                item.setSymptom(rs.getString("symptom"));
+                item.setAppointmentStatus(rs.getString("appointment_status"));
+                item.setQueueStatus(rs.getString("queue_status"));
+                list.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
     
 }

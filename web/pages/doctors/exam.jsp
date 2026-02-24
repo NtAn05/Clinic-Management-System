@@ -10,6 +10,14 @@
     <body>
 
         <div class="exam-container">
+            <c:if test="${not empty pageError}">
+                <div class="alert-error">${pageError}</div>
+                <div class="actions">
+                    <button class="btn-outline" type="button" onclick="location.href = '${pageContext.request.contextPath}/doctorDashboard'">← Quay lại danh sách</button>
+                </div>
+            </c:if>
+
+            <c:if test="${empty pageError}">
             <div class="exam-header">
                 <div>
                     <p class="kicker">Hồ sơ khám</p>
@@ -63,16 +71,78 @@
             </div>
 
             <div class="tab-content" id="lab">
-                <p>Chưa có kết quả xét nghiệm cho lịch khám này.</p>
+                <c:if test="${empty labResults}">
+                    <p>Chưa có kết quả xét nghiệm cho lịch khám này.</p>
+                </c:if>
+
+                <c:forEach var="lab" items="${labResults}">
+                    <div class="card lab-item">
+                        <h4>Phiếu xét nghiệm #${lab.requestId}</h4>
+                        <p><b>Trạng thái:</b> ${lab.status}</p>
+                        <p><b>Thời gian chỉ định:</b> ${lab.requestedAt}</p>
+                        <p><b>Hoàn tất:</b> ${lab.completedAt}</p>
+                        <p><b>Ghi chú kỹ thuật:</b> ${empty lab.notes ? '---' : lab.notes}</p>
+                        <p>
+                            <b>File kết quả:</b>
+                            <c:choose>
+                                <c:when test="${not empty lab.resultFile}">
+                                    <a href="${pageContext.request.contextPath}/${lab.resultFile}" target="_blank">Xem file</a>
+                                </c:when>
+                                <c:otherwise>Chưa có file</c:otherwise>
+                            </c:choose>
+                        </p>
+                    </div>
+                </c:forEach>
             </div>
 
             <div class="tab-content" id="prescription">
-                <p>Chức năng đơn thuốc sẽ được tích hợp ở bước tiếp theo.</p>
+                <div class="card">
+                    <h3>Đơn thuốc tạm</h3>
+                    
+                    <div id="rxList" class="rx-list">
+                        <div class="rx-row">
+                            <input placeholder="Tên thuốc">
+                            <input placeholder="Liều dùng">
+                            <input placeholder="Số lần/ngày">
+                            <input placeholder="Số ngày">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-outline" onclick="addRxRow()">+ Thêm thuốc</button>
+                </div>
             </div>
 
             <div class="tab-content" id="history">
-                <p>Lịch sử khám của bệnh nhân đang được cập nhật.</p>
-            </div>
+                <c:if test="${empty historyList}">
+                    <p>Chưa có lịch sử khám trước đó của bệnh nhân.</p>
+                </c:if>
+
+                <c:if test="${not empty historyList}">
+                    <table class="history-table" border="1" cellpadding="8" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Mã lịch khám</th>
+                                <th>Ngày khám</th>
+                                <th>Giờ khám</th>
+                                <th>Triệu chứng</th>
+                                <th>Trạng thái lịch</th>
+                                <th>Trạng thái khám</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="h" items="${historyList}">
+                                <tr>
+                                    <td>#${h.appointmentId}</td>
+                                    <td><fmt:formatDate value="${h.appointmentDate}" pattern="dd/MM/yyyy" /></td>
+                                    <td>${h.appointmentTime}</td>
+                                    <td>${h.symptom}</td>
+                                    <td>${h.appointmentStatus}</td>
+                                    <td>${h.queueStatus}</td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </c:if>
+                </c:if>
         </div>
 
         <script>
@@ -83,6 +153,19 @@
                 document.querySelectorAll('.tab-content').forEach(c => {
                     c.classList.toggle('active', c.id === id);
                 });
+            }
+
+            function addRxRow() {
+                const wrap = document.getElementById('rxList');
+                const row = document.createElement('div');
+                row.className = 'rx-row';
+                row.innerHTML = `
+                    <input placeholder="Tên thuốc">
+                    <input placeholder="Liều dùng">
+                    <input placeholder="Số lần/ngày">
+                    <input placeholder="Số ngày">
+                `;
+                wrap.appendChild(row);
             }
         </script>
 

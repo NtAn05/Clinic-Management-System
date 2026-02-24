@@ -16,6 +16,7 @@ import java.util.Date;
 public class DoctorQueueItem {
     private int queuePosition;
     private long appointmentId;
+    private long patientId;
     private String patientName;
     private String gender;
     private Date dob;
@@ -25,7 +26,7 @@ public class DoctorQueueItem {
     public DoctorQueueItem() {
     }
 
-    public DoctorQueueItem(int queuePosition, long appointmentId, String patientName, String gender, Date dob, String symptom, String status) {
+    public DoctorQueueItem(int queuePosition, long appointmentId,long patientId, String patientName, String gender, Date dob, String symptom, String status) {
         this.queuePosition = queuePosition;
         this.appointmentId = appointmentId;
         this.patientName = patientName;
@@ -91,5 +92,12 @@ public class DoctorQueueItem {
         this.status = status;
     }
     
+    public long getPatientId() {
+        return patientId;
+    }
+
+    public void setPatientId(long patientId) {
+        this.patientId = patientId;
+    }
     
 }

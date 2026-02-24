@@ -225,3 +225,58 @@ textarea {
     color: #166534;
     font-weight: 600;
 }
+
+.alert-error {
+    margin-top: 4px;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    font-weight: 600;
+}
+
+.lab-item,
+.history-item {
+    margin-bottom: 12px;
+}
+
+.muted {
+    color: #64748b;
+    margin-top: -4px;
+}
+
+.rx-list {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.rx-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 8px;
+}
+
+@media (max-width: 900px) {
+    .rx-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.history-table {
+    border-collapse: collapse;
+    border: 1px solid #dbe3f1;
+}
+
+.history-table th {
+    background: #f8fafc;
+    text-align: left;
+}
+
+.history-table td,
+.history-table th {
+    border: 1px solid #e2e8f0;
+    font-size: 14px;
+}

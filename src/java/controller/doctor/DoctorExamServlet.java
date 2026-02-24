@@ -11,10 +11,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.List;
 import model.Doctor;
+import model.ExaminationHistoryItem;
+import model.ExamLabItem;
 import model.DoctorQueueItem;
-import model.Patient;
 import model.User;
 
 /**
@@ -34,7 +35,6 @@ public class DoctorExamServlet extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
         doGet(request, response);
     }
 
@@ -62,7 +62,7 @@ public class DoctorExamServlet extends HttpServlet {
         session.setAttribute("doctorName", doctor.getFullName());
         return doctor;
     }
-    
+
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**
      * Handles the HTTP <code>GET</code> method.
@@ -75,43 +75,58 @@ public class DoctorExamServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        Doctor doctor = validateDoctor(request, response);
-        if (doctor == null) {
-            return;
-        }
-
-        String appointmentParam = request.getParameter("appointmentId");
-        if (appointmentParam == null || appointmentParam.isBlank()) {
-            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=missingAppointment");
-            return;
-        }
-
-        long appointmentId;
         try {
-            appointmentId = Long.parseLong(appointmentParam);
-        } catch (NumberFormatException ex) {
-            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=invalidAppointment");
-            return;
-        }
+            Doctor doctor = validateDoctor(request, response);
+            if (doctor == null) {
+                return;
+            }
 
-        DoctorDAO doctorDAO = new DoctorDAO();
-        DoctorQueueItem examData = doctorDAO.getQueueItemByAppointment(doctor.getDoctorId(), appointmentId);
-        if (examData == null) {
-            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=notInQueue");
-            return;
-        }
+            String appointmentParam = request.getParameter("appointmentId");
+            if (appointmentParam == null || appointmentParam.trim().isEmpty()) {
+                request.setAttribute("pageError", "Thiếu mã lịch khám. Vui lòng quay lại danh sách chờ khám.");
+                request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+                return;
+            }
 
-        if ("waiting".equalsIgnoreCase(examData.getStatus())) {
-            doctorDAO.startExamination(appointmentId);
-            examData.setStatus("examining");
-        }
+            long appointmentId;
+            try {
+                appointmentId = Long.parseLong(appointmentParam.trim());
+            } catch (NumberFormatException ex) {
+                request.setAttribute("pageError", "Mã lịch khám không hợp lệ.");
+                request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+                return;
+            }
 
-        request.setAttribute("examData", examData);
-        request.setAttribute("success", request.getParameter("success"));
+            DoctorDAO doctorDAO = new DoctorDAO();
+            DoctorQueueItem examData = doctorDAO.getQueueItemByAppointment(doctor.getDoctorId(), appointmentId);
+            if (examData == null) {
+                request.setAttribute("pageError", "Không tìm thấy bệnh nhân trong hàng đợi khám của bác sĩ.");
+                request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+                return;
+            }
+
+            if ("waiting".equalsIgnoreCase(examData.getStatus())) {
+                doctorDAO.startExamination(appointmentId);
+                examData.setStatus("examining");
+            }
+
+            request.setAttribute("examData", examData);
+            List<ExamLabItem> labResults = doctorDAO.getLabResultsByAppointment(appointmentId);
+            request.setAttribute("labResults", labResults);
+
+             List<ExaminationHistoryItem> examinationHistory
+                = doctorDAO.getExaminationHistoryByAppointment(appointmentId);
+            request.setAttribute("examData", examData);
+            request.setAttribute("historyList", examinationHistory);
+            request.setAttribute("success", request.getParameter("success"));
+            request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            request.setAttribute("pageError", "Đã xảy ra lỗi khi tải màn hình khám bệnh. Vui lòng thử lại.");
+            request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+        }
     }
 
-    
-    
     /**
      * Handles the HTTP <code>POST</code> method.
      *
@@ -130,14 +145,14 @@ public class DoctorExamServlet extends HttpServlet {
 
         String appointmentParam = request.getParameter("appointmentId");
         String action = request.getParameter("action");
-        if (appointmentParam == null || appointmentParam.isBlank()) {
+        if (appointmentParam == null || appointmentParam.trim().isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=missingAppointment");
             return;
         }
 
         long appointmentId;
         try {
-            appointmentId = Long.parseLong(appointmentParam);
+            appointmentId = Long.parseLong(appointmentParam.trim());
         } catch (NumberFormatException ex) {
             response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=invalidAppointment");
             return;
