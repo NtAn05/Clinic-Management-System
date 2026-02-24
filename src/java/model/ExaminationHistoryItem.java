@@ -2,6 +2,7 @@ package model;
 
 import java.sql.Date;
 import java.sql.Time;
+import java.sql.Timestamp;
 
 public class ExaminationHistoryItem {
 
@@ -11,6 +12,9 @@ public class ExaminationHistoryItem {
     private String symptom;
     private String appointmentStatus;
     private String queueStatus;
+    private String diagnosis;
+    private String notes;
+    private Timestamp recordUpdatedAt;
 
     public long getAppointmentId() {
         return appointmentId;
@@ -58,5 +62,30 @@ public class ExaminationHistoryItem {
 
     public void setQueueStatus(String queueStatus) {
         this.queueStatus = queueStatus;
+    }
+    
+    
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public Timestamp getRecordUpdatedAt() {
+        return recordUpdatedAt;
+    }
+
+    public void setRecordUpdatedAt(Timestamp recordUpdatedAt) {
+        this.recordUpdatedAt = recordUpdatedAt;
     }
 }

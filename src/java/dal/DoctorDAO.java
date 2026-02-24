@@ -221,13 +221,13 @@ public class DoctorDAO extends DBContext {
 
     // lọc theo keyword , trạng thái
     public List<DoctorQueueItem> getQueueByDoctorWithFilter(
-        int doctorId,
-        String status,
-        String keyword
-) {
-    List<DoctorQueueItem> list = new ArrayList<>();
+            int doctorId,
+            String status,
+            String keyword
+    ) {
+        List<DoctorQueueItem> list = new ArrayList<>();
 
-    StringBuilder sql = new StringBuilder("""
+        StringBuilder sql = new StringBuilder("""
         SELECT 
             q.queue_position,
             q.appointment_id,
@@ -243,48 +243,47 @@ public class DoctorDAO extends DBContext {
         WHERE q.doctor_id = ?
     """);
 
-    if (status != null && !status.equals("all")) {
-        sql.append(" AND q.status = ? ");
-    }
-
-    if (keyword != null && !keyword.isBlank()) {
-        sql.append(" AND p.full_name LIKE ? ");
-    }
-
-    sql.append(" ORDER BY q.queue_position ");
-
-    try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
-        int index = 1;
-        ps.setInt(index++, doctorId);
-
         if (status != null && !status.equals("all")) {
-            ps.setString(index++, status);
+            sql.append(" AND q.status = ? ");
         }
 
         if (keyword != null && !keyword.isBlank()) {
-            ps.setString(index++, "%" + keyword + "%");
+            sql.append(" AND p.full_name LIKE ? ");
         }
 
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            DoctorQueueItem item = new DoctorQueueItem();
-            item.setQueuePosition(rs.getInt("queue_position"));
-            item.setAppointmentId(rs.getLong("appointment_id"));
-            item.setPatientId(rs.getLong("patient_id"));
-            item.setPatientName(rs.getString("patient_name"));
-            item.setGender(rs.getString("gender"));
-            item.setDob(rs.getDate("dob"));
-            item.setSymptom(rs.getString("symptom"));
-            item.setStatus(rs.getString("status"));
-            list.add(item);
+        sql.append(" ORDER BY q.queue_position ");
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            int index = 1;
+            ps.setInt(index++, doctorId);
+
+            if (status != null && !status.equals("all")) {
+                ps.setString(index++, status);
+            }
+
+            if (keyword != null && !keyword.isBlank()) {
+                ps.setString(index++, "%" + keyword + "%");
+            }
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                DoctorQueueItem item = new DoctorQueueItem();
+                item.setQueuePosition(rs.getInt("queue_position"));
+                item.setAppointmentId(rs.getLong("appointment_id"));
+                item.setPatientId(rs.getLong("patient_id"));
+                item.setPatientName(rs.getString("patient_name"));
+                item.setGender(rs.getString("gender"));
+                item.setDob(rs.getDate("dob"));
+                item.setSymptom(rs.getString("symptom"));
+                item.setStatus(rs.getString("status"));
+                list.add(item);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+        return list;
     }
-    return list;
-}
 
-    
     public DoctorQueueItem getQueueItemByAppointment(int doctorId, long appointmentId) {
         String sql = """
             SELECT
@@ -371,15 +370,19 @@ public class DoctorDAO extends DBContext {
                 a.appointment_id,
                 a.appointment_date,
                 a.appointment_time,
-                a.symptom,
+                COALESCE(mr.symptoms, a.symptom) AS symptom,
                 a.status AS appointment_status,
-                COALESCE(eq.status, 'N/A') AS queue_status
+                COALESCE(eq.status, 'N/A') AS queue_status,
+                    mr.diagnosis,
+                    mr.notes,
+                    mr.updated_at AS record_updated_at
             FROM appointments current_ap
             JOIN appointments a ON a.patient_id = current_ap.patient_id
             LEFT JOIN exam_queue eq ON eq.appointment_id = a.appointment_id
+            JOIN medical_records mr ON mr.appointment_id = a.appointment_id
             WHERE current_ap.appointment_id = ?
               AND a.appointment_id <> current_ap.appointment_id
-            ORDER BY a.appointment_date DESC, a.appointment_time DESC
+            ORDER BY a.appointment_date DESC, a.appointment_time DESC, mr.updated_at DESC
             LIMIT 10
         """;
 
@@ -395,6 +398,9 @@ public class DoctorDAO extends DBContext {
                 item.setSymptom(rs.getString("symptom"));
                 item.setAppointmentStatus(rs.getString("appointment_status"));
                 item.setQueueStatus(rs.getString("queue_status"));
+                item.setDiagnosis(rs.getString("diagnosis"));
+                item.setNotes(rs.getString("notes"));
+                item.setRecordUpdatedAt(rs.getTimestamp("record_updated_at"));
                 list.add(item);
             }
         } catch (SQLException e) {
@@ -403,5 +409,5 @@ public class DoctorDAO extends DBContext {
 
         return list;
     }
-    
+
 }
