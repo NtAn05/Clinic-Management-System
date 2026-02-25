@@ -10,6 +10,13 @@
     pageContext.setAttribute("roleName", roleName);
 %>
 <style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 0;
+        padding-top: 78px;
+        background: #f4f7fe;
+    }
     .site-header {
         position: fixed;
         top: 0;
