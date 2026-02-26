@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.List;
 import model.Doctor;
 import model.ExaminationHistoryItem;
@@ -301,26 +302,73 @@ public class DoctorExamServlet extends HttpServlet {
     }
 
     private String extractHistoryLine(String notes, String label) {
-        String historySection = extractSection(notes, SECTION_HISTORY);
-        if (historySection.isEmpty()) {
+        if (notes == null || notes.isBlank()) {
             return "";
         }
 
-        String[] lines = historySection.split("\\R");
+        String targetLabel = normalizeHistoryLabel(label);
+        String historySection = extractSection(notes, SECTION_HISTORY);
+        String value = extractHistoryLineFromBlock(historySection, targetLabel);
+        if (!value.isEmpty()) {
+            return value;
+        }
+
+        value = extractHistoryLineFromBlock(notes, targetLabel);
+        if (!value.isEmpty()) {
+            return value;
+        }
+
+        if (!notes.contains("[") && !notes.contains(":") && !notes.contains("=")) {
+            return notes.trim();
+        }
+
+        return "";
+    }
+
+    private String extractHistoryLineFromBlock(String block, String targetLabel) {
+        if (block == null || block.isBlank()) {
+            return "";
+        }
+
+        String[] lines = block.split("\\R");
         for (String line : lines) {
             String normalized = line.trim();
-            if (normalized.startsWith("-")) {
+            if (normalized.isEmpty()) {
+                continue;
+            }
+
+            while (normalized.startsWith("-") || normalized.startsWith("•") || normalized.startsWith("*")) {
                 normalized = normalized.substring(1).trim();
             }
 
-            String prefix = label + ":";
-            if (normalized.regionMatches(true, 0, prefix, 0, prefix.length())) {
-                return normalized.substring(prefix.length()).trim();
+            int separator = normalized.indexOf(':');
+            if (separator < 0) {
+                separator = normalized.indexOf('=');
+            }
+            if (separator < 0) {
+                separator = normalized.indexOf('：');
+            }
+            if (separator < 0) {
+                continue;
+            }
+
+            String currentLabel = normalized.substring(0, separator).trim();
+            if (normalizeHistoryLabel(currentLabel).equals(targetLabel)) {
+                return normalized.substring(separator + 1).trim();
             }
         }
         return "";
     }
 
+    private String normalizeHistoryLabel(String label) {
+        if (label == null) {
+            return "";
+        }
+
+        String withoutAccent = Normalizer.normalize(label, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return withoutAccent.toLowerCase().trim();
+    }
     /**
      * Returns a short description of the servlet.
      *
