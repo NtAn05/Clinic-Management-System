@@ -12,7 +12,7 @@ body {
     padding: 24px;
     border-radius: 20px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 20px 44px rgba(15, 23, 42, 0.1);
 }
 
 .kicker {
@@ -28,6 +28,10 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 20px;
+}
+
+.exam-header h2 {
+    font-size: clamp(22px, 2.5vw, 30px);
 }
 
 .exam-header h2 {
@@ -69,25 +73,52 @@ body {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-top: 20px;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 10px;
+    margin-top: 24px;
+    border: 1px solid #dbeafe;
+    border-radius: 16px;
+    padding: 10px;
+    background: linear-gradient(130deg, #f8fbff 0%, #f1f5ff 100%);
 }
 
 .tab {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 9px 13px;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 10px 14px;
     font-weight: 700;
     cursor: pointer;
-    border-radius: 10px;
+    border-radius: 12px;
     color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s ease;
 }
 
 .tab.active {
-    color: #1d4ed8;
+    color: #1e3a8a;
     border-color: #bfdbfe;
-    background: #eff6ff;
+    background: #ffffff;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.14);
+}
+
+.tab:not(.active):hover {
+    background: rgba(255, 255, 255, 0.75);
+    color: #334155;
+}
+
+.tab-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(148, 163, 184, 0.18);
+    font-size: 13px;
+}
+
+.tab.active .tab-icon {
+    background: rgba(37, 99, 235, 0.14);
 }
 
 .tab-content {
@@ -97,6 +128,24 @@ body {
 
 .tab-content.active {
     display: block;
+}
+
+.section-intro {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: linear-gradient(140deg, #f8fafc 0%, #eff6ff 100%);
+    border: 1px solid #dbeafe;
+}
+
+.section-intro h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.section-intro p {
+    margin: 4px 0 0;
+    color: #475569;
 }
 
 .card-grid {
@@ -114,6 +163,9 @@ body {
 
 .card h3 {
     margin-top: 0;
+}
+.card h4 {
+    margin: 0;
 }
 
 .grid {
@@ -242,6 +294,48 @@ textarea {
     margin-bottom: 12px;
 }
 
+.lab-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.status-pill {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #0c4a6e;
+}
+
+.lab-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 8px;
+}
+
+.lab-link {
+    color: #1d4ed8;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.lab-link:hover {
+    text-decoration: underline;
+}
+
+.empty-state {
+    padding: 16px;
+    border: 1px dashed #bfdbfe;
+    background: #eff6ff;
+    color: #1e3a8a;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
 .muted {
     color: #64748b;
     margin-top: -4px;
@@ -265,6 +359,10 @@ textarea {
     }
 }
 
+.lab-meta-grid {
+        grid-template-columns: 1fr;
+    }
+
 .history-table {
     border-collapse: collapse;
     border: 1px solid #dbe3f1;
@@ -279,4 +377,16 @@ textarea {
 .history-table th {
     border: 1px solid #e2e8f0;
     font-size: 14px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.section-spacing {
+    margin-top: 16px;
 }

@@ -9,6 +9,7 @@ import java.util.List;
 import model.DoctorDashboardStats;
 import model.ExamLabItem;
 import model.ExaminationHistoryItem;
+import model.MedicalRecord;
 
 public class DoctorDAO extends DBContext {
 
@@ -408,6 +409,78 @@ public class DoctorDAO extends DBContext {
         }
 
         return list;
+    }
+
+    public MedicalRecord getMedicalRecordByAppointment(long appointmentId) {
+        String sql = """
+            SELECT appointment_id, symptoms, diagnosis, notes, updated_at
+            FROM medical_records
+            WHERE appointment_id = ?
+            LIMIT 1
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                MedicalRecord record = new MedicalRecord();
+                record.setAppointmentId(rs.getLong("appointment_id"));
+                record.setSymptoms(rs.getString("symptoms"));
+                record.setDiagnosis(rs.getString("diagnosis"));
+                record.setNotes(rs.getString("notes"));
+                record.setUpdatedAt(rs.getTimestamp("updated_at"));
+                return record;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public boolean upsertMedicalRecord(long appointmentId, String symptoms, String diagnosis, String notes) {
+        String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
+
+        try (PreparedStatement check = connection.prepareStatement(checkSql)) {
+            check.setLong(1, appointmentId);
+            boolean exists;
+            try (ResultSet rs = check.executeQuery()) {
+                exists = rs.next();
+            }
+
+            if (exists) {
+                String updateSql = """
+                    UPDATE medical_records
+                    SET symptoms = ?, diagnosis = ?, notes = ?, updated_at = NOW()
+                    WHERE appointment_id = ?
+                """;
+
+                try (PreparedStatement update = connection.prepareStatement(updateSql)) {
+                    update.setString(1, symptoms);
+                    update.setString(2, diagnosis);
+                    update.setString(3, notes);
+                    update.setLong(4, appointmentId);
+                    return update.executeUpdate() > 0;
+                }
+            }
+
+            String insertSql = """
+                INSERT INTO medical_records (appointment_id, symptoms, diagnosis, notes, updated_at)
+                VALUES (?, ?, ?, ?, NOW())
+            """;
+
+            try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
+                insert.setLong(1, appointmentId);
+                insert.setString(2, symptoms);
+                insert.setString(3, diagnosis);
+                insert.setString(4, notes);
+                return insert.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
 }

@@ -17,6 +17,7 @@ import model.ExaminationHistoryItem;
 import model.ExamLabItem;
 import model.DoctorQueueItem;
 import model.User;
+import model.MedicalRecord;
 
 /**
  *
@@ -24,6 +25,10 @@ import model.User;
  */
 public class DoctorExamServlet extends HttpServlet {
 
+    private static final String SECTION_HISTORY = "TIỀN SỬ";
+    private static final String SECTION_CLINICAL_RESULT = "KẾT QUẢ KHÁM LÂM SÀNG";
+    private static final String SECTION_DOCTOR_NOTE = "GHI CHÚ BÁC SĨ";
+    private static final String SECTION_TREATMENT_PLAN = "PHƯƠNG ÁN ĐIỀU TRỊ";
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -113,12 +118,25 @@ public class DoctorExamServlet extends HttpServlet {
             request.setAttribute("examData", examData);
             List<ExamLabItem> labResults = doctorDAO.getLabResultsByAppointment(appointmentId);
             request.setAttribute("labResults", labResults);
+            MedicalRecord medicalRecord = doctorDAO.getMedicalRecordByAppointment(appointmentId);
+            request.setAttribute("medicalRecord", medicalRecord);
 
-             List<ExaminationHistoryItem> examinationHistory
-                = doctorDAO.getExaminationHistoryByAppointment(appointmentId);
+            String notes = medicalRecord != null ? medicalRecord.getNotes() : null;
+            request.setAttribute("historyAllergies", extractHistoryLine(notes, "Dị ứng"));
+            request.setAttribute("historyChronic", extractHistoryLine(notes, "Bệnh mạn tính"));
+            request.setAttribute("historyFamily", extractHistoryLine(notes, "Tiền sử gia đình"));
+            request.setAttribute("historySocial", extractHistoryLine(notes, "Tiền sử xã hội"));
+            request.setAttribute("historyVaccination", extractHistoryLine(notes, "Lịch sử tiêm chủng"));
+            request.setAttribute("clinicalResult", extractSection(notes, SECTION_CLINICAL_RESULT));
+            request.setAttribute("doctorNote", extractSection(notes, SECTION_DOCTOR_NOTE));
+            request.setAttribute("treatmentPlan", extractSection(notes, SECTION_TREATMENT_PLAN));
+
+            List<ExaminationHistoryItem> examinationHistory
+                    = doctorDAO.getExaminationHistoryByAppointment(appointmentId);
             request.setAttribute("examData", examData);
             request.setAttribute("historyList", examinationHistory);
             request.setAttribute("success", request.getParameter("success"));
+            request.setAttribute("error", request.getParameter("error"));
             request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -165,6 +183,28 @@ public class DoctorExamServlet extends HttpServlet {
             return;
         }
 
+        String symptoms = cleanText(request.getParameter("symptoms"));
+        String diagnosis = cleanText(request.getParameter("diagnosis"));
+
+        String allergies = cleanText(request.getParameter("historyAllergies"));
+        String chronic = cleanText(request.getParameter("historyChronic"));
+        String family = cleanText(request.getParameter("historyFamily"));
+        String social = cleanText(request.getParameter("historySocial"));
+        String vaccination = cleanText(request.getParameter("historyVaccination"));
+
+        String clinicalResult = cleanText(request.getParameter("clinicalResult"));
+        String doctorNote = cleanText(request.getParameter("doctorNote"));
+        String treatmentPlan = cleanText(request.getParameter("treatmentPlan"));
+
+        String notes = buildMedicalRecordNote(allergies, chronic, family, social, vaccination,
+                clinicalResult, doctorNote, treatmentPlan);
+
+        boolean saved = doctorDAO.upsertMedicalRecord(appointmentId, symptoms, diagnosis, notes);
+        if (!saved) {
+            response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
+            return;
+        }
+
         if ("finish".equalsIgnoreCase(action)) {
             doctorDAO.finishExamination(appointmentId);
             response.sendRedirect(request.getContextPath() + "/doctorDashboard?success=examFinished");
@@ -172,6 +212,113 @@ public class DoctorExamServlet extends HttpServlet {
         }
 
         response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&success=saved");
+    }
+
+    private String cleanText(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.trim();
+    }
+
+    private String buildMedicalRecordNote(
+            String allergies,
+            String chronic,
+            String family,
+            String social,
+            String vaccination,
+            String clinicalResult,
+            String doctorNote,
+            String treatmentPlan
+    ) {
+        StringBuilder sb = new StringBuilder();
+
+        if (!allergies.isEmpty() || !chronic.isEmpty() || !family.isEmpty() || !social.isEmpty() || !vaccination.isEmpty()) {
+            sb.append("[").append(SECTION_HISTORY).append("]\n");
+            if (!allergies.isEmpty()) {
+                sb.append("- Dị ứng: ").append(allergies).append("\n");
+            }
+            if (!chronic.isEmpty()) {
+                sb.append("- Bệnh mãn tính: ").append(chronic).append("\n");
+            }
+            if (!family.isEmpty()) {
+                sb.append("- Tiền sử gia đình: ").append(family).append("\n");
+            }
+            if (!social.isEmpty()) {
+                sb.append("- Tiền sử xã hội: ").append(social).append("\n");
+            }
+            if (!vaccination.isEmpty()) {
+                sb.append("- Lịch sử tiêm chủng: ").append(vaccination).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        appendSection(sb, SECTION_CLINICAL_RESULT, clinicalResult);
+        appendSection(sb, SECTION_DOCTOR_NOTE, doctorNote);
+        appendSection(sb, SECTION_TREATMENT_PLAN, treatmentPlan);
+
+        return sb.toString().trim();
+    }
+
+    private void appendSection(StringBuilder sb, String title, String value) {
+        if (value.isEmpty()) {
+            return;
+        }
+
+        sb.append("[").append(title).append("]\n");
+        sb.append(value).append("\n\n");
+    }
+
+    private String extractSection(String notes, String sectionTitle) {
+        if (notes == null || notes.isBlank()) {
+            return "";
+        }
+
+        String marker = "[" + sectionTitle + "]";
+        int start = notes.indexOf(marker);
+        if (start < 0) {
+            return "";
+        }
+
+        int contentStart = start + marker.length();
+        while (contentStart < notes.length() && (notes.charAt(contentStart) == '\n' || notes.charAt(contentStart) == '\r')) {
+            contentStart++;
+        }
+
+        int end = notes.length();
+        int nextMarker = notes.indexOf("[", contentStart);
+        while (nextMarker >= 0) {
+            int close = notes.indexOf("]", nextMarker);
+            if (close > nextMarker) {
+                end = nextMarker;
+                break;
+            }
+            nextMarker = notes.indexOf("[", nextMarker + 1);
+        }
+
+        return notes.substring(contentStart, end).trim();
+    }
+
+    private String extractHistoryLine(String notes, String label) {
+        String historySection = extractSection(notes, SECTION_HISTORY);
+        if (historySection.isEmpty()) {
+            return "";
+        }
+
+        String[] lines = historySection.split("\\R");
+        for (String line : lines) {
+            String normalized = line.trim();
+            if (normalized.startsWith("-")) {
+                normalized = normalized.substring(1).trim();
+            }
+
+            String prefix = label + ":";
+            if (normalized.regionMatches(true, 0, prefix, 0, prefix.length())) {
+                return normalized.substring(prefix.length()).trim();
+            }
+        }
+        return "";
     }
 
     /**
