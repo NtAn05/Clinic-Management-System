@@ -252,7 +252,7 @@
                     <div class="profile-popup" id="profilePopup">
                         <div class="profile-popup-title">Quản lý cá nhân</div>
                         <a class="profile-item" href="#">Tài khoản</a>
-                        <a class="profile-item" href="#">Hồ sơ bệnh án</a>
+                        <a class="profile-item" href="${pageContext.request.contextPath}/patient-medical-records">Hồ sơ bệnh án</a>
                         <a class="profile-item" href="#">Lịch sử khám</a>
                         <a class="profile-item" href="#">Đơn thuốc</a>
                         <a class="profile-item" href="${pageContext.request.contextPath}/appointmentservlet">Thông tin đặt lịch</a>

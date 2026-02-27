@@ -28,6 +28,10 @@
         <servlet-name>DoctorExamServlet</servlet-name>
         <servlet-class>controller.doctor.DoctorExamServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>PatientRecordsServlet</servlet-name>
+        <servlet-class>controller.medicalRecord.PatientRecordsServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <url-pattern>/doctorDashboard</url-pattern>
@@ -87,5 +91,9 @@
     <servlet-mapping>
         <servlet-name>DoctorExamServlet</servlet-name>
         <url-pattern>/doctor/exam</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientRecordsServlet</servlet-name>
+        <url-pattern>/patient-medical-records</url-pattern>
     </servlet-mapping>
 </web-app>
