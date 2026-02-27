@@ -4,6 +4,7 @@ import model.Doctor;
 import model.DoctorShift;
 import model.DoctorQueueItem;
 import java.sql.*;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import model.DoctorDashboardStats;
@@ -73,6 +74,107 @@ public class DoctorDAO extends DBContext {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public List<Doctor> getAllDoctorsForSchedule() {
+        List<Doctor> list = new ArrayList<>();
+        String sql = """
+            SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
+            FROM doctors d
+            JOIN users u ON d.user_id = u.user_id
+            WHERE u.status = 'active'
+            ORDER BY u.full_name
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql);
+                ResultSet rs = st.executeQuery()) {
+            while (rs.next()) {
+                Doctor d = new Doctor();
+                d.setDoctorId(rs.getInt("doctor_id"));
+                d.setUserId(rs.getInt("user_id"));
+                d.setSpecialization(rs.getString("specialization"));
+                d.setFullName(rs.getString("full_name"));
+                list.add(d);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public void addDoctorShift(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
+        String sql = """
+            INSERT INTO doctor_shifts (doctor_id, day_of_week, start_time, end_time, max_patients)
+            VALUES (?, ?, ?, ?, ?)
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            st.setInt(2, dayOfWeek);
+            st.setTime(3, Time.valueOf(startTime));
+            st.setTime(4, Time.valueOf(endTime));
+            st.setInt(5, maxPatients);
+            st.executeUpdate();
+        }
+    }
+
+    public void updateDoctorShift(int shiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
+        String sql = """
+            UPDATE doctor_shifts
+            SET day_of_week = ?, start_time = ?, end_time = ?, max_patients = ?
+            WHERE shift_id = ?
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, dayOfWeek);
+            st.setTime(2, Time.valueOf(startTime));
+            st.setTime(3, Time.valueOf(endTime));
+            st.setInt(4, maxPatients);
+            st.setInt(5, shiftId);
+            st.executeUpdate();
+        }
+    }
+
+    public void deleteDoctorShift(int shiftId) throws SQLException {
+        String sql = "DELETE FROM doctor_shifts WHERE shift_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            st.executeUpdate();
+        }
+    }
+
+    public boolean hasShiftConflict(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime, Integer excludeShiftId) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT 1
+            FROM doctor_shifts
+            WHERE doctor_id = ?
+              AND day_of_week = ?
+              AND start_time < ?
+              AND end_time > ?
+        """);
+        if (excludeShiftId != null) {
+            sql.append(" AND shift_id <> ? ");
+        }
+        sql.append(" LIMIT 1 ");
+
+        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
+            int index = 1;
+            st.setInt(index++, doctorId);
+            st.setInt(index++, dayOfWeek);
+            st.setTime(index++, Time.valueOf(endTime));
+            st.setTime(index++, Time.valueOf(startTime));
+            if (excludeShiftId != null) {
+                st.setInt(index, excludeShiftId);
+            }
+
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /* CẬP NHẬT TRẠNG THÁI HÀNG ĐỢI */

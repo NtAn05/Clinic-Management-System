@@ -137,6 +137,20 @@
                         <span>Quản lý người dùng</span>
                     </a>
                 </li>
+                <li class="sidebar-menu-item">
+                    <a href="${pageContext.request.contextPath}/admin-services" 
+                       class="sidebar-menu-link ${pageContext.request.requestURI.contains('admin-services') ? 'active' : ''}">
+                        <i class="fas fa-list"></i>
+                        <span>Quản lý dịch vụ</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="${pageContext.request.contextPath}/admin-doctor-schedules" 
+                       class="sidebar-menu-link ${pageContext.request.requestURI.contains('admin-doctor-schedules') ? 'active' : ''}">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Lịch làm việc bác sĩ</span>
+                    </a>
+                </li>
             </c:when>
             <c:when test="${roleName == 'receptionist'}">
                 <!-- Receptionist Menu -->

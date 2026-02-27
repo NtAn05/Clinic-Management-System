@@ -229,6 +229,7 @@
                 <c:if test="${roleName == 'admin'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
                 </c:if>
 
                 <c:if test="${roleName == 'doctor'}">

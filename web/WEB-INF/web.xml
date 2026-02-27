@@ -21,6 +21,10 @@
         <servlet-class>controller.AdminServiceServlet</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>AdminDoctorScheduleServlet</servlet-name>
+        <servlet-class>controller.AdminDoctorScheduleServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <servlet-class>controller.doctor.DoctorDashboardServlet</servlet-class>
     </servlet>
@@ -63,6 +67,10 @@
     <servlet-mapping>
         <servlet-name>AdminServiceServlet</servlet-name>
         <url-pattern>/admin-services</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AdminDoctorScheduleServlet</servlet-name>
+        <url-pattern>/admin-doctor-schedules</url-pattern>
     </servlet-mapping>
     <servlet>
         <servlet-name>LabQueueServlet</servlet-name>

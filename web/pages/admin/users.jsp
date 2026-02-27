@@ -19,36 +19,6 @@
                 min-height: 100vh;
             }
 
-            header {
-                padding: 20px 50px;
-                background: white;
-                border-bottom: 2px solid #0061ff;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            header .title {
-                font-weight: bold;
-                color: #0061ff;
-                font-size: 18px;
-            }
-
-            header a {
-                color: #0061ff;
-                text-decoration: none;
-                font-size: 14px;
-                padding: 8px 12px;
-                border-radius: 4px;
-                transition: all 0.3s ease;
-                margin-left: 10px;
-            }
-
-            header a:hover {
-                background: #f0f5ff;
-            }
-
             .container {
                 padding: 30px 50px;
                 max-width: 1400px;
@@ -603,13 +573,7 @@
         </style>
     </head>
     <body>
-        <header>
-            <div class="title">👤 QUẢN LÝ TÀI KHOẢN</div>
-            <div>
-                <a href="${pageContext.request.contextPath}/index.jsp"><i class="fas fa-arrow-left"></i> Quay lại</a>
-                <a href="${pageContext.request.contextPath}/"><i class="fas fa-home"></i> Trang chủ</a>
-            </div>
-        </header>
+        <jsp:include page="/common/header.jsp" />
 
         <div class="container">
             <!-- THÔNG BÁO THÀNH CÔNG -->

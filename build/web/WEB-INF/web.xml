@@ -21,12 +21,20 @@
         <servlet-class>controller.AdminServiceServlet</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>AdminDoctorScheduleServlet</servlet-name>
+        <servlet-class>controller.AdminDoctorScheduleServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <servlet-class>controller.doctor.DoctorDashboardServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>DoctorExamServlet</servlet-name>
         <servlet-class>controller.doctor.DoctorExamServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>PatientRecordsServlet</servlet-name>
+        <servlet-class>controller.medicalRecord.PatientRecordsServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
@@ -60,6 +68,10 @@
         <servlet-name>AdminServiceServlet</servlet-name>
         <url-pattern>/admin-services</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AdminDoctorScheduleServlet</servlet-name>
+        <url-pattern>/admin-doctor-schedules</url-pattern>
+    </servlet-mapping>
     <servlet>
         <servlet-name>LabQueueServlet</servlet-name>
         <servlet-class>controller.LabQueueServlet</servlet-class>
@@ -87,5 +99,9 @@
     <servlet-mapping>
         <servlet-name>DoctorExamServlet</servlet-name>
         <url-pattern>/doctor/exam</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientRecordsServlet</servlet-name>
+        <url-pattern>/patient-medical-records</url-pattern>
     </servlet-mapping>
 </web-app>
