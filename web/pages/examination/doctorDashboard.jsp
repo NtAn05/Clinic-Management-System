@@ -5,7 +5,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Doctor Dashboard</title>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/pages/doctors/doctorDashboard.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/pages/examination/doctorDashboard.css">
     </head>
     <body>
         <div class="dashboard-container">

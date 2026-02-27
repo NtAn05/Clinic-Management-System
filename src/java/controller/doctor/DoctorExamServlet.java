@@ -90,7 +90,7 @@ public class DoctorExamServlet extends HttpServlet {
             String appointmentParam = request.getParameter("appointmentId");
             if (appointmentParam == null || appointmentParam.trim().isEmpty()) {
                 request.setAttribute("pageError", "Thiếu mã lịch khám. Vui lòng quay lại danh sách chờ khám.");
-                request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+                request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
                 return;
             }
 
@@ -99,7 +99,7 @@ public class DoctorExamServlet extends HttpServlet {
                 appointmentId = Long.parseLong(appointmentParam.trim());
             } catch (NumberFormatException ex) {
                 request.setAttribute("pageError", "Mã lịch khám không hợp lệ.");
-                request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+                request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
                 return;
             }
 
@@ -107,7 +107,7 @@ public class DoctorExamServlet extends HttpServlet {
             DoctorQueueItem examData = doctorDAO.getQueueItemByAppointment(doctor.getDoctorId(), appointmentId);
             if (examData == null) {
                 request.setAttribute("pageError", "Không tìm thấy bệnh nhân trong hàng đợi khám của bác sĩ.");
-                request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+                request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
                 return;
             }
 
@@ -138,11 +138,11 @@ public class DoctorExamServlet extends HttpServlet {
             request.setAttribute("historyList", examinationHistory);
             request.setAttribute("success", request.getParameter("success"));
             request.setAttribute("error", request.getParameter("error"));
-            request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+            request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
         } catch (Exception ex) {
             ex.printStackTrace();
             request.setAttribute("pageError", "Đã xảy ra lỗi khi tải màn hình khám bệnh. Vui lòng thử lại.");
-            request.getRequestDispatcher("/pages/doctors/exam.jsp").forward(request, response);
+            request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
         }
     }
 

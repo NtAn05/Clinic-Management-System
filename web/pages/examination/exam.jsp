@@ -6,7 +6,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Khám bệnh</title>
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/pages/doctors/exam.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/pages/examination/exam.css">
     </head>
     <body>
 

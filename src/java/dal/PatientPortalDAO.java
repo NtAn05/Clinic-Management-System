@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dal;
 
 import java.sql.PreparedStatement;
@@ -9,16 +5,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import model.PatientRecordItem;
+import model.MedicalRecord;
 
-/**
- *
- * @author anngu
- */
 public class PatientPortalDAO extends DBContext {
 
-    public List<PatientRecordItem> getMedicalRecordsByUserId(int userId) {
-        List<PatientRecordItem> list = new ArrayList<>();
+    private static final String SECTION_HISTORY = "TIỀN SỬ";
+    private static final String SECTION_DOCTOR_NOTE = "GHI CHÚ BÁC SĨ";
+    private static final String SECTION_TREATMENT_PLAN = "PHƯƠNG ÁN ĐIỀU TRỊ";
+
+    public List<MedicalRecord> getMedicalRecordsByUserId(int userId) {
+        List<MedicalRecord> list = new ArrayList<>();
 
         String sql = """
             SELECT
@@ -44,14 +40,25 @@ public class PatientPortalDAO extends DBContext {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                PatientRecordItem item = new PatientRecordItem();
+                MedicalRecord item = new MedicalRecord();
+                String notes = rs.getString("notes");
+                String history = extractSection(notes, SECTION_HISTORY);
+
                 item.setAppointmentId(rs.getLong("appointment_id"));
                 item.setAppointmentDate(rs.getDate("appointment_date"));
                 item.setAppointmentTime(rs.getTime("appointment_time"));
                 item.setDoctorName(rs.getString("doctor_name"));
                 item.setSymptoms(rs.getString("symptoms"));
                 item.setDiagnosis(rs.getString("diagnosis"));
-                item.setNotes(rs.getString("notes"));
+                item.setNotes(notes);
+                item.setHistory(history);
+                item.setHistoryAllergies(extractHistoryLine(history, "Dị ứng"));
+                item.setHistoryChronic(extractHistoryLine(history, "Bệnh mãn tính"));
+                item.setHistoryFamily(extractHistoryLine(history, "Tiền sử gia đình"));
+                item.setHistorySocial(extractHistoryLine(history, "Tiền sử xã hội"));
+                item.setHistoryVaccination(extractHistoryLine(history, "Lịch sử tiêm chủng"));
+                item.setDoctorNote(extractSection(notes, SECTION_DOCTOR_NOTE));
+                item.setTreatmentPlan(extractSection(notes, SECTION_TREATMENT_PLAN));
                 item.setUpdatedAt(rs.getTimestamp("updated_at"));
                 list.add(item);
             }
@@ -60,5 +67,57 @@ public class PatientPortalDAO extends DBContext {
         }
 
         return list;
+    }
+
+    private String extractSection(String notes, String sectionTitle) {
+        if (notes == null || notes.isBlank()) {
+            return "";
+        }
+
+        String marker = "[" + sectionTitle + "]";
+        int start = notes.indexOf(marker);
+        if (start < 0) {
+            return "";
+        }
+
+        int contentStart = start + marker.length();
+        while (contentStart < notes.length() && (notes.charAt(contentStart) == '\n' || notes.charAt(contentStart) == '\r')) {
+            contentStart++;
+        }
+
+        int end = notes.length();
+        int nextMarker = notes.indexOf("[", contentStart);
+        while (nextMarker >= 0) {
+            int close = notes.indexOf("]", nextMarker);
+            if (close > nextMarker) {
+                end = nextMarker;
+                break;
+            }
+            nextMarker = notes.indexOf("[", nextMarker + 1);
+        }
+
+        return notes.substring(contentStart, end).trim();
+    }
+
+    private String extractHistoryLine(String historySection, String label) {
+        if (historySection == null || historySection.isBlank()) {
+            return "";
+        }
+
+        String[] lines = historySection.split("\\R");
+        String prefix = label + ":";
+
+        for (String line : lines) {
+            String normalized = line.trim();
+            if (normalized.startsWith("-")) {
+                normalized = normalized.substring(1).trim();
+            }
+
+            if (normalized.regionMatches(true, 0, prefix, 0, prefix.length())) {
+                return normalized.substring(prefix.length()).trim();
+            }
+        }
+
+        return "";
     }
 }

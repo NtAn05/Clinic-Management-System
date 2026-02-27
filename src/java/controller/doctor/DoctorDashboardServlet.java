@@ -102,7 +102,7 @@ public class DoctorDashboardServlet extends HttpServlet {
         request.setAttribute("stats", stats);
         request.setAttribute("shifts", shifts);
 
-        request.getRequestDispatcher("/pages/doctors/doctorDashboard.jsp")
+        request.getRequestDispatcher("/pages/examination/doctorDashboard.jsp")
                 .forward(request, response);
 //        String queueId = request.getParameter("queueId");
 //        request.setAttribute("queueId", queueId); //  để sau dùng
@@ -121,7 +121,7 @@ public class DoctorDashboardServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/pages/doctors/doctorDashboard.jsp")
+        request.getRequestDispatcher("/pages/examination/doctorDashboard.jsp")
                 .forward(request, response);
     }
 
