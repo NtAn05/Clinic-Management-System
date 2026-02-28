@@ -44,7 +44,6 @@
 
     .content-wrapper {
       flex: 1;
-      margin-left: var(--sidebar-width);
       padding: 24px;
       width: 100%;
       max-width: 100%;
@@ -285,7 +284,6 @@
 <body>
   <jsp:include page="../../common/header.jsp" />
   <jsp:include page="../../common/modal-alert.jsp" />
-  <jsp:include page="../../common/sidebar.jsp" />
 
   <div class="main-container">
     <div class="content-wrapper">

@@ -58,7 +58,6 @@
         /* Content Area */
         .content-area {
             flex: 1;
-            margin-left: var(--sidebar-width);
             padding: 20px;
             min-height: calc(100vh - 60px);
             overflow-y: auto;
@@ -157,13 +156,6 @@
             font-size: 14px;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .content-area {
-                margin-left: 0;
-            }
-        }
-        
         /* Ensure content scrolls properly */
         html {
             overflow-x: hidden;
@@ -174,9 +166,6 @@
     <jsp:include page="header.jsp" />
 
     <div class="main-container">
-        <!-- Include Sidebar -->
-        <jsp:include page="sidebar.jsp" />
-
         <!-- Content Area -->
         <main class="content-area">
 

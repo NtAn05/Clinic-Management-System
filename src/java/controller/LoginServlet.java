@@ -70,11 +70,19 @@ public class LoginServlet extends HttpServlet {
                     break;
 
                 case "technician":
-                    response.sendRedirect(request.getContextPath() + "/technician-dashboard");
+                    // Redirect technician directly to Lab Queue page
+                    response.sendRedirect(request.getContextPath() + "/lab-queue");
                     break;
-                 case "staff":
+
+                case "receptionist":
+                    // Receptionist: chuyển thẳng tới trang kiểm tra thanh toán
+                    response.sendRedirect(request.getContextPath() + "/lab-payment");
+                    break;
+
+                case "staff":
                     response.sendRedirect(request.getContextPath() + "/staff-dashboard");
                     break;
+
                 default:
                     response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
                     break;

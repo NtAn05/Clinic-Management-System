@@ -39,6 +39,10 @@ public final class RoleHelper {
         return "technician".equals(getRoleName(u));
     }
 
+    public static boolean isReceptionist(User u) {
+        return "receptionist".equals(getRoleName(u));
+    }
+
     public static boolean isDoctor(User u) {
         return "doctor".equals(getRoleName(u));
     }

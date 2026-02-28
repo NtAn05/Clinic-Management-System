@@ -23,7 +23,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, sans-serif; background: var(--bg-light); color: var(--text-main); padding-top: 60px; }
     .main-container { display: flex; min-height: calc(100vh - 60px); }
-    .content-wrapper { flex: 1; margin-left: var(--sidebar-width); padding: 24px; max-width: 1200px; margin-right: auto; }
+    .content-wrapper { flex: 1; padding: 24px; max-width: 1200px; margin-right: auto; }
     .page-header { margin-bottom: 24px; }
     .page-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
     .page-subtitle { font-size: 14px; color: var(--text-sub); }
@@ -49,7 +49,6 @@
 </head>
 <body>
   <jsp:include page="../../common/header.jsp" />
-  <jsp:include page="../../common/sidebar.jsp" />
 
   <div class="main-container">
     <div class="content-wrapper">
