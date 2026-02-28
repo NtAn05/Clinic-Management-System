@@ -325,20 +325,10 @@ public class LabRequestDAO extends DBContext {
 
     /**
      * Tạo phiếu chỉ định xét nghiệm (bác sĩ). Trả về requestId nếu thành công, 0 nếu thất bại.
-     * Xóa bệnh nhân khỏi exam_queue (DELETE) để họ chuyển sang hàng đợi xét nghiệm (schema exam_queue chỉ có waiting/examining/done).
+     * Cho phép nhiều phiếu xét nghiệm cho cùng một appointment (ví dụ: bệnh khác, chỉ định thêm).
+     * Xóa bệnh nhân khỏi exam_queue (DELETE) để họ chuyển sang hàng đợi xét nghiệm.
      */
     public int insertLabRequest(long appointmentId, int doctorId) {
-        String checkSql = "SELECT request_id FROM lab_requests WHERE appointment_id = ?";
-        try (PreparedStatement checkSt = connection.prepareStatement(checkSql)) {
-            checkSt.setLong(1, appointmentId);
-            ResultSet rs = checkSt.executeQuery();
-            if (rs.next()) {
-                return 0; // Đã có phiếu xét nghiệm cho appointment này
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return 0;
-        }
         String insertSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
         try (PreparedStatement st = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
             st.setLong(1, appointmentId);

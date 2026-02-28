@@ -189,7 +189,7 @@ public class LabQueueServlet extends HttpServlet {
                 if (requestId > 0) {
                     response.getWriter().write("{\"success\": true, \"message\": \"Đã chỉ định xét nghiệm. Bệnh nhân đã chuyển sang hàng đợi xét nghiệm.\", \"requestId\": " + requestId + "}");
                 } else {
-                    response.getWriter().write("{\"success\": false, \"message\": \"Đã có phiếu xét nghiệm cho bệnh nhân này hoặc không thể tạo\"}");
+                    response.getWriter().write("{\"success\": false, \"message\": \"Không thể tạo phiếu xét nghiệm\"}");
                 }
             } catch (NumberFormatException e) {
                 response.getWriter().write("{\"success\": false, \"message\": \"Mã lịch hẹn không hợp lệ\"}");
