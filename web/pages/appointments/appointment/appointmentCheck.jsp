@@ -134,7 +134,7 @@
                             <input type="hidden" name="date" value="${appointment.getStatus()}">
                             <input type="hidden" name="doctorID" value="${doctor.doctorId}">
                             <input type="hidden" name="userID" value="${sessionScope.account.userId}">
-                            </form>
+                            <input type="hidden" name="pricePay" value="${doctor.price}">
 
                             <!-- ACTION -->
 
@@ -151,9 +151,11 @@
                                 </button>
 
                             </div>
+        </div>
+                  </form>
 
                         </div>
-                </div>
+                
                 <!-- RIGHT  -->
                 <div class="card">
                     <img src="${doctor.getImage()}" alt="Doctor">
@@ -182,4 +184,3 @@
 
     </body>
 </html>
-

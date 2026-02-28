@@ -1,11 +1,13 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
-        <link rel="stylesheet"
+<head>
+    <title>Thanh toán thất bại</title>
+
+<link rel="stylesheet"
               href="${pageContext.request.contextPath}/pages/appointments/appointment/appointment.css">
+    
     </head>
     <body>
 
@@ -42,19 +44,18 @@
                     </div>
 
                     <div class="card-box">
-                        <h3>Cảm ơn đã đặt lịch hẹn</h3>
+                        <h3>❌ Thanh toán thất bại hoặc đã huỷ!</h2</h3>
 
                         <div class="success-wrapper">
                             <div class="success-icon-box">
-                                <img src="https://png.pngtree.com/png-vector/20250322/ourlarge/pngtree-check-mark-voting-checklist-png-image_15845205.png"
-                                     alt="Thành công"
+                                <img src="https://tse1.mm.bing.net/th/id/OIP.MD5CapzfmiFzbwPNCYDVvwHaGr?pid=ImgDet&w=187&h=168&c=7&dpr=1.3&o=7&rm=3"
+                                     alt="Thất bại"
                                      class="success-icon">
                             </div>
                         </div>
 
                         <label style="color: red">Cuộc hẹn của bạn đã được đặt thành công !!!</label>
                         <br>
-                        <label style="color: red">Vui lòng đến cơ sở khám đúng thời gian</label>
 
                         <div class="actions">
                             <a href="${pageContext.request.contextPath}/index.jsp" class="btn-primary">
