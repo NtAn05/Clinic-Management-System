@@ -1,4 +1,4 @@
-﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
 <html lang="vi">
@@ -27,7 +27,7 @@
                 padding: 22px;
                 border-radius: 10px;
                 margin-bottom: 20px;
-                box-shadow: 0 4px 15px rgba(0,0,0,.1);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, .1);
             }
             .alert {
                 padding: 15px 20px;
@@ -174,7 +174,7 @@
                 border-collapse: collapse;
             }
             th {
-                background: linear-gradient(135deg,#f8f9fa 0%,#f0f0f0 100%);
+                background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%);
                 padding: 14px;
                 text-align: left;
                 border-bottom: 2px solid #e0e0e0;
@@ -223,7 +223,7 @@
                 position: fixed;
                 z-index: 1000;
                 inset: 0;
-                background: rgba(0,0,0,.5);
+                background: rgba(0, 0, 0, .5);
             }
             .modal-content {
                 background: #fff;
@@ -280,10 +280,10 @@
         <div class="container">
             <c:if test="${not empty success}">
                 <div class="alert success"><i class="fas fa-check-circle"></i>${success}</div>
-                </c:if>
-                <c:if test="${not empty error}">
+            </c:if>
+            <c:if test="${not empty error}">
                 <div class="alert error"><i class="fas fa-exclamation-circle"></i>${error}</div>
-                </c:if>
+            </c:if>
 
             <div class="panel">
                 <form id="filterForm" method="GET" action="${pageContext.request.contextPath}/admin-doctor-schedules" class="toolbar">
@@ -292,12 +292,11 @@
                         <input type="text" name="keyword" value="${keyword}" placeholder="Nhập tên bác sĩ...">
                     </div>
                     <div class="field">
-                        <label><i class="fas fa-user-md"></i> Bác sĩ</label>
-                        <select id="doctorIdFilter" name="doctorId">
-                            <option value="0" ${selectedDoctorId == 0 ? 'selected' : ''}>Tất cả bác sĩ</option>
-                            <c:forEach var="doctor" items="${doctors}">
-                                <option value="${doctor.doctorId}" ${doctor.doctorId == selectedDoctorId ? 'selected' : ''}>${doctor.fullName}</option>
-                            </c:forEach>
+                        <label><i class="fas fa-sun"></i> Ca làm việc</label>
+                        <select id="shiftTypeFilter" name="shiftType">
+                            <option value="" ${empty selectedShiftType ? 'selected' : ''}>Tất cả ca</option>
+                            <option value="morning" ${selectedShiftType == 'morning' ? 'selected' : ''}>Ca sáng</option>
+                            <option value="afternoon" ${selectedShiftType == 'afternoon' ? 'selected' : ''}>Ca chiều</option>
                         </select>
                     </div>
                     <div class="field">
@@ -327,7 +326,7 @@
                     <div class="week-nav">
                         <c:url var="prevWeekUrl" value="/admin-doctor-schedules">
                             <c:param name="keyword" value="${keyword}" />
-                            <c:param name="doctorId" value="${selectedDoctorId}" />
+                            <c:param name="shiftType" value="${selectedShiftType}" />
                             <c:param name="dayOfWeek" value="${selectedDay}" />
                             <c:param name="weekOffset" value="${weekOffset - 1}" />
                         </c:url>
@@ -335,7 +334,7 @@
                         <div class="week-label">${weekLabel}</div>
                         <c:url var="nextWeekUrl" value="/admin-doctor-schedules">
                             <c:param name="keyword" value="${keyword}" />
-                            <c:param name="doctorId" value="${selectedDoctorId}" />
+                            <c:param name="shiftType" value="${selectedShiftType}" />
                             <c:param name="dayOfWeek" value="${selectedDay}" />
                             <c:param name="weekOffset" value="${weekOffset + 1}" />
                         </c:url>
@@ -355,7 +354,7 @@
                                     <c:when test="${dayKey == '4'}">Thứ 5</c:when>
                                     <c:when test="${dayKey == '5'}">Thứ 6</c:when>
                                     <c:when test="${dayKey == '6'}">Thứ 7</c:when>
-                                    <c:otherwise>CN</c:otherwise>
+                                    <c:otherwise>Chủ nhật</c:otherwise>
                                 </c:choose>
                             </div>
                             <div class="day-date">${dayDates[dayKey]}</div>
@@ -363,8 +362,8 @@
                                 <c:when test="${not empty weekGrid[dayKey]}">
                                     <c:forEach var="item" items="${weekGrid[dayKey]}">
                                         <div class="shift-card">
-                                            <div class="shift-name">BS. ${item.doctorName}</div>
-                                            <div><i class="far fa-clock"></i> ${item.startTimeText} - ${item.endTimeText}</div>
+                                            <div class="shift-name">Bác sĩ ${item.doctorName}</div>
+                                            <div><i class="far fa-sun"></i> ${item.shiftLabel}</div>
                                             <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
                                         </div>
                                     </c:forEach>
@@ -390,8 +389,7 @@
                                 <th>Bác sĩ</th>
                                 <th>Ngày</th>
                                 <th>Thứ</th>
-                                <th>Giờ bắt đầu</th>
-                                <th>Giờ kết thúc</th>
+                                <th>Ca</th>
                                 <th>Số BN tối đa</th>
                                 <th>Trạng thái</th>
                                 <th>Thao tác</th>
@@ -405,8 +403,7 @@
                                             <td>${item.doctorName}</td>
                                             <td>${item.workDateText}</td>
                                             <td>${item.dayLabel}</td>
-                                            <td>${item.startTimeText}</td>
-                                            <td>${item.endTimeText}</td>
+                                            <td>${item.shiftLabel}</td>
                                             <td>${item.maxPatients}</td>
                                             <td><span class="status">${item.status}</span></td>
                                             <td>
@@ -415,8 +412,7 @@
                                                             data-shift-id="${item.shiftId}"
                                                             data-doctor-id="${item.doctorId}"
                                                             data-day-of-week="${item.dayOfWeek}"
-                                                            data-start-time="${item.startTimeText}"
-                                                            data-end-time="${item.endTimeText}"
+                                                            data-shift-type="${item.shiftCode}"
                                                             data-max-patients="${item.maxPatients}"
                                                             onclick="openEditModal(this)">
                                                         <i class="fas fa-pen"></i>
@@ -425,8 +421,8 @@
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="shiftId" value="${item.shiftId}">
                                                         <input type="hidden" name="filterKeyword" value="${keyword}">
-                                                        <input type="hidden" name="filterDoctorId" value="${selectedDoctorId}">
                                                         <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
+                                                        <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                                                         <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
                                                         <button class="icon-btn delete" type="submit" title="Xóa"><i class="fas fa-trash"></i></button>
                                                     </form>
@@ -436,7 +432,7 @@
                                     </c:forEach>
                                 </c:when>
                                 <c:otherwise>
-                                    <tr><td colspan="8" class="no-data">Không có dữ liệu lịch làm việc</td></tr>
+                                    <tr><td colspan="7" class="no-data">Không có dữ liệu lịch làm việc</td></tr>
                                 </c:otherwise>
                             </c:choose>
                         </tbody>
@@ -451,15 +447,15 @@
                 <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="filterKeyword" value="${keyword}">
-                    <input type="hidden" name="filterDoctorId" value="${selectedDoctorId}">
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
+                    <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
                     <div class="modal-grid">
                         <div class="field" style="grid-column:1/-1;">
                             <label>Bác sĩ</label>
                             <select name="doctorId" required>
                                 <c:forEach var="doctor" items="${doctors}">
-                                    <option value="${doctor.doctorId}" ${doctor.doctorId == selectedDoctorId ? 'selected' : ''}>${doctor.fullName}</option>
+                                    <option value="${doctor.doctorId}">${doctor.fullName}</option>
                                 </c:forEach>
                             </select>
                         </div>
@@ -475,9 +471,17 @@
                                 <option value="0">Chủ nhật</option>
                             </select>
                         </div>
-                        <div class="field"><label>Số bệnh nhân tối đa</label><input type="number" name="maxPatients" min="1" max="200" value="20" required></div>
-                        <div class="field"><label>Giờ bắt đầu</label><input type="time" name="startTime" required></div>
-                        <div class="field"><label>Giờ kết thúc</label><input type="time" name="endTime" required></div>
+                        <div class="field">
+                            <label>Ca làm việc</label>
+                            <select name="shiftType" required>
+                                <option value="morning">Ca sáng (07:00 - 11:30)</option>
+                                <option value="afternoon">Ca chiều (13:00 - 16:30)</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Số bệnh nhân tối đa</label>
+                            <input type="number" name="maxPatients" min="1" max="200" value="20" required>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-reset" onclick="closeAddModal()"><i class="fas fa-times"></i> Hủy</button>
@@ -495,8 +499,8 @@
                     <input type="hidden" name="shiftId" id="editShiftId">
                     <input type="hidden" name="doctorId" id="editDoctorId">
                     <input type="hidden" name="filterKeyword" value="${keyword}">
-                    <input type="hidden" name="filterDoctorId" value="${selectedDoctorId}">
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
+                    <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
                     <div class="modal-grid">
                         <div class="field">
@@ -511,9 +515,17 @@
                                 <option value="0">Chủ nhật</option>
                             </select>
                         </div>
-                        <div class="field"><label>Số bệnh nhân tối đa</label><input type="number" name="maxPatients" id="editMaxPatients" min="1" max="200" required></div>
-                        <div class="field"><label>Giờ bắt đầu</label><input type="time" name="startTime" id="editStartTime" required></div>
-                        <div class="field"><label>Giờ kết thúc</label><input type="time" name="endTime" id="editEndTime" required></div>
+                        <div class="field">
+                            <label>Ca làm việc</label>
+                            <select name="shiftType" id="editShiftType" required>
+                                <option value="morning">Ca sáng (07:00 - 11:30)</option>
+                                <option value="afternoon">Ca chiều (13:00 - 16:30)</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Số bệnh nhân tối đa</label>
+                            <input type="number" name="maxPatients" id="editMaxPatients" min="1" max="200" required>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-reset" onclick="closeEditModal()"><i class="fas fa-times"></i> Hủy</button>
@@ -526,8 +538,7 @@
         <script>
             function submitFilterForm() {
                 var form = document.getElementById("filterForm");
-                if (form)
-                    form.submit();
+                if (form) form.submit();
             }
 
             function openAddModal() {
@@ -540,8 +551,7 @@
                 document.getElementById("editShiftId").value = btn.dataset.shiftId;
                 document.getElementById("editDoctorId").value = btn.dataset.doctorId;
                 document.getElementById("editDayOfWeek").value = btn.dataset.dayOfWeek;
-                document.getElementById("editStartTime").value = btn.dataset.startTime;
-                document.getElementById("editEndTime").value = btn.dataset.endTime;
+                document.getElementById("editShiftType").value = btn.dataset.shiftType;
                 document.getElementById("editMaxPatients").value = btn.dataset.maxPatients;
                 document.getElementById("editModal").style.display = "block";
             }
@@ -549,19 +559,15 @@
                 document.getElementById("editModal").style.display = "none";
             }
             window.onclick = function (event) {
-                if (event.target === document.getElementById("addModal"))
-                    closeAddModal();
-                if (event.target === document.getElementById("editModal"))
-                    closeEditModal();
+                if (event.target === document.getElementById("addModal")) closeAddModal();
+                if (event.target === document.getElementById("editModal")) closeEditModal();
             };
 
             document.addEventListener("DOMContentLoaded", function () {
-                var doctorFilter = document.getElementById("doctorIdFilter");
+                var shiftTypeFilter = document.getElementById("shiftTypeFilter");
                 var dayFilter = document.getElementById("dayOfWeekFilter");
-                if (doctorFilter)
-                    doctorFilter.addEventListener("change", submitFilterForm);
-                if (dayFilter)
-                    dayFilter.addEventListener("change", submitFilterForm);
+                if (shiftTypeFilter) shiftTypeFilter.addEventListener("change", submitFilterForm);
+                if (dayFilter) dayFilter.addEventListener("change", submitFilterForm);
             });
         </script>
     </body>

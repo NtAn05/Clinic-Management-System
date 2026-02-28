@@ -164,13 +164,14 @@ public class UserDAO extends DBContext {
 
     // Cập nhật thông tin người dùng
     public void updateUser(User user) throws SQLException {
-        String sql = "UPDATE users SET full_name = ?, email = ?, status = ? WHERE phone = ?";
-        
+        String sql = "UPDATE users SET full_name = ?, phone = ?, email = ?, status = ? WHERE user_id = ?";
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, user.getFullName());
-            st.setString(2, user.getEmail());
-            st.setString(3, user.getStatus().toString());
-            st.setString(4, user.getPhone());
+            st.setString(2, user.getPhone());
+            st.setString(3, user.getEmail());
+            st.setString(4, user.getStatus().toString());
+            st.setInt(5, user.getUserId());
             st.executeUpdate();
         } catch (SQLException e) {
             throw e;

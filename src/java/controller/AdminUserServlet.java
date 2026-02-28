@@ -115,12 +115,14 @@ public class AdminUserServlet extends HttpServlet {
 
     private void handleEditUser(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
+        String userIdStr = request.getParameter("userId");
         String fullName = request.getParameter("fullname");
         String phone = request.getParameter("phone");
         String email = request.getParameter("email");
         String statusStr = request.getParameter("status");
         
-        if (fullName == null || fullName.trim().isEmpty() ||
+        if (userIdStr == null || userIdStr.trim().isEmpty() ||
+            fullName == null || fullName.trim().isEmpty() ||
             phone == null || phone.trim().isEmpty()) {
             request.setAttribute("error", "Vui lòng điền đầy đủ thông tin");
             loadUsers(request, response);
@@ -129,7 +131,9 @@ public class AdminUserServlet extends HttpServlet {
         
         UserDAO userDAO = new UserDAO();
         try {
+            int userId = Integer.parseInt(userIdStr);
             User user = new User();
+            user.setUserId(userId);
             user.setFullName(fullName);
             user.setPhone(phone);
             user.setEmail(email);
@@ -137,6 +141,8 @@ public class AdminUserServlet extends HttpServlet {
             
             userDAO.updateUser(user);
             request.setAttribute("success", "Cập nhật tài khoản thành công");
+        } catch (SQLException e) {
+            request.setAttribute("error", getFriendlyUpdateErrorMessage(e));
         } catch (Exception e) {
             request.setAttribute("error", "Lỗi khi cập nhật: " + e.getMessage());
         }
@@ -144,6 +150,17 @@ public class AdminUserServlet extends HttpServlet {
         loadUsers(request, response);
     }
 
+    private String getFriendlyUpdateErrorMessage(SQLException e) {
+        String message = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+
+        if (message.contains("users.phone") || message.contains("key 'phone'")) {
+            return "Số điện thoại đã tồn tại";
+        }
+        if (message.contains("users.email") || message.contains("key 'email'")) {
+            return "Email đã tồn tại";
+        }
+        return "Lỗi khi cập nhật: " + e.getMessage();
+    }
     private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
         String phone = request.getParameter("phone");
@@ -378,3 +395,4 @@ public class AdminUserServlet extends HttpServlet {
         return "Admin User Management Servlet";
     }
 }
+

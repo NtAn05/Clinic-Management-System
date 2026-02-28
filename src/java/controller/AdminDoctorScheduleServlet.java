@@ -1,6 +1,11 @@
 package controller;
 
 import dal.DoctorDAO;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.DayOfWeek;
@@ -16,11 +21,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import model.Doctor;
 import model.DoctorShift;
 import model.Role;
@@ -32,6 +32,13 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     private static final List<Integer> DAY_ORDER = Arrays.asList(1, 2, 3, 4, 5, 6, 0);
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy", new Locale("vi", "VN"));
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+
+    private static final String SHIFT_MORNING = "morning";
+    private static final String SHIFT_AFTERNOON = "afternoon";
+    private static final LocalTime MORNING_START = LocalTime.of(7, 0);
+    private static final LocalTime MORNING_END = LocalTime.of(11, 30);
+    private static final LocalTime AFTERNOON_START = LocalTime.of(13, 0);
+    private static final LocalTime AFTERNOON_END = LocalTime.of(16, 30);
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -83,10 +90,15 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     private void loadPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         DoctorDAO doctorDAO = new DoctorDAO();
         List<Doctor> doctors = doctorDAO.getAllDoctorsForSchedule();
+
         String keyword = trim(firstNonBlank(req.getParameter("filterKeyword"), req.getParameter("keyword")));
-        int selectedDoctorId = parseInt(firstNonBlank(req.getParameter("filterDoctorId"), req.getParameter("doctorId")), 0);
         Integer selectedDay = parseNullableDay(firstNonBlank(req.getParameter("filterDayOfWeek"), req.getParameter("dayOfWeek")));
         int weekOffset = parseInt(firstNonBlank(req.getParameter("filterWeekOffset"), req.getParameter("weekOffset")), 0);
+
+        String selectedShiftType = normalizeShiftType(req.getParameter("filterShiftType"));
+        if (selectedShiftType.isEmpty() && "GET".equalsIgnoreCase(req.getMethod())) {
+            selectedShiftType = normalizeShiftType(req.getParameter("shiftType"));
+        }
 
         LocalDate weekStart = LocalDate.now()
                 .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -94,18 +106,30 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         LocalDate weekEnd = weekStart.plusDays(6);
 
         List<Doctor> filteredDoctors = doctors.stream()
-                .filter(d -> selectedDoctorId == 0 || d.getDoctorId() == selectedDoctorId)
                 .filter(d -> keyword.isEmpty() || containsIgnoreCase(d.getFullName(), keyword))
                 .collect(Collectors.toList());
 
         List<ScheduleViewItem> scheduleItems = new ArrayList<>();
         for (Doctor doctor : filteredDoctors) {
             List<DoctorShift> shifts = doctorDAO.getDoctorShifts(doctor.getDoctorId());
+            if (shifts == null || shifts.isEmpty()) {
+                continue;
+            }
             for (DoctorShift shift : shifts) {
-                if (selectedDay != null && shift.getDayOfWeek() != selectedDay) {
+                Integer normalizedDayOfWeek = normalizeDayOfWeek(shift.getDayOfWeek());
+                if (normalizedDayOfWeek == null) {
                     continue;
                 }
-                scheduleItems.add(toScheduleItem(doctor, shift, weekStart));
+                if (shift.getStartTime() == null || shift.getEndTime() == null) {
+                    continue;
+                }
+                if (selectedDay != null && normalizedDayOfWeek.intValue() != selectedDay) {
+                    continue;
+                }
+                if (!selectedShiftType.isEmpty() && !selectedShiftType.equals(getShiftCode(shift.getStartTime(), shift.getEndTime()))) {
+                    continue;
+                }
+                scheduleItems.add(toScheduleItem(doctor, shift, weekStart, normalizedDayOfWeek));
             }
         }
 
@@ -122,7 +146,10 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             weekGrid.put(key, new ArrayList<>());
         }
         for (ScheduleViewItem item : scheduleItems) {
-            weekGrid.get(String.valueOf(item.getDayOfWeek())).add(item);
+            List<ScheduleViewItem> list = weekGrid.get(String.valueOf(item.getDayOfWeek()));
+            if (list != null) {
+                list.add(item);
+            }
         }
 
         req.setAttribute("doctors", doctors);
@@ -131,8 +158,8 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("weekGrid", weekGrid);
         req.setAttribute("dayDates", dayDates);
         req.setAttribute("keyword", keyword);
-        req.setAttribute("selectedDoctorId", selectedDoctorId);
         req.setAttribute("selectedDay", selectedDay == null ? "" : String.valueOf(selectedDay));
+        req.setAttribute("selectedShiftType", selectedShiftType);
         req.setAttribute("weekOffset", weekOffset);
         req.setAttribute("weekLabel", weekStart.format(DATE_FMT) + " - " + weekEnd.format(DATE_FMT));
         req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
@@ -141,17 +168,16 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     private void handleAddShift(HttpServletRequest req, DoctorDAO doctorDAO) throws SQLException {
         int doctorId = requiredInt(req.getParameter("doctorId"), "Vui lòng chọn bác sĩ");
         int dayOfWeek = requiredInt(req.getParameter("dayOfWeek"), "Vui lòng chọn thứ");
-        LocalTime startTime = requiredTime(req.getParameter("startTime"), "Vui lòng nhập giờ bắt đầu");
-        LocalTime endTime = requiredTime(req.getParameter("endTime"), "Vui lòng nhập giờ kết thúc");
+        ShiftTime shiftTime = resolveShiftType(req.getParameter("shiftType"));
         int maxPatients = requiredInt(req.getParameter("maxPatients"), "Vui lòng nhập số bệnh nhân tối đa");
 
-        validateShift(dayOfWeek, startTime, endTime, maxPatients);
+        validateShift(dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
 
-        if (doctorDAO.hasShiftConflict(doctorId, dayOfWeek, startTime, endTime, null)) {
+        if (doctorDAO.hasShiftConflict(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, null)) {
             throw new IllegalArgumentException("Khung giờ bị trùng với ca làm việc đã có");
         }
 
-        doctorDAO.addDoctorShift(doctorId, dayOfWeek, startTime, endTime, maxPatients);
+        doctorDAO.addDoctorShift(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
         req.setAttribute("success", "Đã thêm ca làm việc thành công");
     }
 
@@ -159,17 +185,16 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         int shiftId = requiredInt(req.getParameter("shiftId"), "Thiếu mã ca làm việc");
         int doctorId = requiredInt(req.getParameter("doctorId"), "Vui lòng chọn bác sĩ");
         int dayOfWeek = requiredInt(req.getParameter("dayOfWeek"), "Vui lòng chọn thứ");
-        LocalTime startTime = requiredTime(req.getParameter("startTime"), "Vui lòng nhập giờ bắt đầu");
-        LocalTime endTime = requiredTime(req.getParameter("endTime"), "Vui lòng nhập giờ kết thúc");
+        ShiftTime shiftTime = resolveShiftType(req.getParameter("shiftType"));
         int maxPatients = requiredInt(req.getParameter("maxPatients"), "Vui lòng nhập số bệnh nhân tối đa");
 
-        validateShift(dayOfWeek, startTime, endTime, maxPatients);
+        validateShift(dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
 
-        if (doctorDAO.hasShiftConflict(doctorId, dayOfWeek, startTime, endTime, shiftId)) {
+        if (doctorDAO.hasShiftConflict(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, shiftId)) {
             throw new IllegalArgumentException("Khung giờ bị trùng với ca làm việc đã có");
         }
 
-        doctorDAO.updateDoctorShift(shiftId, dayOfWeek, startTime, endTime, maxPatients);
+        doctorDAO.updateDoctorShift(shiftId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
         req.setAttribute("success", "Đã cập nhật ca làm việc thành công");
     }
 
@@ -177,6 +202,16 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         int shiftId = requiredInt(req.getParameter("shiftId"), "Thiếu mã ca làm việc");
         doctorDAO.deleteDoctorShift(shiftId);
         req.setAttribute("success", "Đã xóa ca làm việc thành công");
+    }
+
+    private ShiftTime resolveShiftType(String shiftType) {
+        if (SHIFT_MORNING.equals(shiftType)) {
+            return new ShiftTime(MORNING_START, MORNING_END);
+        }
+        if (SHIFT_AFTERNOON.equals(shiftType)) {
+            return new ShiftTime(AFTERNOON_START, AFTERNOON_END);
+        }
+        throw new IllegalArgumentException("Vui lòng chọn ca làm việc hợp lệ");
     }
 
     private void validateShift(int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) {
@@ -202,17 +237,6 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
     }
 
-    private LocalTime requiredTime(String value, String error) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(error);
-        }
-        try {
-            return LocalTime.parse(value);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(error);
-        }
-    }
-
     private int parseInt(String value, int defaultValue) {
         if (value == null || value.isBlank()) {
             return defaultValue;
@@ -230,10 +254,18 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
         try {
             int day = Integer.parseInt(value);
-            return (day >= 0 && day <= 6) ? day : null;
+            return normalizeDayOfWeek(day);
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private Integer normalizeDayOfWeek(int day) {
+        // Legacy data may store Sunday as 7 (java.time), while current UI uses 0.
+        if (day == 7) {
+            return 0;
+        }
+        return (day >= 0 && day <= 6) ? day : null;
     }
 
     private String trim(String value) {
@@ -247,6 +279,13 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         return second;
     }
 
+    private String normalizeShiftType(String shiftType) {
+        if (SHIFT_MORNING.equals(shiftType) || SHIFT_AFTERNOON.equals(shiftType)) {
+            return shiftType;
+        }
+        return "";
+    }
+
     private boolean containsIgnoreCase(String source, String keyword) {
         if (source == null) {
             return false;
@@ -258,42 +297,54 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         return dayOfWeek == 0 ? weekStart.plusDays(6) : weekStart.plusDays(dayOfWeek - 1);
     }
 
-    private ScheduleViewItem toScheduleItem(Doctor doctor, DoctorShift shift, LocalDate weekStart) {
-        LocalDate workDate = getDateForDay(weekStart, shift.getDayOfWeek());
+    private ScheduleViewItem toScheduleItem(Doctor doctor, DoctorShift shift, LocalDate weekStart, int dayOfWeek) {
+        LocalDate workDate = getDateForDay(weekStart, dayOfWeek);
+        String shiftCode = getShiftCode(shift.getStartTime(), shift.getEndTime());
         return new ScheduleViewItem(
                 shift.getShiftId(),
                 doctor.getDoctorId(),
                 doctor.getFullName(),
                 doctor.getSpecialization(),
-                shift.getDayOfWeek(),
-                getDayLabel(shift.getDayOfWeek()),
+                dayOfWeek,
+                getDayLabel(dayOfWeek),
                 workDate,
                 workDate.format(DATE_FMT),
                 shift.getStartTime(),
                 shift.getStartTime().format(TIME_FMT),
                 shift.getEndTime(),
                 shift.getEndTime().format(TIME_FMT),
+                shiftCode,
+                getShiftLabel(shiftCode),
                 shift.getMaxPatients(),
                 "Đã xếp"
         );
     }
 
+    private String getShiftCode(LocalTime startTime, LocalTime endTime) {
+        if (MORNING_START.equals(startTime) && MORNING_END.equals(endTime)) {
+            return SHIFT_MORNING;
+        }
+        if (AFTERNOON_START.equals(startTime) && AFTERNOON_END.equals(endTime)) {
+            return SHIFT_AFTERNOON;
+        }
+        return SHIFT_MORNING;
+    }
+
+    private String getShiftLabel(String shiftCode) {
+        return SHIFT_AFTERNOON.equals(shiftCode)
+                ? "Ca chiều (13:00 - 16:30)"
+                : "Ca sáng (07:00 - 11:30)";
+    }
+
     private String getDayLabel(int dayOfWeek) {
         switch (dayOfWeek) {
-            case 1:
-                return "Thứ 2";
-            case 2:
-                return "Thứ 3";
-            case 3:
-                return "Thứ 4";
-            case 4:
-                return "Thứ 5";
-            case 5:
-                return "Thứ 6";
-            case 6:
-                return "Thứ 7";
-            default:
-                return "Chủ nhật";
+            case 1: return "Thứ 2";
+            case 2: return "Thứ 3";
+            case 3: return "Thứ 4";
+            case 4: return "Thứ 5";
+            case 5: return "Thứ 6";
+            case 6: return "Thứ 7";
+            default: return "Chủ nhật";
         }
     }
 
@@ -311,12 +362,14 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         private final String startTimeText;
         private final LocalTime endTime;
         private final String endTimeText;
+        private final String shiftCode;
+        private final String shiftLabel;
         private final int maxPatients;
         private final String status;
 
         public ScheduleViewItem(int shiftId, int doctorId, String doctorName, String specialization, int dayOfWeek,
                 String dayLabel, LocalDate workDate, String workDateText, LocalTime startTime, String startTimeText,
-                LocalTime endTime, String endTimeText, int maxPatients, String status) {
+                LocalTime endTime, String endTimeText, String shiftCode, String shiftLabel, int maxPatients, String status) {
             this.shiftId = shiftId;
             this.doctorId = doctorId;
             this.doctorName = doctorName;
@@ -329,64 +382,38 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             this.startTimeText = startTimeText;
             this.endTime = endTime;
             this.endTimeText = endTimeText;
+            this.shiftCode = shiftCode;
+            this.shiftLabel = shiftLabel;
             this.maxPatients = maxPatients;
             this.status = status;
         }
 
-        public int getShiftId() {
-            return shiftId;
-        }
+        public int getShiftId() { return shiftId; }
+        public int getDoctorId() { return doctorId; }
+        public String getDoctorName() { return doctorName; }
+        public String getSpecialization() { return specialization; }
+        public int getDayOfWeek() { return dayOfWeek; }
+        public String getDayLabel() { return dayLabel; }
+        public LocalDate getWorkDate() { return workDate; }
+        public String getWorkDateText() { return workDateText; }
+        public LocalTime getStartTime() { return startTime; }
+        public String getStartTimeText() { return startTimeText; }
+        public LocalTime getEndTime() { return endTime; }
+        public String getEndTimeText() { return endTimeText; }
+        public String getShiftCode() { return shiftCode; }
+        public String getShiftLabel() { return shiftLabel; }
+        public int getMaxPatients() { return maxPatients; }
+        public String getStatus() { return status; }
+    }
 
-        public int getDoctorId() {
-            return doctorId;
-        }
+    private static class ShiftTime {
 
-        public String getDoctorName() {
-            return doctorName;
-        }
+        private final LocalTime startTime;
+        private final LocalTime endTime;
 
-        public String getSpecialization() {
-            return specialization;
-        }
-
-        public int getDayOfWeek() {
-            return dayOfWeek;
-        }
-
-        public String getDayLabel() {
-            return dayLabel;
-        }
-
-        public LocalDate getWorkDate() {
-            return workDate;
-        }
-
-        public String getWorkDateText() {
-            return workDateText;
-        }
-
-        public LocalTime getStartTime() {
-            return startTime;
-        }
-
-        public String getStartTimeText() {
-            return startTimeText;
-        }
-
-        public LocalTime getEndTime() {
-            return endTime;
-        }
-
-        public String getEndTimeText() {
-            return endTimeText;
-        }
-
-        public int getMaxPatients() {
-            return maxPatients;
-        }
-
-        public String getStatus() {
-            return status;
+        private ShiftTime(LocalTime startTime, LocalTime endTime) {
+            this.startTime = startTime;
+            this.endTime = endTime;
         }
     }
 }
