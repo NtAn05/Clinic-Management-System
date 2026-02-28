@@ -110,13 +110,13 @@
                                 <div class="form-grid confirm-view">
                                     <div>
                                         <label>Ca khám</label>
-                                        <c:if test="${appointment.getPatientName() == 'morning'}">
+                                        <c:if test="${time == 'morning'}">
                                             <p>
                                                 <strong>Ca sáng</strong>
                                                 <span>07:00 - 11:30</span>
                                             </p>
                                         </c:if>
-                                        <c:if test="${appointment.getPatientName() == 'afternoon'}">
+                                        <c:if test="${time == 'afternoon'}">
                                             <p>
                                                 <strong>Ca chiều</strong>
                                                 <span>13:30 - 17:00</span>
@@ -126,16 +126,15 @@
 
                                     <div>
                                         <label>Ngày khám</label>
-                                        <p>${appointment.getStatus()}</p>
+                                        <p>${date}</p>
                                     </div>
                                 </div>
                             </div>
-                            <input type="hidden" name="time" value="${appointment.getPatientName()}">
-                            <input type="hidden" name="date" value="${appointment.getStatus()}">
-                            <input type="hidden" name="doctorID" value="${doctor.doctorId}">
+                            <input type="hidden" name="time" value="${time}">
+                            <input type="hidden" name="date" value="${date}">
+                            <input type="hidden" name="doctorID" value="${doctor.getDoctorId()}">
                             <input type="hidden" name="userID" value="${sessionScope.account.userId}">
                             <input type="hidden" name="pricePay" value="${doctor.price}">
-
                             <!-- ACTION -->
 
                             <div class="actions">
@@ -151,11 +150,12 @@
                                 </button>
 
                             </div>
-        </div>
-                  </form>
-
                         </div>
-                
+                    </form>
+
+
+                </div>
+
                 <!-- RIGHT  -->
                 <div class="card">
                     <img src="${doctor.getImage()}" alt="Doctor">

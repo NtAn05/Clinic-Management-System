@@ -11,9 +11,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
-import model.Appointment;
+import model.Appointments;
 import model.Doctor;
-import model.Patient;
+import model.Patients;
 
 public class AppointmentServlet extends HttpServlet {
 
@@ -45,7 +45,7 @@ public class AppointmentServlet extends HttpServlet {
         int useId = Integer.parseInt(userID);
 
         String doctorID = request.getParameter("doctorID");
-        long doctorId = Long.parseLong(doctorID);
+        int doctorId = Integer.parseInt(doctorID);
 
         String name = request.getParameter("name");
         String sdt = request.getParameter("sdt");
@@ -67,8 +67,8 @@ public class AppointmentServlet extends HttpServlet {
         Doctor doctor = dao.getDoctorById(doctorID);
         request.setAttribute("doctor", doctor);
 
-        Patient patient = new Patient(doctorId, useId, name, sdt, birthDate, address, email, gender);
-        Appointment appointment = new Appointment(0, time, date, note);
+        Patients patient = new Patients(1, useId, name, sdt, birthDate, address, email, gender);
+        Appointments appointment = new Appointments(1, doctor.getDoctorId(), 3, "online", "No Checkin", note);
 
         // Validate thông tin
         String errorPhone = "";
@@ -88,6 +88,8 @@ public class AppointmentServlet extends HttpServlet {
         request.setAttribute("appointment", appointment);
         request.setAttribute("patient", patient);
         request.setAttribute("status", status);
+        request.setAttribute("time", time);
+        request.setAttribute("date", date);
 
         // ✅ Xử lý step2: tạo đơn thanh toán
         if (submit != null && submit.equalsIgnoreCase("step2")) {

@@ -86,8 +86,7 @@ public class DoctorDAO extends DBContext {
             ORDER BY u.full_name
         """;
 
-        try (PreparedStatement st = connection.prepareStatement(sql);
-                ResultSet rs = st.executeQuery()) {
+        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
             while (rs.next()) {
                 Doctor d = new Doctor();
                 d.setDoctorId(rs.getInt("doctor_id"));
@@ -585,4 +584,43 @@ public class DoctorDAO extends DBContext {
         return false;
     }
 
+    public void updateDoctor(int doctorId, String qualification, int experience, String specialization) {
+        String sql = "UPDATE doctors SET qualification=?, experience_years=?, specialization=? "
+                + "WHERE doctor_id=?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setString(1, qualification);
+            st.setInt(2, experience);
+            st.setString(3, specialization);
+            st.setInt(4, doctorId);
+
+            st.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Object getDoctorByUserId2(int userId) {
+        String sql = "SELECT * FROM doctors WHERE user_id=?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                Doctor d = new Doctor();
+                d.setDoctorId(rs.getInt("doctor_id"));
+                d.setQualification(rs.getString("qualification"));
+                d.setExperience_years(rs.getInt("experience_years"));
+                d.setSpecialization(rs.getString("specialization"));
+                return d;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

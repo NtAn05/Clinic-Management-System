@@ -10,8 +10,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import model.Appointment;
+import model.Appointments;
 import model.Doctor;
 import model.Patient;
+import model.Patients;
 
 /**
  *
@@ -193,12 +195,77 @@ public class AppointmentDAO extends DBContext{
     return null; 
 }
 
-    public Appointment addAppointment(Appointment Appointments) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public boolean addAppointment(Appointments a) {
+String sql = "INSERT INTO appointments "
+                + "(patient_id, doctor_id, shift_id, booking_type, status, symptom) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setLong(1, a.getPatientId());
+            st.setInt(2, a.getDoctorId());
+            st.setInt(3, a.getShiftId());
+            st.setString(4, a.getBookingType());
+            st.setString(5, a.getStatus());
+            st.setString(6, a.getSymptom());
+
+            return st.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }    
+
+    public long addPatient(Patients p) {
+ String sql = "INSERT INTO patients (user_id, full_name, phone, dob, address, email, gender) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setInt(1, p.getUserId());
+            st.setString(2, p.getFullName());
+            st.setString(3, p.getPhone());
+            st.setDate(4, new java.sql.Date(p.getDob().getTime()));
+            st.setString(5, p.getAddress());
+            st.setString(6, p.getEmail());
+            st.setString(7, p.getGender());
+
+            st.executeUpdate();
+
+            ResultSet rs = st.getGeneratedKeys();
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }    
+
+    public long getPatientID(Patients patient) {
+String sql = "SELECT patient_id FROM patients "
+               + "WHERE full_name = ? AND phone = ? AND email = ?";
+
+    try {
+        PreparedStatement st = connection.prepareStatement(sql);
+        st.setString(1, patient.getFullName());
+        st.setString(2, patient.getPhone());
+        st.setString(3, patient.getEmail());
+
+        ResultSet rs = st.executeQuery();
+
+        if (rs.next()) {
+            return rs.getLong("patient_id");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
 
-    public Patient addPatient(Patient patient) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+    return -1;
+}    
     
 }

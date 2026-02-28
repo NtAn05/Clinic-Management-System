@@ -40,6 +40,10 @@
         <servlet-name>AppointmentPaymentServlet</servlet-name>
         <servlet-class>controller.appointments.AppointmentPaymentServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>UserInformationServlet</servlet-name>
+        <servlet-class>controller.userInformation.UserInformationServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <url-pattern>/doctorDashboard</url-pattern>
@@ -111,5 +115,9 @@
     <servlet-mapping>
         <servlet-name>AppointmentPaymentServlet</servlet-name>
         <url-pattern>/appointmentpaymentservlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UserInformationServlet</servlet-name>
+        <url-pattern>/userinformationservlet</url-pattern>
     </servlet-mapping>
 </web-app>
