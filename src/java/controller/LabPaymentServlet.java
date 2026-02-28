@@ -34,7 +34,7 @@ public class LabPaymentServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User account = (User) session.getAttribute("account");
 
-        if (account == null || !RoleHelper.isTechnician(account)) {
+        if (account == null || !RoleHelper.isReceptionist(account)) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
@@ -95,7 +95,7 @@ public class LabPaymentServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User account = (User) session.getAttribute("account");
 
-        if (account == null || !RoleHelper.isTechnician(account)) {
+        if (account == null || !RoleHelper.isReceptionist(account)) {
             response.getWriter().write("{\"success\": false, \"message\": \"Unauthorized\"}");
             return;
         }

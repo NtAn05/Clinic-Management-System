@@ -6,7 +6,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Kỹ thuật viên - Kiểm tra thanh toán xét nghiệm</title>
+  <title>Kiểm tra thanh toán xét nghiệm</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
@@ -48,14 +48,7 @@
 
     .content-wrapper {
       flex: 1;
-      margin-left: 260px;
       min-height: calc(100vh - 60px);
-    }
-
-    @media (max-width: 768px) {
-      .content-wrapper {
-        margin-left: 0;
-      }
     }
 
     .page {
@@ -297,8 +290,6 @@
   <jsp:include page="../../common/modal-alert.jsp" />
 
   <div class="main-container">
-    <jsp:include page="../../common/sidebar.jsp" />
-
     <div class="content-wrapper">
       <div class="page" style="max-width: 1280px; margin: 0 auto;">
 
