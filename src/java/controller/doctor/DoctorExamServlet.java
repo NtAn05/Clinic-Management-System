@@ -244,6 +244,11 @@ public class DoctorExamServlet extends HttpServlet {
         }
 
         if ("createLabRequest".equalsIgnoreCase(action)) {
+            if ("done".equalsIgnoreCase(examData.getStatus())) {
+                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&error=labRequestNotAllowed");
+                return;
+            }
+
             LabRequestDAO labRequestDAO = new LabRequestDAO();
             int requestId = labRequestDAO.insertLabRequest(appointmentId, doctor.getDoctorId());
             if (requestId > 0) {
