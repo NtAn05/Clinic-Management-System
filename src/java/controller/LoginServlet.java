@@ -16,7 +16,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Chuyển hướng đến trang đăng nhập khi gõ URL trực tiếp
+       
         request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
     }
 
@@ -25,39 +25,40 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
         
         // 1. Lấy dữ liệu từ form login.jsp
+       
         String phone = request.getParameter("phone");
         String password = request.getParameter("password");
-        String formRole = request.getParameter("role"); // Sẽ nhận giá trị "patient" hoặc "staff"
+        String formRole = request.getParameter("role");
 
-        // 2. Gọi DAO để kiểm tra thông tin trong Database
+        
         UserDAO dao = new UserDAO();
         User user = dao.checkLogin(phone, password);
         String error = null;
 
         if (user != null) {
-            // 3. Lấy role thực tế từ Database
+            
             String dbRole = user.getRole().toString().toLowerCase(); 
 
-            // 4. Kiểm tra xem người dùng có chọn đúng Tab (Bệnh nhân / Nhân viên) không
+           
             boolean isTabValid = false;
             if (formRole.equals("patient") && dbRole.equals("patient")) {
-                isTabValid = true; // Bệnh nhân đăng nhập tab Bệnh nhân -> Hợp lệ
+                isTabValid = true; 
             } else if (formRole.equals("staff") && !dbRole.equals("patient")) {
-                // Nhóm Nhân viên (admin, doctor, receptionist, technician) đăng nhập tab Nhân viên -> Hợp lệ
+            
                 isTabValid = true; 
             }
 
-            // 5. Xử lý sau khi kiểm tra Tab
+        
             if (isTabValid) {
-                // Kiểm tra xem tài khoản có bị khóa không
+                
                 if (user.getStatus().toString().equalsIgnoreCase("inactive")) {
                     error = "Tài khoản của bạn đã bị khóa! Vui lòng liên hệ Admin.";
                 } else {
-                    // ĐĂNG NHẬP THÀNH CÔNG -> Lưu thông tin vào Session
+                   
                     HttpSession session = request.getSession();
                     session.setAttribute("account", user);
 
-                    // 6. PHÂN QUYỀN ĐIỀU HƯỚNG TÙY THEO ROLE THỰC TẾ
+              
                     if (dbRole.equals("admin")) {
                         response.sendRedirect(request.getContextPath() + "/admin-users");
                     } else if (dbRole.equals("doctor")) {
@@ -65,7 +66,7 @@ public class LoginServlet extends HttpServlet {
                     } else if (dbRole.equals("technician")) {
                         response.sendRedirect(request.getContextPath() + "/lab-queue");
                     } else if (dbRole.equals("receptionist")) {
-                        response.sendRedirect(request.getContextPath() + "/lab-payment"); 
+                        response.sendRedirect(request.getContextPath() + "/lab-payyment"); 
                     } else { 
                        
                         response.sendRedirect(request.getContextPath() + "/index.jsp");
@@ -89,8 +90,7 @@ public class LoginServlet extends HttpServlet {
             
          
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
-                    // Redirect technician directly to Lab Queue page
-                    // Receptionist: chuyển thẳng tới trang kiểm tra thanh toán
+                    
         }
     }
 }
