@@ -8,11 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import model.Role;
 import model.Status;
-import model.Users;
 
 public class UserDAO extends DBContext {
 
-    
     public User checkLogin(String phone, String password) {
         String sql = "SELECT user_id, full_name, phone, email, role, status "
                 + "FROM users "
@@ -38,8 +36,7 @@ public class UserDAO extends DBContext {
         }
         return null;
     }
-    
-   
+
     public void registerPatient(
             String fullName,
             String phone,
@@ -50,7 +47,6 @@ public class UserDAO extends DBContext {
             String gender
     ) throws SQLException {
 
-      
         String sql = """
             INSERT INTO users (full_name, phone, email, password_hash, dob, address, gender, role, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'patient', 'active')
@@ -60,16 +56,16 @@ public class UserDAO extends DBContext {
             st.setString(1, fullName);
             st.setString(2, phone);
             st.setString(3, email);
-            st.setString(4, password); 
+            st.setString(4, password);
             st.setDate(5, dob);
             st.setString(6, address);
             st.setString(7, gender);
 
             st.executeUpdate();
-            
+
         } catch (SQLException e) {
             e.printStackTrace();
-            throw e; 
+            throw e;
         }
     }
 
@@ -84,7 +80,6 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-
     public boolean isEmailExist(String email) {
         String sql = "SELECT 1 FROM users WHERE email = ?";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -96,15 +91,14 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-  
     public List<User> getUsersByRole(Role role) {
         String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE role = ? ORDER BY full_name";
         List<User> users = new ArrayList<>();
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, role.toString());
             ResultSet rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 User u = new User();
                 u.setUserId(rs.getInt("user_id"));
@@ -118,13 +112,13 @@ public class UserDAO extends DBContext {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return users;
     }
 
     public void createUser(User user) throws SQLException {
         String sql = "INSERT INTO users (full_name, phone, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?, ?)";
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, user.getFullName());
             st.setString(2, user.getPhone());
@@ -138,10 +132,9 @@ public class UserDAO extends DBContext {
         }
     }
 
-
     public void updateUser(User user) throws SQLException {
         String sql = "UPDATE users SET full_name = ?, email = ?, status = ? WHERE phone = ?";
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, user.getFullName());
             st.setString(2, user.getEmail());
@@ -153,10 +146,9 @@ public class UserDAO extends DBContext {
         }
     }
 
-   
     public void toggleUserStatus(String phone) throws SQLException {
         String sql = "UPDATE users SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE phone = ?";
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, phone);
             st.executeUpdate();
@@ -170,7 +162,7 @@ public class UserDAO extends DBContext {
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, userId);
             ResultSet rs = st.executeQuery();
-            
+
             if (rs.next()) {
                 User u = new User();
                 u.setUserId(rs.getInt("user_id"));
@@ -192,7 +184,7 @@ public class UserDAO extends DBContext {
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, phone);
             ResultSet rs = st.executeQuery();
-            
+
             if (rs.next()) {
                 User u = new User();
                 u.setUserId(rs.getInt("user_id"));
@@ -209,6 +201,7 @@ public class UserDAO extends DBContext {
         return null;
     }
 
+<<<<<<< Updated upstream
     public User getUserByEmail(String email) {
         String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE email = ?";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -232,6 +225,8 @@ public class UserDAO extends DBContext {
     }
 
     
+=======
+>>>>>>> Stashed changes
     public List<User> getPatientList() {
         String sql = """
         SELECT u.user_id, u.full_name, u.phone, u.email, u.role, u.status 
@@ -240,10 +235,10 @@ public class UserDAO extends DBContext {
         ORDER BY u.full_name
     """;
         List<User> users = new ArrayList<>();
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             ResultSet rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 User u = new User();
                 u.setUserId(rs.getInt("user_id"));
@@ -257,13 +252,13 @@ public class UserDAO extends DBContext {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return users;
     }
 
     public void updateUserRole(int userId, Role role) throws SQLException {
         String sql = "UPDATE users SET role = ? WHERE user_id = ?";
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, role.toString());
             st.setInt(2, userId);
@@ -282,14 +277,14 @@ public class UserDAO extends DBContext {
     """;
         List<User> users = new ArrayList<>();
         keyword = "%" + keyword + "%";
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, keyword);
             st.setString(2, keyword);
             st.setString(3, keyword);
             st.setString(4, role.toString());
             ResultSet rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 User u = new User();
                 u.setUserId(rs.getInt("user_id"));
@@ -303,7 +298,7 @@ public class UserDAO extends DBContext {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return users;
     }
 
@@ -321,10 +316,10 @@ public class UserDAO extends DBContext {
             END, full_name
     """;
         List<User> users = new ArrayList<>();
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             ResultSet rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 User u = new User();
                 u.setUserId(rs.getInt("user_id"));
@@ -338,7 +333,7 @@ public class UserDAO extends DBContext {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return users;
     }
 
@@ -350,12 +345,12 @@ public class UserDAO extends DBContext {
         ORDER BY full_name
     """;
         List<User> users = new ArrayList<>();
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, role.toString());
             st.setString(2, status.toString());
             ResultSet rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 User u = new User();
                 u.setUserId(rs.getInt("user_id"));
@@ -369,31 +364,46 @@ public class UserDAO extends DBContext {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         return users;
     }
- public Object getUserById2(int userId) {
-        String sql = "SELECT * FROM users WHERE user_id = ?";
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, userId);
-            ResultSet rs = st.executeQuery();
 
-            if (rs.next()) {
-                Users u = new Users();
-                u.setUserId(rs.getInt("user_id"));
-                u.setFullName(rs.getString("full_name"));
-                u.setPhone(rs.getString("phone"));
-                u.setEmail(rs.getString("email"));
-                u.setGender(rs.getString("gender"));
-                u.setDob(rs.getDate("dob"));
-                u.setCity(rs.getString("address_province"));
-                u.setDistrict(rs.getString("address_district"));
-                u.setDetail(rs.getString("address_detail"));
-                return u;
+    public User getUserById1(int userId) {
+
+        String sql = "SELECT user_id, full_name, phone, email, password_hash, "
+                + "role, status, address, image_url "
+                + "FROM users WHERE user_id = ?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setInt(1, userId);
+
+            try (ResultSet rs = st.executeQuery()) {
+
+                if (rs.next()) {
+
+                    User u = new User();
+                    u.setUserId(rs.getInt("user_id"));
+                    u.setFullName(rs.getString("full_name"));
+                    u.setPhone(rs.getString("phone"));
+                    u.setEmail(rs.getString("email"));
+                    u.setPasswordHash(rs.getString("password_hash"));
+
+                    // Convert String -> Enum (an toàn)
+                    u.setRole(Role.valueOf(rs.getString("role").trim()));
+                    u.setStatus(Status.valueOf(rs.getString("status").trim()));
+
+                    u.setAddress(rs.getString("address"));
+                    u.setImageUrl(rs.getString("image_url"));
+
+                    return u;
+                }
             }
-        } catch (Exception e) {
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 
@@ -423,29 +433,33 @@ public class UserDAO extends DBContext {
         }
     }
 
-    public void updateUser(int userId, String name, String phone, String email, String gender, String dob, String city, String commune, String house) { {
+    public void updateUser(int id,
+            String name,
+            String phone,
+            String email,
+            String address) {
 
-        String sql = "UPDATE users SET full_name=?, phone=?, email=?, gender=?, dob=?, "
-                + "address_province=?, address_district=?, address_detail=?, updated_at=NOW() "
-                + "WHERE user_id=?";
+        String sql = """
+        UPDATE users
+        SET full_name = ?,
+            phone = ?,
+            email = ?,
+            address = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+        """;
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-
-            st.setString(1, name);
-            st.setString(2, phone);
-            st.setString(3, email);
-            st.setString(4, gender);
-            st.setString(5, dob);
-            st.setString(6, city);
-            st.setString(7, commune);
-            st.setString(8, house);
-            st.setInt(9, userId);
-
-            st.executeUpdate();
-
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, name);
+            ps.setString(2, phone);
+            ps.setString(3, email);
+            ps.setString(4, address);
+            ps.setInt(5, id);
+            ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
-        }  }
-}
+        }
+    }
 
 }

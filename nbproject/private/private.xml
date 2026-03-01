@@ -3,21 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/web/common/header.jsp</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/model/Role.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/web/pages/appointments/listOfDoctors.jsp</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/web/common/footer.jsp</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/controller/LoginServlet.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/model/ServicePrice.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/web/pages/auth/login.jsp</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/web/pages/admin/services.jsp</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/dal/UserDAO.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/controller/AdminServiceServlet.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/dal/DBContext.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/controller/LogoutServlet.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/dal/ServiceDAO.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/src/java/dal/DoctorDAO.java</file>
-            <file>file:/C:/Users/admin/OneDrive/Documents/GitHub/Clinic-Management-System/web/common/sidebar.jsp</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/appointments/AppointmentServlet.java</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/userInformation/userInformation.css</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/userInformation/UserInformationServlet.java</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/appointments/AppointmentPaymentServlet.java</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/dal/UserDAO.java</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/model/User.java</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/userInformation/userInformation.jsp</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/medicalRecords.css</file>
         </group>
     </open-files>
 </project-private>

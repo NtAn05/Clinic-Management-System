@@ -82,7 +82,7 @@ public class AppointmentPaymentServlet extends HttpServlet {
         } else {
             // ❌ Thanh toán thất bại → không lưu DB
             request.setAttribute("message", "Thanh toán thất bại hoặc đã huỷ!");
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentfailPayment.jsp")
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentFailPayment.jsp")
                     .forward(request, response);
         }
     }

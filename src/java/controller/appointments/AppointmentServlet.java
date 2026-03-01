@@ -116,7 +116,7 @@ public class AppointmentServlet extends HttpServlet {
                         .amount(amount)
                         .description("Thanh toan")
                         .returnUrl("http://localhost:8080/PhongKhamDaLieu/appointmentpaymentservlet")
-                        .cancelUrl("http://localhost:8080/PhongKhamDaLieu/pages/appointments/appointment/appointmentPaymentFail.jsp")
+                        .cancelUrl("http://localhost:8080/PhongKhamDaLieu/pages/appointments/appointment/appointmentFailPayment.jsp")
                         .build();
 
                 CreatePaymentLinkResponse result = payOS.paymentRequests().create(paymentRequest);

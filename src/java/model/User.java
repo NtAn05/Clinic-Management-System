@@ -10,10 +10,40 @@ public class User {
     private String passwordHash;
     private Role role; 
     private Status status; 
-
+  
+    private String address;
+    private String imageUrl;
     public User() {
     }
 
+    public User(int userId, String fullName, String phone, String email, String passwordHash, Role role, Status status, String address, String imageUrl) {
+        this.userId = userId;
+        this.fullName = fullName;
+        this.phone = phone;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.role = role;
+        this.status = status;
+        this.address = address;
+        this.imageUrl = imageUrl;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+    
    
     public int getUserId() {
         return userId;

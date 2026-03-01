@@ -13,9 +13,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Doctors;
 import model.User;
-import model.Users;
 
 /**
  *
@@ -61,17 +59,32 @@ public class UserInformationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        System.out.println("=======================Nigger!");
         HttpSession session = request.getSession(false);
-        UserDAO users = new UserDAO();
-        DoctorDAO doctor = new DoctorDAO();
-        Users user = (Users) session.getAttribute("account");
-        int userId = user.getUserId();
-        request.setAttribute("user", users.getUserById2(userId));
-        request.setAttribute("doctor", doctor.getDoctorByUserId2(userId));
+//        System.out.println("Test display session : ",session);
+        if (session == null || session.getAttribute("account") == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
+     
+        User userSession = (User) session.getAttribute("account");
+        int userId = userSession.getUserId();
+        
+ 
+        
+        UserDAO userDAO = new UserDAO();
+        User user = userDAO.getUserById1(userId);
+       
+        request.setAttribute("user", user);
+        request.setAttribute("roleName", user.getRole());
+        DoctorDAO doc = new DoctorDAO();
+        if ("doctor".equals(user.getRole())) {
+        var doctor = doc.getDoctorByUserId(userId);
+        request.setAttribute("doctor", doctor);
+    }
 
-        request.getRequestDispatcher("/pages/user/userInformation.jsp")
-                .forward(request, response);
+    request.getRequestDispatcher("/pages/profile/userInformation/userInformation.jsp")
+            .forward(request, response);
     }
 
     /**
@@ -85,18 +98,16 @@ public class UserInformationServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
         HttpSession session = request.getSession(false);
-UserDAO users = new UserDAO();
-            DoctorDAO doctors = new DoctorDAO();
+        UserDAO users = new UserDAO();
+        DoctorDAO doctors = new DoctorDAO();
         if (session == null || session.getAttribute("account") == null) {
             response.sendRedirect("login.jsp");
             return;
         }
 
-        Users userSession = (Users) session.getAttribute("account");
+        User userSession = (User) session.getAttribute("account");
         int userId = userSession.getUserId();
-
         String action = request.getParameter("action");
 
         if ("updateProfile".equals(action)) {
@@ -104,32 +115,12 @@ UserDAO users = new UserDAO();
             String name = request.getParameter("txtName");
             String phone = request.getParameter("txtPhone");
             String email = request.getParameter("txtEmail");
-            String gender = request.getParameter("txtGender");
-            String dob = request.getParameter("txtDob");
-            String city = request.getParameter("city");
-            String commune = request.getParameter("commune");
-            String house = request.getParameter("house");
-            
-            users.updateUser(userId, name, phone, email, gender, dob, city, commune, house);
 
-            // Update doctor if exists
-            Doctors doctor= (Doctors) doctors.getDoctorByUserId2(userId);
-            if ( doctors.getDoctorByUserId(userId) != null) {
+            String address = request.getParameter("txtAddress");
+            String txtImage = request.getParameter("txtImage");
 
-                String qualification = request.getParameter("txtQualification");
-                int experience = Integer.parseInt(request.getParameter("txtExperience"));
-                String specialization = request.getParameter("txtSpecialization");
-
-                 doctors.updateDoctor(
-                        doctor.getDoctorId(),
-                        qualification,
-                        experience,
-                        specialization
-                );
-            }
-
-            response.sendRedirect("userinformation");
-        }
+            users.updateUser(userId, name, phone, email, address);
+response.sendRedirect(request.getContextPath() + "/userinformationservlet");        }
 
         if ("changePass".equals(action)) {
 
@@ -143,18 +134,18 @@ UserDAO users = new UserDAO();
                 users.updatePassword(userId, newPass);
             }
 
-            response.sendRedirect("userinformation");
+response.sendRedirect(request.getContextPath() + "/userinformationservlet");
         }
-    
-}
 
-/**
- * Returns a short description of the servlet.
- *
- * @return a String containing servlet description
- */
-@Override
-public String getServletInfo() {
+    }
+
+    /**
+     * Returns a short description of the servlet.
+     *
+     * @return a String containing servlet description
+     */
+    @Override
+    public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
 
