@@ -63,10 +63,9 @@ public class LoginServlet extends HttpServlet {
                     } else if (dbRole.equals("doctor")) {
                         response.sendRedirect(request.getContextPath() + "/doctorDashboard");
                     } else if (dbRole.equals("technician")) {
-                        response.sendRedirect(request.getContextPath() + "/technician-dashboard");
+                        response.sendRedirect(request.getContextPath() + "/lab-queue");
                     } else if (dbRole.equals("receptionist")) {
-                        // Nhớ tạo một Servlet hoặc JSP có đường dẫn này cho Lễ tân nhé
-                        response.sendRedirect(request.getContextPath() + "/lab-queue"); 
+                        response.sendRedirect(request.getContextPath() + "/lab-payment"); 
                     } else { 
                        
                         response.sendRedirect(request.getContextPath() + "/index.jsp");
