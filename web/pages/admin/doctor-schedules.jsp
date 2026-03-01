@@ -289,7 +289,7 @@
                 <form id="filterForm" method="GET" action="${pageContext.request.contextPath}/admin-doctor-schedules" class="toolbar">
                     <div class="field">
                         <label><i class="fas fa-search"></i> Tìm kiếm bác sĩ</label>
-                        <input type="text" name="keyword" value="${keyword}" placeholder="Nhập tên bác sĩ...">
+                        <input id="keywordFilter" type="text" name="keyword" value="${keyword}" placeholder="Nhập tên bác sĩ...">
                     </div>
                     <div class="field">
                         <label><i class="fas fa-sun"></i> Ca làm việc</label>
@@ -314,7 +314,6 @@
                     </div>
                     <div class="actions">
                         <input type="hidden" name="weekOffset" value="${weekOffset}">
-                        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm kiếm</button>
                         <a class="btn btn-reset" href="${pageContext.request.contextPath}/admin-doctor-schedules"><i class="fas fa-rotate-left"></i> Đặt lại</a>
                     </div>
                 </form>
@@ -444,7 +443,7 @@
         <div class="modal" id="addModal">
             <div class="modal-content">
                 <div class="modal-title"><i class="fas fa-plus-circle"></i> Thêm ca làm việc</div>
-                <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules">
+                <form id="addShiftForm" method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="filterKeyword" value="${keyword}">
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
@@ -453,11 +452,13 @@
                     <div class="modal-grid">
                         <div class="field" style="grid-column:1/-1;">
                             <label>Bác sĩ</label>
-                            <select name="doctorId" required>
-                                <c:forEach var="doctor" items="${doctors}">
-                                    <option value="${doctor.doctorId}">${doctor.fullName}</option>
+                            <input id="addDoctorInput" list="addDoctorList" placeholder="Chọn bác sĩ" autocomplete="off" required>
+                            <input type="hidden" id="addDoctorId" name="doctorId">
+                            <datalist id="addDoctorList">
+                                <c:forEach var="doctor" items="${activeDoctors}">
+                                    <option value="${doctor.fullName}" data-doctor-id="${doctor.doctorId}"></option>
                                 </c:forEach>
-                            </select>
+                            </datalist>
                         </div>
                         <div class="field">
                             <label>Thứ</label>
@@ -536,13 +537,38 @@
         </div>
 
         <script>
+            var keywordTimer = null;
+
             function submitFilterForm() {
                 var form = document.getElementById("filterForm");
                 if (form) form.submit();
             }
 
+            function resolveAddDoctorId() {
+                var input = document.getElementById("addDoctorInput");
+                var hidden = document.getElementById("addDoctorId");
+                var options = document.querySelectorAll("#addDoctorList option");
+                if (!input || !hidden) return false;
+
+                var value = (input.value || "").trim();
+                hidden.value = "";
+                for (var i = 0; i < options.length; i++) {
+                    if (options[i].value === value) {
+                        hidden.value = options[i].getAttribute("data-doctor-id");
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             function openAddModal() {
                 document.getElementById("addModal").style.display = "block";
+                var doctorSearch = document.getElementById("addDoctorInput");
+                if (doctorSearch) {
+                    doctorSearch.value = "";
+                    document.getElementById("addDoctorId").value = "";
+                    doctorSearch.focus();
+                }
             }
             function closeAddModal() {
                 document.getElementById("addModal").style.display = "none";
@@ -564,10 +590,29 @@
             };
 
             document.addEventListener("DOMContentLoaded", function () {
+                var keywordInput = document.getElementById("keywordFilter");
                 var shiftTypeFilter = document.getElementById("shiftTypeFilter");
                 var dayFilter = document.getElementById("dayOfWeekFilter");
+                var addDoctorInput = document.getElementById("addDoctorInput");
+                var addShiftForm = document.getElementById("addShiftForm");
+
+                if (keywordInput) {
+                    keywordInput.addEventListener("input", function () {
+                        clearTimeout(keywordTimer);
+                        keywordTimer = setTimeout(submitFilterForm, 350);
+                    });
+                }
                 if (shiftTypeFilter) shiftTypeFilter.addEventListener("change", submitFilterForm);
                 if (dayFilter) dayFilter.addEventListener("change", submitFilterForm);
+                if (addDoctorInput) addDoctorInput.addEventListener("input", resolveAddDoctorId);
+                if (addShiftForm) {
+                    addShiftForm.addEventListener("submit", function (event) {
+                        if (!resolveAddDoctorId()) {
+                            event.preventDefault();
+                            alert("Vui lòng chọn bác sĩ từ danh sách (chỉ tài khoản đang hoạt động).");
+                        }
+                    });
+                }
             });
         </script>
     </body>

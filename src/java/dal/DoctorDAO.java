@@ -77,12 +77,13 @@ public class DoctorDAO extends DBContext {
     }
 
     public List<Doctor> getAllDoctorsForSchedule() {
+        syncDoctorProfilesForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
         String sql = """
             SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
-            WHERE u.status = 'active'
+            WHERE u.role = 'doctor'
             ORDER BY u.full_name
         """;
 
@@ -100,6 +101,51 @@ public class DoctorDAO extends DBContext {
         }
 
         return list;
+    }
+
+    public List<Doctor> getActiveDoctorsForSchedule() {
+        syncDoctorProfilesForAllDoctorUsers();
+        List<Doctor> list = new ArrayList<>();
+        String sql = """
+            SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
+            FROM doctors d
+            JOIN users u ON d.user_id = u.user_id
+            WHERE u.role = 'doctor' AND u.status = 'active'
+            ORDER BY u.full_name
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql);
+                ResultSet rs = st.executeQuery()) {
+            while (rs.next()) {
+                Doctor d = new Doctor();
+                d.setDoctorId(rs.getInt("doctor_id"));
+                d.setUserId(rs.getInt("user_id"));
+                d.setSpecialization(rs.getString("specialization"));
+                d.setFullName(rs.getString("full_name"));
+                list.add(d);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public void syncDoctorProfilesForAllDoctorUsers() {
+        String sql = """
+            INSERT INTO doctors (user_id, specialization)
+            SELECT u.user_id, 'Chưa cập nhật'
+            FROM users u
+            LEFT JOIN doctors d ON d.user_id = u.user_id
+            WHERE u.role = 'doctor' AND d.doctor_id IS NULL
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.executeUpdate();
+        } catch (SQLException e) {
+            // Keep schedule page working even if sync fails on existing schemas.
+            e.printStackTrace();
+        }
     }
 
     public void addDoctorShift(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {

@@ -1,6 +1,7 @@
 package controller;
 
 import dal.UserDAO;
+import dal.DoctorDAO;
 import model.Role;
 import model.Status;
 import model.User;
@@ -103,6 +104,9 @@ public class AdminUserServlet extends HttpServlet {
             newUser.setStatus(Status.active);
             
             userDAO.createUser(newUser);
+            if (role == Role.doctor) {
+                new DoctorDAO().syncDoctorProfilesForAllDoctorUsers();
+            }
             request.setAttribute("success", "Tạo tài khoản thành công");
         } catch (Exception e) {
             request.setAttribute("error", "Lỗi khi tạo tài khoản: " + e.getMessage());
