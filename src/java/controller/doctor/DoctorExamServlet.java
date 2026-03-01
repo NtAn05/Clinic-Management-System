@@ -229,16 +229,22 @@ public class DoctorExamServlet extends HttpServlet {
                 labRequestInstruction = labInstructionBuilder.toString().trim();
             }
         }
-        String notes = buildMedicalRecordNote(allergies, chronic, family, social, vaccination, clinicalResult, doctorNote, treatmentPlan, labRequestInstruction);
-
-        boolean saved = doctorDAO.upsertMedicalRecord(appointmentId, symptoms, diagnosis, notes);
-        if (!saved) {
-            response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
+        String requiredFieldError = validateRequiredFields(action, diagnosis, clinicalResult, treatmentPlan,
+                labTestType, labPriority, labCollectionMethod);
+        if (!requiredFieldError.isEmpty()) {
+            String errorTab = "createLabRequest".equalsIgnoreCase(action) ? "lab" : "info";
+            response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=" + errorTab + "&error=" + requiredFieldError);
             return;
         }
+        
+        String notes = buildMedicalRecordNote(allergies, chronic, family, social, vaccination, clinicalResult, doctorNote, treatmentPlan, labRequestInstruction);
 
         if ("finish".equalsIgnoreCase(action)) {
-            doctorDAO.finishExamination(appointmentId);
+            boolean finished = doctorDAO.saveMedicalRecordAndFinishExamination(appointmentId, symptoms, diagnosis, notes);
+            if (!finished) {
+                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/doctorDashboard?success=examFinished");
             return;
         }
@@ -250,12 +256,18 @@ public class DoctorExamServlet extends HttpServlet {
             }
 
             LabRequestDAO labRequestDAO = new LabRequestDAO();
-            int requestId = labRequestDAO.insertLabRequest(appointmentId, doctor.getDoctorId());
+            int requestId = doctorDAO.saveMedicalRecordAndCreateLabRequest(appointmentId, doctor.getDoctorId(), symptoms, diagnosis, notes);
             if (requestId > 0) {
                 response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&success=labRequested");
                 return;
             }
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&error=labRequestFailed");
+            return;
+        }
+        
+        boolean saved = doctorDAO.upsertMedicalRecord(appointmentId, symptoms, diagnosis, notes);
+        if (!saved) {
+            response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
             return;
         }
 
@@ -270,6 +282,29 @@ public class DoctorExamServlet extends HttpServlet {
         return value.trim();
     }
 
+    private String validateRequiredFields(String action,
+            String diagnosis,
+            String clinicalResult,
+            String treatmentPlan,
+            String labTestType,
+            String labPriority,
+            String labCollectionMethod) {
+        if ("finish".equalsIgnoreCase(action)) {
+            if (diagnosis.isEmpty() || clinicalResult.isEmpty() || treatmentPlan.isEmpty()) {
+                return "missingRequiredFinishFields";
+            }
+        }
+
+        if ("createLabRequest".equalsIgnoreCase(action)) {
+            if (diagnosis.isEmpty() || clinicalResult.isEmpty()
+                    || labTestType.isEmpty() || labPriority.isEmpty() || labCollectionMethod.isEmpty()) {
+                return "missingRequiredLabFields";
+            }
+        }
+
+        return "";
+    }
+    
     private String buildMedicalRecordNote(
             String allergies,
             String chronic,

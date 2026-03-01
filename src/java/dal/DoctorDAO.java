@@ -630,6 +630,175 @@ public class DoctorDAO extends DBContext {
         return false;
     }
 
+    public boolean saveMedicalRecordAndFinishExamination(long appointmentId, String symptoms, String diagnosis, String notes) {
+        String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
+        String updateRecordSql = """
+            UPDATE medical_records
+            SET symptoms = ?, diagnosis = ?, notes = ?, updated_at = NOW()
+            WHERE appointment_id = ?
+        """;
+        String insertRecordSql = """
+            INSERT INTO medical_records (appointment_id, symptoms, diagnosis, notes, updated_at)
+            VALUES (?, ?, ?, ?, NOW())
+        """;
+        String finishSql = """
+            UPDATE exam_queue
+            SET status = 'done'
+            WHERE appointment_id = ?
+        """;
+
+        try {
+            connection.setAutoCommit(false);
+
+            boolean exists;
+            try (PreparedStatement check = connection.prepareStatement(checkSql)) {
+                check.setLong(1, appointmentId);
+                try (ResultSet rs = check.executeQuery()) {
+                    exists = rs.next();
+                }
+            }
+
+            if (exists) {
+                try (PreparedStatement update = connection.prepareStatement(updateRecordSql)) {
+                    update.setString(1, symptoms);
+                    update.setString(2, diagnosis);
+                    update.setString(3, notes);
+                    update.setLong(4, appointmentId);
+                    if (update.executeUpdate() == 0) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+            } else {
+                try (PreparedStatement insert = connection.prepareStatement(insertRecordSql)) {
+                    insert.setLong(1, appointmentId);
+                    insert.setString(2, symptoms);
+                    insert.setString(3, diagnosis);
+                    insert.setString(4, notes);
+                    if (insert.executeUpdate() == 0) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+            }
+
+            try (PreparedStatement finish = connection.prepareStatement(finishSql)) {
+                finish.setLong(1, appointmentId);
+                if (finish.executeUpdate() == 0) {
+                    connection.rollback();
+                    return false;
+                }
+            }
+
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public int saveMedicalRecordAndCreateLabRequest(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes) {
+        String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
+        String updateRecordSql = """
+            UPDATE medical_records
+            SET symptoms = ?, diagnosis = ?, notes = ?, updated_at = NOW()
+            WHERE appointment_id = ?
+        """;
+        String insertRecordSql = """
+            INSERT INTO medical_records (appointment_id, symptoms, diagnosis, notes, updated_at)
+            VALUES (?, ?, ?, ?, NOW())
+        """;
+        String insertLabSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
+        String deleteQueueSql = "DELETE FROM exam_queue WHERE appointment_id = ?";
+
+        try {
+            connection.setAutoCommit(false);
+
+            boolean exists;
+            try (PreparedStatement check = connection.prepareStatement(checkSql)) {
+                check.setLong(1, appointmentId);
+                try (ResultSet rs = check.executeQuery()) {
+                    exists = rs.next();
+                }
+            }
+
+            if (exists) {
+                try (PreparedStatement update = connection.prepareStatement(updateRecordSql)) {
+                    update.setString(1, symptoms);
+                    update.setString(2, diagnosis);
+                    update.setString(3, notes);
+                    update.setLong(4, appointmentId);
+                    if (update.executeUpdate() == 0) {
+                        connection.rollback();
+                        return 0;
+                    }
+                }
+            } else {
+                try (PreparedStatement insert = connection.prepareStatement(insertRecordSql)) {
+                    insert.setLong(1, appointmentId);
+                    insert.setString(2, symptoms);
+                    insert.setString(3, diagnosis);
+                    insert.setString(4, notes);
+                    if (insert.executeUpdate() == 0) {
+                        connection.rollback();
+                        return 0;
+                    }
+                }
+            }
+
+            int requestId;
+            try (PreparedStatement insertLab = connection.prepareStatement(insertLabSql, Statement.RETURN_GENERATED_KEYS)) {
+                insertLab.setLong(1, appointmentId);
+                insertLab.setInt(2, doctorId);
+                if (insertLab.executeUpdate() == 0) {
+                    connection.rollback();
+                    return 0;
+                }
+                try (ResultSet keys = insertLab.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        connection.rollback();
+                        return 0;
+                    }
+                    requestId = keys.getInt(1);
+                }
+            }
+
+            try (PreparedStatement del = connection.prepareStatement(deleteQueueSql)) {
+                del.setLong(1, appointmentId);
+                del.executeUpdate();
+            }
+
+            connection.commit();
+            return requestId;
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return 0;
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
     public void updateDoctor(int doctorId, String qualification, int experience, String specialization) {
         String sql = "UPDATE doctors SET qualification=?, experience_years=?, specialization=? "
                 + "WHERE doctor_id=?";

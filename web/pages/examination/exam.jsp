@@ -41,7 +41,12 @@
                     <c:if test="${error == 'saveFailed'}">
                         <div class="alert-error">Không thể lưu hồ sơ khám. Vui lòng thử lại.</div>
                     </c:if>
-
+                    <c:if test="${error == 'missingRequiredFinishFields'}">
+                        <div class="alert-error">Cần nhập đầy đủ Chẩn đoán, Kết quả khám lâm sàng và Phương án điều trị trước khi hoàn thành phiên khám.</div>
+                    </c:if>
+                    <c:if test="${error == 'missingRequiredLabFields'}">
+                        <div class="alert-error">Cần nhập Chẩn đoán, Kết quả khám lâm sàng và đầy đủ thông tin chỉ định xét nghiệm trước khi tạo yêu cầu.</div>
+                    </c:if>
                     <c:if test="${success == 'labRequested'}">
                         <div class="alert-success">Đã tạo yêu cầu xét nghiệm và chuyển bệnh nhân sang hàng đợi xét nghiệm.</div>
                     </c:if>
