@@ -45,9 +45,11 @@
                     <c:if test="${success == 'labRequested'}">
                         <div class="alert-success">Đã tạo yêu cầu xét nghiệm và chuyển bệnh nhân sang hàng đợi xét nghiệm.</div>
                     </c:if>
-
                     <c:if test="${error == 'labRequestFailed'}">
                         <div class="alert-error">Không thể tạo yêu cầu xét nghiệm. Có thể lịch khám này đã có phiếu xét nghiệm.</div>
+                    </c:if>
+                    <c:if test="${error == 'labRequestNotAllowed'}">
+                        <div class="alert-error">Phiên khám đã hoàn tất, không thể tạo thêm yêu cầu xét nghiệm.</div>
                     </c:if>
 
                     <div class="tabs">
@@ -123,61 +125,82 @@
                     </div>
 
                     <div class="tab-content ${activeTab == 'lab' ? 'active' : ''}" id="lab">
-                        <div class="card">
-                            <h3>Tạo yêu cầu xét nghiệm</h3>
-                            <p class="muted">Nhập chỉ định xét nghiệm theo mẫu tương tự tạo đơn thuốc.</p>
-                            <div id="labRequestList" class="rx-list">
-                                <div class="rx-row lab-row">
-                                    <select name="labTestType">
-                                        <option value="">Chọn loại xét nghiệm</option>
-                                        <option value="Công thức máu">Công thức máu</option>
-                                        <option value="Đường huyết">Đường huyết</option>
-                                        <option value="Sinh hóa máu">Sinh hóa máu</option>
-                                        <option value="Nước tiểu">Nước tiểu</option>
-                                        <option value="X-quang">X-quang</option>
-                                    </select>
-                                    <select name="labPriority">
-                                        <option value="Bình thường">Bình thường</option>
-                                        <option value="Khẩn">Khẩn</option>
-                                    </select>
-                                    <select name="labCollectionMethod">
-                                        <option value="Lấy mẫu tại chỗ">Lấy mẫu tại chỗ</option>
-                                        <option value="Nhịn ăn trước xét nghiệm">Nhịn ăn trước xét nghiệm</option>
-                                        <option value="Theo hướng dẫn bác sĩ">Theo hướng dẫn bác sĩ</option>
-                                    </select>
+                        <c:if test="${examData.status != 'done'}">
+                            <div class="card">
+                                <h3>Tạo yêu cầu xét nghiệm</h3>
+                                <p class="muted">Nhập chỉ định xét nghiệm theo mẫu tương tự tạo đơn thuốc.</p>
+                                <div id="labRequestList" class="rx-list">
+                                    <div class="rx-row lab-row">
+                                        <select name="labTestType">
+                                            <option value="">Chọn loại xét nghiệm</option>
+                                            <option value="Công thức máu">Công thức máu</option>
+                                            <option value="Đường huyết">Đường huyết</option>
+                                            <option value="Sinh hóa máu">Sinh hóa máu</option>
+                                            <option value="Nước tiểu">Nước tiểu</option>
+                                            <option value="X-quang">X-quang</option>
+                                        </select>
+                                        <select name="labPriority">
+                                            <option value="Bình thường">Bình thường</option>
+                                            <option value="Khẩn">Khẩn</option>
+                                        </select>
+                                        <select name="labCollectionMethod">
+                                            <option value="Lấy mẫu tại chỗ">Lấy mẫu tại chỗ</option>
+                                            <option value="Nhịn ăn trước xét nghiệm">Nhịn ăn trước xét nghiệm</option>
+                                            <option value="Theo hướng dẫn bác sĩ">Theo hướng dẫn bác sĩ</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <label>Hướng dẫn / ghi chú chỉ định</label>
+                                <textarea rows="3" name="labRequestNote" placeholder="Ví dụ: ưu tiên xử lý trước 10h, lưu ý tiền sử dị ứng thuốc cản quang..."><c:out value="${labRequestInstruction}"/></textarea>
+
+                                <div class="actions">
+                                    <button type="submit" class="btn-primary" name="action" value="createLabRequest" onclick="return confirm('Xác nhận gửi yêu cầu xét nghiệm cho bệnh nhân này?');">🧪 Gửi yêu cầu xét nghiệm</button>
                                 </div>
                             </div>
-
-                            <label>Hướng dẫn / ghi chú chỉ định</label>
-                            <textarea rows="3" name="labRequestNote" placeholder="Ví dụ: ưu tiên xử lý trước 10h, lưu ý tiền sử dị ứng thuốc cản quang..."><c:out value="${labRequestInstruction}"/></textarea>
-
-                            <div class="actions">
-                                <button type="submit" class="btn-primary" name="action" value="createLabRequest" onclick="return confirm('Xác nhận gửi yêu cầu xét nghiệm cho bệnh nhân này?');">🧪 Gửi yêu cầu xét nghiệm</button>
-                            </div>
-                        </div>
+                        </c:if>
+                        <c:if test="${examData.status == 'done'}">
+                            <div class="empty-state">Phiên khám đã hoàn tất, không thể tạo yêu cầu xét nghiệm.</div>
+                        </c:if>
 
                         <div class="section-spacing"></div>
-                        
+
                         <c:if test="${empty labResults}">
                             <p>Chưa có kết quả xét nghiệm cho lịch khám này.</p>
                         </c:if>
 
                         <c:forEach var="lab" items="${labResults}">
                             <div class="card lab-item">
-                                <h4>Phiếu xét nghiệm #${lab.requestId}</h4>
-                                <p><b>Trạng thái:</b> ${lab.status}</p>
-                                <p><b>Thời gian chỉ định:</b> ${lab.requestedAt}</p>
-                                <p><b>Hoàn tất:</b> ${lab.completedAt}</p>
-                                <p><b>Ghi chú kỹ thuật:</b> ${empty lab.notes ? '---' : lab.notes}</p>
-                                <p>
-                                    <b>File kết quả:</b>
-                                    <c:choose>
-                                        <c:when test="${not empty lab.resultFile}">
-                                            <a href="${pageContext.request.contextPath}/${lab.resultFile}" target="_blank">Xem file</a>
-                                        </c:when>
-                                        <c:otherwise>Chưa có file</c:otherwise>
-                                    </c:choose>
-                                </p>
+                                <div class="lab-head">
+                                    <h4>Phiếu xét nghiệm #${lab.requestId}</h4>
+                                    <c:set var="labStatusText" value="${lab.status == 'pending' ? 'Chờ xử lý' : (lab.status == 'processing' ? 'Đang xét nghiệm' : (lab.status == 'completed' ? 'Hoàn tất' : lab.status))}" />
+                                    <span class="status-pill ${lab.status}">${labStatusText}</span>
+                                </div>
+                                <div class="lab-meta-grid">
+                                    <div class="meta-item">
+                                        <span class="meta-label">Thời gian chỉ định</span>
+                                        <span class="meta-value">${empty lab.requestedAt ? '---' : lab.requestedAt}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Hoàn tất</span>
+                                        <span class="meta-value">${empty lab.completedAt ? '---' : lab.completedAt}</span>
+                                    </div>
+                                    <div class="meta-item meta-item-full">
+                                        <span class="meta-label">Ghi chú kỹ thuật</span>
+                                        <p class="meta-note">${empty lab.notes ? 'Không có ghi chú.' : lab.notes}</p>
+                                    </div>
+                                    <div class="meta-item meta-item-full">
+                                        <span class="meta-label">File kết quả</span>
+                                        <c:choose>
+                                            <c:when test="${not empty lab.resultFile}">
+                                                <a class="lab-link" href="${pageContext.request.contextPath}/${lab.resultFile}" target="_blank">📄 Xem file kết quả</a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="meta-value">Chưa có file</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                </div>
                             </div>
                         </c:forEach>
                     </div>
@@ -204,34 +227,48 @@
                         </c:if>
 
                         <c:if test="${not empty historyList}">
-                            <table class="history-table" border="1" cellpadding="8" cellspacing="0" width="100%">
-                                <thead>
-                                    <tr>
-                                        <th>Mã lịch khám</th>
-                                        <th>Ngày khám</th>
-                                        <th>Giờ khám</th>
-                                        <th>Triệu chứng</th>
-                                        <th>Chẩn đoán</th>
-                                        <th>Ghi chú</th>
-                                        <th>Trạng thái lịch</th>
-                                        <th>Trạng thái khám</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach var="h" items="${historyList}">
+                            <div class="history-table-wrap">
+                                <table class="history-table">
+                                    <thead>
                                         <tr>
-                                            <td>#${h.appointmentId}</td>
-                                            <td><fmt:formatDate value="${h.appointmentDate}" pattern="dd/MM/yyyy" /></td>
-                                            <td>${h.appointmentTime}</td>
-                                            <td>${h.symptom}</td>
-                                            <td>${h.diagnosis}</td>
-                                            <td>${h.notes}</td>
-                                            <td>${h.appointmentStatus}</td>
-                                            <td>${h.queueStatus}</td>
+                                            <th>Mã lịch khám</th>
+                                            <th>Ngày khám</th>
+                                            <th>Giờ khám</th>
+                                            <th>Triệu chứng</th>
+                                            <th>Chẩn đoán</th>
+                                            <th>Ghi chú</th>
+                                            <th>Trạng thái lịch</th>
+                                            <th>Trạng thái khám</th>
                                         </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="h" items="${historyList}">
+                                            <tr>
+                                                <td><span class="history-id">#${h.appointmentId}</span></td>
+                                                <td><fmt:formatDate value="${h.appointmentDate}" pattern="dd/MM/yyyy" /></td>
+                                                <td>${h.appointmentTime}</td>
+                                                <td><div class="history-cell-text">${empty h.symptom ? '---' : h.symptom}</div></td>
+                                                <td><div class="history-cell-text">${empty h.diagnosis ? '---' : h.diagnosis}</div></td>
+                                                <td>
+                                                    <div class="history-note" title="${empty h.notes ? '' : h.notes}">
+                                                        ${empty h.notes ? 'Không có ghi chú.' : h.notes}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="status-pill history-status ${h.appointmentStatus}">
+                                                        ${empty h.appointmentStatus ? '---' : h.appointmentStatus}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="status-pill history-status ${h.queueStatus}">
+                                                        ${empty h.queueStatus ? 'N/A' : h.queueStatus}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
                         </c:if>
                     </div>
                 </form>
