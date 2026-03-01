@@ -66,7 +66,7 @@ public class LoginServlet extends HttpServlet {
                     } else if (dbRole.equals("technician")) {
                         response.sendRedirect(request.getContextPath() + "/lab-queue");
                     } else if (dbRole.equals("receptionist")) {
-                        response.sendRedirect(request.getContextPath() + "/lab-payyment"); 
+                        response.sendRedirect(request.getContextPath() + "/lab-payment"); 
                     } else { 
                        
                         response.sendRedirect(request.getContextPath() + "/index.jsp");
