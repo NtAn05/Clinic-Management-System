@@ -92,12 +92,17 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         List<Doctor> doctors = doctorDAO.getAllDoctorsForSchedule();
         List<Doctor> activeDoctors = doctorDAO.getActiveDoctorsForSchedule();
 
+        boolean isGetRequest = "GET".equalsIgnoreCase(req.getMethod());
         String keyword = trim(firstNonBlank(req.getParameter("filterKeyword"), req.getParameter("keyword")));
-        Integer selectedDay = parseNullableDay(firstNonBlank(req.getParameter("filterDayOfWeek"), req.getParameter("dayOfWeek")));
+        String dayFilterParam = firstNonBlank(
+                req.getParameter("filterDayOfWeek"),
+                isGetRequest ? req.getParameter("dayOfWeek") : null
+        );
+        Integer selectedDay = parseNullableDay(dayFilterParam);
         int weekOffset = parseInt(firstNonBlank(req.getParameter("filterWeekOffset"), req.getParameter("weekOffset")), 0);
 
         String selectedShiftType = normalizeShiftType(req.getParameter("filterShiftType"));
-        if (selectedShiftType.isEmpty() && "GET".equalsIgnoreCase(req.getMethod())) {
+        if (selectedShiftType.isEmpty() && isGetRequest) {
             selectedShiftType = normalizeShiftType(req.getParameter("shiftType"));
         }
 

@@ -36,6 +36,11 @@
                 display: flex;
                 gap: 10px;
                 align-items: center;
+                transition: opacity .35s ease, transform .35s ease;
+            }
+            .alert.fade-out {
+                opacity: 0;
+                transform: translateY(-8px);
             }
             .alert.success {
                 background: #e8f5e9;
@@ -50,7 +55,7 @@
 
             .toolbar {
                 display: grid;
-                grid-template-columns: 2fr 1.2fr 1.2fr auto;
+                grid-template-columns: 2.2fr 1.5fr 1.5fr auto;
                 gap: 12px;
                 align-items: end;
             }
@@ -83,14 +88,29 @@
                 align-items: center;
                 gap: 6px;
                 text-decoration: none;
+                transition: all 0.3s ease;
             }
             .btn-primary {
                 background: #0061ff;
                 color: #fff;
             }
+            .btn-primary:hover {
+                background: #0052cc;
+            }
+            .btn-filter {
+                background: #0061ff;
+                color: #fff;
+            }
+            .btn-filter:hover {
+                background: #0052cc;
+                transform: translateY(-1px);
+            }
             .btn-reset {
                 background: #f0f0f0;
                 color: #333;
+            }
+            .btn-reset:hover {
+                background: #e0e0e0;
             }
 
             .week-head, .section-head {
@@ -132,7 +152,7 @@
             .day-col {
                 border: 1px solid #e2e8f0;
                 border-radius: 10px;
-                min-height: 220px;
+                min-height: 360px;
                 padding: 10px;
             }
             .day-title {
@@ -155,6 +175,35 @@
                 font-size: 13px;
                 color: #1e40af;
             }
+            .shift-section {
+                margin-top: 10px;
+                display: flex;
+                flex-direction: column;
+            }
+            .shift-section.morning {
+                height: 150px;
+            }
+            .shift-section.afternoon {
+                height: 150px;
+            }
+            .shift-section-title {
+                font-size: 12px;
+                font-weight: 700;
+                color: #0f172a;
+                margin-bottom: 6px;
+                padding: 4px 8px;
+                border-radius: 6px;
+                background: #f1f5f9;
+            }
+            .shift-section-body {
+                overflow-y: auto;
+                padding-right: 2px;
+            }
+            .empty-shift {
+                color: #94a3b8;
+                font-size: 12px;
+                padding: 4px 2px 8px;
+            }
             .shift-name {
                 font-weight: 700;
                 margin-bottom: 4px;
@@ -172,6 +221,29 @@
             table {
                 width: 100%;
                 border-collapse: collapse;
+            }
+            .upcoming-table {
+                table-layout: fixed;
+            }
+            .upcoming-table th:nth-child(1),
+            .upcoming-table td:nth-child(1) {
+                width: 26%;
+            }
+            .upcoming-table th:nth-child(2),
+            .upcoming-table td:nth-child(2) {
+                width: 14%;
+            }
+            .upcoming-table th:nth-child(3),
+            .upcoming-table td:nth-child(3) {
+                width: 12%;
+            }
+            .upcoming-table th:nth-child(4),
+            .upcoming-table td:nth-child(4) {
+                width: 24%;
+            }
+            .upcoming-table th:nth-child(5),
+            .upcoming-table td:nth-child(5) {
+                width: 12%;
             }
             th {
                 background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%);
@@ -200,7 +272,15 @@
             }
             .row-actions {
                 display: flex;
-                gap: 8px;
+                gap: 20px;
+                align-items: center;
+                justify-content: center;
+                width: auto;
+            }
+            th.action-col, td.action-col {
+                width: 12%;
+                text-align: center;
+                white-space: nowrap;
             }
             .icon-btn {
                 border: none;
@@ -208,9 +288,18 @@
                 cursor: pointer;
                 font-size: 15px;
                 color: #1976d2;
+                padding: 6px 10px;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+            }
+            .icon-btn:hover {
+                background: #e3f2fd;
             }
             .icon-btn.delete {
                 color: #d32f2f;
+            }
+            .icon-btn.delete:hover {
+                background: #ffebee;
             }
             .no-data {
                 text-align: center;
@@ -239,7 +328,7 @@
                 color: #0061ff;
                 margin-bottom: 20px;
                 display: flex;
-                gap: 8px;
+                gap: 14px;
                 align-items: center;
             }
             .modal-grid {
@@ -254,6 +343,38 @@
                 margin-top: 20px;
                 padding-top: 12px;
                 border-top: 1px solid #f0f0f0;
+            }
+            .btn-cancel {
+                padding: 10px 20px;
+                background: #f0f0f0;
+                color: #333;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .btn-cancel:hover {
+                background: #e0e0e0;
+            }
+            .btn-submit-modal {
+                padding: 10px 20px;
+                background: #0061ff;
+                color: #fff;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .btn-submit-modal:hover {
+                background: #0052cc;
             }
 
             @media (max-width: 1024px) {
@@ -294,7 +415,7 @@
                     <div class="field">
                         <label><i class="fas fa-sun"></i> Ca làm việc</label>
                         <select id="shiftTypeFilter" name="shiftType">
-                            <option value="" ${empty selectedShiftType ? 'selected' : ''}>Tất cả ca</option>
+                            <option value="" ${empty selectedShiftType ? 'selected' : ''}>-- Tất cả --</option>
                             <option value="morning" ${selectedShiftType == 'morning' ? 'selected' : ''}>Ca sáng</option>
                             <option value="afternoon" ${selectedShiftType == 'afternoon' ? 'selected' : ''}>Ca chiều</option>
                         </select>
@@ -302,7 +423,7 @@
                     <div class="field">
                         <label><i class="fas fa-filter"></i> Lọc theo thứ</label>
                         <select id="dayOfWeekFilter" name="dayOfWeek">
-                            <option value="" ${empty selectedDay ? 'selected' : ''}>Tất cả</option>
+                            <option value="" ${empty selectedDay ? 'selected' : ''}>-- Tất cả --</option>
                             <option value="1" ${selectedDay == '1' ? 'selected' : ''}>Thứ 2</option>
                             <option value="2" ${selectedDay == '2' ? 'selected' : ''}>Thứ 3</option>
                             <option value="3" ${selectedDay == '3' ? 'selected' : ''}>Thứ 4</option>
@@ -314,7 +435,8 @@
                     </div>
                     <div class="actions">
                         <input type="hidden" name="weekOffset" value="${weekOffset}">
-                        <a class="btn btn-reset" href="${pageContext.request.contextPath}/admin-doctor-schedules"><i class="fas fa-rotate-left"></i> Đặt lại</a>
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm</button>
+                        <a class="btn btn-reset" href="${pageContext.request.contextPath}/admin-doctor-schedules"><i class="fas fa-redo"></i> Đặt lại</a>
                     </div>
                 </form>
             </div>
@@ -357,20 +479,42 @@
                                 </c:choose>
                             </div>
                             <div class="day-date">${dayDates[dayKey]}</div>
-                            <c:choose>
-                                <c:when test="${not empty weekGrid[dayKey]}">
+                            <div class="shift-section morning">
+                                <div class="shift-section-title">Ca sáng</div>
+                                <div class="shift-section-body">
+                                    <c:set var="hasMorning" value="false" />
                                     <c:forEach var="item" items="${weekGrid[dayKey]}">
-                                        <div class="shift-card">
-                                            <div class="shift-name">Bác sĩ ${item.doctorName}</div>
-                                            <div><i class="far fa-sun"></i> ${item.shiftLabel}</div>
-                                            <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
-                                        </div>
+                                        <c:if test="${item.shiftCode == 'morning'}">
+                                            <c:set var="hasMorning" value="true" />
+                                            <div class="shift-card">
+                                                <div class="shift-name">Bác sĩ ${item.doctorName}</div>
+                                                <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
+                                            </div>
+                                        </c:if>
                                     </c:forEach>
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="empty-day">Không có lịch</div>
-                                </c:otherwise>
-                            </c:choose>
+                                    <c:if test="${hasMorning == false}">
+                                        <div class="empty-shift">Không có lịch ca sáng</div>
+                                    </c:if>
+                                </div>
+                            </div>
+                            <div class="shift-section afternoon">
+                                <div class="shift-section-title">Ca chiều</div>
+                                <div class="shift-section-body">
+                                    <c:set var="hasAfternoon" value="false" />
+                                    <c:forEach var="item" items="${weekGrid[dayKey]}">
+                                        <c:if test="${item.shiftCode == 'afternoon'}">
+                                            <c:set var="hasAfternoon" value="true" />
+                                            <div class="shift-card">
+                                                <div class="shift-name">Bác sĩ ${item.doctorName}</div>
+                                                <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
+                                            </div>
+                                        </c:if>
+                                    </c:forEach>
+                                    <c:if test="${hasAfternoon == false}">
+                                        <div class="empty-shift">Không có lịch ca chiều</div>
+                                    </c:if>
+                                </div>
+                            </div>
                         </div>
                     </c:forTokens>
                 </div>
@@ -382,7 +526,7 @@
                     <button class="btn btn-primary" type="button" onclick="openAddModal()"><i class="fas fa-plus"></i> Thêm ca làm việc</button>
                 </div>
                 <div class="table-container">
-                    <table>
+                    <table class="upcoming-table">
                         <thead>
                             <tr>
                                 <th>Bác sĩ</th>
@@ -390,8 +534,7 @@
                                 <th>Thứ</th>
                                 <th>Ca</th>
                                 <th>Số BN tối đa</th>
-                                <th>Trạng thái</th>
-                                <th>Thao tác</th>
+                                <th class="action-col">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -404,8 +547,7 @@
                                             <td>${item.dayLabel}</td>
                                             <td>${item.shiftLabel}</td>
                                             <td>${item.maxPatients}</td>
-                                            <td><span class="status">${item.status}</span></td>
-                                            <td>
+                                            <td class="action-col">
                                                 <div class="row-actions">
                                                     <button class="icon-btn" type="button" title="Sửa"
                                                             data-shift-id="${item.shiftId}"
@@ -431,7 +573,7 @@
                                     </c:forEach>
                                 </c:when>
                                 <c:otherwise>
-                                    <tr><td colspan="7" class="no-data">Không có dữ liệu lịch làm việc</td></tr>
+                                    <tr><td colspan="6" class="no-data">Không có dữ liệu lịch làm việc</td></tr>
                                 </c:otherwise>
                             </c:choose>
                         </tbody>
@@ -440,6 +582,7 @@
             </div>
         </div>
 
+        <!-- MODAL THÊM CA LÀM VIỆC -->
         <div class="modal" id="addModal">
             <div class="modal-content">
                 <div class="modal-title"><i class="fas fa-plus-circle"></i> Thêm ca làm việc</div>
@@ -452,13 +595,12 @@
                     <div class="modal-grid">
                         <div class="field" style="grid-column:1/-1;">
                             <label>Bác sĩ</label>
-                            <input id="addDoctorInput" list="addDoctorList" placeholder="Chọn bác sĩ" autocomplete="off" required>
-                            <input type="hidden" id="addDoctorId" name="doctorId">
-                            <datalist id="addDoctorList">
+                            <select id="addDoctorSelect" name="doctorId" required>
+                                <option value="" selected disabled>Chọn bác sĩ</option>
                                 <c:forEach var="doctor" items="${activeDoctors}">
-                                    <option value="${doctor.fullName}" data-doctor-id="${doctor.doctorId}"></option>
+                                    <option value="${doctor.doctorId}">${doctor.fullName}</option>
                                 </c:forEach>
-                            </datalist>
+                            </select>
                         </div>
                         <div class="field">
                             <label>Thứ</label>
@@ -485,13 +627,14 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-reset" onclick="closeAddModal()"><i class="fas fa-times"></i> Hủy</button>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu</button>
+                        <button type="button" class="btn-cancel" onclick="closeAddModal()"><i class="fas fa-times"></i> Hủy</button>
+                        <button type="submit" class="btn-submit-modal"><i class="fas fa-save"></i> Lưu</button>
                     </div>
                 </form>
             </div>
         </div>
 
+        <!-- MODAL CẬP NHẬT CA LÀM VIỆC -->
         <div class="modal" id="editModal">
             <div class="modal-content">
                 <div class="modal-title"><i class="fas fa-edit"></i> Cập nhật ca làm việc</div>
@@ -529,50 +672,33 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-reset" onclick="closeEditModal()"><i class="fas fa-times"></i> Hủy</button>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu thay đổi</button>
+                        <button type="button" class="btn-cancel" onclick="closeEditModal()"><i class="fas fa-times"></i> Hủy</button>
+                        <button type="submit" class="btn-submit-modal"><i class="fas fa-save"></i> Lưu thay đổi</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <script>
-            var keywordTimer = null;
-
+            // Áp dụng bộ lọc
             function submitFilterForm() {
                 var form = document.getElementById("filterForm");
                 if (form) form.submit();
             }
 
-            function resolveAddDoctorId() {
-                var input = document.getElementById("addDoctorInput");
-                var hidden = document.getElementById("addDoctorId");
-                var options = document.querySelectorAll("#addDoctorList option");
-                if (!input || !hidden) return false;
-
-                var value = (input.value || "").trim();
-                hidden.value = "";
-                for (var i = 0; i < options.length; i++) {
-                    if (options[i].value === value) {
-                        hidden.value = options[i].getAttribute("data-doctor-id");
-                        return true;
-                    }
-                }
-                return false;
-            }
-
+            // Mở modal thêm
             function openAddModal() {
                 document.getElementById("addModal").style.display = "block";
-                var doctorSearch = document.getElementById("addDoctorInput");
-                if (doctorSearch) {
-                    doctorSearch.value = "";
-                    document.getElementById("addDoctorId").value = "";
-                    doctorSearch.focus();
-                }
+                var doctorSelect = document.getElementById("addDoctorSelect");
+                if (doctorSelect) doctorSelect.focus();
             }
+
+            // Đóng modal thêm
             function closeAddModal() {
                 document.getElementById("addModal").style.display = "none";
             }
+
+            // Mở modal chỉnh sửa
             function openEditModal(btn) {
                 document.getElementById("editShiftId").value = btn.dataset.shiftId;
                 document.getElementById("editDoctorId").value = btn.dataset.doctorId;
@@ -581,37 +707,45 @@
                 document.getElementById("editMaxPatients").value = btn.dataset.maxPatients;
                 document.getElementById("editModal").style.display = "block";
             }
+
+            // Đóng modal chỉnh sửa
             function closeEditModal() {
                 document.getElementById("editModal").style.display = "none";
             }
+
+            // Đóng modal khi click bên ngoài
             window.onclick = function (event) {
-                if (event.target === document.getElementById("addModal")) closeAddModal();
-                if (event.target === document.getElementById("editModal")) closeEditModal();
+                const addModal = document.getElementById("addModal");
+                const editModal = document.getElementById("editModal");
+                if (event.target === addModal) {
+                    addModal.style.display = "none";
+                }
+                if (event.target === editModal) {
+                    editModal.style.display = "none";
+                }
             };
 
             document.addEventListener("DOMContentLoaded", function () {
-                var keywordInput = document.getElementById("keywordFilter");
                 var shiftTypeFilter = document.getElementById("shiftTypeFilter");
                 var dayFilter = document.getElementById("dayOfWeekFilter");
-                var addDoctorInput = document.getElementById("addDoctorInput");
-                var addShiftForm = document.getElementById("addShiftForm");
+                var alerts = document.querySelectorAll(".alert");
 
-                if (keywordInput) {
-                    keywordInput.addEventListener("input", function () {
-                        clearTimeout(keywordTimer);
-                        keywordTimer = setTimeout(submitFilterForm, 350);
-                    });
-                }
                 if (shiftTypeFilter) shiftTypeFilter.addEventListener("change", submitFilterForm);
                 if (dayFilter) dayFilter.addEventListener("change", submitFilterForm);
-                if (addDoctorInput) addDoctorInput.addEventListener("input", resolveAddDoctorId);
-                if (addShiftForm) {
-                    addShiftForm.addEventListener("submit", function (event) {
-                        if (!resolveAddDoctorId()) {
-                            event.preventDefault();
-                            alert("Vui lòng chọn bác sĩ từ danh sách (chỉ tài khoản đang hoạt động).");
+                // Tự động đóng thông báo sau 5 giây
+                if (alerts && alerts.length > 0) {
+                    setTimeout(function () {
+                        for (var i = 0; i < alerts.length; i++) {
+                            alerts[i].classList.add("fade-out");
                         }
-                    });
+                        setTimeout(function () {
+                            for (var i = 0; i < alerts.length; i++) {
+                                if (alerts[i] && alerts[i].parentNode) {
+                                    alerts[i].parentNode.removeChild(alerts[i]);
+                                }
+                            }
+                        }, 300);
+                    }, 5000);
                 }
             });
         </script>

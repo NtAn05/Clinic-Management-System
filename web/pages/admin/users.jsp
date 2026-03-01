@@ -306,7 +306,6 @@
 
             .action-buttons {
                 display: flex;
-                gap: 8px;
                 flex-wrap: wrap;
             }
 
