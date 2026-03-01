@@ -409,7 +409,7 @@
             <div class="panel">
                 <form id="filterForm" method="GET" action="${pageContext.request.contextPath}/admin-doctor-schedules" class="toolbar">
                     <div class="field">
-                        <label><i class="fas fa-search"></i> Tìm kiếm bác sĩ</label>
+                        <label><i class="fas fa-search"></i> Tìm kiếm </label>
                         <input id="keywordFilter" type="text" name="keyword" value="${keyword}" placeholder="Nhập tên bác sĩ...">
                     </div>
                     <div class="field">

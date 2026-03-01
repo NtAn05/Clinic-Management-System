@@ -111,16 +111,23 @@
                 padding: 20px;
                 border-radius: 10px;
                 margin-bottom: 20px;
-                display: flex;
-                gap: 15px;
-                align-items: flex-end;
-                flex-wrap: wrap;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(220px, 1fr)) auto;
+                gap: 12px;
+                align-items: end;
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             }
 
+            .toolbar-staff {
+                grid-template-columns: minmax(340px, 1.9fr) minmax(170px, 0.85fr) minmax(170px, 0.85fr) auto;
+            }
+
+            .toolbar-patient {
+                grid-template-columns: minmax(360px, 2fr) minmax(220px, 1fr) auto;
+            }
+
             .search-box {
-                flex: 1;
-                min-width: 250px;
+                min-width: 0;
             }
 
             .search-box label {
@@ -147,7 +154,7 @@
             }
 
             .filter-box {
-                min-width: 200px;
+                min-width: 0;
             }
 
             .filter-box label {
@@ -178,10 +185,11 @@
             .toolbar-buttons {
                 display: flex;
                 gap: 10px;
+                align-self: end;
             }
 
             .btn-search, .btn-reset, .btn-add {
-                padding: 10px 20px;
+                padding: 10px 16px;
                 border: none;
                 border-radius: 6px;
                 cursor: pointer;
@@ -216,7 +224,6 @@
             .btn-add {
                 background: #4caf50;
                 color: white;
-                margin-left: auto;
             }
 
             .btn-add:hover {
@@ -467,6 +474,13 @@
                 min-height: 80px;
             }
 
+            .field-error {
+                color: #d32f2f;
+                font-size: 12px;
+                margin-top: 6px;
+                font-weight: 500;
+            }
+
             .modal-footer {
                 display: flex;
                 gap: 10px;
@@ -543,8 +557,7 @@
                 }
 
                 .toolbar {
-                    flex-direction: column;
-                    align-items: stretch;
+                    grid-template-columns: 1fr;
                 }
 
                 .search-box,
@@ -554,11 +567,19 @@
                 }
 
                 .toolbar-buttons {
-                    justify-content: space-between;
+                    justify-content: stretch;
+                    width: 100%;
                 }
 
                 .btn-add {
                     margin-left: 0;
+                }
+
+                .toolbar-buttons .btn-search,
+                .toolbar-buttons .btn-reset,
+                .toolbar-buttons .btn-add {
+                    flex: 1;
+                    justify-content: center;
                 }
 
                 table {
@@ -584,7 +605,7 @@
             </c:if>
 
             <!-- THÔNG BÁO LỖI -->
-            <c:if test="${not empty error}">
+            <c:if test="${not empty error and not addModalOpen}">
                 <div class="alert error">
                     <i class="fas fa-exclamation-circle"></i>
                     ${error}
@@ -604,7 +625,7 @@
             <!-- TAB 1: NHÂN VIÊN -->
             <div id="staff" class="tab-content ${empty currentTab or currentTab == 'staff' ? 'active' : ''}">
                 <!-- TOOLBAR -->
-                <div class="toolbar">
+                <div class="toolbar toolbar-staff">
                     <div class="search-box">
                         <label><i class="fas fa-search"></i> Tìm kiếm</label>
                         <input type="text" id="staffSearch" placeholder="Nhập tên, số điện thoại hoặc email..." value="${searchKeyword}">
@@ -704,7 +725,7 @@
             <!-- TAB 2: BỆNH NHÂN -->
             <div id="patient" class="tab-content ${currentTab == 'patient' ? 'active' : ''}">
                 <!-- TOOLBAR -->
-                <div class="toolbar">
+                <div class="toolbar toolbar-patient">
                     <div class="search-box">
                         <label><i class="fas fa-search"></i> Tìm kiếm</label>
                         <input type="text" id="patientSearch" placeholder="Nhập tên, số điện thoại hoặc email..." value="${searchKeyword}">
@@ -837,19 +858,32 @@
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="role" id="addRoleInput">
 
+                    <c:if test="${not empty error and addModalOpen}">
+                        <div class="alert error" style="margin-bottom: 12px;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${error}
+                        </div>
+                    </c:if>
+
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="addFullName" required placeholder="Nhập họ và tên">
+                        <input type="text" name="fullname" id="addFullName" required placeholder="Nhập họ và tên" value="${addFullName}">
                     </div>
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="addPhone" required placeholder="Nhập số điện thoại">
+                        <input type="tel" name="phone" id="addPhone" required pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" placeholder="Nhập số điện thoại" value="${addPhone}">
+                        <c:if test="${not empty addPhoneError}">
+                            <div class="field-error">${addPhoneError}</div>
+                        </c:if>
                     </div>
 
                     <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" id="addEmail" placeholder="Nhập email">
+                        <label>Email <span style="color: red;">*</span></label>
+                        <input type="email" name="email" id="addEmail" required pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không đúng định dạng" placeholder="Nhập email" value="${addEmail}">
+                        <c:if test="${not empty addEmailError}">
+                            <div class="field-error">${addEmailError}</div>
+                        </c:if>
                     </div>
 
                     <div id="addRoleGroup" class="form-group" style="display: none;">
@@ -889,21 +923,28 @@
 
                 <form action="admin-users" method="POST" id="editAccountForm">
                     <input type="hidden" name="action" value="edit">
-                    <input type="hidden" name="userId" id="editUserId">
+                    <input type="hidden" name="userId" id="editUserId" value="${editUserId}">
+                    <input type="hidden" name="editType" id="editType" value="${editModalType}">
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="editFullName" required>
+                        <input type="text" name="fullname" id="editFullName" required value="${editFullName}">
                     </div>
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="editPhone" required>
+                        <input type="tel" name="phone" id="editPhone" required pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" value="${editPhone}">
+                        <c:if test="${not empty editPhoneError}">
+                            <div class="field-error">${editPhoneError}</div>
+                        </c:if>
                     </div>
 
                     <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" id="editEmail">
+                        <label>Email <span style="color: red;">*</span></label>
+                        <input type="email" name="email" id="editEmail" required pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không đúng định dạng" value="${editEmail}">
+                        <c:if test="${not empty editEmailError}">
+                            <div class="field-error">${editEmailError}</div>
+                        </c:if>
                     </div>
 
                     <div id="editRoleGroup" class="form-group" style="display: none;">
@@ -918,8 +959,8 @@
                     <div class="form-group">
                         <label>Trạng thái <span style="color: red;">*</span></label>
                         <select name="status" id="editStatus">
-                            <option value="active">Hoạt động</option>
-                            <option value="inactive">Khóa</option>
+                            <option value="active" ${editStatusValue == 'active' ? 'selected' : ''}>Hoạt động</option>
+                            <option value="inactive" ${editStatusValue == 'inactive' ? 'selected' : ''}>Khóa</option>
                         </select>
                     </div>
 
@@ -969,10 +1010,23 @@
                 openModal('viewAccountModal');
             }
 
+            function clearFieldErrors(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.querySelectorAll('.field-error').forEach(el => el.remove());
+            }
+
             // Mở modal thêm tài khoản
-            function openAddModal(type) {
+            function openAddModal(type, preserveData = false) {
                 const form = document.getElementById('addAccountForm');
-                form.reset();
+                if (!preserveData) {
+                    form.reset();
+                    document.getElementById('addFullName').value = '';
+                    document.getElementById('addPhone').value = '';
+                    document.getElementById('addEmail').value = '';
+                    document.getElementById('addPassword').value = '123456';
+                    clearFieldErrors('addAccountModal');
+                }
 
                 const roleGroup = document.getElementById('addRoleGroup');
                 if (type === 'staff') {
@@ -990,7 +1044,9 @@
 
             // Mở modal chỉnh sửa
             function openEditModal(userId, fullName, phone, email, role, status, type) {
+                clearFieldErrors('editAccountModal');
                 document.getElementById('editUserId').value = userId;
+                document.getElementById('editType').value = type;
                 document.getElementById('editFullName').value = fullName;
                 document.getElementById('editPhone').value = phone;
                 document.getElementById('editEmail').value = email;
@@ -1144,6 +1200,24 @@
                         searchPatient();
                     }
                 });
+
+                const shouldOpenAddModal = '${addModalOpen}' === 'true';
+                const shouldOpenEditModal = '${editModalOpen}' === 'true';
+
+                if (shouldOpenAddModal) {
+                    const addType = '${not empty addModalType ? addModalType : "staff"}';
+                    openAddModal(addType, true);
+                }
+
+                if (shouldOpenEditModal) {
+                    const roleGroup = document.getElementById('editRoleGroup');
+                    if ('${editModalType}' === 'staff') {
+                        roleGroup.style.display = 'block';
+                    } else {
+                        roleGroup.style.display = 'none';
+                    }
+                    openModal('editAccountModal');
+                }
             });
         </script>
     </body>

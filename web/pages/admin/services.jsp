@@ -156,14 +156,15 @@
 
             .search-grid {
                 display: grid;
-                grid-template-columns: 2fr 1fr 1fr 1fr auto;
-                gap: 15px;
+                grid-template-columns: repeat(4, minmax(180px, 1fr)) auto;
+                gap: 12px;
                 align-items: end;
             }
 
             .search-group {
                 display: flex;
                 flex-direction: column;
+                min-width: 0;
             }
 
             .search-group label {
@@ -177,7 +178,7 @@
             }
 
             .filter-box {
-                min-width: 200px;
+                min-width: 0;
             }
 
             .filter-box label {
@@ -206,11 +207,12 @@
             }
 
             .search-input, .filter-select, .price-input {
-                padding: 8px 12px;
+                padding: 10px 15px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
+                border-radius: 6px;
                 font-family: inherit;
-                font-size: 13px;
+                font-size: 14px;
+                width: 100%;
             }
 
             .search-input:focus, .filter-select:focus, .price-input:focus {
@@ -222,16 +224,17 @@
             .button-group {
                 display: flex;
                 gap: 8px;
+                align-self: end;
             }
 
             .btn-filter {
                 background: #0061ff;
                 color: white;
                 border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
+                padding: 10px 16px;
+                border-radius: 6px;
                 cursor: pointer;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 600;
                 display: flex;
                 align-items: center;
@@ -247,9 +250,9 @@
             .btn-clear {
                 color: #666;
                 text-decoration: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-size: 13px;
+                padding: 10px 16px;
+                border-radius: 6px;
+                font-size: 14px;
                 font-weight: 700;
                 display: flex;
                 align-items: center;
@@ -270,6 +273,13 @@
                 }
                 
                 .button-group {
+                    justify-content: stretch;
+                    width: 100%;
+                }
+
+                .button-group .btn-filter,
+                .button-group .btn-clear {
+                    flex: 1;
                     justify-content: center;
                 }
             }

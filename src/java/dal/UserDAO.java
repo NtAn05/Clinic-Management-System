@@ -209,6 +209,28 @@ public class UserDAO extends DBContext {
         return null;
     }
 
+    public User getUserByEmail(String email) {
+        String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE email = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, email);
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                User u = new User();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setRole(Role.valueOf(rs.getString("role")));
+                u.setStatus(Status.valueOf(rs.getString("status")));
+                return u;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     
     public List<User> getPatientList() {
         String sql = """

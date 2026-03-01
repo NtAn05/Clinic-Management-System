@@ -63,18 +63,24 @@ public class AdminUserServlet extends HttpServlet {
             throws SQLException, ServletException, IOException {
         String fullName = request.getParameter("fullname");
         String phone = request.getParameter("phone");
+        String email = request.getParameter("email");
         String password = request.getParameter("password");
         String roleStr = request.getParameter("role");
         
         // Validation
         if (fullName == null || fullName.trim().isEmpty() ||
             phone == null || phone.trim().isEmpty() ||
+            email == null || email.trim().isEmpty() ||
             roleStr == null || roleStr.trim().isEmpty()) {
             request.setAttribute("error", "Vui lòng điền đầy đủ thông tin");
+            request.setAttribute("addModalOpen", true);
+            request.setAttribute("addModalType", "patient".equals(roleStr) ? "patient" : "staff");
+            request.setAttribute("addFullName", fullName);
+            request.setAttribute("addPhone", phone);
+            request.setAttribute("addEmail", email);
             loadUsers(request, response);
             return;
         }
-        
         UserDAO userDAO = new UserDAO();
         
         // Kiểm tra số điện thoại đã tồn tại
