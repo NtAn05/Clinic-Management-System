@@ -14,80 +14,84 @@ import jakarta.servlet.http.HttpSession;
 public class LoginServlet extends HttpServlet {
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Chuyển hướng đến trang đăng nhập khi gõ URL trực tiếp
+        request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
+        
+        // 1. Lấy dữ liệu từ form login.jsp
         String phone = request.getParameter("phone");
-        String pass = request.getParameter("password");
-        String selectedRole = request.getParameter("role");
+        String password = request.getParameter("password");
+        String formRole = request.getParameter("role"); // Sẽ nhận giá trị "patient" hoặc "staff"
 
+        // 2. Gọi DAO để kiểm tra thông tin trong Database
         UserDAO dao = new UserDAO();
-        User u = dao.checkLogin(phone, pass);
+        User user = dao.checkLogin(phone, password);
         String error = null;
 
-        if (u == null) {
-            error = "Sai số điện thoại hoặc mật khẩu!";
+        if (user != null) {
+            // 3. Lấy role thực tế từ Database
+            String dbRole = user.getRole().toString().toLowerCase(); 
+
+            // 4. Kiểm tra xem người dùng có chọn đúng Tab (Bệnh nhân / Nhân viên) không
+            boolean isTabValid = false;
+            if (formRole.equals("patient") && dbRole.equals("patient")) {
+                isTabValid = true; // Bệnh nhân đăng nhập tab Bệnh nhân -> Hợp lệ
+            } else if (formRole.equals("staff") && !dbRole.equals("patient")) {
+                // Nhóm Nhân viên (admin, doctor, receptionist, technician) đăng nhập tab Nhân viên -> Hợp lệ
+                isTabValid = true; 
+            }
+
+            // 5. Xử lý sau khi kiểm tra Tab
+            if (isTabValid) {
+                // Kiểm tra xem tài khoản có bị khóa không
+                if (user.getStatus().toString().equalsIgnoreCase("inactive")) {
+                    error = "Tài khoản của bạn đã bị khóa! Vui lòng liên hệ Admin.";
+                } else {
+                    // ĐĂNG NHẬP THÀNH CÔNG -> Lưu thông tin vào Session
+                    HttpSession session = request.getSession();
+                    session.setAttribute("account", user);
+
+                    // 6. PHÂN QUYỀN ĐIỀU HƯỚNG TÙY THEO ROLE THỰC TẾ
+                    if (dbRole.equals("admin")) {
+                        response.sendRedirect(request.getContextPath() + "/admin-users");
+                    } else if (dbRole.equals("doctor")) {
+                        response.sendRedirect(request.getContextPath() + "/doctorDashboard");
+                    } else if (dbRole.equals("technician")) {
+                        response.sendRedirect(request.getContextPath() + "/technician-dashboard");
+                    } else if (dbRole.equals("receptionist")) {
+                        // Nhớ tạo một Servlet hoặc JSP có đường dẫn này cho Lễ tân nhé
+                        response.sendRedirect(request.getContextPath() + "/lab-queue"); 
+                    } else { 
+                       
+                        response.sendRedirect(request.getContextPath() + "/index.jsp");
+                    }
+                    return; 
+                }
+            } else {
+                error = "Vui lòng chọn đúng tab (Nhân viên hoặc Bệnh nhân) để đăng nhập!";
+            }
         } else {
-
-            String roleName = u.getRole().name().toLowerCase();
-            String status = u.getStatus().name().toLowerCase();
-            if (selectedRole.equals("staff")) {
-                if (roleName.equals("patient")) {
-                    error = "Bệnh nhân vui lòng đăng nhập bên tab Bệnh nhân!";
-                }
-            } else if (selectedRole.equals("patient")) {
-                if (!roleName.equals("patient")) {
-                    error = "Nhân viên vui lòng đăng nhập bên tab Nhân viên!";
-                }
-            }
-
-            if (!status.equals("active")) {
-                error = "Tài khoản đang bị khóa!";
-            }
+            error = "Số điện thoại hoặc mật khẩu không chính xác!";
         }
 
+        
         if (error != null) {
-
             request.setAttribute("error", error);
-            request.setAttribute("phone", phone);
+            
+           
+            request.setAttribute("phone", phone); 
+            request.setAttribute("role", formRole); 
+            
+         
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
-        } else {
-            HttpSession session = request.getSession();
-            session.setAttribute("account", u);
-            String roleName = u.getRole().name().toLowerCase();
-
-            switch (roleName) {
-                case "doctor":
-                    response.sendRedirect(request.getContextPath() + "/doctorDashboard");
-                    break;
-
-                case "admin":
-                    response.sendRedirect(request.getContextPath() + "/index.jsp");
-                    break;
-
-                case "patient":
-                    response.sendRedirect(request.getContextPath() + "/index.jsp");
-                    break;
-
-                case "technician":
                     // Redirect technician directly to Lab Queue page
-                    response.sendRedirect(request.getContextPath() + "/lab-queue");
-                    break;
-
-                case "receptionist":
                     // Receptionist: chuyển thẳng tới trang kiểm tra thanh toán
-                    response.sendRedirect(request.getContextPath() + "/lab-payment");
-                    break;
-
-                case "staff":
-                    response.sendRedirect(request.getContextPath() + "/staff-dashboard");
-                    break;
-
-                default:
-                    response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
-                    break;
-            }
-
         }
     }
 }

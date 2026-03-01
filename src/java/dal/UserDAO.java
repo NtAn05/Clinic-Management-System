@@ -12,9 +12,11 @@ import model.Users;
 
 public class UserDAO extends DBContext {
 
-    // Hàm kiểm tra đăng nhập
+    // ===== ĐÃ SỬA: Thay tham số email thành phone cho chuẩn logic đăng nhập =====
     public User checkLogin(String phone, String password) {
-        String sql = "SELECT user_id, full_name, phone, role, status FROM users WHERE phone = ? AND password_hash = ? AND status = 'active'";
+        String sql = "SELECT user_id, full_name, phone, email, role, status "
+                + "FROM users "
+                + "WHERE phone = ? AND password_hash = ?";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, phone);
@@ -26,6 +28,7 @@ public class UserDAO extends DBContext {
                 u.setUserId(rs.getInt("user_id"));
                 u.setFullName(rs.getString("full_name"));
                 u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
                 u.setRole(Role.valueOf(rs.getString("role")));
                 u.setStatus(Status.valueOf(rs.getString("status")));
                 return u;
@@ -58,9 +61,7 @@ public class UserDAO extends DBContext {
 
         connection.setAutoCommit(false);
 
-        try (
-                PreparedStatement stUser
-                = connection.prepareStatement(sqlUser, PreparedStatement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement stUser = connection.prepareStatement(sqlUser, PreparedStatement.RETURN_GENERATED_KEYS)) {
             // users
             stUser.setString(1, fullName);
             stUser.setString(2, phone);
@@ -109,8 +110,9 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // ===== ĐÃ SỬA: Sửa tên bảng "us" thành "users" =====
     public boolean isEmailExist(String email) {
-        String sql = "SELECT 1 FROM patients WHERE email = ?";
+        String sql = "SELECT 1 FROM users WHERE email = ?";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, email);
             return st.executeQuery().next();
@@ -382,6 +384,7 @@ public class UserDAO extends DBContext {
 
         return users;
     }
+
 
     public Object getUserById2(int userId) {
         String sql = "SELECT * FROM users WHERE user_id = ?";

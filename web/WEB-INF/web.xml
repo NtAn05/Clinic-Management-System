@@ -33,6 +33,7 @@
         <servlet-class>controller.doctor.DoctorExamServlet</servlet-class>
     </servlet>
     <servlet>
+
         <servlet-name>PatientRecordsServlet</servlet-name>
         <servlet-class>controller.medicalRecord.PatientRecordsServlet</servlet-class>
     </servlet>
@@ -43,6 +44,12 @@
     <servlet>
         <servlet-name>UserInformationServlet</servlet-name>
         <servlet-class>controller.userInformation.UserInformationServlet</servlet-class>
+
+    </servlet>
+    <servlet>
+        <servlet-name>VerifyPhoneServlet</servlet-name>
+        <servlet-class>controller.VerifyPhoneServlet</servlet-class>
+
     </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
@@ -109,6 +116,7 @@
         <url-pattern>/doctor/exam</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
+
         <servlet-name>PatientRecordsServlet</servlet-name>
         <url-pattern>/patient-medical-records</url-pattern>
     </servlet-mapping>
@@ -119,5 +127,10 @@
     <servlet-mapping>
         <servlet-name>UserInformationServlet</servlet-name>
         <url-pattern>/userinformationservlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>VerifyPhoneServlet</servlet-name>
+        <url-pattern>/verify-phone</url-pattern>
+
     </servlet-mapping>
 </web-app>

@@ -168,7 +168,7 @@
                 font-weight: 500;
                 display: flex;
                 align-items: center;
-                gap: 8px; 
+                             gap: 8px; 
                 transition: 0.3s;
             }
             
@@ -193,11 +193,17 @@
 
                 <form action="${pageContext.request.contextPath}/login" method="POST">
                     <div class="role-switch">
-                        <button type="button" id="btn-staff" class="active" onclick="selectRole('staff')">Nhân viên / Bác sĩ</button>
-                        <button type="button" id="btn-patient" onclick="selectRole('patient')">Bệnh nhân</button>
+                        <button type="button" id="btn-patient" class="active" onclick="selectRole('patient')">Bệnh nhân</button>
+                        <button type="button" id="btn-staff" onclick="selectRole('staff')">Nhân viên / Bác sĩ</button>
                     </div>
 
-                    <input type="hidden" name="role" id="selected-role" value="staff">
+                    <input type="hidden" name="role" id="selected-role" value="patient">
+
+                    <c:if test="${param.registered == 'true'}">
+                        <p style="color: #0f5132; text-align: center; font-size: 14px; background: #d1e7dd; padding: 10px; border-radius: 5px;">
+                            <i class="fas fa-check-circle"></i> Đăng ký thành công! Vui lòng đăng nhập bằng số điện thoại đã xác thực.
+                        </p>
+                    </c:if>
 
                     <% if(request.getAttribute("error") != null) { %>
                     <p style="color: red; text-align: center; font-size: 14px; background: #ffe6e6; padding: 10px; border-radius: 5px;">
@@ -207,7 +213,7 @@
 
                     <div class="form-group">
                         <label>Số điện thoại</label>
-                        <input type="text" name="phone" placeholder="Nhập số điện thoại" value="${phone != null ? phone : ''}" required>
+                        <input type="tel" name="phone" placeholder="Nhập số điện thoại" value="${phone != null ? phone : ''}" pattern="\d{10}" title="Số điện thoại phải gồm đúng 10 chữ số" required>
                     </div>
                     <div class="form-group">
                         <label>Mật khẩu</label>

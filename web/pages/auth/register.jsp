@@ -139,6 +139,7 @@
                     <% } %>
 
                     <div class="form-group">
+                        
                         <label>Họ và tên *</label>
                         <input type="text" name="fullname" value="${fullname}" placeholder="Nhập họ và tên đầy đủ" required>
                     </div>
@@ -164,8 +165,8 @@
                             <input type="tel" name="phone" value="${phone}" placeholder="0912345678" pattern="\d{10}" title="Số điện thoại phải gồm đúng 10 chữ số" required>
                         </div>
                         <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" name="email" value="${email}" placeholder="email@example.com">
+                            <label>Email *</label>
+                            <input type="email" name="email" value="${email}" placeholder="email@example.com" required>
                         </div>
                     </div>
 
@@ -176,7 +177,7 @@
                                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
                         </div>
 
-                        <div class="form-group">
+                                        <div class="form-group">
                             <label>Phường / Xã (Quận / Huyện) *</label>
                             <input type="text" name="ward" value="${ward}" placeholder="Ví dụ: Quận Cầu Giấy" required>
                         </div>
@@ -201,7 +202,7 @@
                         <input type="checkbox" required> Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật
                     </div>
 
-                    <button type="submit" class="btn-submit">Tiếp tục</button>
+                    <button type="submit" class="btn-submit">Tiếp tục xác thực SĐT</button>
                     <a href="${pageContext.request.contextPath}/pages/auth/login.jsp" class="back-link">← Quay lại đăng nhập</a>
                 </form>
             </div>
