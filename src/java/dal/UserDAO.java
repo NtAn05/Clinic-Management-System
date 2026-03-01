@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import model.Role;
 import model.Status;
+import model.Users;
 
 public class UserDAO extends DBContext {
 
@@ -349,4 +350,80 @@ public class UserDAO extends DBContext {
         
         return users;
     }
+ public Object getUserById2(int userId) {
+        String sql = "SELECT * FROM users WHERE user_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                Users u = new Users();
+                u.setUserId(rs.getInt("user_id"));
+                u.setFullName(rs.getString("full_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setEmail(rs.getString("email"));
+                u.setGender(rs.getString("gender"));
+                u.setDob(rs.getDate("dob"));
+                u.setCity(rs.getString("address_province"));
+                u.setDistrict(rs.getString("address_district"));
+                u.setDetail(rs.getString("address_detail"));
+                return u;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean checkOldPassword(int userId, String oldPass) {
+        String sql = "SELECT password_hash FROM users WHERE user_id=?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("password_hash").equals(oldPass);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void updatePassword(int userId, String newPass) {
+        String sql = "UPDATE users SET password_hash=? WHERE user_id=?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, newPass);
+            st.setInt(2, userId);
+            st.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateUser(int userId, String name, String phone, String email, String gender, String dob, String city, String commune, String house) { {
+
+        String sql = "UPDATE users SET full_name=?, phone=?, email=?, gender=?, dob=?, "
+                + "address_province=?, address_district=?, address_detail=?, updated_at=NOW() "
+                + "WHERE user_id=?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setString(1, name);
+            st.setString(2, phone);
+            st.setString(3, email);
+            st.setString(4, gender);
+            st.setString(5, dob);
+            st.setString(6, city);
+            st.setString(7, commune);
+            st.setString(8, house);
+            st.setInt(9, userId);
+
+            st.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }  }
+}
+
 }
