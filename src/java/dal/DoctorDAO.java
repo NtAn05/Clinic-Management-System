@@ -114,8 +114,7 @@ public class DoctorDAO extends DBContext {
             ORDER BY u.full_name
         """;
 
-        try (PreparedStatement st = connection.prepareStatement(sql);
-                ResultSet rs = st.executeQuery()) {
+        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
             while (rs.next()) {
                 Doctor d = new Doctor();
                 d.setDoctorId(rs.getInt("doctor_id"));
@@ -373,8 +372,65 @@ public class DoctorDAO extends DBContext {
             String status,
             String keyword
     ) {
+        return getQueueByDoctorWithFilterPaging(doctorId, status, keyword, 1, Integer.MAX_VALUE);
+    }
+
+    public int countQueueByDoctorWithFilter(int doctorId, String status, String keyword) {
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*)
+        FROM exam_queue q
+        JOIN appointments a ON q.appointment_id = a.appointment_id
+        JOIN patients p ON a.patient_id = p.patient_id
+        WHERE q.doctor_id = ?
+    """);
+
+        boolean hasStatusFilter = status != null && !status.equals("all");
+        boolean hasKeywordFilter = keyword != null && !keyword.isBlank();
+
+        if (hasStatusFilter) {
+            sql.append(" AND q.status = ? ");
+        }
+
+        if (hasKeywordFilter) {
+            sql.append(" AND p.full_name LIKE ? ");
+        }
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            int index = 1;
+            ps.setInt(index++, doctorId);
+
+            if (hasStatusFilter) {
+                ps.setString(index++, status);
+            }
+
+            if (hasKeywordFilter) {
+                ps.setString(index, "%" + keyword + "%");
+            }
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    public List<DoctorQueueItem> getQueueByDoctorWithFilterPaging(
+            int doctorId,
+            String status,
+            String keyword,
+            int page,
+            int pageSize
+    ) {
         List<DoctorQueueItem> list = new ArrayList<>();
 
+        int safePage = Math.max(page, 1);
+        int safePageSize = pageSize <= 0 ? 10 : pageSize;
+        int offset = (safePage - 1) * safePageSize;
+        
         StringBuilder sql = new StringBuilder("""
         SELECT 
             q.queue_position,
@@ -391,27 +447,33 @@ public class DoctorDAO extends DBContext {
         WHERE q.doctor_id = ?
     """);
 
-        if (status != null && !status.equals("all")) {
+        boolean hasStatusFilter = status != null && !status.equals("all");
+        boolean hasKeywordFilter = keyword != null && !keyword.isBlank();
+
+        if (hasStatusFilter) {
             sql.append(" AND q.status = ? ");
         }
 
-        if (keyword != null && !keyword.isBlank()) {
+        if (hasKeywordFilter) {
             sql.append(" AND p.full_name LIKE ? ");
         }
 
-        sql.append(" ORDER BY q.queue_position ");
+        sql.append(" ORDER BY q.queue_position LIMIT ? OFFSET ? ");
 
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             int index = 1;
             ps.setInt(index++, doctorId);
 
-            if (status != null && !status.equals("all")) {
+            if (hasStatusFilter) {
                 ps.setString(index++, status);
             }
 
-            if (keyword != null && !keyword.isBlank()) {
+            if (hasKeywordFilter) {
                 ps.setString(index++, "%" + keyword + "%");
             }
+            
+            ps.setInt(index++, safePageSize);
+            ps.setInt(index, offset);
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -426,7 +488,7 @@ public class DoctorDAO extends DBContext {
                 item.setStatus(rs.getString("status"));
                 list.add(item);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return list;
@@ -708,7 +770,7 @@ public class DoctorDAO extends DBContext {
             }
         }
     }
-    
+
     public int saveMedicalRecordAndCreateLabRequest(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes) {
         String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
         String updateRecordSql = """
@@ -799,6 +861,8 @@ public class DoctorDAO extends DBContext {
         }
     }
     
+    
+
     public void updateDoctor(int doctorId, String qualification, int experience, String specialization) {
         String sql = "UPDATE doctors SET qualification=?, experience_years=?, specialization=? "
                 + "WHERE doctor_id=?";

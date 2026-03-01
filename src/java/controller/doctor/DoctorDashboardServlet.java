@@ -27,6 +27,8 @@ import model.User;
  */
 public class DoctorDashboardServlet extends HttpServlet {
 
+    private static final int PAGE_SIZE = 10;
+
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -74,7 +76,7 @@ public class DoctorDashboardServlet extends HttpServlet {
 
         int doctorId = doctor.getDoctorId();
         session.setAttribute("doctorName", doctor.getFullName());
-        
+
 //        int doctorId = 3;// test 
         //lấy thông tin lọc
         String status = request.getParameter("status");
@@ -84,9 +86,30 @@ public class DoctorDashboardServlet extends HttpServlet {
             status = "all";
         }
 
+        int currentPage = 1;
+        try {
+            String pageParam = request.getParameter("page");
+            if (pageParam != null && !pageParam.isBlank()) {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) {
+                    currentPage = 1;
+                }
+            }
+        } catch (NumberFormatException ex) {
+            currentPage = 1;
+        }
+
+        int totalRecords = doctorDAO.countQueueByDoctorWithFilter(doctorId, status, keyword);
+        int totalPages = (int) Math.ceil((double) totalRecords / PAGE_SIZE);
+        if (totalPages == 0) {
+            totalPages = 1;
+        }
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
         //1️⃣ Danh sách bệnh nhân đang chờ khám
         List<DoctorQueueItem> queueList
-                = doctorDAO.getQueueByDoctorWithFilter(doctorId, status, keyword);
+                = doctorDAO.getQueueByDoctorWithFilterPaging(doctorId, status, keyword, currentPage, PAGE_SIZE);
 
         // Thống kê số liệu
         DoctorDashboardStats stats
@@ -101,6 +124,12 @@ public class DoctorDashboardServlet extends HttpServlet {
         request.setAttribute("queueList", queueList);
         request.setAttribute("stats", stats);
         request.setAttribute("shifts", shifts);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalRecords", totalRecords);
+        request.setAttribute("pageSize", PAGE_SIZE);
+        request.setAttribute("selectedStatus", status);
+        request.setAttribute("keyword", keyword == null ? "" : keyword.trim());
 
         request.getRequestDispatcher("/pages/examination/doctorDashboard.jsp")
                 .forward(request, response);

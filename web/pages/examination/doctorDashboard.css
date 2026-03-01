@@ -140,6 +140,54 @@ body {
     gap: 10px;
 }
 
+.queue-pagination {
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pagination-summary {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.pagination-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 84px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid #dbe3f1;
+    background: #ffffff;
+    color: #1d4ed8;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.page-btn:hover {
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+.page-btn.disabled {
+    pointer-events: none;
+    color: #94a3b8;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
 .queue-table-header {
     display: grid;
     grid-template-columns: 70px minmax(150px, 1.3fr) 120px 130px minmax(180px, 2fr) 130px 140px;

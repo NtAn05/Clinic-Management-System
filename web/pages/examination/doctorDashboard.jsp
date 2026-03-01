@@ -48,15 +48,15 @@
                         <form method="get">
                             <input type="text" name="keyword"
                                    placeholder="Tìm kiếm bệnh nhân theo tên hoặc mã..."
-                                   value="${param.keyword}"/>
+                                   value="${keyword}"/>
 
                             <select name="status">
-                                <option value="all" ${param.status=='all'?'selected':''}>Tất cả</option>
-                                <option value="waiting" ${param.status=='waiting'?'selected':''}>Đang chờ</option>
-                                <option value="examining" ${param.status=='examining'?'selected':''}>Đang khám</option>
-                                <option value="done" ${param.status=='done'?'selected':''}>Hoàn tất</option>
+                                <option value="all" ${selectedStatus=='all'?'selected':''}>Tất cả</option>
+                                <option value="waiting" ${selectedStatus=='waiting'?'selected':''}>Đang chờ</option>
+                                <option value="examining" ${selectedStatus=='examining'?'selected':''}>Đang khám</option>
+                                <option value="done" ${selectedStatus=='done'?'selected':''}>Hoàn tất</option>
                             </select>
-
+                            <input type="hidden" name="page" value="1"/>
                             <button type="submit">Lọc</button>
                         </form>
                     </div>
@@ -97,6 +97,41 @@
                             <p class="empty-state">Không có bệnh nhân chờ khám</p>
                         </c:if>
                     </div>
+                            <c:if test="${totalRecords > 0}">
+                        <div class="queue-pagination">
+                            <span class="pagination-summary">Trang ${currentPage}/${totalPages} • ${totalRecords} bệnh nhân</span>
+                            <div class="pagination-actions">
+                                <c:url var="prevPageUrl" value="/doctorDashboard">
+                                    <c:param name="status" value="${selectedStatus}" />
+                                    <c:param name="keyword" value="${keyword}" />
+                                    <c:param name="page" value="${currentPage - 1}" />
+                                </c:url>
+                                <c:url var="nextPageUrl" value="/doctorDashboard">
+                                    <c:param name="status" value="${selectedStatus}" />
+                                    <c:param name="keyword" value="${keyword}" />
+                                    <c:param name="page" value="${currentPage + 1}" />
+                                </c:url>
+
+                                <c:choose>
+                                    <c:when test="${currentPage > 1}">
+                                        <a class="page-btn" href="${prevPageUrl}">← Trước</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="page-btn disabled">← Trước</span>
+                                    </c:otherwise>
+                                </c:choose>
+
+                                <c:choose>
+                                    <c:when test="${currentPage < totalPages}">
+                                        <a class="page-btn" href="${nextPageUrl}">Sau →</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="page-btn disabled">Sau →</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </c:if>
                 </div>
 
                 <div class="shift-section">
