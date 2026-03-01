@@ -42,7 +42,6 @@ public class LabPaymentDAO extends DBContext {
                 p.full_name AS patient_name,
                 p.phone AS patient_phone,
                 p.dob,
-                p.address,
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
@@ -211,7 +210,6 @@ public class LabPaymentDAO extends DBContext {
                 p.full_name AS patient_name,
                 p.phone AS patient_phone,
                 p.dob,
-                p.address,
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
@@ -336,7 +334,6 @@ public class LabPaymentDAO extends DBContext {
         patient.setFullName(rs.getString("patient_name"));
         patient.setPhone(rs.getString("patient_phone"));
         patient.setDob(rs.getDate("dob"));
-        patient.setAddress(rs.getString("address"));
         patient.setEmail(rs.getString("patient_email"));
         patient.setGender(rs.getString("gender"));
         labRequest.setPatient(patient);
