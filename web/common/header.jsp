@@ -226,18 +226,22 @@
             </c:if>
 
             <c:if test="${sessionScope.account != null}">
+                
                 <c:if test="${roleName == 'admin'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
                 </c:if>
 
                 <c:if test="${roleName == 'doctor'}">
-                    <a class="header-link" href="${pageContext.request.contextPath}/doctorDashboard">Dashboard</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/doctorDashboard">Quản lý khám bệnh</a>
                 </c:if>
 
                 <c:if test="${roleName == 'technician'}">
-                    <a class="header-link" href="${pageContext.request.contextPath}/technician-dashboard">Dashboard</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/technician-dashboard">Quản lý xét nghiệm</a>
+                </c:if>
+                
+                <c:if test="${roleName == 'receptionist'}">
+                    <a class="header-link" href="${pageContext.request.contextPath}/lab-payment">Quản lý tiếp nhận</a>
                 </c:if>
 
                 <c:if test="${roleName == 'patient'}">
@@ -252,15 +256,20 @@
 
                     <div class="profile-popup" id="profilePopup">
                         <div class="profile-popup-title">Quản lý cá nhân</div>
-                        <a class="profile-item" href="#">Tài khoản</a>
-                        <a class="profile-item" href="${pageContext.request.contextPath}/patient-medical-records">Hồ sơ bệnh án</a>
-                        <a class="profile-item" href="#">Lịch sử khám</a>
-                        <a class="profile-item" href="#">Đơn thuốc</a>
-                        <a class="profile-item" href="${pageContext.request.contextPath}/appointmentservlet">Thông tin đặt lịch</a>
+                        
+                        <a class="profile-item" href="${pageContext.request.contextPath}/userinformationservlet">Tài khoản của tôi</a>
+                        
+                        <c:if test="${roleName == 'patient'}">
+                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-medical-records">Hồ sơ bệnh án</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-prescription">Đơn thuốc</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/appointmentservlet">Thông tin đặt lịch</a>
+                        </c:if>
+
                         <hr class="profile-divider" />
                         <a href="${pageContext.request.contextPath}/logout" class="profile-item btn-logout">Đăng xuất</a>
                     </div>
                 </div>
+
             </c:if>
         </nav>
     </div>
