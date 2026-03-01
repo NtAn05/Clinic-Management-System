@@ -175,7 +175,8 @@ body {
 }
 
 input,
-textarea {
+textarea,
+select {
     width: 100%;
     box-sizing: border-box;
     padding: 10px;
@@ -389,4 +390,14 @@ label {
 
 .section-spacing {
     margin-top: 16px;
+}
+
+.lab-row {
+    grid-template-columns: 1.6fr 1fr 1.2fr;
+}
+
+@media (max-width: 900px) {
+    .lab-row {
+        grid-template-columns: 1fr;
+    }
 }

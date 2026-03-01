@@ -5,6 +5,7 @@
 package controller.doctor;
 
 import dal.DoctorDAO;
+import dal.LabRequestDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,6 +31,8 @@ public class DoctorExamServlet extends HttpServlet {
     private static final String SECTION_CLINICAL_RESULT = "KẾT QUẢ KHÁM LÂM SÀNG";
     private static final String SECTION_DOCTOR_NOTE = "GHI CHÚ BÁC SĨ";
     private static final String SECTION_TREATMENT_PLAN = "PHƯƠNG ÁN ĐIỀU TRỊ";
+    private static final String SECTION_LAB_REQUEST = "YÊU CẦU XÉT NGHIỆM";
+
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -131,11 +134,17 @@ public class DoctorExamServlet extends HttpServlet {
             request.setAttribute("clinicalResult", extractSection(notes, SECTION_CLINICAL_RESULT));
             request.setAttribute("doctorNote", extractSection(notes, SECTION_DOCTOR_NOTE));
             request.setAttribute("treatmentPlan", extractSection(notes, SECTION_TREATMENT_PLAN));
+            request.setAttribute("labRequestInstruction", extractSection(notes, SECTION_LAB_REQUEST));
 
             List<ExaminationHistoryItem> examinationHistory
                     = doctorDAO.getExaminationHistoryByAppointment(appointmentId);
             request.setAttribute("examData", examData);
             request.setAttribute("historyList", examinationHistory);
+            String activeTab = cleanText(request.getParameter("tab"));
+            if (activeTab.isEmpty()) {
+                activeTab = "info";
+            }
+            request.setAttribute("activeTab", activeTab);
             request.setAttribute("success", request.getParameter("success"));
             request.setAttribute("error", request.getParameter("error"));
             request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
@@ -196,9 +205,31 @@ public class DoctorExamServlet extends HttpServlet {
         String clinicalResult = cleanText(request.getParameter("clinicalResult"));
         String doctorNote = cleanText(request.getParameter("doctorNote"));
         String treatmentPlan = cleanText(request.getParameter("treatmentPlan"));
+        String labTestType = cleanText(request.getParameter("labTestType"));
+        String labPriority = cleanText(request.getParameter("labPriority"));
+        String labCollectionMethod = cleanText(request.getParameter("labCollectionMethod"));
+        String labRequestNote = cleanText(request.getParameter("labRequestNote"));
 
-        String notes = buildMedicalRecordNote(allergies, chronic, family, social, vaccination,
-                clinicalResult, doctorNote, treatmentPlan);
+        String labRequestInstruction = cleanText(request.getParameter("labRequestInstruction"));
+        if ("createLabRequest".equalsIgnoreCase(action)) {
+            StringBuilder labInstructionBuilder = new StringBuilder();
+            if (!labTestType.isEmpty()) {
+                labInstructionBuilder.append("- Loại xét nghiệm: ").append(labTestType).append("\n");
+            }
+            if (!labPriority.isEmpty()) {
+                labInstructionBuilder.append("- Mức độ ưu tiên: ").append(labPriority).append("\n");
+            }
+            if (!labCollectionMethod.isEmpty()) {
+                labInstructionBuilder.append("- Hình thức lấy mẫu: ").append(labCollectionMethod).append("\n");
+            }
+            if (!labRequestNote.isEmpty()) {
+                labInstructionBuilder.append("- Ghi chú chỉ định: ").append(labRequestNote);
+            }
+            if (labInstructionBuilder.length() > 0) {
+                labRequestInstruction = labInstructionBuilder.toString().trim();
+            }
+        }
+        String notes = buildMedicalRecordNote(allergies, chronic, family, social, vaccination, clinicalResult, doctorNote, treatmentPlan, labRequestInstruction);
 
         boolean saved = doctorDAO.upsertMedicalRecord(appointmentId, symptoms, diagnosis, notes);
         if (!saved) {
@@ -209,6 +240,17 @@ public class DoctorExamServlet extends HttpServlet {
         if ("finish".equalsIgnoreCase(action)) {
             doctorDAO.finishExamination(appointmentId);
             response.sendRedirect(request.getContextPath() + "/doctorDashboard?success=examFinished");
+            return;
+        }
+
+        if ("createLabRequest".equalsIgnoreCase(action)) {
+            LabRequestDAO labRequestDAO = new LabRequestDAO();
+            int requestId = labRequestDAO.insertLabRequest(appointmentId, doctor.getDoctorId());
+            if (requestId > 0) {
+                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&success=labRequested");
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&error=labRequestFailed");
             return;
         }
 
@@ -231,7 +273,8 @@ public class DoctorExamServlet extends HttpServlet {
             String vaccination,
             String clinicalResult,
             String doctorNote,
-            String treatmentPlan
+            String treatmentPlan,
+            String labRequestInstruction
     ) {
         StringBuilder sb = new StringBuilder();
 
@@ -258,6 +301,7 @@ public class DoctorExamServlet extends HttpServlet {
         appendSection(sb, SECTION_CLINICAL_RESULT, clinicalResult);
         appendSection(sb, SECTION_DOCTOR_NOTE, doctorNote);
         appendSection(sb, SECTION_TREATMENT_PLAN, treatmentPlan);
+        appendSection(sb, SECTION_LAB_REQUEST, labRequestInstruction);
 
         return sb.toString().trim();
     }
@@ -369,6 +413,7 @@ public class DoctorExamServlet extends HttpServlet {
                 .replaceAll("\\p{M}+", "");
         return withoutAccent.toLowerCase().trim();
     }
+
     /**
      * Returns a short description of the servlet.
      *

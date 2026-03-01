@@ -34,7 +34,7 @@
                         </div>
                     </div>
 
-                    <c:if test="${not empty success}">
+                    <c:if test="${success == 'saved'}">
                         <div class="alert-success">Đã lưu thông tin bệnh án.</div>
                     </c:if>
 
@@ -42,14 +42,22 @@
                         <div class="alert-error">Không thể lưu hồ sơ khám. Vui lòng thử lại.</div>
                     </c:if>
 
+                    <c:if test="${success == 'labRequested'}">
+                        <div class="alert-success">Đã tạo yêu cầu xét nghiệm và chuyển bệnh nhân sang hàng đợi xét nghiệm.</div>
+                    </c:if>
+
+                    <c:if test="${error == 'labRequestFailed'}">
+                        <div class="alert-error">Không thể tạo yêu cầu xét nghiệm. Có thể lịch khám này đã có phiếu xét nghiệm.</div>
+                    </c:if>
+
                     <div class="tabs">
-                        <button class="tab active" data-target="info" type="button" onclick="showTab('info')">Thông tin</button>
-                        <button class="tab" data-target="lab" type="button" onclick="showTab('lab')">Kết quả XN</button>
-                        <button class="tab" data-target="prescription" type="button" onclick="showTab('prescription')">Đơn thuốc</button>
-                        <button class="tab" data-target="history" type="button" onclick="showTab('history')">Lịch sử</button>
+                        <button class="tab ${activeTab == 'info' || empty activeTab ? 'active' : ''}" data-target="info" type="button" onclick="showTab('info')">Thông tin</button>
+                        <button class="tab ${activeTab == 'lab' ? 'active' : ''}" data-target="lab" type="button" onclick="showTab('lab')">Kết quả XN</button>
+                        <button class="tab ${activeTab == 'prescription' ? 'active' : ''}" data-target="prescription" type="button" onclick="showTab('prescription')">Đơn thuốc</button>
+                        <button class="tab ${activeTab == 'history' ? 'active' : ''}" data-target="history" type="button" onclick="showTab('history')">Lịch sử</button>
                     </div>
 
-                    <div class="tab-content active" id="info">
+                    <div class="tab-content ${activeTab == 'info' || empty activeTab ? 'active' : ''}" id="info">
                         <div class="card-grid">
                             <section class="card">
                                 <h3>Thông tin bệnh nhân</h3>
@@ -114,7 +122,42 @@
                         </section>
                     </div>
 
-                    <div class="tab-content" id="lab">
+                    <div class="tab-content ${activeTab == 'lab' ? 'active' : ''}" id="lab">
+                        <div class="card">
+                            <h3>Tạo yêu cầu xét nghiệm</h3>
+                            <p class="muted">Nhập chỉ định xét nghiệm theo mẫu tương tự tạo đơn thuốc.</p>
+                            <div id="labRequestList" class="rx-list">
+                                <div class="rx-row lab-row">
+                                    <select name="labTestType">
+                                        <option value="">Chọn loại xét nghiệm</option>
+                                        <option value="Công thức máu">Công thức máu</option>
+                                        <option value="Đường huyết">Đường huyết</option>
+                                        <option value="Sinh hóa máu">Sinh hóa máu</option>
+                                        <option value="Nước tiểu">Nước tiểu</option>
+                                        <option value="X-quang">X-quang</option>
+                                    </select>
+                                    <select name="labPriority">
+                                        <option value="Bình thường">Bình thường</option>
+                                        <option value="Khẩn">Khẩn</option>
+                                    </select>
+                                    <select name="labCollectionMethod">
+                                        <option value="Lấy mẫu tại chỗ">Lấy mẫu tại chỗ</option>
+                                        <option value="Nhịn ăn trước xét nghiệm">Nhịn ăn trước xét nghiệm</option>
+                                        <option value="Theo hướng dẫn bác sĩ">Theo hướng dẫn bác sĩ</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <label>Hướng dẫn / ghi chú chỉ định</label>
+                            <textarea rows="3" name="labRequestNote" placeholder="Ví dụ: ưu tiên xử lý trước 10h, lưu ý tiền sử dị ứng thuốc cản quang..."><c:out value="${labRequestInstruction}"/></textarea>
+
+                            <div class="actions">
+                                <button type="submit" class="btn-primary" name="action" value="createLabRequest" onclick="return confirm('Xác nhận gửi yêu cầu xét nghiệm cho bệnh nhân này?');">🧪 Gửi yêu cầu xét nghiệm</button>
+                            </div>
+                        </div>
+
+                        <div class="section-spacing"></div>
+                        
                         <c:if test="${empty labResults}">
                             <p>Chưa có kết quả xét nghiệm cho lịch khám này.</p>
                         </c:if>
@@ -139,7 +182,7 @@
                         </c:forEach>
                     </div>
 
-                    <div class="tab-content" id="prescription">
+                    <div class="tab-content ${activeTab == 'prescription' ? 'active' : ''}" id="prescription">
                         <div class="card">
                             <h3>Đơn thuốc tạm</h3>
 
@@ -155,7 +198,7 @@
                         </div>
                     </div>
 
-                    <div class="tab-content" id="history">
+                    <div class="tab-content ${activeTab == 'history' ? 'active' : ''}" id="history">
                         <c:if test="${empty historyList}">
                             <p>Chưa có lịch sử khám trước đó của bệnh nhân.</p>
                         </c:if>

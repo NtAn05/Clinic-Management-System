@@ -146,30 +146,7 @@
         <jsp:include page="/common/modal-alert.jsp" />
         <script>
             function orderLab(appointmentId) {
-                showConfirm('Chỉ định xét nghiệm cho bệnh nhân này? Bệnh nhân sẽ chuyển sang hàng đợi xét nghiệm.', function () {
-                    var formData = new FormData();
-                    formData.append('action', 'createLabRequest');
-                    formData.append('appointmentId', appointmentId);
-                    fetch('${pageContext.request.contextPath}/lab-queue', {
-                        method: 'POST',
-                        body: formData
-                    })
-                            .then(function (r) {
-                                return r.json();
-                            })
-                            .then(function (data) {
-                                if (data.success) {
-                                    showAlert(data.message || 'Đã chỉ định xét nghiệm.', 'success', function () {
-                                        location.reload();
-                                    });
-                                } else {
-                                    showAlert(data.message || 'Thất bại.', 'error');
-                                }
-                            })
-                            .catch(function () {
-                                showAlert('Lỗi kết nối.', 'error');
-                            });
-                });
+                location.href = '${pageContext.request.contextPath}/doctor/exam?appointmentId=' + appointmentId + '&tab=lab&createLab=1';
             }
 
             const panel = document.getElementById('controlPanel');
