@@ -215,12 +215,15 @@ public class LabQueueServlet extends HttpServlet {
             }
 
         } else if ("sendResult".equals(action)) {
-            // Get technician ID from session
+            // Get technician ID from session (technician, doctor, admin đều được gửi kết quả)
             jakarta.servlet.http.HttpSession session = request.getSession();
             model.User account = (model.User) session.getAttribute("account");
             
-            if (account == null || !RoleHelper.isTechnician(account)) {
-                response.getWriter().write("{\"success\": false, \"message\": \"Không có quyền thực hiện\"}");
+            boolean canSend = account != null && (
+                RoleHelper.isTechnician(account) || RoleHelper.isDoctor(account) || RoleHelper.isAdmin(account)
+            );
+            if (!canSend) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Không có quyền thực hiện. Vui lòng đăng nhập với tài khoản kỹ thuật viên.\"}");
                 return;
             }
             

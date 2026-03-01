@@ -46,4 +46,8 @@ public final class RoleHelper {
     public static boolean isDoctor(User u) {
         return "doctor".equals(getRoleName(u));
     }
+
+    public static boolean isAdmin(User u) {
+        return "admin".equals(getRoleName(u));
+    }
 }

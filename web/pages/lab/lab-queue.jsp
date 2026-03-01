@@ -49,7 +49,6 @@
 
     .content-wrapper {
       flex: 1;
-      min-height: calc(100vh - 60px);
     }
 
     .page {
