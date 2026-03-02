@@ -201,7 +201,6 @@ public class UserDAO extends DBContext {
         return null;
     }
 
-<<<<<<< Updated upstream
     public User getUserByEmail(String email) {
         String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE email = ?";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -224,9 +223,6 @@ public class UserDAO extends DBContext {
         return null;
     }
 
-    
-=======
->>>>>>> Stashed changes
     public List<User> getPatientList() {
         String sql = """
         SELECT u.user_id, u.full_name, u.phone, u.email, u.role, u.status 
