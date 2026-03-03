@@ -48,13 +48,13 @@ public class UserDAO extends DBContext {
     ) throws SQLException {
 
         String sqlUser = """
-        INSERT INTO users (full_name, phone, email, password_hash, role, status)
-        VALUES (?, ?, ?, ?, 'patient', 'active')
+        INSERT INTO users (full_name, phone, email, password_hash, address, role, status)
+        VALUES (?, ?, ?, ?, ?, 'patient', 'active')
     """;
 
         String sqlPatient = """
-        INSERT INTO patients (user_id, full_name, phone, dob, address, email, gender)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO patients (user_id, full_name, phone, dob, email, gender)
+        VALUES (?, ?, ?, ?, ?, ?)
     """;
 
         connection.setAutoCommit(false);
@@ -62,12 +62,12 @@ public class UserDAO extends DBContext {
         try (
                 PreparedStatement stUser
                 = connection.prepareStatement(sqlUser, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            // users
+           
             stUser.setString(1, fullName);
             stUser.setString(2, phone);
             stUser.setString(3, email);
-            stUser.setString(4, password); // TODO hash sau
-
+            stUser.setString(4, password); 
+            stUser.setString(5, address);
             stUser.executeUpdate();
 
             ResultSet rs = stUser.getGeneratedKeys();
@@ -77,15 +77,14 @@ public class UserDAO extends DBContext {
 
             int userId = rs.getInt(1);
 
-            // patients
+            
             try (PreparedStatement stPatient = connection.prepareStatement(sqlPatient)) {
                 stPatient.setInt(1, userId);
                 stPatient.setString(2, fullName);
                 stPatient.setString(3, phone);
                 stPatient.setDate(4, dob);
-                stPatient.setString(5, address);
-                stPatient.setString(6, email);
-                stPatient.setString(7, gender); // male/female/other
+                stPatient.setString(5, email);
+                stPatient.setString(6, gender); // male/female/other
 
                 stPatient.executeUpdate();
             }
