@@ -590,6 +590,38 @@
                     padding: 10px;
                 }
             }
+
+            /* paging */
+            .pagination-wrapper {
+                margin-top: 16px;
+                display: flex;
+                justify-self: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .page-link {
+                min-width: 34px;
+                padding: 8px 12px;
+                border: 1px solid #dcdcdc;
+                border-radius: 6px;
+                text-decoration: none;
+                color: #333;
+                background: #fff;
+                text-align: center;
+            }
+            .page-link:hover {
+                background: #f5f5f5;
+            }
+            .page-link.active {
+                background: #0061ff;
+                color: #fff;
+                border-color: #0061ff;
+                pointer-events: none;
+            }
+            .page-link.disabled {
+                opacity: .5;
+                pointer-events: none;
+            }
         </style>
     </head>
     <body>
@@ -720,6 +752,42 @@
                         </c:otherwise>
                     </c:choose>
                 </div>
+
+                <!-- PAGINATION -->
+                 <c:if test="${staffTotalPages > 1}">
+                    <div class="pagination-wrapper">
+                        <c:choose>
+                            <c:when test="${staffCurrentPage > 1}">
+                                <a class="page-link"
+                                href="admin-users?tab=staff&action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&staffPage=${staffCurrentPage - 1}&patientPage=${patientCurrentPage}">
+                                    ‹ Trước
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">‹ Trước</span>
+                            </c:otherwise>
+                        </c:choose>
+
+                        <c:forEach var="i" begin="1" end="${staffTotalPages}">
+                            <a class="page-link ${i == staffCurrentPage ? 'active' : ''}"
+                            href="admin-users?tab=staff&action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&staffPage=${i}&patientPage=${patientCurrentPage}">
+                                ${i}
+                            </a>
+                        </c:forEach>
+
+                        <c:choose>
+                            <c:when test="${staffCurrentPage < staffTotalPages}">
+                                <a class="page-link"
+                                href="admin-users?tab=staff&action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&staffPage=${staffCurrentPage + 1}&patientPage=${patientCurrentPage}">
+                                    Sau ›
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">Sau ›</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
             </div>
 
             <!-- TAB 2: BỆNH NHÂN -->
@@ -802,6 +870,42 @@
                         </c:otherwise>
                     </c:choose>
                 </div>
+
+                <!-- PAGINATION -->
+                <c:if test="${patientTotalPages > 1}">
+                    <div class="pagination-wrapper">
+                        <c:choose>
+                            <c:when test="${patientCurrentPage > 1}">
+                                <a class="page-link"
+                                href="admin-users?tab=patient&action=${currentAction}&keyword=${searchKeyword}&status=${filterPatientStatus}&staffPage=${staffCurrentPage}&patientPage=${patientCurrentPage - 1}">
+                                    ‹ Trước
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">‹ Trước</span>
+                            </c:otherwise>
+                        </c:choose>
+
+                        <c:forEach var="i" begin="1" end="${patientTotalPages}">
+                            <a class="page-link ${i == patientCurrentPage ? 'active' : ''}"
+                            href="admin-users?tab=patient&action=${currentAction}&keyword=${searchKeyword}&status=${filterPatientStatus}&staffPage=${staffCurrentPage}&patientPage=${i}">
+                                ${i}
+                            </a>
+                        </c:forEach>
+
+                        <c:choose>
+                            <c:when test="${patientCurrentPage < patientTotalPages}">
+                                <a class="page-link"
+                                href="admin-users?tab=patient&action=${currentAction}&keyword=${searchKeyword}&status=${filterPatientStatus}&staffPage=${staffCurrentPage}&patientPage=${patientCurrentPage + 1}">
+                                    Sau ›
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">Sau ›</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
             </div>
         </div>
 
@@ -1112,7 +1216,7 @@
                 const role = document.getElementById('staffRoleFilter').value;
                 const status = document.getElementById('staffStatusFilter').value;
                 
-                let url = 'admin-users?action=filter&tab=staff';
+                let url = 'admin-users?action=filter&tab=staff&staffPage=1';
                 if (role !== 'all') {
                     url += '&role=' + role;
                 }
@@ -1127,7 +1231,7 @@
             function filterPatient() {
                 const status = document.getElementById('patientFilter').value;
                 
-                let url = 'admin-users?action=filter&tab=patient';
+                let url = 'admin-users?action=filter&tab=patient&patientPage=1';
                 if (status !== 'all') {
                     url += '&status=' + status;
                 }
@@ -1139,7 +1243,7 @@
             function searchStaff() {
                 const keyword = document.getElementById('staffSearch').value.trim();
                 
-                let url = 'admin-users?action=search&tab=staff';
+                let url = 'admin-users?action=search&tab=staff&staffPage=1';
                 if (keyword) {
                     url += '&keyword=' + encodeURIComponent(keyword);
                 }
@@ -1151,7 +1255,7 @@
             function searchPatient() {
                 const keyword = document.getElementById('patientSearch').value.trim();
                 
-                let url = 'admin-users?action=search&tab=patient';
+                let url = 'admin-users?action=search&tab=staff&staffPage=1';
                 if (keyword) {
                     url += '&keyword=' + encodeURIComponent(keyword);
                 }
