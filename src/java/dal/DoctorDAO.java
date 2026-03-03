@@ -375,6 +375,8 @@ public class DoctorDAO extends DBContext {
         return getQueueByDoctorWithFilterPaging(doctorId, status, keyword, 1, Integer.MAX_VALUE);
     }
 
+    // tính tổng số bản ghi theo bộ lọc để controller tính totalPages cho phân trang.
+    // dùng query COUNT(*) cùng điều kiện status/keyword giống query lấy dữ liệu trang.
     public int countQueueByDoctorWithFilter(int doctorId, String status, String keyword) {
         StringBuilder sql = new StringBuilder("""
         SELECT COUNT(*)
@@ -418,6 +420,8 @@ public class DoctorDAO extends DBContext {
         return 0;
     }
 
+    // Pagination, hiển thị theo phân trang và bộ lọc.
+    // LIMIT/OFFSET sau khi chuẩn hóa page/pageSize và bind điều kiện động.
     public List<DoctorQueueItem> getQueueByDoctorWithFilterPaging(
             int doctorId,
             String status,
@@ -494,6 +498,8 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
+    // Xác thực appointment có nằm trong queue của chính bác sĩ hay không.
+    // Join exam_queue/appointments/patients và lọc theo doctor_id + appointment_id.
     public DoctorQueueItem getQueueItemByAppointment(int doctorId, long appointmentId) {
         String sql = """
             SELECT
@@ -535,7 +541,10 @@ public class DoctorDAO extends DBContext {
 
         return null;
     }
-
+    
+    
+    // Nnạp timeline các phiếu xét nghiệm và kết quả theo appointment hiện tại.
+    // LEFT JOIN lab_requests với lab_results.
     public List<ExamLabItem> getLabResultsByAppointment(long appointmentId) {
         List<ExamLabItem> list = new ArrayList<>();
         String sql = """

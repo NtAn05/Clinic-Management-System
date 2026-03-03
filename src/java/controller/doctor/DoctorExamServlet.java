@@ -47,6 +47,9 @@ public class DoctorExamServlet extends HttpServlet {
         doGet(request, response);
     }
 
+    // validateDoctor:
+    // Xác thực session + role doctor + profile bác sĩ hợp lệ.
+    // Đọc session/account, kiểm role, sau đó đối chiếu doctor theo userId.
     private Doctor validateDoctor(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -84,6 +87,9 @@ public class DoctorExamServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Nạp dữ liệu của appointment
+        // validate doctor -> validate appointmentId -> kiểm tra queue ownership
+        //  chuyển waiting thành examining -> nạp medical record/lab/history -> forward exam.jsp.
         try {
             Doctor doctor = validateDoctor(request, response);
             if (doctor == null) {
@@ -166,6 +172,8 @@ public class DoctorExamServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Ghi bệnh án, đóng phiên khám hoặc chuyển phiên khám sang luồng xét nghiệm.
+        // Validate input bắt buộc theo action rồi gọi DAO transactional tương ứng.
         Doctor doctor = validateDoctor(request, response);
         if (doctor == null) {
             return;
@@ -274,6 +282,9 @@ public class DoctorExamServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&success=saved");
     }
 
+    // Chuẩn hóa dữ liệu nhập cho form khám.
+    // Giải quyết null và khoảng trắng dư để tránh lỗi validate/ghi DB.
+    // null -> "", còn lại trim().
     private String cleanText(String value) {
         if (value == null) {
             return "";
@@ -282,6 +293,8 @@ public class DoctorExamServlet extends HttpServlet {
         return value.trim();
     }
 
+    // Ngăn submit khi thiếu thông tin.
+    // Kiểm tra các field bắt buộc.
     private String validateRequiredFields(String action,
             String diagnosis,
             String clinicalResult,
@@ -305,6 +318,8 @@ public class DoctorExamServlet extends HttpServlet {
         return "";
     }
     
+    // Gộp (tiền sử, kết quả khám, ghi chú...) thành 1 field "notes.
+    // Dùng section header dạng [SECTION] + nội dung tương ứng, tách ra để parse ngược khi tải lại. 
     private String buildMedicalRecordNote(
             String allergies,
             String chronic,
@@ -346,6 +361,7 @@ public class DoctorExamServlet extends HttpServlet {
         return sb.toString().trim();
     }
 
+    // Chỉ thêm section khi có nội dung, tránh sinh section rỗng
     private void appendSection(StringBuilder sb, String title, String value) {
         if (value.isEmpty()) {
             return;
@@ -355,6 +371,8 @@ public class DoctorExamServlet extends HttpServlet {
         sb.append(value).append("\n\n");
     }
 
+    // Tách nội dung của một section cụ thể theo marker [SECTION].
+    // Tìm vị trí marker hiện tại và marker kế tiếp -> substring phần nội dung.
     private String extractSection(String notes, String sectionTitle) {
         if (notes == null || notes.isBlank()) {
             return "";
@@ -385,6 +403,8 @@ public class DoctorExamServlet extends HttpServlet {
         return notes.substring(contentStart, end).trim();
     }
 
+    // Giải quyết khả năng notes có nhiều định dạng (trong section TIỀN SỬ hoặc text cũ).
+    // Uu tiên parse trong section TIỀN SỬ, fallback parse toàn notes.
     private String extractHistoryLine(String notes, String label) {
         if (notes == null || notes.isBlank()) {
             return "";
@@ -409,6 +429,8 @@ public class DoctorExamServlet extends HttpServlet {
         return "";
     }
 
+    // Các biến thể định dạng dòng như "- label: value", "label=value", ký tự ':' fullwidth.
+    // Tách dòng, loại bullet, tìm separator và so khớp nhãn đã normalize.
     private String extractHistoryLineFromBlock(String block, String targetLabel) {
         if (block == null || block.isBlank()) {
             return "";
@@ -444,6 +466,8 @@ public class DoctorExamServlet extends HttpServlet {
         return "";
     }
 
+    // Giải quyết khác biệt có/không dấu, hoa/thường.
+    // Unicode normalize, bỏ dấu, lowercase, trim.
     private String normalizeHistoryLabel(String label) {
         if (label == null) {
             return "";

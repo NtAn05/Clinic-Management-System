@@ -11,14 +11,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.List;
 import model.Doctor;
 import model.DoctorDashboardStats;
 import model.DoctorQueueItem;
 import model.DoctorShift;
-import model.Patient;
 import model.User;
 
 /**
