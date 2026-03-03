@@ -16,49 +16,49 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-       
+
         request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         // 1. Lấy dữ liệu từ form login.jsp
-       
-        String phone = request.getParameter("phone");
+
+        String email = request.getParameter("email");
         String password = request.getParameter("password");
         String formRole = request.getParameter("role");
 
-        
+
         UserDAO dao = new UserDAO();
-        User user = dao.checkLogin(phone, password);
+        User user = dao.checkLogin(email, password);
         String error = null;
 
         if (user != null) {
-            
-            String dbRole = user.getRole().toString().toLowerCase(); 
 
-           
+            String dbRole = user.getRole().toString().toLowerCase();
+
+
             boolean isTabValid = false;
             if (formRole.equals("patient") && dbRole.equals("patient")) {
-                isTabValid = true; 
+                isTabValid = true;
             } else if (formRole.equals("staff") && !dbRole.equals("patient")) {
-            
-                isTabValid = true; 
+
+                isTabValid = true;
             }
 
-        
+
             if (isTabValid) {
-                
+
                 if (user.getStatus().toString().equalsIgnoreCase("inactive")) {
                     error = "Tài khoản của bạn đã bị khóa! Vui lòng liên hệ Admin.";
                 } else {
-                   
+
                     HttpSession session = request.getSession();
                     session.setAttribute("account", user);
 
-              
+
                     if (dbRole.equals("admin")) {
                         response.sendRedirect(request.getContextPath() + "/admin-users");
                     } else if (dbRole.equals("doctor")) {
@@ -66,31 +66,31 @@ public class LoginServlet extends HttpServlet {
                     } else if (dbRole.equals("technician")) {
                         response.sendRedirect(request.getContextPath() + "/lab-queue");
                     } else if (dbRole.equals("receptionist")) {
-                        response.sendRedirect(request.getContextPath() + "/lab-payment"); 
-                    } else { 
-                       
+                        response.sendRedirect(request.getContextPath() + "/lab-payment");
+                    } else {
+
                         response.sendRedirect(request.getContextPath() + "/index.jsp");
                     }
-                    return; 
+                    return;
                 }
             } else {
                 error = "Vui lòng chọn đúng tab (Nhân viên hoặc Bệnh nhân) để đăng nhập!";
             }
         } else {
-            error = "Số điện thoại hoặc mật khẩu không chính xác!";
+            error = "Gmail hoặc mật khẩu không chính xác!";
         }
 
-        
+
         if (error != null) {
             request.setAttribute("error", error);
-            
-           
-            request.setAttribute("phone", phone); 
-            request.setAttribute("role", formRole); 
-            
-         
+
+
+            request.setAttribute("email", email);
+            request.setAttribute("role", formRole);
+
+
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
-                    
+
         }
     }
 }

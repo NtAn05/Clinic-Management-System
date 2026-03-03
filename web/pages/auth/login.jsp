@@ -176,7 +176,7 @@
                 color: var(--primary); 
                 transform: translateX(-3px); 
             }
-        </style>
+       </style>
     </head>
     <body>
         <div class="container">
@@ -201,7 +201,7 @@
 
                     <c:if test="${param.registered == 'true'}">
                         <p style="color: #0f5132; text-align: center; font-size: 14px; background: #d1e7dd; padding: 10px; border-radius: 5px;">
-                            <i class="fas fa-check-circle"></i> Đăng ký thành công! Vui lòng đăng nhập bằng số điện thoại đã xác thực.
+                            <i class="fas fa-check-circle"></i> Đăng ký thành công! Vui lòng đăng nhập bằng Gmail đã xác thực.
                         </p>
                     </c:if>
 
@@ -212,8 +212,8 @@
                     <% } %>
 
                     <div class="form-group">
-                        <label>Số điện thoại</label>
-                        <input type="tel" name="phone" placeholder="Nhập số điện thoại" value="${phone != null ? phone : ''}" pattern="\d{10}" title="Số điện thoại phải gồm đúng 10 chữ số" required>
+                        <label>Gmail</label>
+                        <input type="email" name="email" placeholder="Nhập Gmail" value="${email != null ? email : ''}" required>
                     </div>
                     <div class="form-group">
                         <label>Mật khẩu</label>
@@ -243,20 +243,20 @@
 
         <script>
             function selectRole(role) {
-                // Lấy 2 cái nút
+               
                 var btnStaff = document.getElementById("btn-staff");
                 var btnPatient = document.getElementById("btn-patient");
 
-                // Lấy cái input ẩn
+               
                 var inputRole = document.getElementById("selected-role");
 
                 if (role === 'staff') {
-                    // Nếu chọn Nhân viên
+                    
                     btnStaff.classList.add("active");
                     btnPatient.classList.remove("active");
                     inputRole.value = "staff"; // Cập nhật giá trị gửi đi
                 } else {
-                    // Nếu chọn Bệnh nhân
+                   
                     btnPatient.classList.add("active");
                     btnStaff.classList.remove("active");
                     inputRole.value = "patient"; // Cập nhật giá trị gửi đi

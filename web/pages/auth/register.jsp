@@ -6,7 +6,6 @@
         <title>Đăng ký - Phòng khám ABC</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <style>
-
             :root {
                 --primary: #0061ff;
                 --bg: #f4f7fe;
@@ -120,6 +119,37 @@
                 color: #2ecc71;
                 margin-right: 10px;
             }
+
+            .terms-box {
+                width: 100%;
+                height: 150px;
+                overflow-y: auto;
+                background: #f8f9fa;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 15px;
+                box-sizing: border-box;
+                font-size: 13px;
+                color: #555;
+                line-height: 1.6;
+            }
+            .terms-box h4 {
+                margin: 0 0 10px 0;
+                color: var(--primary);
+                font-size: 14px;
+            }
+            .terms-box strong {
+                color: #333;
+            }
+            /* Tùy chỉnh thanh cuộn cho đẹp */
+            .terms-box::-webkit-scrollbar {
+                width: 6px;
+            }
+            .terms-box::-webkit-scrollbar-thumb {
+                background: #bbb;
+                border-radius: 3px;
+            }
         </style>
     </head>
     <body>
@@ -139,7 +169,6 @@
                     <% } %>
 
                     <div class="form-group">
-                        
                         <label>Họ và tên *</label>
                         <input type="text" name="fullname" value="${fullname}" placeholder="Nhập họ và tên đầy đủ" required>
                     </div>
@@ -177,7 +206,7 @@
                                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
                         </div>
 
-                                        <div class="form-group">
+                        <div class="form-group">
                             <label>Phường / Xã (Quận / Huyện) *</label>
                             <input type="text" name="ward" value="${ward}" placeholder="Ví dụ: Quận Cầu Giấy" required>
                         </div>
@@ -198,12 +227,31 @@
                         <input type="password" name="confirmPassword" required>
                     </div>
 
-                    <div style="font-size: 13px; color: #666; margin-bottom: 20px;">
-                        <input type="checkbox" required> Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật
+                    <div class="terms-box" id="termsBox">
+                        <h4>Điều Khoản Dịch Vụ & Chính Sách Bảo Mật</h4>
+                        <p>Chào mừng bạn đến với <strong>Phòng khám ABC</strong>. Bằng việc đăng ký tài khoản, bạn đồng ý với các điều khoản sau:</p>
+                        
+                        <strong>1. Mục đích thu thập thông tin</strong>
+                        <p>Chúng tôi thu thập thông tin cá nhân (Họ tên, SĐT, Ngày sinh, v.v.) nhằm mục đích quản lý hồ sơ bệnh án, hỗ trợ đặt lịch khám và gửi thông báo nhắc nhở y tế. Thông tin này là bắt buộc để đảm bảo an toàn trong công tác khám chữa bệnh.</p>
+                        
+                        <strong>2. Cam kết bảo mật dữ liệu</strong>
+                        <p>Hồ sơ y tế của bạn được bảo mật tuyệt đối theo quy định của Bộ Y tế. Phòng khám ABC cam kết KHÔNG mua bán, trao đổi hoặc cung cấp dữ liệu cá nhân của bạn cho bất kỳ bên thứ ba nào khi chưa có sự đồng ý bằng văn bản, ngoại trừ các trường hợp cơ quan chức năng yêu cầu theo pháp luật.</p>
+
+                        <strong>3. Trách nhiệm của người bệnh</strong>
+                        <p>Bạn cam kết cung cấp thông tin cá nhân và tiền sử bệnh lý chính xác. Việc cung cấp sai lệch thông tin có thể ảnh hưởng đến kết quả chẩn đoán và điều trị, phòng khám sẽ không chịu trách nhiệm trong trường hợp này. Bạn có trách nhiệm tự bảo mật thông tin đăng nhập (mật khẩu) của mình.</p>
+                        
+                        <strong>4. Quyền lợi của bạn</strong>
+                        <p>Bạn có quyền truy cập, yêu cầu chỉnh sửa hoặc xóa hồ sơ cá nhân của mình trên hệ thống (trừ các dữ liệu bắt buộc lưu trữ theo luật y tế). Bạn có quyền từ chối nhận các tin nhắn quảng cáo từ phòng khám bất cứ lúc nào.</p>
                     </div>
 
-                    <button type="submit" class="btn-submit">Tiếp tục xác thực SĐT</button>
-                    <a href="${pageContext.request.contextPath}/pages/auth/login.jsp" class="back-link">← Quay lại đăng nhập</a>
+                    <div style="font-size: 13px; color: #333; margin-bottom: 20px; font-weight: 500; display: flex; align-items: flex-start; gap: 8px;">
+                        <input type="checkbox" id="agree" required style="margin-top: 2px; cursor: pointer; width: auto; transform: scale(1.2);"> 
+                        <label for="agree" style="cursor: pointer; margin: 0; line-height: 1.5;">
+                            Tôi đã đọc, hiểu và đồng ý toàn bộ nội dung <strong>Điều khoản dịch vụ</strong> và <strong>Chính sách bảo mật</strong> nêu trên.
+                        </label>
+                    </div>
+                    <button type="submit" class="btn-submit">Tiếp tục xác thực Email</button>
+                    <a href="${pageContext.request.contextPath}/login" class="back-link">← Quay lại đăng nhập</a>
                 </form>
             </div>
 

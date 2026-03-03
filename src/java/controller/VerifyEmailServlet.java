@@ -12,8 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "VerifyPhoneServlet", urlPatterns = {"/verify-phone"})
-public class VerifyPhoneServlet extends HttpServlet {
+@WebServlet(name = "VerifyEmailServlet", urlPatterns = {"/verify-email"})
+public class VerifyEmailServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -23,15 +23,30 @@ public class VerifyPhoneServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/pages/auth/register.jsp");
             return;
         }
-        request.getRequestDispatcher("/pages/auth/verify-phone.jsp").forward(request, response);
+        request.getRequestDispatcher("/pages/auth/verify-email.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
         HttpSession session = request.getSession(false);
         if (session == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/register.jsp");
+            return;
+        }
+
+        String action = request.getParameter("action");
+        if ("resend".equals(action)) {
+            handleResendOtp(request, response, session);
+            return;
+        }
+        if ("cancel".equals(action)) {
+            RegisterServlet.clearPendingRegister(session);
             response.sendRedirect(request.getContextPath() + "/pages/auth/register.jsp");
             return;
         }
@@ -48,16 +63,14 @@ public class VerifyPhoneServlet extends HttpServlet {
         }
 
         if (System.currentTimeMillis() > otpExpires) {
-            RegisterServlet.clearPendingRegister(session);
-            request.setAttribute("error", "Mã xác thực SĐT đã hết hạn. Vui lòng đăng ký lại.");
-            request.getRequestDispatcher("/pages/auth/register.jsp").forward(request, response);
+            request.setAttribute("error", "Mã OTP Gmail đã hết hạn. Vui lòng nhấn gửi lại OTP mới.");
+            request.getRequestDispatcher("/pages/auth/verify-email.jsp").forward(request, response);
             return;
         }
 
         if (submittedOtp == null || !submittedOtp.equals(storedOtp)) {
-            request.setAttribute("error", "Mã OTP SĐT không đúng.");
-            request.setAttribute("demoOtp", storedOtp);
-            request.getRequestDispatcher("/pages/auth/verify-phone.jsp").forward(request, response);
+            request.setAttribute("error", "Mã OTP Gmail không đúng.");
+            request.getRequestDispatcher("/pages/auth/verify-email.jsp").forward(request, response);
             return;
         }
 
@@ -75,9 +88,35 @@ public class VerifyPhoneServlet extends HttpServlet {
             RegisterServlet.clearPendingRegister(session);
             response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp?registered=true");
 
-        } catch (SQLException | IllegalArgumentException e) {
-            request.setAttribute("error", "Có lỗi khi tạo tài khoản. Vui lòng thử lại.");
+     
+        } catch (Exception e) {
+            e.printStackTrace(); 
+            request.setAttribute("error", "Lỗi CSDL: " + e.getMessage()); 
+            
             request.getRequestDispatcher("/pages/auth/register.jsp").forward(request, response);
         }
+    }
+
+    private void handleResendOtp(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+            throws ServletException, IOException {
+        Map<String, String> pendingData = RegisterServlet.getPendingData(session);
+        if (pendingData == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/register.jsp");
+            return;
+        }
+
+        String newOtp = RegisterServlet.generateOtp();
+        long expiresAt = System.currentTimeMillis() + RegisterServlet.getOtpTtlMs();
+        session.setAttribute("registerOtp", newOtp);
+        session.setAttribute("registerOtpExpires", expiresAt);
+
+        String sendError = RegisterServlet.sendOtpEmail(pendingData.get("email"), pendingData.get("fullName"), newOtp);
+        if (sendError != null) {
+            request.setAttribute("error", sendError);
+        } else {
+            request.setAttribute("success", "Đã gửi OTP Gmail mới. Mã có hiệu lực trong 60 giây.");
+        }
+
+        request.getRequestDispatcher("/pages/auth/verify-email.jsp").forward(request, response);
     }
 }

@@ -1,6 +1,7 @@
 package controller;
 
 import dal.UserDAO;
+import model.EmailOtpService;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ public class RegisterServlet extends HttpServlet {
     private static final String OTP_SESSION_KEY = "registerOtp";
     private static final String OTP_EXPIRES_SESSION_KEY = "registerOtpExpires";
     private static final String PENDING_REGISTER_SESSION_KEY = "pendingRegisterData";
+    private static final long OTP_TTL_MS = 60 * 1000;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -43,22 +45,16 @@ public class RegisterServlet extends HttpServlet {
             gender = "female";
         }
 
+        // ================= ĐOẠN NÀY VỪA BỊ MẤT ĐÃ ĐƯỢC PHỤC HỒI =================
         String phone = request.getParameter("phone");
         String email = request.getParameter("email");
-
         String city = request.getParameter("city");
         String ward = request.getParameter("ward");
         String street = request.getParameter("street");
 
-        if (city == null) {
-            city = "";
-        }
-        if (ward == null) {
-            ward = "";
-        }
-        if (street == null) {
-            street = "";
-        }
+        if (city == null) city = "";
+        if (ward == null) ward = "";
+        if (street == null) street = "";
         String finalAddress = street + " - " + ward + " - " + city;
 
         String password = request.getParameter("password");
@@ -96,16 +92,43 @@ public class RegisterServlet extends HttpServlet {
         pendingData.put("address", finalAddress);
         pendingData.put("gender", gender);
 
-        String otpCode = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
-        long expiredAt = System.currentTimeMillis() + 5 * 60 * 1000;
+        String otpCode = generateOtp();
+        long expiredAt = System.currentTimeMillis() + OTP_TTL_MS;
 
         session.setAttribute(PENDING_REGISTER_SESSION_KEY, pendingData);
         session.setAttribute(OTP_SESSION_KEY, otpCode);
         session.setAttribute(OTP_EXPIRES_SESSION_KEY, expiredAt);
 
-        request.setAttribute("success", "Mã xác thực SĐT đã được tạo. Vui lòng nhập OTP để hoàn tất đăng ký.");
-        request.setAttribute("demoOtp", otpCode);
-        request.getRequestDispatcher("/pages/auth/verify-phone.jsp").forward(request, response);
+        String sentError = sendOtpEmail(email, fullName, otpCode);
+        if (sentError != null) {
+            request.setAttribute("error", sentError);
+        } else {
+            request.setAttribute("success", "Đã gửi OTP đến Gmail của bạn. Mã có hiệu lực trong 60 giây.");
+        }
+        request.getRequestDispatcher("/pages/auth/verify-email.jsp").forward(request, response);
+    }
+
+    public static String generateOtp() {
+        return String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+    }
+
+    public static long getOtpTtlMs() {
+        return OTP_TTL_MS;
+    }
+
+    public static String sendOtpEmail(String email, String fullName, String otpCode) {
+        if (email == null || email.isBlank()) {
+            return "Bạn cần nhập Gmail để nhận OTP.";
+        }
+
+        try {
+            EmailOtpService.sendOtp(email, fullName, otpCode, OTP_TTL_MS / 1000);
+            return null;
+        } catch (IllegalStateException ex) {
+            return "Hệ thống gửi Gmail OTP chưa cấu hình. Vui lòng thiết lập GMAIL_OTP_SENDER và GMAIL_OTP_APP_PASSWORD.";
+        } catch (Exception ex) {
+            return "Không thể gửi OTP qua Gmail. Vui lòng thử gửi lại.";
+        }
     }
 
     public static Map<String, String> getPendingData(HttpSession session) {

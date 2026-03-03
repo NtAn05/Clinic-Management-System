@@ -11,13 +11,13 @@ import model.Status;
 
 public class UserDAO extends DBContext {
 
-    public User checkLogin(String phone, String password) {
+    public User checkLogin(String email, String password) {
         String sql = "SELECT user_id, full_name, phone, email, role, status "
                 + "FROM users "
-                + "WHERE phone = ? AND password_hash = ?";
+                + "WHERE email = ? AND password_hash = ?";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, phone);
+            st.setString(1, email);
             st.setString(2, password);
 
             ResultSet rs = st.executeQuery();
@@ -37,7 +37,7 @@ public class UserDAO extends DBContext {
         return null;
     }
 
-    public void registerPatient(
+   public void registerPatient(
             String fullName,
             String phone,
             String email,
@@ -47,25 +47,55 @@ public class UserDAO extends DBContext {
             String gender
     ) throws SQLException {
 
-        String sql = """
-            INSERT INTO users (full_name, phone, email, password_hash, dob, address, gender, role, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'patient', 'active')
-        """;
+        String sqlUser = """
+        INSERT INTO users (full_name, phone, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, 'patient', 'active')
+    """;
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, fullName);
-            st.setString(2, phone);
-            st.setString(3, email);
-            st.setString(4, password);
-            st.setDate(5, dob);
-            st.setString(6, address);
-            st.setString(7, gender);
+        String sqlPatient = """
+        INSERT INTO patients (user_id, full_name, phone, dob, address, email, gender)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """;
 
-            st.executeUpdate();
+        connection.setAutoCommit(false);
 
+        try (
+                PreparedStatement stUser
+                = connection.prepareStatement(sqlUser, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            // users
+            stUser.setString(1, fullName);
+            stUser.setString(2, phone);
+            stUser.setString(3, email);
+            stUser.setString(4, password); // TODO hash sau
+
+            stUser.executeUpdate();
+
+            ResultSet rs = stUser.getGeneratedKeys();
+            if (!rs.next()) {
+                throw new SQLException("Không lấy được user_id");
+            }
+
+            int userId = rs.getInt(1);
+
+            // patients
+            try (PreparedStatement stPatient = connection.prepareStatement(sqlPatient)) {
+                stPatient.setInt(1, userId);
+                stPatient.setString(2, fullName);
+                stPatient.setString(3, phone);
+                stPatient.setDate(4, dob);
+                stPatient.setString(5, address);
+                stPatient.setString(6, email);
+                stPatient.setString(7, gender); // male/female/other
+
+                stPatient.executeUpdate();
+            }
+
+            connection.commit();
         } catch (SQLException e) {
-            e.printStackTrace();
+            connection.rollback();
             throw e;
+        } finally {
+            connection.setAutoCommit(true);
         }
     }
 
