@@ -142,7 +142,6 @@
             .terms-box strong {
                 color: #333;
             }
-            /* Tùy chỉnh thanh cuộn cho đẹp */
             .terms-box::-webkit-scrollbar {
                 width: 6px;
             }
@@ -226,28 +225,10 @@
                         <label>Nhập lại mật khẩu *</label>
                         <input type="password" name="confirmPassword" required>
                     </div>
-
-                    <div class="terms-box" id="termsBox">
-                        <h4>Điều Khoản Dịch Vụ & Chính Sách Bảo Mật</h4>
-                        <p>Chào mừng bạn đến với <strong>Phòng khám ABC</strong>. Bằng việc đăng ký tài khoản, bạn đồng ý với các điều khoản sau:</p>
-                        
-                        <strong>1. Mục đích thu thập thông tin</strong>
-                        <p>Chúng tôi thu thập thông tin cá nhân (Họ tên, SĐT, Ngày sinh, v.v.) nhằm mục đích quản lý hồ sơ bệnh án, hỗ trợ đặt lịch khám và gửi thông báo nhắc nhở y tế. Thông tin này là bắt buộc để đảm bảo an toàn trong công tác khám chữa bệnh.</p>
-                        
-                        <strong>2. Cam kết bảo mật dữ liệu</strong>
-                        <p>Hồ sơ y tế của bạn được bảo mật tuyệt đối theo quy định của Bộ Y tế. Phòng khám ABC cam kết KHÔNG mua bán, trao đổi hoặc cung cấp dữ liệu cá nhân của bạn cho bất kỳ bên thứ ba nào khi chưa có sự đồng ý bằng văn bản, ngoại trừ các trường hợp cơ quan chức năng yêu cầu theo pháp luật.</p>
-
-                        <strong>3. Trách nhiệm của người bệnh</strong>
-                        <p>Bạn cam kết cung cấp thông tin cá nhân và tiền sử bệnh lý chính xác. Việc cung cấp sai lệch thông tin có thể ảnh hưởng đến kết quả chẩn đoán và điều trị, phòng khám sẽ không chịu trách nhiệm trong trường hợp này. Bạn có trách nhiệm tự bảo mật thông tin đăng nhập (mật khẩu) của mình.</p>
-                        
-                        <strong>4. Quyền lợi của bạn</strong>
-                        <p>Bạn có quyền truy cập, yêu cầu chỉnh sửa hoặc xóa hồ sơ cá nhân của mình trên hệ thống (trừ các dữ liệu bắt buộc lưu trữ theo luật y tế). Bạn có quyền từ chối nhận các tin nhắn quảng cáo từ phòng khám bất cứ lúc nào.</p>
-                    </div>
-
                     <div style="font-size: 13px; color: #333; margin-bottom: 20px; font-weight: 500; display: flex; align-items: flex-start; gap: 8px;">
                         <input type="checkbox" id="agree" required style="margin-top: 2px; cursor: pointer; width: auto; transform: scale(1.2);"> 
                         <label for="agree" style="cursor: pointer; margin: 0; line-height: 1.5;">
-                            Tôi đã đọc, hiểu và đồng ý toàn bộ nội dung <strong>Điều khoản dịch vụ</strong> và <strong>Chính sách bảo mật</strong> nêu trên.
+                            Tôi đã đọc, hiểu và đồng ý toàn bộ nội dung <strong>Điều khoản dịch vụ</strong> và <strong>Chính sách bảo mật</strong>.
                         </label>
                     </div>
                     <button type="submit" class="btn-submit">Tiếp tục xác thực Email</button>
