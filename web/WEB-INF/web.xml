@@ -48,6 +48,10 @@
         <servlet-name>VerifyEmailServlet</servlet-name>
         <servlet-class>controller.VerifyEmailServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>HistoryOfAppointmentServlet</servlet-name>
+        <servlet-class>controller.historyOfAppointment.HistoryOfAppointmentServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <url-pattern>/doctorDashboard</url-pattern>
@@ -127,5 +131,9 @@
     <servlet-mapping>
         <servlet-name>VerifyEmailServlet</servlet-name>
         <url-pattern>/verify-email</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>HistoryOfAppointmentServlet</servlet-name>
+        <url-pattern>/historyofappointmentservlet</url-pattern>
     </servlet-mapping>
 </web-app>

@@ -15,6 +15,7 @@ public class Patient {
     public Patient() {
     }
 
+    
     public Patient(Integer userId, String fullName, String phone, Date dob, String email, String gender) {
         this.userId = userId;
         this.fullName = fullName;

@@ -369,8 +369,8 @@ textarea {
 }
 
 .success-icon-box {
-    width: 120px;
-    height: 120px;
+    width: 200px;
+    height: 200px;
     border-radius: 50%;
     background-color: #e8f8f0; 
     display: flex;
@@ -380,7 +380,7 @@ textarea {
 }
 
 .success-icon {
-    width: 70px;
-    height: 70px;
+    width: 200px;
+    height: 200px;
     object-fit: contain;
 }

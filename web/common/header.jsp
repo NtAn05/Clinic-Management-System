@@ -230,7 +230,7 @@
                 <c:if test="${roleName == 'admin'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
+                    <!--<a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>-->
 
                 </c:if>
 
@@ -264,7 +264,7 @@
                         <c:if test="${roleName == 'patient'}">
                             <a class="profile-item" href="${pageContext.request.contextPath}/patient-medical-records">Hồ sơ bệnh án</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/patient-prescription">Đơn thuốc</a>
-                            <a class="profile-item" href="${pageContext.request.contextPath}/appointmentservlet">Thông tin đặt lịch</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/historyofappointmentservlet">Thông tin đặt lịch</a>
                         </c:if>
 
                         <hr class="profile-divider" />

@@ -110,13 +110,13 @@
                                 <div class="form-grid confirm-view">
                                     <div>
                                         <label>Ca khám</label>
-                                        <c:if test="${time == 'morning'}">
+                                        <c:if test="${time == '07:30'}">
                                             <p>
                                                 <strong>Ca sáng</strong>
                                                 <span>07:00 - 11:30</span>
                                             </p>
                                         </c:if>
-                                        <c:if test="${time == 'afternoon'}">
+                                        <c:if test="${time == '13:30'}">
                                             <p>
                                                 <strong>Ca chiều</strong>
                                                 <span>13:30 - 17:00</span>

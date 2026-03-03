@@ -59,7 +59,6 @@ public class UserInformationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        System.out.println("=======================Nigger!");
         HttpSession session = request.getSession(false);
 //        System.out.println("Test display session : ",session);
         if (session == null || session.getAttribute("account") == null) {
@@ -120,6 +119,8 @@ public class UserInformationServlet extends HttpServlet {
             String txtImage = request.getParameter("txtImage");
 
             users.updateUser(userId, name, phone, email, address);
+            User updatedUser = users.getUserById1(userId);
+            session.setAttribute("account", updatedUser);
 response.sendRedirect(request.getContextPath() + "/userinformationservlet");        }
 
         if ("changePass".equals(action)) {

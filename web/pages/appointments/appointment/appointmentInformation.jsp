@@ -103,13 +103,13 @@
                             <div class="time-slots" id="dateRadios"></div>
 
                             <div class="time-slots">
-                                <input type="radio" name="time" id="morning" value="morning" checked>
+                                <input type="radio" name="time" id="morning" value="07:30" checked>
                                 <label for="morning" class="slot">
                                     <strong>Ca sáng</strong>
-                                    <span>07:00 - 11:30</span>
+                                    <span>30 - 11:30</span>
                                 </label>
 
-                                <input type="radio" name="time" id="afternoon" value="afternoon">
+                                <input type="radio" name="time" id="afternoon" value="13:30">
                                 <label for="afternoon" class="slot">
                                     <strong>Ca chiều</strong>
                                     <span>13:30 - 17:00</span>

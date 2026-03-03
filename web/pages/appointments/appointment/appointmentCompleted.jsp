@@ -46,7 +46,7 @@
 
                         <div class="success-wrapper">
                             <div class="success-icon-box">
-                                <img src="https://png.pngtree.com/png-vector/20250322/ourlarge/pngtree-check-mark-voting-checklist-png-image_15845205.png"
+                                <img src="https://tse1.mm.bing.net/th/id/OIP.dSGCRzF6aLogIpu-UJt7gAHaF4?pid=Api&h=220&P=0"
                                      alt="Thành công"
                                      class="success-icon">
                             </div>

@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import model.Appointment;
 import model.Doctor;
 import model.Patient;
@@ -60,7 +61,10 @@ public class AppointmentServlet extends HttpServlet {
         String note = request.getParameter("note");
         String date = request.getParameter("date");
         java.sql.Date sqlDate = java.sql.Date.valueOf(date);
-        String time = request.getParameter("time");
+        String timeStr = request.getParameter("time");
+
+        LocalTime localTime = LocalTime.parse(timeStr);
+        java.sql.Time sqlTime = java.sql.Time.valueOf(localTime);
         String submit = request.getParameter("btnSubmit");
 
         // Tạo đối tượng
@@ -69,7 +73,7 @@ public class AppointmentServlet extends HttpServlet {
         request.setAttribute("doctor", doctor);
 
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-        Appointment appointment = new Appointment(1, doctorId, 1, "online", sqlDate, time, "booked", note);
+        Appointment appointment = new Appointment(1, doctorId, 1, "online", sqlDate, sqlTime, "booked", note);
 
         // Validate thông tin
         String errorPhone = "";
@@ -89,12 +93,11 @@ public class AppointmentServlet extends HttpServlet {
         request.setAttribute("appointment", appointment);
         request.setAttribute("patient", patient);
         request.setAttribute("address", address);
-        
+
         request.setAttribute("status", status);
-        request.setAttribute("time", time);
+        request.setAttribute("time", timeStr);
         request.setAttribute("date", date);
 
-        // ✅ Xử lý step2: tạo đơn thanh toán
         if (submit != null && submit.equalsIgnoreCase("step2")) {
 
             try {
@@ -117,7 +120,7 @@ public class AppointmentServlet extends HttpServlet {
                 CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
                         .orderCode(orderCode)
                         .amount(amount)
-                        .description( name +" thanh toan"  )
+                        .description(name + " thanh toan")
                         .returnUrl("http://localhost:8080/PhongKhamDaLieu/appointmentpaymentservlet")
                         .cancelUrl("http://localhost:8080/PhongKhamDaLieu/pages/appointments/appointment/appointmentFailPayment.jsp")
                         .build();

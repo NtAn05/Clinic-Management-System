@@ -11,7 +11,7 @@ package model;
 public class Doctors {
      private int doctorId;
     private int userId;
-
+    
     private String qualification;
     private int experienceYears;
     private String specialization;

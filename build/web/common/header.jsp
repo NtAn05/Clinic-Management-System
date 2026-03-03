@@ -226,19 +226,12 @@
             </c:if>
 
             <c:if test="${sessionScope.account != null}">
-<<<<<<< Updated upstream
 
                 <c:if test="${roleName == 'admin'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
+                    <!--<a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>-->
 
-=======
-                
-                <c:if test="${roleName == 'admin'}">
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
->>>>>>> Stashed changes
                 </c:if>
 
                 <c:if test="${roleName == 'doctor'}">
@@ -248,11 +241,7 @@
                 <c:if test="${roleName == 'technician'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/technician-dashboard">Quản lý xét nghiệm</a>
                 </c:if>
-<<<<<<< Updated upstream
 
-=======
-                
->>>>>>> Stashed changes
                 <c:if test="${roleName == 'receptionist'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/lab-payment">Quản lý tiếp nhận</a>
                 </c:if>
@@ -269,19 +258,13 @@
 
                     <div class="profile-popup" id="profilePopup">
                         <div class="profile-popup-title">Quản lý cá nhân</div>
-<<<<<<< Updated upstream
 
                         <a class="profile-item" href="${pageContext.request.contextPath}/userinformationservlet">Tài khoản của tôi</a>
 
-=======
-                        
-                        <a class="profile-item" href="${pageContext.request.contextPath}/userinformationservlet">Tài khoản của tôi</a>
-                        
->>>>>>> Stashed changes
                         <c:if test="${roleName == 'patient'}">
                             <a class="profile-item" href="${pageContext.request.contextPath}/patient-medical-records">Hồ sơ bệnh án</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/patient-prescription">Đơn thuốc</a>
-                            <a class="profile-item" href="${pageContext.request.contextPath}/appointmentservlet">Thông tin đặt lịch</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/historyofappointmentservlet">Thông tin đặt lịch</a>
                         </c:if>
 
                         <hr class="profile-divider" />

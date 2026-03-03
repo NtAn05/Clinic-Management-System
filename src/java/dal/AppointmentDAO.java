@@ -4,15 +4,16 @@
  */
 package dal;
 
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import model.Appointment;
+import model.AppointmentDetail;
 import model.Doctor;
 import model.Patient;
-
 
 /**
  *
@@ -205,9 +206,11 @@ public class AppointmentDAO extends DBContext {
     }
 
     public boolean addAppointment(Appointment a) {
+
         String sql = "INSERT INTO appointments "
-                + "(patient_id, doctor_id, shift_id, booking_type, status, symptom) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                + "(patient_id, doctor_id, shift_id, booking_type, "
+                + "appointment_date, appointment_time, status, symptom) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
 
@@ -215,8 +218,10 @@ public class AppointmentDAO extends DBContext {
             st.setInt(2, a.getDoctorId());
             st.setInt(3, a.getShiftId());
             st.setString(4, a.getBookingType());
-            st.setString(5, a.getStatus());
-            st.setString(6, a.getSymptom());
+            st.setDate(5, (Date) a.getAppointmentDate());
+            st.setTime(6, a.getAppointmentTime());
+            st.setString(7, a.getStatus());
+            st.setString(8, a.getSymptom());
 
             return st.executeUpdate() > 0;
 
@@ -229,7 +234,7 @@ public class AppointmentDAO extends DBContext {
 
     public long addPatient(Patient p) {
         String sql = "INSERT INTO patients (user_id, full_name, phone, dob, email, gender) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
 
@@ -275,5 +280,82 @@ public class AppointmentDAO extends DBContext {
 
         return -1;
     }
+    
+    
+    
+   public List<AppointmentDetail> getAppointmentsByPatientUserId(int userId) {
+
+    List<AppointmentDetail> list = new ArrayList<>();
+
+    String sql = "SELECT "
+            + "a.appointment_id, "
+            + "a.patient_id, "
+            + "a.doctor_id, "
+            + "a.shift_id, "
+            + "a.booking_type, "
+            + "a.appointment_date, "
+            + "a.appointment_time, "
+            + "a.status, "
+            + "a.symptom, "
+
+            + "d.specialization, "
+            + "d.qualification, "
+            + "d.price_booking, "
+
+            + "du.user_id AS doctor_user_id, "
+            + "du.image_url, "
+
+            + "p.full_name, "
+            + "p.phone, "
+            + "p.email "
+
+            + "FROM appointments a "
+            + "JOIN patients p ON a.patient_id = p.patient_id "
+            + "JOIN doctors d ON a.doctor_id = d.doctor_id "
+            + "JOIN users du ON d.user_id = du.user_id "
+            + "WHERE p.user_id = ? "
+            + "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+
+    try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+        st.setInt(1, userId);
+        ResultSet rs = st.executeQuery();
+
+        while (rs.next()) {
+
+            AppointmentDetail ad = new AppointmentDetail();
+
+            // appointment
+            ad.setAppointmentId(rs.getLong("appointment_id"));
+            ad.setPatientId(rs.getLong("patient_id"));
+            ad.setDoctorId(rs.getInt("doctor_id"));
+            ad.setShiftId(rs.getInt("shift_id"));
+            ad.setBookingType(rs.getString("booking_type"));
+            ad.setAppointmentDate(rs.getDate("appointment_date"));
+            ad.setAppointmentTime(rs.getTime("appointment_time"));
+            ad.setStatus(rs.getString("status"));
+            ad.setSymptom(rs.getString("symptom"));
+
+            // doctor
+            ad.setSpecialization(rs.getString("specialization"));
+            ad.setQualification(rs.getString("qualification"));
+            ad.setPrice(rs.getDouble("price_booking"));
+            ad.setUserId(rs.getInt("doctor_user_id"));
+            ad.setImage(rs.getString("image_url"));
+
+            // patient
+            ad.setFullName(rs.getString("full_name"));
+            ad.setPhone(rs.getString("phone"));
+            ad.setEmail(rs.getString("email"));
+
+            list.add(ad);
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return list;
+}
 
 }
