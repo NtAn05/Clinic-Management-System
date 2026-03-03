@@ -10,10 +10,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import model.Appointment;
-import model.Appointments;
 import model.Doctor;
 import model.Patient;
-import model.Patients;
+
 
 /**
  *
@@ -205,7 +204,7 @@ public class AppointmentDAO extends DBContext {
         return null;
     }
 
-    public boolean addAppointment(Appointments a) {
+    public boolean addAppointment(Appointment a) {
         String sql = "INSERT INTO appointments "
                 + "(patient_id, doctor_id, shift_id, booking_type, status, symptom) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
@@ -228,8 +227,8 @@ public class AppointmentDAO extends DBContext {
         return false;
     }
 
-    public long addPatient(Patients p) {
-        String sql = "INSERT INTO patients (user_id, full_name, phone, dob, address, email, gender) "
+    public long addPatient(Patient p) {
+        String sql = "INSERT INTO patients (user_id, full_name, phone, dob, email, gender) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -238,9 +237,8 @@ public class AppointmentDAO extends DBContext {
             st.setString(2, p.getFullName());
             st.setString(3, p.getPhone());
             st.setDate(4, new java.sql.Date(p.getDob().getTime()));
-            st.setString(5, p.getAddress());
-            st.setString(6, p.getEmail());
-            st.setString(7, p.getGender());
+            st.setString(5, p.getEmail());
+            st.setString(6, p.getGender());
 
             st.executeUpdate();
 
@@ -255,7 +253,7 @@ public class AppointmentDAO extends DBContext {
         return -1;
     }
 
-    public long getPatientID(Patients patient) {
+    public long getPatientID(Patient patient) {
         String sql = "SELECT patient_id FROM patients "
                 + "WHERE full_name = ? AND phone = ? AND email = ?";
 

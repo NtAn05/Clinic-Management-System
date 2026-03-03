@@ -228,7 +228,7 @@
                     <button type="submit" class="btn-submit">Đăng nhập</button>
                 </form>
                 <div class="footer-link">
-                    Chưa có tài khoản? <a href="register.jsp">Đăng ký ngay</a>
+                    Chưa có tài khoản? <a href="${pageContext.request.contextPath}/register">Đăng ký ngay</a>
                 </div>
             </div>
 

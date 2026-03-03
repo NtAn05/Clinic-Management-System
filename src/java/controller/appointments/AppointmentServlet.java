@@ -11,9 +11,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.time.LocalDate;
-import model.Appointments;
+import model.Appointment;
 import model.Doctor;
-import model.Patients;
+import model.Patient;
 
 public class AppointmentServlet extends HttpServlet {
 
@@ -59,6 +59,7 @@ public class AppointmentServlet extends HttpServlet {
         String address = request.getParameter("address");
         String note = request.getParameter("note");
         String date = request.getParameter("date");
+        java.sql.Date sqlDate = java.sql.Date.valueOf(date);
         String time = request.getParameter("time");
         String submit = request.getParameter("btnSubmit");
 
@@ -67,8 +68,8 @@ public class AppointmentServlet extends HttpServlet {
         Doctor doctor = dao.getDoctorById(doctorID);
         request.setAttribute("doctor", doctor);
 
-        Patients patient = new Patients(1, useId, name, sdt, birthDate, address, email, gender);
-        Appointments appointment = new Appointments(1, doctor.getDoctorId(), 3, "online", "No Checkin", note);
+        Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
+        Appointment appointment = new Appointment(1, doctorId, 1, "online", sqlDate, time, "booked", note);
 
         // Validate thông tin
         String errorPhone = "";
@@ -87,6 +88,8 @@ public class AppointmentServlet extends HttpServlet {
         request.setAttribute("errorEmail", errorEmail);
         request.setAttribute("appointment", appointment);
         request.setAttribute("patient", patient);
+        request.setAttribute("address", address);
+        
         request.setAttribute("status", status);
         request.setAttribute("time", time);
         request.setAttribute("date", date);
@@ -114,7 +117,7 @@ public class AppointmentServlet extends HttpServlet {
                 CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
                         .orderCode(orderCode)
                         .amount(amount)
-                        .description("Thanh toan")
+                        .description( name +" thanh toan"  )
                         .returnUrl("http://localhost:8080/PhongKhamDaLieu/appointmentpaymentservlet")
                         .cancelUrl("http://localhost:8080/PhongKhamDaLieu/pages/appointments/appointment/appointmentFailPayment.jsp")
                         .build();

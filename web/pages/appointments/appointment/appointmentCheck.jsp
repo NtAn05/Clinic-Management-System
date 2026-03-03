@@ -92,8 +92,8 @@
 
                                 <div>
                                     <label>Địa chỉ</label>
-                                    <p>${patient.getAddress()}</p>
-                                    <input type="hidden" name="address" value="${patient.getAddress()}">
+                                    <p>${address}</p>
+                                    <input type="hidden" name="address" value="${address}">
                                 </div>
                             </div>
                             <div>

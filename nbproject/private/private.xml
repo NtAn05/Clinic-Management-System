@@ -5,7 +5,6 @@
         <group>
             <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/appointments/AppointmentServlet.java</file>
             <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/userInformation/userInformation.css</file>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/userInformation/UserInformationServlet.java</file>
             <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/appointments/AppointmentPaymentServlet.java</file>
             <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/dal/UserDAO.java</file>
             <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/model/User.java</file>

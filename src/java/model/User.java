@@ -16,6 +16,16 @@ public class User {
     public User() {
     }
 
+    public User(int userId, String fullName, String phone, String email, String passwordHash, Role role, Status status) {
+        this.userId = userId;
+        this.fullName = fullName;
+        this.phone = phone;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.role = role;
+        this.status = status;
+    }
+    
     public User(int userId, String fullName, String phone, String email, String passwordHash, Role role, Status status, String address, String imageUrl) {
         this.userId = userId;
         this.fullName = fullName;

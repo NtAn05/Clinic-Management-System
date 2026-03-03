@@ -223,6 +223,10 @@ public class UserDAO extends DBContext {
         return null;
     }
 
+
+    
+
+
     public List<User> getPatientList() {
         String sql = """
         SELECT u.user_id, u.full_name, u.phone, u.email, u.role, u.status 
@@ -440,7 +444,7 @@ public class UserDAO extends DBContext {
         SET full_name = ?,
             phone = ?,
             email = ?,
-            address = ?,
+            
             updated_at = CURRENT_TIMESTAMP
         WHERE user_id = ?
         """;
@@ -450,8 +454,7 @@ public class UserDAO extends DBContext {
             ps.setString(1, name);
             ps.setString(2, phone);
             ps.setString(3, email);
-            ps.setString(4, address);
-            ps.setInt(5, id);
+            ps.setInt(4, id);
             ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();

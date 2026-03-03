@@ -54,7 +54,7 @@
                             </div>
                         </div>
 
-                        <label style="color: red">Cuộc hẹn của bạn đã được đặt thành công !!!</label>
+                        <label style="color: red">Cuộc hẹn của bạn bị hủy !!!</label>
                         <br>
 
                         <div class="actions">

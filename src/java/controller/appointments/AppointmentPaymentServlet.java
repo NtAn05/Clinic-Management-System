@@ -12,8 +12,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Appointments;
-import model.Patients;
+import model.Appointment;
+import model.Patient;
 
 /**
  *
@@ -64,13 +64,13 @@ public class AppointmentPaymentServlet extends HttpServlet {
 
         if ("00".equals(code) && "PAID".equals(status)) {
             HttpSession session = request.getSession();
-            Patients patient = (Patients) session.getAttribute("pendingPatient");
-            Appointments appointment = (Appointments) session.getAttribute("pendingAppointment");
+            Patient patient = (Patient) session.getAttribute("pendingPatient");
+            Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
             if (patient != null && appointment != null) {
                 AppointmentDAO dao = new AppointmentDAO();
                 dao.addPatient(patient);
                 long patientId = dao.getPatientID(patient);
-                Appointments appointment1 = new Appointments(patientId, appointment.getDoctorId(), appointment.getShiftId(), appointment.getBookingType(), appointment.getStatus(), appointment.getSymptom());
+                Appointment appointment1 = new Appointment(patientId, appointment.getDoctorId(), appointment.getShiftId(), appointment.getBookingType(), appointment.getAppointmentDate(), appointment.getAppointmentTime(), appointment.getStatus(), appointment.getSymptom());
                 dao.addAppointment(appointment1);
                 session.removeAttribute("pendingPatient");
                 session.removeAttribute("pendingAppointment");

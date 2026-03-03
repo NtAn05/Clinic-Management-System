@@ -3,25 +3,23 @@ package model;
 import java.sql.Date;
 
 public class Patient {
-    private long patientId;
-    private Integer userId;
-    private String fullName;
-    private String phone;
-    private Date dob;
-    private String address;
-    private String email;
-    private String gender;
+    private long patientId;     
+    private Integer userId;     
+    private String fullName;    
+    private String phone;       
+    private Date dob;           
+    private String email;       
+    private String gender;      
+   
 
     public Patient() {
     }
 
-    public Patient(long patientId, Integer userId, String fullName, String phone, Date dob, String address, String email, String gender) {
-        this.patientId = patientId;
+    public Patient(Integer userId, String fullName, String phone, Date dob, String email, String gender) {
         this.userId = userId;
         this.fullName = fullName;
         this.phone = phone;
         this.dob = dob;
-        this.address = address;
         this.email = email;
         this.gender = gender;
     }
@@ -66,14 +64,6 @@ public class Patient {
         this.dob = dob;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
     public String getEmail() {
         return email;
     }
@@ -89,5 +79,9 @@ public class Patient {
     public void setGender(String gender) {
         this.gender = gender;
     }
+
+   
+
+    
 }
 

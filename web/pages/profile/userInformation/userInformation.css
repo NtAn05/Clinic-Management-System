@@ -1,4 +1,5 @@
-    /* ===== RESET ===== */
+/* ================= GLOBAL ================= */
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -7,21 +8,22 @@
 }
 
 body {
-    background-color: #f4f6f9;
+    background: #f4f7fe;
+    padding-top: 80px;
+    color: #333;
 }
 
-/* ===== PAGE ===== */
+/* ================= PAGE WRAPPER ================= */
+
 .page {
-    max-width: 1000px;
-    margin: 40px auto;
-    background: #fff;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    width: 95%;
+    max-width: 1100px;
+    margin: auto;
+    margin-bottom: 50px;
 }
 
 .page h3 {
-    font-size: 22px;
+    font-size: 26px;
     margin-bottom: 5px;
 }
 
@@ -30,12 +32,17 @@ body {
     margin-bottom: 25px;
 }
 
-/* ===== PROFILE TOP ===== */
+/* ================= PROFILE HEADER ================= */
+
 .profile-top {
+    background: white;
+    padding: 20px 25px;
+    border-radius: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
 }
 
 .profile-left {
@@ -44,116 +51,98 @@ body {
     gap: 20px;
 }
 
-.avatar img {
-    width: 110px;
-    height: 110px;
+.avatar {
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #4e73df;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    border: 3px solid #4a90e2;
 }
 
 .profile-name h2 {
-    margin-bottom: 5px;
+    font-size: 22px;
 }
 
 .profile-role {
-    color: #4a90e2;
-    font-weight: 600;
-    text-transform: capitalize;
+    background: #4e73df;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
 }
 
-/* ===== BUTTON ===== */
+/* ================= BUTTON ================= */
+
 .btn-edit-profile {
-    background: #4a90e2;
+    background: #4e73df;
     color: white;
     border: none;
     padding: 10px 18px;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
-    transition: 0.2s;
+    font-weight: 600;
+    transition: 0.3s;
 }
 
 .btn-edit-profile:hover {
-    background: #357bd8;
+    background: #2e59d9;
 }
 
-/* ===== MAIN CONTENT ===== */
-.main {
-    margin-top: 20px;
+/* ================= MAIN GRID ================= */
+
+
+   .main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+
 }
+
+/* ================= INFO BOX ================= */
 
 .info-box {
-    background: #fafafa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 25px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .info-box h4 {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #4e73df;
+}
+
+/* VIEW MODE */
+
+.profile-view .info-box div {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.profile-view .info-box div:last-child {
+    border-bottom: none;
+}
+
+.profile-view label {
+    font-weight: 600;
+    color: #555;
+}
+
+.profile-view p {
     color: #333;
 }
 
-.info-box div {
-    margin-bottom: 12px;
-}
+/* ================= EDIT MODE ================= */
 
-.info-box label {
-    font-weight: 600;
-    display: block;
-    margin-bottom: 5px;
-    color: #444;
-}
-
-.info-box p {
-    background: #fff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-}
-
-/* ===== FORM ===== */
-.info-box input[type="text"],
-.info-box input[type="email"],
-.info-box input[type="file"],
-.info-box input[type="password"] {
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    transition: 0.2s;
-}
-
-.info-box input:focus {
-    border-color: #4a90e2;
-    outline: none;
-}
-
-/* ===== SAVE BUTTON ===== */
-button[type="submit"] {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-button[type="submit"]:hover {
-    background: #218838;
-}
-
-/* ===== SECURITY BOX ===== */
-.security {
-    background: #fff3f3;
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #ffd6d6;
-}
-
-/* ===== TOGGLE VIEW / EDIT ===== */
 .profile-edit {
     display: none;
 }
@@ -164,4 +153,109 @@ button[type="submit"]:hover {
 
 .page.edit-mode .profile-edit {
     display: block;
+}
+
+.profile-edit .info-box div {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.profile-edit label {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.profile-edit input[type="text"],
+.profile-edit input[type="email"],
+.profile-edit input[type="file"] {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    transition: 0.3s;
+}
+
+.profile-edit input:focus {
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 5px rgba(78,115,223,0.3);
+}
+
+.profile-edit button {
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background: #28a745;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.profile-edit button:hover {
+    background: #218838;
+}
+
+/* ================= CHANGE PASSWORD ================= */
+
+.security {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.security h4 {
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #d63031;
+}
+
+.security div {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.security label {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.security input[type="password"] {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    transition: 0.3s;
+}
+
+.security input:focus {
+    border-color: #d63031;
+    outline: none;
+    box-shadow: 0 0 5px rgba(214,48,49,0.3);
+}
+
+.security button {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    background: #d63031;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.security button:hover {
+    background: #b71c1c;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (min-width: 768px) {
+    .main {
+        grid-template-columns: 2fr 1fr;
+    }
 }

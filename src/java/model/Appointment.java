@@ -1,5 +1,7 @@
 package model;
 
+import java.util.Date;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
@@ -10,17 +12,26 @@ package model;
  * @author anngu
  */
 public class Appointment {
-    private long appointmentId;
-    private String patientName;
-    private String status;
-    private String symptom;
+     private long appointmentId;     
+    private long patientId;     
+    private int doctorId;         
+    private int shiftId;       
+    private String bookingType;    
+    private Date appointmentDate;   
+    private String appointmentTime;   
+    private String status;         
+    private String symptom;    
 
     public Appointment() {
     }
 
-    public Appointment(long appointmentId, String patientName, String status, String symptom) {
-        this.appointmentId = appointmentId;
-        this.patientName = patientName;
+    public Appointment(long patientId, int doctorId, int shiftId, String bookingType, Date appointmentDate, String appointmentTime, String status, String symptom) {
+        this.patientId = patientId;
+        this.doctorId = doctorId;
+        this.shiftId = shiftId;
+        this.bookingType = bookingType;
+        this.appointmentDate = appointmentDate;
+        this.appointmentTime = appointmentTime;
         this.status = status;
         this.symptom = symptom;
     }
@@ -33,12 +44,52 @@ public class Appointment {
         this.appointmentId = appointmentId;
     }
 
-    public String getPatientName() {
-        return patientName;
+    public long getPatientId() {
+        return patientId;
     }
 
-    public void setPatientName(String patientName) {
-        this.patientName = patientName;
+    public void setPatientId(long patientId) {
+        this.patientId = patientId;
+    }
+
+    public int getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(int doctorId) {
+        this.doctorId = doctorId;
+    }
+
+    public int getShiftId() {
+        return shiftId;
+    }
+
+    public void setShiftId(int shiftId) {
+        this.shiftId = shiftId;
+    }
+
+    public String getBookingType() {
+        return bookingType;
+    }
+
+    public void setBookingType(String bookingType) {
+        this.bookingType = bookingType;
+    }
+
+    public Date getAppointmentDate() {
+        return appointmentDate;
+    }
+
+    public void setAppointmentDate(Date appointmentDate) {
+        this.appointmentDate = appointmentDate;
+    }
+
+    public String getAppointmentTime() {
+        return appointmentTime;
+    }
+
+    public void setAppointmentTime(String appointmentTime) {
+        this.appointmentTime = appointmentTime;
     }
 
     public String getStatus() {
@@ -56,7 +107,6 @@ public class Appointment {
     public void setSymptom(String symptom) {
         this.symptom = symptom;
     }
-    
-    
-    
+
+       
 }

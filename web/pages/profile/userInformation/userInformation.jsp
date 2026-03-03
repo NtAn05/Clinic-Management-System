@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <title>User Information</title>
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/pages/profile/userInformation/userInformation.css">
+      href="${pageContext.request.contextPath}/pages/profile/userInformation/userInformation.css">
 </head>
 <body>
 
