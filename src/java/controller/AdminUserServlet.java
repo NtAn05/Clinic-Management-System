@@ -88,6 +88,24 @@ public class AdminUserServlet extends HttpServlet {
         // Kiểm tra số điện thoại đã tồn tại
         if (userDAO.isPhoneExist(phone)) {
             request.setAttribute("error", "Số điện thoại này đã tồn tại");
+            request.setAttribute("addModalOpen", true);
+            request.setAttribute("addModalType", "patient".equals(roleStr) ? "patient" : "staff");
+            request.setAttribute("addFullName", fullName);
+            request.setAttribute("addPhone", phone);
+            request.setAttribute("addEmail", email);
+            request.setAttribute("addPhoneError", "Số điện thoại này đã tồn tại");
+            loadUsers(request, response);
+            return;
+        }
+
+        if (userDAO.isEmailExist(email)) {
+            request.setAttribute("error", "Email này đã tồn tại");
+            request.setAttribute("addModalOpen", true);
+            request.setAttribute("addModalType", "patient".equals(roleStr) ? "patient" : "staff");
+            request.setAttribute("addFullName", fullName);
+            request.setAttribute("addPhone", phone);
+            request.setAttribute("addEmail", email);
+            request.setAttribute("addEmailError", "Email này đã tồn tại");
             loadUsers(request, response);
             return;
         }
@@ -107,6 +125,7 @@ public class AdminUserServlet extends HttpServlet {
             User newUser = new User();
             newUser.setFullName(fullName);
             newUser.setPhone(phone);
+            newUser.setEmail(email);
             newUser.setPasswordHash(password);
             newUser.setRole(role);
             newUser.setStatus(Status.active);
