@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -266,6 +267,47 @@
                 color: #333;
             }
 
+            .pagination-wrapper {
+                margin-top: 16px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .page-link {
+                min-width: 36px;
+                padding: 10px 14px;
+                border: 1px solid #d9d9d9;
+                border-radius: 10px;
+                background: #fff;
+                color: #333;
+                text-decoration: none;
+                font-weight: 500;
+                text-align: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .page-link:hover {
+                background: #f5f5f5;
+            }
+
+            .page-link.active {
+                background: #0061ff;
+                color: #fff;
+                border-color: #0061ff;
+                pointer-events: none;
+            }
+
+            .page-link.disabled {
+                opacity: .5;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+
             @media (max-width: 768px) {
                 .search-grid {
                     grid-template-columns: 1fr;
@@ -498,7 +540,7 @@
                         <div class="search-grid">
                             <div class="search-group">
                                 <label><i class="fas fa-search"></i> Tìm kiếm</label>
-                                <input type="text" name="search" value="${param.search}" placeholder="Tên dịch vụ..." class="search-input" onkeypress="if(event.keyCode==13) this.form.submit()">
+                                <input type="text" name="search" value="${searchKeyword}" placeholder="Tên dịch vụ..." class="search-input" onkeypress="if(event.keyCode==13) this.form.submit()">
                             </div>
                             <div class="filter-box">
                                 <label><i class="fas fa-filter"></i> Danh mục</label>
@@ -510,12 +552,13 @@
                             </div>
                             <div class="search-group">
                                 <label><i class="fas fa-dollar-sign"></i> Giá từ</label>
-                                <input type="number" name="minPrice" value="${param.minPrice}" min="0" placeholder="0" class="price-input" onchange="this.form.submit()">
+                                <input type="number" name="minPrice" value="${minPriceValue}" min="0" placeholder="0" class="price-input" onchange="this.form.submit()">
                             </div>
                             <div class="search-group">
                                 <label><i class="fas fa-dollar-sign"></i> Giá đến</label>
-                                <input type="number" name="maxPrice" value="${param.maxPrice}" min="0" placeholder="Không giới hạn" class="price-input" onchange="this.form.submit()">
+                                <input type="number" name="maxPrice" value="${maxPriceValue}" min="0" placeholder="Không giới hạn" class="price-input" onchange="this.form.submit()">
                             </div>
+                            <input type="hidden" name="page" value="1">
                             <div class="search-group">
                                 <label>&nbsp;</label>
                                 <div class="button-group">
@@ -532,6 +575,17 @@
                 </div>
 
                 <!-- Danh sách dịch vụ -->
+                <c:set var="pageSize" value="${not empty requestScope.pageSize ? requestScope.pageSize : 10}" />
+                <c:set var="currentPage" value="${not empty requestScope.currentPage ? requestScope.currentPage : (empty param.page ? 1 : param.page)}" />
+                <c:set var="totalRecords" value="${not empty requestScope.totalRecords ? requestScope.totalRecords : (not empty services ? fn:length(services) : 0)}" />
+                <c:set var="totalPages" value="${not empty requestScope.totalPages ? requestScope.totalPages : ((totalRecords + pageSize - 1) div pageSize)}" />
+                <c:set var="isServerPaged" value="${not empty requestScope.totalPages}" />
+                <c:if test="${totalPages == 0}">
+                    <c:set var="currentPage" value="1" />
+                </c:if>
+                <c:if test="${totalPages > 0 and currentPage > totalPages}">
+                    <c:set var="currentPage" value="${totalPages}" />
+                </c:if>
                 <c:choose>
                     <c:when test="${not empty services}">
                         <table>
@@ -544,36 +598,98 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <c:forEach var="service" items="${services}">
-                                    <c:set var="displayType" value="${service.serviceType}"/>
-                                    <c:if test="${service.serviceType eq 'booking_fee'}">
-                                        <c:set var="displayType" value="Khám & tư vấn"/>
-                                    </c:if>
-                                    <c:if test="${service.serviceType eq 'lab'}">
-                                        <c:set var="displayType" value="Kiểm tra chuyên sâu"/>
-                                    </c:if>
-                                    <tr>
-                                        <td><strong>${service.name}</strong></td>
-                                        <td>${displayType}</td>
-                                        <td>${service.price}</td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;${service.price}&quot;)" title="Chỉnh sửa">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
-                                                    <input type="hidden" name="action" value="delete">
-                                                    <input type="hidden" name="serviceId" value="${service.serviceId}">
-                                                    <button type="submit" class="btn-delete" title="Xóa">
-                                                        <i class="fas fa-trash"></i>
+                                <c:forEach var="service" items="${not empty servicesPaged ? servicesPaged : services}" varStatus="st">
+                                    <c:if test="${not empty servicesPaged or (st.index >= (currentPage - 1) * pageSize and st.index < currentPage * pageSize)}">
+                                        <c:set var="displayType" value="${service.serviceType}"/>
+                                        <c:if test="${service.serviceType eq 'booking_fee'}">
+                                            <c:set var="displayType" value="Khám & tư vấn"/>
+                                        </c:if>
+                                        <c:if test="${service.serviceType eq 'lab'}">
+                                            <c:set var="displayType" value="Kiểm tra chuyên sâu"/>
+                                        </c:if>
+                                        <tr>
+                                            <td><strong>${service.name}</strong></td>
+                                            <td>${displayType}</td>
+                                            <td>${service.price}</td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;${service.price}&quot;)" title="Chỉnh sửa">
+                                                        <i class="fas fa-edit"></i>
                                                     </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                                    <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="serviceId" value="${service.serviceId}">
+                                                        <input type="hidden" name="filterSearch" value="${not empty searchKeyword ? searchKeyword : param.search}">
+                                                        <input type="hidden" name="filterCategory" value="${not empty filterCategory ? filterCategory : param.category}">
+                                                        <input type="hidden" name="filterMinPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}">
+                                                        <input type="hidden" name="filterMaxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}">
+                                                        <input type="hidden" name="filterPage" value="${currentPage}">
+                                                        <button type="submit" class="btn-delete" title="Xóa">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:if>
                                 </c:forEach>
                             </tbody>
                         </table>
+
+                        <c:if test="${totalPages > 1}">
+                            <div class="pagination-wrapper">
+                                <c:url var="prevUrl" value="/admin-services">
+                                    <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
+                                    <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
+                                    <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
+                                    <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
+                                    <c:param name="page" value="${currentPage - 1}" />
+                                </c:url>
+                                <c:url var="nextUrl" value="/admin-services">
+                                    <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
+                                    <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
+                                    <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
+                                    <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
+                                    <c:param name="page" value="${currentPage + 1}" />
+                                </c:url>
+
+                                <c:choose>
+                                    <c:when test="${currentPage > 1}">
+                                        <a class="page-link" href="${prevUrl}">‹ Trước</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="page-link disabled">‹ Trước</span>
+                                    </c:otherwise>
+                                </c:choose>
+
+                                <c:forEach var="i" begin="1" end="${totalPages}">
+                                    <c:url var="pageUrl" value="/admin-services">
+                                        <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
+                                        <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
+                                        <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
+                                        <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
+                                        <c:param name="page" value="${i}" />
+                                    </c:url>
+                                    <c:choose>
+                                        <c:when test="${i == currentPage}">
+                                            <span class="page-link active">${i}</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a class="page-link" href="${pageUrl}">${i}</a>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:forEach>
+
+                                <c:choose>
+                                    <c:when test="${currentPage < totalPages}">
+                                        <a class="page-link" href="${nextUrl}">Sau ›</a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="page-link disabled">Sau ›</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </c:if>
                     </c:when>
                     <c:otherwise>
                         <div class="no-data">
@@ -595,6 +711,11 @@
 
                 <form method="POST" action="${pageContext.request.contextPath}/admin-services">
                     <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="filterSearch" value="${searchKeyword}">
+                    <input type="hidden" name="filterCategory" value="${filterCategory}">
+                    <input type="hidden" name="filterMinPrice" value="${minPriceValue}">
+                    <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
+                    <input type="hidden" name="filterPage" value="${currentPage}">
 
                     <div class="form-group-modal">
                         <label>Tên dịch vụ <span style="color: red;">*</span></label>
@@ -638,6 +759,11 @@
                 <form method="POST" action="${pageContext.request.contextPath}/admin-services">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="serviceId" id="editServiceId">
+                    <input type="hidden" name="filterSearch" value="${searchKeyword}">
+                    <input type="hidden" name="filterCategory" value="${filterCategory}">
+                    <input type="hidden" name="filterMinPrice" value="${minPriceValue}">
+                    <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
+                    <input type="hidden" name="filterPage" value="${currentPage}">
 
                     <div class="form-group-modal">
                         <label>Tên dịch vụ <span style="color: red;">*</span></label>
