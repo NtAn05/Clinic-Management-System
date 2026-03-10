@@ -145,6 +145,7 @@ public class AdminUserServlet extends HttpServlet {
     private void handleEditUser(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
         String userIdStr = request.getParameter("userId");
+        String editType = request.getParameter("editType");
         String fullName = request.getParameter("fullname");
         String phone = request.getParameter("phone");
         String email = request.getParameter("email");
@@ -152,15 +153,55 @@ public class AdminUserServlet extends HttpServlet {
 
         if (userIdStr == null || userIdStr.trim().isEmpty()
                 || fullName == null || fullName.trim().isEmpty()
-                || phone == null || phone.trim().isEmpty()) {
+                || phone == null || phone.trim().isEmpty()
+                || email == null || email.trim().isEmpty()) {
             request.setAttribute("error", "Vui lòng điền đầy đủ thông tin");
+            request.setAttribute("editModalOpen", true);
+            request.setAttribute("editModalType", "patient".equals(editType) ? "patient" : "staff");
+            request.setAttribute("editUserId", userIdStr);
+            request.setAttribute("editFullName", fullName);
+            request.setAttribute("editPhone", phone);
+            request.setAttribute("editEmail", email);
+            request.setAttribute("editStatusValue", statusStr != null ? statusStr : "active");
             loadUsers(request, response);
             return;
         }
 
         UserDAO userDAO = new UserDAO();
+
         try {
             int userId = Integer.parseInt(userIdStr);
+
+            User phoneOwner = userDAO.getUserByPhone(phone);
+            if (phoneOwner != null && phoneOwner.getUserId() != userId) {
+                request.setAttribute("error", "Số điện thoại này đã tồn tại");
+                request.setAttribute("editModalOpen", true);
+                request.setAttribute("editModalType", "patient".equals(editType) ? "patient" : "staff");
+                request.setAttribute("editUserId", userIdStr);
+                request.setAttribute("editFullName", fullName);
+                request.setAttribute("editPhone", phone);
+                request.setAttribute("editEmail", email);
+                request.setAttribute("editStatusValue", statusStr != null ? statusStr : "active");
+                request.setAttribute("editPhoneError", "Số điện thoại này đã tồn tại");
+                loadUsers(request, response);
+                return;
+            }
+
+            User emailOwner = userDAO.getUserByEmail(email);
+            if (emailOwner != null && emailOwner.getUserId() != userId) {
+                request.setAttribute("error", "Email này đã tồn tại");
+                request.setAttribute("editModalOpen", true);
+                request.setAttribute("editModalType", "patient".equals(editType) ? "patient" : "staff");
+                request.setAttribute("editUserId", userIdStr);
+                request.setAttribute("editFullName", fullName);
+                request.setAttribute("editPhone", phone);
+                request.setAttribute("editEmail", email);
+                request.setAttribute("editStatusValue", statusStr != null ? statusStr : "active");
+                request.setAttribute("editEmailError", "Email này đã tồn tại");
+                loadUsers(request, response);
+                return;
+            }
+
             User user = new User();
             user.setUserId(userId);
             user.setFullName(fullName);
@@ -171,24 +212,26 @@ public class AdminUserServlet extends HttpServlet {
             userDAO.updateUser(user);
             request.setAttribute("success", "Cập nhật tài khoản thành công");
         } catch (SQLException e) {
-            request.setAttribute("error", getFriendlyUpdateErrorMessage(e));
+            request.setAttribute("error", "Lỗi khi cập nhật thông tin: " + e.getMessage());
+            request.setAttribute("editModalOpen", true);
+            request.setAttribute("editModalType", "patient".equals(editType) ? "patient" : "staff");
+            request.setAttribute("editUserId", userIdStr);
+            request.setAttribute("editFullName", fullName);
+            request.setAttribute("editPhone", phone);
+            request.setAttribute("editEmail", email);
+            request.setAttribute("editStatusValue", statusStr != null ? statusStr : "active");
         } catch (Exception e) {
-            request.setAttribute("error", "Lỗi khi cập nhật: " + e.getMessage());
+            request.setAttribute("error", "Lỗi khi câp nhật: " + e.getMessage());
+            request.setAttribute("editModalOpen", true);
+            request.setAttribute("editModalType", "patient".equals(editType) ? "patient" : "staff");
+            request.setAttribute("editUserId", userIdStr);
+            request.setAttribute("editFullName", fullName);
+            request.setAttribute("editPhone", phone);
+            request.setAttribute("editEmail", email);
+            request.setAttribute("editStatusValue", statusStr != null ? statusStr : "active");
         }
 
         loadUsers(request, response);
-    }
-
-    private String getFriendlyUpdateErrorMessage(SQLException e) {
-        String message = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-
-        if (message.contains("users.phone") || message.contains("key 'phone'")) {
-            return "Số điện thoại đã tồn tại";
-        }
-        if (message.contains("users.email") || message.contains("key 'email'")) {
-            return "Email đã tồn tại";
-        }
-        return "Lỗi khi cập nhật: " + e.getMessage();
     }
 
     private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response)

@@ -637,7 +637,7 @@
             </c:if>
 
             <!-- THÔNG BÁO LỖI -->
-            <c:if test="${not empty error and not addModalOpen}">
+            <c:if test="${not empty error and not addModalOpen and not editModalOpen}">
                 <div class="alert error">
                     <i class="fas fa-exclamation-circle"></i>
                     ${error}
@@ -1029,6 +1029,13 @@
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="userId" id="editUserId" value="${editUserId}">
                     <input type="hidden" name="editType" id="editType" value="${editModalType}">
+
+                    <c:if test="${not empty error and editModalOpen}">
+                        <div class="alert error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${error}
+                        </div>
+                    </c:if>
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
