@@ -112,14 +112,16 @@ public class UserInformationServlet extends HttpServlet {
         if ("updateProfile".equals(action)) {
 
             String name = request.getParameter("txtName");
+            String userID = request.getParameter("userID");
+            int userIDD = Integer.parseInt(userID);
             String phone = request.getParameter("txtPhone");
             String email = request.getParameter("txtEmail");
 
             String address = request.getParameter("txtAddress");
             String txtImage = request.getParameter("txtImage");
 
-            users.updateUser(userId, name, phone, email, address);
-            User updatedUser = users.getUserById1(userId);
+            users.updateUser(userIDD, name, phone, email, address, txtImage);
+            User updatedUser = users.getUserById1(userIDD);
             session.setAttribute("account", updatedUser);
 response.sendRedirect(request.getContextPath() + "/userinformationservlet");        }
 

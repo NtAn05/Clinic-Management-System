@@ -462,7 +462,7 @@ public class UserDAO extends DBContext {
         }
     }
 
-    public void updateUser(int id, String name, String phone, String email, String address) {
+    public void updateUser(int id, String name, String phone, String email, String address, String image) {
 
     String sql = """
         UPDATE users
@@ -470,6 +470,7 @@ public class UserDAO extends DBContext {
             phone = ?,
             email = ?,
             address = ?,
+            image_url = ?,
             updated_at = CURRENT_TIMESTAMP
         WHERE user_id = ?
     """;
@@ -479,8 +480,9 @@ public class UserDAO extends DBContext {
         ps.setString(1, name);
         ps.setString(2, phone);
         ps.setString(3, email);
-        ps.setString(4, address);   // ✅ Thêm address
-        ps.setInt(5, id);           // ✅ user_id đúng index
+        ps.setString(4, address);
+        ps.setString(5, image);
+        ps.setInt(6, id);
         ps.executeUpdate();
     } catch (Exception e) {
         e.printStackTrace();

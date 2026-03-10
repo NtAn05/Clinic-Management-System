@@ -44,10 +44,11 @@
                          >
 
                         <div class="doctor-info">
-                            <img src="images/${a.image}" class="doctor-img">
+                            <img src="${a.image}" class="doctor-img">
 
                             <div>
-                                <h3>${a.specialization}</h3>
+                                <h3>Bác sĩ: ${a.doctorName}</h3>
+                                <p>Bằng cấp: ${a.qualification}</p>
                                 <p class="price">${a.price} đ</p>
                             </div>
                         </div>

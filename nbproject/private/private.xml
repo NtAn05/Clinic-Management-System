@@ -3,13 +3,8 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/appointments/AppointmentServlet.java</file>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/userInformation/userInformation.css</file>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/controller/appointments/AppointmentPaymentServlet.java</file>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/dal/UserDAO.java</file>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/src/java/model/User.java</file>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/userInformation/userInformation.jsp</file>
-            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/medicalRecords.css</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/historyOfAppointment/historyOfAppointment.jsp</file>
+            <file>file:/F:/k5/SWT/Clinic-Management-System/web/pages/profile/historyOfAppointment/historyOfAppointment.css</file>
         </group>
     </open-files>
 </project-private>

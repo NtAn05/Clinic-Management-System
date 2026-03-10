@@ -303,6 +303,7 @@ public class AppointmentDAO extends DBContext {
             + "d.price_booking, "
 
             + "du.user_id AS doctor_user_id, "
+            + "du.full_name AS doctor_name, "
             + "du.image_url, "
 
             + "p.full_name, "
@@ -347,7 +348,7 @@ public class AppointmentDAO extends DBContext {
             ad.setFullName(rs.getString("full_name"));
             ad.setPhone(rs.getString("phone"));
             ad.setEmail(rs.getString("email"));
-
+            ad.setDoctorName(rs.getString("doctor_name"));
             list.add(ad);
         }
 

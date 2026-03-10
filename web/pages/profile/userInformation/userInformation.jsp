@@ -70,7 +70,7 @@
         <!-- ================= EDIT MODE ================= -->
         <div class="profile-edit">
 
-            <form action="userinformationservlet" method="post" enctype="multipart/form-data">
+            <form action="userinformationservlet" method="post" >
 
                 <input type="hidden" name="userID" value="${user.userId}">
 
@@ -99,18 +99,9 @@
 
                     <div>
                         <label>Avatar</label>
-                        <input type="file" name="txtImage">
+                        <input type="text" value="${user.imageUrl}" name="txtImage">
                     </div>
 
-                    <div>
-                        <label>Vai trò</label>
-                        <input type="text" value="${user.role}" disabled>
-                    </div>
-
-                    <div>
-                        <label>Trạng thái</label>
-                        <input type="text" value="${user.status}" disabled>
-                    </div>
 
                 </div>
 

@@ -32,11 +32,11 @@ public class AppointmentDetail {
     private String fullName;
     private String phone;
     private String email;
-
+private String doctorName;
     public AppointmentDetail() {
     }
 
-    public AppointmentDetail(int userId, String image, long appointmentId, long patientId, int doctorId, int shiftId, String bookingType, Date appointmentDate, Time appointmentTime, String status, String symptom, String specialization, String qualification, double price, String fullName, String phone, String email) {
+    public AppointmentDetail(int userId, String image, long appointmentId, long patientId, int doctorId, int shiftId, String bookingType, Date appointmentDate, Time appointmentTime, String status, String symptom, String specialization, String qualification, double price, String fullName, String phone, String email, String doctorName) {
         
         this.userId = userId;
         this.image = image;
@@ -55,6 +55,15 @@ public class AppointmentDetail {
         this.fullName = fullName;
         this.phone = phone;
         this.email = email;
+        this.doctorName = doctorName;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
     }
 
     public int getUserId() {

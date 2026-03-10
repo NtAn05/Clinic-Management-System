@@ -138,9 +138,9 @@
                             <!-- ACTION -->
 
                             <div class="actions">
-                                <button  class="btn-outline"
+                                <button type="button"  class="btn-outline"
                                          onclick="history.back()">
-                                    Quay lại
+                                    Chỉnh sửa thông tin
                                 </button>
 
 
