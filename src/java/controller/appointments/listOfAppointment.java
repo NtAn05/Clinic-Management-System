@@ -11,15 +11,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import model.Appointment;
-import model.Patient;
+import java.util.List;
+import model.AppointmentDetail;
 
 /**
  *
  * @author Admin
  */
-public class AppointmentPaymentServlet extends HttpServlet {
+public class listOfAppointment extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -38,10 +37,10 @@ public class AppointmentPaymentServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet AppointmentPaymentServlet</title>");
+            out.println("<title>Servlet listOfAppointment</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet AppointmentPaymentServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet listOfAppointment at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -59,37 +58,16 @@ public class AppointmentPaymentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String code = request.getParameter("code");
-        String status = request.getParameter("status");
 
-        if ("00".equals(code) && "PAID".equals(status)) {
-            HttpSession session = request.getSession();
-            Patient patient = (Patient) session.getAttribute("pendingPatient");
-            Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
-            if (patient != null && appointment != null) {
-                AppointmentDAO dao = new AppointmentDAO();
-                long patientId = dao.getPatientIdByEmail(patient.getEmail());
+        AppointmentDAO dao = new AppointmentDAO();
+        dao.cancelPastBookedAppointments();
+        List<AppointmentDetail> list = dao.getAllAppointments();
 
-                // nếu chưa tồn tại thì thêm mới
-                if (patientId == -1) {
-                    dao.addPatient(patient);
-                    patientId = dao.getPatientID(patient);
-                }
-                Appointment appointment1 = new Appointment(patientId, appointment.getDoctorId(), appointment.getShiftId(), appointment.getBookingType(), appointment.getAppointmentDate(), appointment.getAppointmentTime(), appointment.getStatus(), appointment.getSymptom());
-                dao.addAppointment(appointment1);
-                session.removeAttribute("pendingPatient");
-                session.removeAttribute("pendingAppointment");
-            }
+        request.setAttribute("list", list);
 
-            request.setAttribute("message", "Đặt lịch và thanh toán thành công!");
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentCompleted.jsp")
-                    .forward(request, response);
-        } else {
-            // ❌ Thanh toán thất bại → không lưu DB
-            request.setAttribute("message", "Thanh toán thất bại hoặc đã huỷ!");
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentFailPayment.jsp")
-                    .forward(request, response);
-        }
+        request.getRequestDispatcher("/pages/appointments/listOfAppointment/listOfAppointment.jsp")
+                .forward(request, response);
+
     }
 
     /**
@@ -103,7 +81,14 @@ public class AppointmentPaymentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        long id = Long.parseLong(request.getParameter("id"));
+        String status = request.getParameter("status");
+
+        AppointmentDAO dao = new AppointmentDAO();
+
+        dao.updateStatus(id, status);
+
+        response.sendRedirect("listofappointment");
     }
 
     /**

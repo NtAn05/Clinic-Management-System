@@ -3,6 +3,7 @@
     Created on : Jan 26, 2026, 6:25:11 PM
     Author     : Admin
 --%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
@@ -52,7 +53,8 @@
                         <!-- hidden an toàn -->
                         <input type="hidden" name="doctorID" value="${doctor.doctorId}">
                         <input type="hidden" name="userID" value="${sessionScope.account.userId}">
-
+                        <input type="hidden" name="bookingStyle"
+                               value="${roleName == 'receptionist' ? 'walk_in' : 'online'}">
                         <div class="card-box">
                             <h3>Thông tin của bạn</h3>
 
@@ -103,16 +105,16 @@
                             <div class="time-slots" id="dateRadios"></div>
 
                             <div class="time-slots">
-                                <input type="radio" name="time" id="morning" value="07:30" checked>
+                                <input type="radio" name="time" id="morning" value="08:00" checked>
                                 <label for="morning" class="slot">
                                     <strong>Ca sáng</strong>
-                                    <span>30 - 11:30</span>
+                                    <span>08:00 - 11:30</span>
                                 </label>
 
-                                <input type="radio" name="time" id="afternoon" value="13:30">
+                                <input type="radio" name="time" id="afternoon" value="13:00">
                                 <label for="afternoon" class="slot">
                                     <strong>Ca chiều</strong>
-                                    <span>13:30 - 17:00</span>
+                                    <span>13:00 - 17:00</span>
                                 </label>
                             </div>
                         </div>
@@ -130,27 +132,27 @@
 
                     </form>
                 </div>
-            
 
-            <!-- bãc sĩ -->
-            <div class="card">
-                <img src="${doctor.image}" alt="Doctor">
 
-                <h3>${doctor.fullName}</h3>
-                <p class="degree">${doctor.qualification}</p>
-                <p class="desc">${doctor.specialization}</p>
-                <p class="desc">${doctor.clinic_address}</p>
+                <!-- bãc sĩ -->
+                <div class="card">
+                    <img src="${doctor.image}" alt="Doctor">
 
-                <div class="info">
-                    <span>⏱ ${doctor.experience_years} năm</span>
-                    <span>⭐ ${doctor.rating}</span>
+                    <h3>${doctor.fullName}</h3>
+                    <p class="degree">${doctor.qualification}</p>
+                    <p class="desc">${doctor.specialization}</p>
+                    <p class="desc">${doctor.clinic_address}</p>
+
+                    <div class="info">
+                        <span>⏱ ${doctor.experience_years} năm</span>
+                        <span>⭐ ${doctor.rating}</span>
+                    </div>
+
+                    <p class="price">
+                        <fmt:formatNumber value="${doctor.price}" type="number"/>đ
+                    </p>
                 </div>
-
-                <p class="price">
-                    <fmt:formatNumber value="${doctor.price}" type="number"/>đ
-                </p>
             </div>
-                </div>
         </div>
 
         <script>

@@ -110,16 +110,16 @@
                                 <div class="form-grid confirm-view">
                                     <div>
                                         <label>Ca khám</label>
-                                        <c:if test="${time == '07:30'}">
+                                        <c:if test="${time == '08:00'}">
                                             <p>
                                                 <strong>Ca sáng</strong>
-                                                <span>07:00 - 11:30</span>
+                                                <span>08:00 - 11:00</span>
                                             </p>
                                         </c:if>
-                                        <c:if test="${time == '13:30'}">
+                                        <c:if test="${time == '13:00'}">
                                             <p>
                                                 <strong>Ca chiều</strong>
-                                                <span>13:30 - 17:00</span>
+                                                <span>13:00 - 17:00</span>
                                             </p>
                                         </c:if>
                                     </div>
@@ -135,6 +135,8 @@
                             <input type="hidden" name="doctorID" value="${doctor.getDoctorId()}">
                             <input type="hidden" name="userID" value="${sessionScope.account.userId}">
                             <input type="hidden" name="pricePay" value="${doctor.price}">
+                            <input type="hidden" name="bookingStyle"
+                               value="${roleName == 'receptionist' ? 'walk_in' : 'online'}">
                             <!-- ACTION -->
 
                             <div class="actions">

@@ -280,83 +280,202 @@ public class AppointmentDAO extends DBContext {
 
         return -1;
     }
-    
-    
-    
-   public List<AppointmentDetail> getAppointmentsByPatientUserId(int userId) {
 
-    List<AppointmentDetail> list = new ArrayList<>();
+    public List<AppointmentDetail> getAppointmentsByPatientUserId(int userId) {
 
-    String sql = "SELECT "
-            + "a.appointment_id, "
-            + "a.patient_id, "
-            + "a.doctor_id, "
-            + "a.shift_id, "
-            + "a.booking_type, "
-            + "a.appointment_date, "
-            + "a.appointment_time, "
-            + "a.status, "
-            + "a.symptom, "
+        List<AppointmentDetail> list = new ArrayList<>();
 
-            + "d.specialization, "
-            + "d.qualification, "
-            + "d.price_booking, "
+        String sql = "SELECT "
+                + "a.appointment_id, "
+                + "a.patient_id, "
+                + "a.doctor_id, "
+                + "a.shift_id, "
+                + "a.booking_type, "
+                + "a.appointment_date, "
+                + "a.appointment_time, "
+                + "a.status, "
+                + "a.symptom, "
+                + "d.specialization, "
+                + "d.qualification, "
+                + "d.price_booking, "
+                + "du.user_id AS doctor_user_id, "
+                + "du.full_name AS doctor_name, "
+                + "du.image_url, "
+                + "p.full_name, "
+                + "p.phone, "
+                + "p.email "
+                + "FROM appointments a "
+                + "JOIN patients p ON a.patient_id = p.patient_id "
+                + "JOIN doctors d ON a.doctor_id = d.doctor_id "
+                + "JOIN users du ON d.user_id = du.user_id "
+                + "WHERE p.user_id = ? "
+                + "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
 
-            + "du.user_id AS doctor_user_id, "
-            + "du.full_name AS doctor_name, "
-            + "du.image_url, "
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
 
-            + "p.full_name, "
-            + "p.phone, "
-            + "p.email "
+            st.setInt(1, userId);
+            ResultSet rs = st.executeQuery();
 
-            + "FROM appointments a "
-            + "JOIN patients p ON a.patient_id = p.patient_id "
-            + "JOIN doctors d ON a.doctor_id = d.doctor_id "
-            + "JOIN users du ON d.user_id = du.user_id "
-            + "WHERE p.user_id = ? "
-            + "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+            while (rs.next()) {
 
-    try (PreparedStatement st = connection.prepareStatement(sql)) {
+                AppointmentDetail ad = new AppointmentDetail();
 
-        st.setInt(1, userId);
-        ResultSet rs = st.executeQuery();
+                // appointment
+                ad.setAppointmentId(rs.getLong("appointment_id"));
+                ad.setPatientId(rs.getLong("patient_id"));
+                ad.setDoctorId(rs.getInt("doctor_id"));
+                ad.setShiftId(rs.getInt("shift_id"));
+                ad.setBookingType(rs.getString("booking_type"));
+                ad.setAppointmentDate(rs.getDate("appointment_date"));
+                ad.setAppointmentTime(rs.getTime("appointment_time"));
+                ad.setStatus(rs.getString("status"));
+                ad.setSymptom(rs.getString("symptom"));
 
-        while (rs.next()) {
+                // doctor
+                ad.setSpecialization(rs.getString("specialization"));
+                ad.setQualification(rs.getString("qualification"));
+                ad.setPrice(rs.getDouble("price_booking"));
+                ad.setUserId(rs.getInt("doctor_user_id"));
+                ad.setImage(rs.getString("image_url"));
 
-            AppointmentDetail ad = new AppointmentDetail();
+                // patient
+                ad.setFullName(rs.getString("full_name"));
+                ad.setPhone(rs.getString("phone"));
+                ad.setEmail(rs.getString("email"));
+                ad.setDoctorName(rs.getString("doctor_name"));
+                list.add(ad);
+            }
 
-            // appointment
-            ad.setAppointmentId(rs.getLong("appointment_id"));
-            ad.setPatientId(rs.getLong("patient_id"));
-            ad.setDoctorId(rs.getInt("doctor_id"));
-            ad.setShiftId(rs.getInt("shift_id"));
-            ad.setBookingType(rs.getString("booking_type"));
-            ad.setAppointmentDate(rs.getDate("appointment_date"));
-            ad.setAppointmentTime(rs.getTime("appointment_time"));
-            ad.setStatus(rs.getString("status"));
-            ad.setSymptom(rs.getString("symptom"));
-
-            // doctor
-            ad.setSpecialization(rs.getString("specialization"));
-            ad.setQualification(rs.getString("qualification"));
-            ad.setPrice(rs.getDouble("price_booking"));
-            ad.setUserId(rs.getInt("doctor_user_id"));
-            ad.setImage(rs.getString("image_url"));
-
-            // patient
-            ad.setFullName(rs.getString("full_name"));
-            ad.setPhone(rs.getString("phone"));
-            ad.setEmail(rs.getString("email"));
-            ad.setDoctorName(rs.getString("doctor_name"));
-            list.add(ad);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        return list;
     }
 
-    return list;
-}
+    // lấy toàn bộ appointment
+    public List<AppointmentDetail> getAllAppointments() {
 
+        List<AppointmentDetail> list = new ArrayList<>();
+
+        String sql = "SELECT "
+                + "a.appointment_id, "
+                + "a.patient_id, "
+                + "a.doctor_id, "
+                + "a.shift_id, "
+                + "a.booking_type, "
+                + "a.appointment_date, "
+                + "a.appointment_time, "
+                + "a.status, "
+                + "a.symptom, "
+                + "d.specialization, "
+                + "d.qualification, "
+                + "d.price_booking, "
+                + "du.user_id AS doctor_user_id, "
+                + "du.full_name AS doctor_name, "
+                + "du.image_url, "
+                + "p.full_name, "
+                + "p.phone, "
+                + "p.email "
+                + "FROM appointments a "
+                + "JOIN patients p ON a.patient_id = p.patient_id "
+                + "JOIN doctors d ON a.doctor_id = d.doctor_id "
+                + "JOIN users du ON d.user_id = du.user_id "
+                + "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            ResultSet rs = st.executeQuery();
+
+            while (rs.next()) {
+
+                AppointmentDetail ad = new AppointmentDetail();
+
+                ad.setAppointmentId(rs.getLong("appointment_id"));
+                ad.setPatientId(rs.getLong("patient_id"));
+                ad.setDoctorId(rs.getInt("doctor_id"));
+                ad.setShiftId(rs.getInt("shift_id"));
+                ad.setBookingType(rs.getString("booking_type"));
+                ad.setAppointmentDate(rs.getDate("appointment_date"));
+                ad.setAppointmentTime(rs.getTime("appointment_time"));
+                ad.setStatus(rs.getString("status"));
+                ad.setSymptom(rs.getString("symptom"));
+
+                // doctor
+                ad.setSpecialization(rs.getString("specialization"));
+                ad.setQualification(rs.getString("qualification"));
+                ad.setPrice(rs.getDouble("price_booking"));
+                ad.setUserId(rs.getInt("doctor_user_id"));
+                ad.setImage(rs.getString("image_url"));
+                ad.setDoctorName(rs.getString("doctor_name"));
+
+                // patient
+                ad.setFullName(rs.getString("full_name"));
+                ad.setPhone(rs.getString("phone"));
+                ad.setEmail(rs.getString("email"));
+
+                list.add(ad);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public void updateStatus(long appointmentId, String status) {
+
+        String sql = "UPDATE appointments SET status = ? WHERE appointment_id = ?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setString(1, status);
+            st.setLong(2, appointmentId);
+
+            st.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void cancelPastBookedAppointments() {
+
+        String sql = """
+        UPDATE appointments
+        SET status = 'cancelled'
+        WHERE appointment_date < CURDATE()
+        AND status = 'booked'
+    """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public long getPatientIdByEmail(String email) {
+
+        String sql = "SELECT patient_id FROM patients WHERE email = ?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setString(1, email);
+
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                return rs.getLong("patient_id");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return -1;
+    }
 }

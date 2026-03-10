@@ -1,0 +1,200 @@
+<%-- 
+    Document   : appointmentSecond
+    Created on : Feb 3, 2026, 2:00:08 PM
+    Author     : Admin
+--%>
+
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>List of appointment</title>
+        <link rel="stylesheet"
+              href="${pageContext.request.contextPath}/pages/appointments/listOfAppointment/listOfAppointment.css">
+    </head>
+    <body>
+
+        <jsp:include page="/common/header.jsp" />
+
+        <div class="container">
+
+            <div class="header">
+
+                <div>
+                    <h2>Danh sách cuộc hẹn</h2>
+                    <p>Quản lý trạng thái các cuộc hẹn</p>
+                </div>
+
+                <div class="total">
+                    Tổng: ${list.size()} cuộc hẹn
+                </div>
+
+            </div>
+
+
+            <div class="filter-bar">
+
+                <select id="statusFilter">
+
+                    <option value="all">Tất cả</option>
+                    <option value="booked">Booked</option>
+                    <option value="checked_in">Checked in</option>
+                    <option value="waiting">Waiting</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+
+                </select>
+
+                <input type="text" id="searchBox"
+                       placeholder="Tìm theo tên bệnh nhân / mã hẹn">
+
+                <button onclick="clearFilter()" class="btn-clear">
+                    Xóa bộ lọc
+                </button>
+
+            </div>
+
+
+            <div class="stats">
+
+                <span class="badge blue">${list.size()} cuộc</span>
+                <span class="badge yellow">Booked</span>
+                <span class="badge purple">Waiting</span>
+                <span class="badge green">Completed</span>
+
+            </div>
+
+
+            <table id="appointmentTable">
+
+                <thead>
+                    <tr>
+
+                        <th>Mã hẹn</th>
+                        <th>Bệnh nhân</th>
+                        <th>Bác sĩ</th>
+                        <th>Booking</th>
+                        <th>Ngày</th>
+                        <th>Giờ</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <c:forEach items="${list}" var="a">
+
+                        <tr data-status="${a.status}">
+
+                            <td>AP-${a.appointmentId}</td>
+
+                            <td>
+                                ${a.fullName}
+                                <br>
+                                <span class="sub">${a.phone}</span>
+                            </td>
+
+                            <td>${a.doctorName}</td>
+
+                            <td>
+                                <span class="booking ${a.bookingType}">
+                                    ${a.bookingType}
+                                </span>
+                            </td>
+
+                            <td>${a.appointmentDate}</td>
+
+                            <td>${a.appointmentTime}</td>
+
+                            <td>
+
+                                <span class="status ${a.status}">
+                                    ${a.status}
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <form action="listofappointment" method="post">
+
+                                    <input type="hidden" name="id" value="${a.appointmentId}">
+
+                                    <select name="status">
+
+                                        <option value="booked">Booked</option>
+                                        <option value="checked_in">Checked In</option>
+                                        <option value="waiting">Waiting</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+
+                                    </select>
+
+                                    <button class="btn-update">Update</button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                    </c:forEach>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <script>
+            const statusFilter = document.getElementById("statusFilter");
+            const searchBox = document.getElementById("searchBox");
+
+            statusFilter.addEventListener("change", filterTable);
+            searchBox.addEventListener("keyup", filterTable);
+
+            function filterTable() {
+
+                let status = statusFilter.value;
+                let keyword = searchBox.value.toLowerCase();
+
+                let rows = document.querySelectorAll("#appointmentTable tbody tr");
+
+                rows.forEach(row => {
+
+                    let rowStatus = row.getAttribute("data-status");
+                    let text = row.innerText.toLowerCase();
+
+                    let show = true;
+
+                    if (status !== "all" && rowStatus !== status) {
+                        show = false;
+                    }
+
+                    if (!text.includes(keyword)) {
+                        show = false;
+                    }
+
+                    row.style.display = show ? "" : "none";
+
+                });
+
+            }
+
+            function clearFilter() {
+
+                statusFilter.value = "all";
+                searchBox.value = "";
+                filterTable();
+
+            }
+        </script>
+        <jsp:include page="/common/footer.jsp" />
+
+    </body>
+</html>

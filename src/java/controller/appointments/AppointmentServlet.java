@@ -59,6 +59,7 @@ public class AppointmentServlet extends HttpServlet {
         String gender = request.getParameter("gender");
         String address = request.getParameter("address");
         String note = request.getParameter("note");
+        String bookingStyle = request.getParameter("bookingStyle");
         String date = request.getParameter("date");
         java.sql.Date sqlDate = java.sql.Date.valueOf(date);
         String timeStr = request.getParameter("time");
@@ -134,7 +135,7 @@ public class AppointmentServlet extends HttpServlet {
             } catch (Exception e) {
                 e.printStackTrace();
                 request.setAttribute("errorPay", "Lỗi thanh toán: " + e.getMessage());
-                request.getRequestDispatcher("/pages/appointments/appointment/appointmentPayment.jsp")
+                request.getRequestDispatcher("/pages/appointments/appointment/appointmentFailPayment.jsp")
                         .forward(request, response);
                 return;
             }

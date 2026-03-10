@@ -244,6 +244,7 @@
 
                 <c:if test="${roleName == 'receptionist'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/lab-payment">Quản lý tiếp nhận</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/listofappointment">Quản lý cuộc hẹn</a>
                 </c:if>
 
                 <c:if test="${roleName == 'patient'}">
