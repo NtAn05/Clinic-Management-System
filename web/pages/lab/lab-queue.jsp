@@ -563,7 +563,7 @@
                     <c:set var="genderText" value="${request.patient.gender == 'male' ? 'Nam' : (request.patient.gender == 'female' ? 'Nữ' : 'Khác')}" />
                     <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : (request.status == 'cancelled' ? 'Đã hủy' : 'Đã có kết quả'))}" />
                     <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : (request.status == 'cancelled' ? 'status-cancelled' : 'status-done'))}" />
-                    <tr class="queue-row" data-request-id="${request.requestId}">
+                    <tr class="queue-row" data-request-id="${request.requestId}" data-notes="${fn:escapeXml(request.notes)}">
                       <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${requestCode}</td>
                       <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
                         ${request.patient.fullName}<br />
@@ -589,6 +589,9 @@
                             <button class="btn btn-outline" onclick="event.stopPropagation(); cancelRequest(${request.requestId});" style="font-size: 12px; padding: 6px 12px; margin-left: 4px;">
                               <i class="fas fa-times"></i> Hủy phiếu
                             </button>
+                            <button class="btn btn-outline" onclick="event.stopPropagation(); editNotes(${request.requestId});" style="font-size: 12px; padding: 6px 10px; margin-left: 4px;">
+                              <i class="fas fa-pen"></i> Ghi chú
+                            </button>
                           </c:when>
                           <c:when test="${request.status == 'processing'}">
                             <button class="btn btn-primary" onclick="event.stopPropagation(); window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}';" style="font-size: 12px; padding: 6px 12px;">
@@ -596,6 +599,9 @@
                             </button>
                             <button class="btn btn-outline" onclick="event.stopPropagation(); cancelRequest(${request.requestId});" style="font-size: 12px; padding: 6px 12px; margin-left: 4px;">
                               <i class="fas fa-times"></i> Hủy phiếu
+                            </button>
+                            <button class="btn btn-outline" onclick="event.stopPropagation(); editNotes(${request.requestId});" style="font-size: 12px; padding: 6px 10px; margin-left: 4px;">
+                              <i class="fas fa-pen"></i> Ghi chú
                             </button>
                           </c:when>
                           <c:when test="${request.status == 'completed'}">
@@ -805,6 +811,41 @@
         .catch(err => {
           showAlert('Đã xảy ra lỗi.', 'error');
         });
+      });
+    }
+
+    // Cập nhật ghi chú phiếu xét nghiệm trực tiếp trên hàng đợi
+    function editNotes(requestId) {
+      const row = document.querySelector('.queue-row[data-request-id="' + requestId + '"]');
+      const currentNotes = row ? (row.getAttribute('data-notes') || '') : '';
+      const newNotes = prompt('Nhập / cập nhật ghi chú cho phiếu LAB (để trống để xóa):', currentNotes);
+      if (newNotes === null) {
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.append('action', 'updateNotes');
+      params.append('requestId', requestId);
+      params.append('notes', newNotes);
+
+      fetch('${pageContext.request.contextPath}/lab-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (row) {
+            row.setAttribute('data-notes', newNotes);
+          }
+          showAlert('Đã cập nhật ghi chú phiếu xét nghiệm.', 'success');
+        } else {
+          showAlert(data.message || 'Cập nhật ghi chú thất bại.', 'error');
+        }
+      })
+      .catch(err => {
+        showAlert('Đã xảy ra lỗi khi cập nhật ghi chú.', 'error');
       });
     }
 
