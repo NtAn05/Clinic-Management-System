@@ -434,7 +434,7 @@ public class DoctorDAO extends DBContext {
         int safePage = Math.max(page, 1);
         int safePageSize = pageSize <= 0 ? 10 : pageSize;
         int offset = (safePage - 1) * safePageSize;
-        
+
         StringBuilder sql = new StringBuilder("""
         SELECT 
             q.queue_position,
@@ -475,7 +475,7 @@ public class DoctorDAO extends DBContext {
             if (hasKeywordFilter) {
                 ps.setString(index++, "%" + keyword + "%");
             }
-            
+
             ps.setInt(index++, safePageSize);
             ps.setInt(index, offset);
 
@@ -541,8 +541,7 @@ public class DoctorDAO extends DBContext {
 
         return null;
     }
-    
-    
+
     // Nnạp timeline các phiếu xét nghiệm và kết quả theo appointment hiện tại.
     // LEFT JOIN lab_requests với lab_results.
     public List<ExamLabItem> getLabResultsByAppointment(long appointmentId) {
@@ -869,8 +868,6 @@ public class DoctorDAO extends DBContext {
             }
         }
     }
-    
-    
 
     public void updateDoctor(int doctorId, String qualification, int experience, String specialization) {
         String sql = "UPDATE doctors SET qualification=?, experience_years=?, specialization=? "
@@ -913,14 +910,163 @@ public class DoctorDAO extends DBContext {
     }
 
     public boolean savePrescription(long appointmentId, int doctorId, String prescriptionNote, List<PrescriptionItem> prescriptionItems) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        if (prescriptionItems == null || prescriptionItems.isEmpty()) {
+            return false;
+        }
+
+        String deleteItemsSql = "DELETE FROM prescription_items WHERE prescription_id = ?";
+        String upsertPrescriptionSql = """
+            INSERT INTO prescriptions (appointment_id, doctor_id, notes, created_at)
+            VALUES (?, ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE
+                doctor_id = VALUES(doctor_id),
+                notes = VALUES(notes),
+                created_at = NOW()
+        """;
+        String findPrescriptionSql = "SELECT prescription_id FROM prescriptions WHERE appointment_id = ? LIMIT 1";
+        String insertItemSql = """
+            INSERT INTO prescription_items
+                (prescription_id, medicine_id, dosage, frequency, duration_days, instruction, quantity)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        boolean originalAutoCommit;
+        try {
+            originalAutoCommit = connection.getAutoCommit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+
+        try {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement upsert = connection.prepareStatement(upsertPrescriptionSql)) {
+                upsert.setLong(1, appointmentId);
+                upsert.setInt(2, doctorId);
+                upsert.setString(3, prescriptionNote);
+                upsert.executeUpdate();
+            }
+
+            int prescriptionId;
+            try (PreparedStatement find = connection.prepareStatement(findPrescriptionSql)) {
+                find.setLong(1, appointmentId);
+                try (ResultSet rs = find.executeQuery()) {
+                    if (!rs.next()) {
+                        connection.rollback();
+                        return false;
+                    }
+                    prescriptionId = rs.getInt("prescription_id");
+                }
+            }
+
+            try (PreparedStatement deleteItems = connection.prepareStatement(deleteItemsSql)) {
+                deleteItems.setInt(1, prescriptionId);
+                deleteItems.executeUpdate();
+            }
+
+            try (PreparedStatement insertItem = connection.prepareStatement(insertItemSql)) {
+                for (PrescriptionItem item : prescriptionItems) {
+                    insertItem.setInt(1, prescriptionId);
+                    insertItem.setInt(2, item.getMedicineId());
+                    insertItem.setString(3, item.getDosage());
+                    insertItem.setString(4, item.getFrequency());
+                    insertItem.setString(5, item.getDurationDays());
+                    insertItem.setString(6, item.getInstruction());
+                    insertItem.setString(7, item.getQuantity());
+                    insertItem.addBatch();
+                }
+                insertItem.executeBatch();
+            }
+
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                connection.setAutoCommit(originalAutoCommit);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+
     }
 
     public List<PrescriptionItem> getPrescriptionItemsByAppointment(long appointmentId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        List<PrescriptionItem> list = new ArrayList<>();
+        String sql = """
+            SELECT
+                pi.item_id,
+                pi.prescription_id,
+                pi.medicine_id,
+                m.medicine_name,
+                m.unit,
+                pi.dosage,
+                pi.frequency,
+                pi.duration_days,
+                pi.instruction,
+                pi.quantity
+            FROM prescriptions p
+            JOIN prescription_items pi ON pi.prescription_id = p.prescription_id
+            JOIN medicines m ON m.medicine_id = pi.medicine_id
+            WHERE p.appointment_id = ?
+            ORDER BY pi.item_id
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                PrescriptionItem item = new PrescriptionItem();
+                item.setItemId(rs.getInt("item_id"));
+                item.setPrescriptionId(rs.getInt("prescription_id"));
+                item.setMedicineId(rs.getInt("medicine_id"));
+                item.setMedicineName(rs.getString("medicine_name"));
+                item.setUnit(rs.getString("unit"));
+                item.setDosage(rs.getString("dosage"));
+                item.setFrequency(rs.getString("frequency"));
+                item.setDurationDays(rs.getString("duration_days"));
+                item.setInstruction(rs.getString("instruction"));
+                item.setQuantity(rs.getString("quantity"));
+                list.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 
     public List<Medicine> getAllMedicines() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        List<Medicine> list = new ArrayList<>();
+        String sql = """
+            SELECT medicine_id, medicine_name, unit, default_dosage
+            FROM medicines
+            ORDER BY medicine_name
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Medicine medicine = new Medicine();
+                medicine.setMedicineId(rs.getInt("medicine_id"));
+                medicine.setMedicineName(rs.getString("medicine_name"));
+                medicine.setUnit(rs.getString("unit"));
+                medicine.setDefaultDosage(rs.getString("default_dosage"));
+                list.add(medicine);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 }
