@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import model.MedicalRecord;
+import model.PrescriptionItem;
 
 public class PatientPortalDAO extends DBContext {
 
@@ -120,4 +121,97 @@ public class PatientPortalDAO extends DBContext {
 
         return "";
     }
+public List<MedicalRecord> getPrescriptionsByUserId(int userId) {
+        List<MedicalRecord> list = new ArrayList<>();
+
+        String sql = """
+            SELECT
+                p.prescription_id,
+                p.notes AS prescription_note,
+                p.created_at,
+                a.appointment_id,
+                a.appointment_date,
+                a.appointment_time,
+                COALESCE(du.full_name, 'Chưa cập nhật') AS doctor_name,
+                COALESCE(mr.diagnosis, '') AS diagnosis
+            FROM patients pt
+            JOIN appointments a ON a.patient_id = pt.patient_id
+            JOIN prescriptions p ON p.appointment_id = a.appointment_id
+            LEFT JOIN medical_records mr ON mr.appointment_id = a.appointment_id
+            LEFT JOIN doctors d ON d.doctor_id = p.doctor_id
+            LEFT JOIN users du ON du.user_id = d.user_id
+            WHERE pt.user_id = ?
+            ORDER BY p.created_at DESC
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                MedicalRecord item = new MedicalRecord();
+                item.setPrescriptionId(rs.getInt("prescription_id"));
+                item.setPrescriptionNote(rs.getString("prescription_note"));
+                item.setAppointmentId(rs.getLong("appointment_id"));
+                item.setAppointmentDate(rs.getDate("appointment_date"));
+                item.setAppointmentTime(rs.getTime("appointment_time"));
+                item.setDoctorName(rs.getString("doctor_name"));
+                item.setDiagnosis(rs.getString("diagnosis"));
+                item.setUpdatedAt(rs.getTimestamp("created_at"));
+                item.setPrescriptionItems(getPrescriptionItemsByPrescriptionId(item.getPrescriptionId()));
+                list.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    private List<PrescriptionItem> getPrescriptionItemsByPrescriptionId(int prescriptionId) {
+        List<PrescriptionItem> list = new ArrayList<>();
+
+        String sql = """
+            SELECT
+                pi.item_id,
+                pi.prescription_id,
+                pi.medicine_id,
+                m.medicine_name,
+                m.unit,
+                pi.dosage,
+                pi.frequency,
+                pi.duration_days,
+                pi.instruction,
+                pi.quantity
+            FROM prescription_items pi
+            JOIN medicines m ON m.medicine_id = pi.medicine_id
+            WHERE pi.prescription_id = ?
+            ORDER BY pi.item_id
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, prescriptionId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                PrescriptionItem item = new PrescriptionItem();
+                item.setItemId(rs.getInt("item_id"));
+                item.setPrescriptionId(rs.getInt("prescription_id"));
+                item.setMedicineId(rs.getInt("medicine_id"));
+                item.setMedicineName(rs.getString("medicine_name"));
+                item.setUnit(rs.getString("unit"));
+                item.setDosage(rs.getString("dosage"));
+                item.setFrequency(rs.getString("frequency"));
+                item.setDurationDays(rs.getString("duration_days"));
+                item.setInstruction(rs.getString("instruction"));
+                item.setQuantity(rs.getString("quantity"));
+                list.add(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
 }

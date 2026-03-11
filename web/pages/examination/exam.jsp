@@ -55,6 +55,15 @@
                     </c:if>
                     <c:if test="${error == 'labRequestNotAllowed'}">
                         <div class="alert-error">Phiên khám đã hoàn tất, không thể tạo thêm yêu cầu xét nghiệm.</div>
+                    </c:if>                     
+                    <c:if test="${success == 'prescriptionSaved'}">
+                        <div class="alert-success">Đã lưu đơn thuốc thành công.</div>
+                    </c:if>
+                    <c:if test="${error == 'emptyPrescription'}">
+                        <div class="alert-error">Vui lòng chọn ít nhất một thuốc để lưu đơn.</div>
+                    </c:if>
+                    <c:if test="${error == 'savePrescriptionFailed'}">
+                        <div class="alert-error">Không thể lưu đơn thuốc. Vui lòng thử lại.</div>
                     </c:if>
 
                     <div class="tabs">
@@ -212,17 +221,52 @@
 
                     <div class="tab-content ${activeTab == 'prescription' ? 'active' : ''}" id="prescription">
                         <div class="card">
-                            <h3>Đơn thuốc tạm</h3>
+                            <h3>Đơn thuốc</h3>
+                            <p class="muted">Tạo đơn thuốc bằng cách chọn thuốc từ danh mục trong cơ sở dữ liệu.</p>
+
+                            <label>Ghi chú đơn thuốc</label>
+                            <textarea rows="2" name="prescriptionNote" placeholder="Lưu ý chung cho bệnh nhân khi dùng thuốc..."></textarea>
 
                             <div id="rxList" class="rx-list">
-                                <div class="rx-row">
-                                    <input placeholder="Tên thuốc">
-                                    <input placeholder="Liều dùng">
-                                    <input placeholder="Số lần/ngày">
-                                    <input placeholder="Số ngày">
-                                </div>
+                                <c:choose>
+                                    <c:when test="${not empty prescriptionItems}">
+                                        <c:forEach var="item" items="${prescriptionItems}">
+                                            <div class="rx-row">
+                                                <select name="medicineId" required>
+                                                    <option value="">Chọn thuốc</option>
+                                                    <c:forEach var="m" items="${medicineList}">
+                                                        <option value="${m.medicineId}" ${m.medicineId == item.medicineId ? 'selected' : ''}>${m.medicineName}${empty m.unit ? '' : ' ('}${empty m.unit ? '' : m.unit}${empty m.unit ? '' : ')'}</option>
+                                                    </c:forEach>
+                                                </select>
+                                                <input name="dosage" placeholder="Liều dùng" value="${item.dosage}">
+                                                <input name="frequency" placeholder="Số lần/ngày" value="${item.frequency}">
+                                                <input name="durationDays" placeholder="Số ngày" value="${item.durationDays}">
+                                                <input name="quantity" placeholder="Số lượng" value="${item.quantity}">
+                                                <input name="instruction" placeholder="Hướng dẫn" value="${item.instruction}">
+                                            </div>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="rx-row">
+                                            <select name="medicineId" required>
+                                                <option value="">Chọn thuốc</option>
+                                                <c:forEach var="m" items="${medicineList}">
+                                                    <option value="${m.medicineId}">${m.medicineName}${empty m.unit ? '' : ' ('}${empty m.unit ? '' : m.unit}${empty m.unit ? '' : ')'}</option>
+                                                </c:forEach>
+                                            </select>
+                                            <input name="dosage" placeholder="Liều dùng">
+                                            <input name="frequency" placeholder="Số lần/ngày">
+                                            <input name="durationDays" placeholder="Số ngày">
+                                            <input name="quantity" placeholder="Số lượng">
+                                            <input name="instruction" placeholder="Hướng dẫn">
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
-                            <button type="button" class="btn-outline" onclick="addRxRow()">+ Thêm thuốc</button>
+                            <div class="actions">
+                                <button type="button" class="btn-outline" onclick="addRxRow()">+ Thêm thuốc</button>
+                                <button type="submit" class="btn-primary" name="action" value="savePrescription">💊 Lưu đơn thuốc</button>
+                            </div>
                         </div>
                     </div>
 
@@ -280,8 +324,21 @@
             </c:if>
         </div>
 
-        <script>
-            function showTab(id) {
+        <template id="rxTemplate">
+            <select name="medicineId" required>
+                <option value="">Chọn thuốc</option>
+                <c:forEach var="m" items="${medicineList}">
+                    <option value="${m.medicineId}">${m.medicineName}${empty m.unit ? '' : ' ('}${empty m.unit ? '' : m.unit}${empty m.unit ? '' : ')'}</option>
+                </c:forEach>
+            </select>
+            <input name="dosage" placeholder="Liều dùng">
+            <input name="frequency" placeholder="Số lần/ngày">
+            <input name="durationDays" placeholder="Số ngày">
+            <input name="quantity" placeholder="Số lượng">
+            <input name="instruction" placeholder="Hướng dẫn">
+        </template>
+
+        <script>            function showTab(id) {
                 document.querySelectorAll('.tab').forEach(t => {
                     t.classList.toggle('active', t.dataset.target === id);
                 });
@@ -294,12 +351,7 @@
                 const wrap = document.getElementById('rxList');
                 const row = document.createElement('div');
                 row.className = 'rx-row';
-                row.innerHTML = `
-                    <input placeholder="Tên thuốc">
-                    <input placeholder="Liều dùng">
-                    <input placeholder="Số lần/ngày">
-                    <input placeholder="Số ngày">
-                `;
+                row.innerHTML = document.getElementById('rxTemplate').innerHTML;
                 wrap.appendChild(row);
             }
         </script>

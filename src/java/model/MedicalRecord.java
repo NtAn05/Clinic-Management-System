@@ -7,6 +7,7 @@ package model;
 import java.sql.Timestamp;
 import java.sql.Time;
 import java.util.Date;
+import java.util.List;
 
 public class MedicalRecord {
 
@@ -25,6 +26,9 @@ public class MedicalRecord {
     private String historyVaccination;
     private String doctorNote;
     private String treatmentPlan;
+    private int prescriptionId;
+    private String prescriptionNote;
+    private List<PrescriptionItem> prescriptionItems;
     private Timestamp updatedAt;
 
     public long getAppointmentId() {
@@ -145,6 +149,30 @@ public class MedicalRecord {
 
     public void setTreatmentPlan(String treatmentPlan) {
         this.treatmentPlan = treatmentPlan;
+    }
+    
+    public int getPrescriptionId() {
+        return prescriptionId;
+    }
+
+    public void setPrescriptionId(int prescriptionId) {
+        this.prescriptionId = prescriptionId;
+    }
+
+    public String getPrescriptionNote() {
+        return prescriptionNote;
+    }
+
+    public void setPrescriptionNote(String prescriptionNote) {
+        this.prescriptionNote = prescriptionNote;
+    }
+
+    public List<PrescriptionItem> getPrescriptionItems() {
+        return prescriptionItems;
+    }
+
+    public void setPrescriptionItems(List<PrescriptionItem> prescriptionItems) {
+        this.prescriptionItems = prescriptionItems;
     }
     
     public Timestamp getUpdatedAt() {

@@ -238,9 +238,7 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    /* =========================
-       BẮT ĐẦU KHÁM
-       ========================= */
+    /* BẮT ĐẦU KHÁM */
     public void startExamination(long appointmentId) {
         String sql = """
             UPDATE exam_queue
@@ -272,7 +270,7 @@ public class DoctorDAO extends DBContext {
     }
 
     // DANH SÁCH CHỜ KHÁM CỦA BÁC SĨ
-    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) { // được thay thế bởi getqueuewithfilter
+    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) { // được thay thế bởi getqueuewithfilterpaging
         List<DoctorQueueItem> list = new ArrayList<>();
 
         String sql = """
@@ -600,7 +598,7 @@ public class DoctorDAO extends DBContext {
             LEFT JOIN exam_queue eq ON eq.appointment_id = a.appointment_id
             JOIN medical_records mr ON mr.appointment_id = a.appointment_id
             WHERE current_ap.appointment_id = ?
-              AND a.appointment_id <> current_ap.appointment_id
+            AND a.appointment_id <> current_ap.appointment_id
             ORDER BY a.appointment_date DESC, a.appointment_time DESC, mr.updated_at DESC
             LIMIT 10
         """;

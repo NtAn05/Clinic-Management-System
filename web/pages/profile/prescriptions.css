@@ -1,0 +1,65 @@
+.prescription-page {
+    max-width: 1100px;
+    margin: 20px auto 48px;
+    padding: 0 18px;
+}
+.page-hero {
+    margin-bottom: 16px;
+}
+.page-hero h1 {
+    margin: 0;
+    color: #13316d;
+}
+.page-hero p {
+    color: #60708f;
+}
+.empty-card, .rx-card {
+    background: #fff;
+    border: 1px solid #e2e9fb;
+    border-radius: 12px;
+    padding: 16px;
+}
+.rx-list {
+    display: grid;
+    gap: 14px;
+}
+.rx-head {
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    margin-bottom:8px;
+}
+.rx-id {
+    font-weight:700;
+    color:#1f3f8f;
+    margin-right:8px;
+}
+.doctor-chip {
+    background:#edf3ff;
+    color:#2952a3;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:12px;
+}
+.rx-meta,.rx-diagnosis,.rx-note {
+    margin:6px 0;
+    color:#334155;
+}
+.rx-table {
+    width:100%;
+    border-collapse: collapse;
+    margin-top:10px;
+}
+.rx-table th, .rx-table td {
+    border:1px solid #e5ecfb;
+    padding:8px;
+    text-align:left;
+    font-size:14px;
+}
+.rx-table th {
+    background:#f5f8ff;
+}
+.muted {
+    color:#8a97ad;
+}
