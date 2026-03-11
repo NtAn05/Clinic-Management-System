@@ -18,6 +18,7 @@ import model.DoctorDashboardStats;
 import model.DoctorQueueItem;
 import model.DoctorShift;
 import model.User;
+import util.SystemLogService;
 
 /**
  *
@@ -112,6 +113,12 @@ public class DoctorDashboardServlet extends HttpServlet {
         // Thống kê số liệu
         DoctorDashboardStats stats
                 = doctorDAO.getDashboardStats(doctorId);
+
+        // Ghi log xem thống kê dashboard bác sĩ
+        SystemLogService.logWithSession(session, "VIEW_DOCTOR_DASHBOARD",
+                "Bác sĩ " + doctor.getFullName()
+                + " xem dashboard với status=" + status
+                + ", keyword=" + (keyword == null ? "" : keyword.trim()));
 
         //Ca làm việc trong ngày
         int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // CN = 0
