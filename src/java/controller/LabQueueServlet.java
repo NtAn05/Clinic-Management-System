@@ -187,6 +187,10 @@ public class LabQueueServlet extends HttpServlet {
                 }
                 int requestId = labRequestDAO.insertLabRequest(appointmentId, doctor.getDoctorId());
                 if (requestId > 0) {
+                    // Ghi system log
+                    util.SystemLogService.logWithSession(session, "CREATE_LAB_REQUEST",
+                            "Bác sĩ " + account.getFullName() + " tạo phiếu xét nghiệm cho appointmentId=" + appointmentId
+                            + ", requestId=" + requestId);
                     response.getWriter().write("{\"success\": true, \"message\": \"Đã chỉ định xét nghiệm. Bệnh nhân đã chuyển sang hàng đợi xét nghiệm.\", \"requestId\": " + requestId + "}");
                 } else {
                     response.getWriter().write("{\"success\": false, \"message\": \"Không thể tạo phiếu xét nghiệm\"}");

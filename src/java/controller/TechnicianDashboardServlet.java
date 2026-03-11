@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.http.HttpSession;
 import model.User;
+import util.SystemLogService;
 
 @WebServlet(name = "TechnicianDashboardServlet", urlPatterns = {"/technician-dashboard"})
 public class TechnicianDashboardServlet extends HttpServlet {
@@ -44,6 +45,10 @@ public class TechnicianDashboardServlet extends HttpServlet {
         // Check if this is an AJAX request for statistics
         String action = request.getParameter("action");
         if ("stats".equals(action)) {
+            // Ghi log xem thống kê dashboard của kỹ thuật viên
+            SystemLogService.logWithSession(session, "VIEW_TECH_DASHBOARD_STATS",
+                    "Xem thống kê dashboard kỹ thuật viên");
+
             // Return statistics as JSON
             int[] stats = labRequestDAO.getLabRequestStatisticsWithFilter(null, null, null);
             

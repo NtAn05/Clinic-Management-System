@@ -2,6 +2,7 @@ package controller;
 
 import dal.UserDAO;
 import dal.DoctorDAO;
+import util.SystemLogService;
 import model.Role;
 import model.Status;
 import model.User;
@@ -135,6 +136,11 @@ public class AdminUserServlet extends HttpServlet {
                 new DoctorDAO().syncDoctorProfilesForAllDoctorUsers();
             }
             request.setAttribute("success", "Tạo tài khoản thành công");
+
+            // Ghi system log
+            HttpSession session = request.getSession(false);
+            SystemLogService.logWithSession(session, "CREATE_USER",
+                    "Tạo tài khoản mới: " + fullName + " (" + email + "), role=" + role.name());
         } catch (Exception e) {
             request.setAttribute("error", "Lỗi khi tạo tài khoản: " + e.getMessage());
         }
@@ -211,6 +217,11 @@ public class AdminUserServlet extends HttpServlet {
 
             userDAO.updateUser(user);
             request.setAttribute("success", "Cập nhật tài khoản thành công");
+
+            // Ghi system log
+            HttpSession session = request.getSession(false);
+            SystemLogService.logWithSession(session, "UPDATE_USER",
+                    "Cập nhật tài khoản userId=" + userId + ", fullName=" + fullName + ", status=" + user.getStatus());
         } catch (SQLException e) {
             request.setAttribute("error", "Lỗi khi cập nhật thông tin: " + e.getMessage());
             request.setAttribute("editModalOpen", true);
@@ -255,6 +266,11 @@ public class AdminUserServlet extends HttpServlet {
 
             userDAO.toggleUserStatus(phone);
             request.setAttribute("success", "Cập nhật trạng thái của " + user.getFullName() + " thành công");
+
+            // Ghi system log
+            HttpSession session = request.getSession(false);
+            SystemLogService.logWithSession(session, "TOGGLE_USER_STATUS",
+                    "Thay đổi trạng thái tài khoản: " + user.getFullName() + " (" + user.getEmail() + ")");
         } catch (Exception e) {
             request.setAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
         }

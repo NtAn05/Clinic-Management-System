@@ -2,6 +2,7 @@ package controller;
 
 import dal.UserDAO;
 import model.User;
+import util.SystemLogService;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -58,6 +59,10 @@ public class LoginServlet extends HttpServlet {
                     HttpSession session = request.getSession();
                     session.setAttribute("account", user);
 
+
+                    // Ghi log đăng nhập thành công
+                    SystemLogService.log(user.getUserId(), "LOGIN_SUCCESS",
+                            "Đăng nhập thành công với role=" + dbRole + ", email=" + email);
 
                     if (dbRole.equals("admin")) {
                         response.sendRedirect(request.getContextPath() + "/admin-users");

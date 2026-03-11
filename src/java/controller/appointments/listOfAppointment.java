@@ -12,7 +12,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
+import jakarta.servlet.http.HttpSession;
 import model.AppointmentDetail;
+import util.SystemLogService;
 
 /**
  *
@@ -87,6 +89,19 @@ public class listOfAppointment extends HttpServlet {
         AppointmentDAO dao = new AppointmentDAO();
 
         dao.updateStatus(id, status);
+
+        // Ghi log huỷ lịch / check-in / các trạng thái khác
+        HttpSession session = request.getSession(false);
+        String action;
+        if ("cancelled".equalsIgnoreCase(status)) {
+            action = "CANCEL_APPOINTMENT";
+        } else if ("checked_in".equalsIgnoreCase(status)) {
+            action = "CHECKIN_APPOINTMENT";
+        } else {
+            action = "UPDATE_APPOINTMENT_STATUS";
+        }
+        SystemLogService.logWithSession(session, action,
+                "Cập nhật trạng thái lịch hẹn appointmentId=" + id + " -> " + status);
 
         response.sendRedirect("listofappointment");
     }
