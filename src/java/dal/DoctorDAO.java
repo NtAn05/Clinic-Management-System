@@ -11,6 +11,8 @@ import model.DoctorDashboardStats;
 import model.ExamLabItem;
 import model.ExaminationHistoryItem;
 import model.MedicalRecord;
+import model.Medicine;
+import model.PrescriptionItem;
 
 public class DoctorDAO extends DBContext {
 
@@ -908,5 +910,17 @@ public class DoctorDAO extends DBContext {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean savePrescription(long appointmentId, int doctorId, String prescriptionNote, List<PrescriptionItem> prescriptionItems) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public List<PrescriptionItem> getPrescriptionItemsByAppointment(long appointmentId) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public List<Medicine> getAllMedicines() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }
