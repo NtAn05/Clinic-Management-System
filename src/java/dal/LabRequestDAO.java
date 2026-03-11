@@ -362,23 +362,48 @@ public class LabRequestDAO extends DBContext {
             if ("completed".equals(status)) return false; // Không hủy khi đã hoàn thành
             connection.setAutoCommit(false);
             try {
+                // Đánh dấu phiếu xét nghiệm đã hủy
                 try (PreparedStatement up = connection.prepareStatement("UPDATE lab_requests SET status = 'cancelled' WHERE request_id = ?")) {
                     up.setInt(1, requestId);
                     up.executeUpdate();
                 }
-                // Bệnh nhân đã bị xóa khỏi exam_queue khi tạo lab request → INSERT lại với status = 'waiting'
-                int nextPos = 1;
-                String maxSql = "SELECT COALESCE(MAX(queue_position), 0) + 1 AS np FROM exam_queue WHERE doctor_id = ?";
-                try (PreparedStatement maxSt = connection.prepareStatement(maxSql)) {
-                    maxSt.setInt(1, doctorId);
-                    ResultSet maxRs = maxSt.executeQuery();
-                    if (maxRs.next()) nextPos = maxRs.getInt("np");
+
+                // Cập nhật trạng thái lịch hẹn về 'waiting' để quay lại hàng đợi khám
+                try (PreparedStatement upAp = connection.prepareStatement("UPDATE appointments SET status = 'waiting' WHERE appointment_id = ?")) {
+                    upAp.setLong(1, appointmentId);
+                    upAp.executeUpdate();
                 }
-                try (PreparedStatement ins = connection.prepareStatement("INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) VALUES (?, ?, ?, 'waiting')")) {
-                    ins.setLong(1, appointmentId);
-                    ins.setInt(2, doctorId);
-                    ins.setInt(3, nextPos);
-                    ins.executeUpdate();
+
+                // Đưa bệnh nhân trở lại exam_queue với status = 'waiting'
+                // Nếu đã tồn tại bản ghi trong exam_queue thì chỉ cần UPDATE status,
+                // nếu chưa có thì INSERT mới với queue_position kế tiếp.
+                String checkQueueSql = "SELECT queue_id, queue_position FROM exam_queue WHERE appointment_id = ?";
+                boolean existsInQueue = false;
+                try (PreparedStatement checkSt = connection.prepareStatement(checkQueueSql)) {
+                    checkSt.setLong(1, appointmentId);
+                    ResultSet qrs = checkSt.executeQuery();
+                    existsInQueue = qrs.next();
+                }
+
+                if (existsInQueue) {
+                    try (PreparedStatement upQueue = connection.prepareStatement("UPDATE exam_queue SET status = 'waiting' WHERE appointment_id = ?")) {
+                        upQueue.setLong(1, appointmentId);
+                        upQueue.executeUpdate();
+                    }
+                } else {
+                    int nextPos = 1;
+                    String maxSql = "SELECT COALESCE(MAX(queue_position), 0) + 1 AS np FROM exam_queue WHERE doctor_id = ?";
+                    try (PreparedStatement maxSt = connection.prepareStatement(maxSql)) {
+                        maxSt.setInt(1, doctorId);
+                        ResultSet maxRs = maxSt.executeQuery();
+                        if (maxRs.next()) nextPos = maxRs.getInt("np");
+                    }
+                    try (PreparedStatement ins = connection.prepareStatement("INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) VALUES (?, ?, ?, 'waiting')")) {
+                        ins.setLong(1, appointmentId);
+                        ins.setInt(2, doctorId);
+                        ins.setInt(3, nextPos);
+                        ins.executeUpdate();
+                    }
                 }
                 connection.commit();
                 return true;

@@ -22,8 +22,8 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: system-ui, sans-serif; background: var(--bg-light); color: var(--text-main); padding-top: 60px; }
-    .main-container { display: flex; min-height: calc(100vh - 60px); }
-    .content-wrapper { flex: 1; padding: 24px; max-width: 1200px; margin-right: auto; }
+    .main-container { display: flex; justify-content: center; min-height: calc(100vh - 60px); }
+    .content-wrapper { flex: 1; padding: 24px; max-width: 1200px; margin: 0 auto; }
     .page-header { margin-bottom: 24px; }
     .page-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
     .page-subtitle { font-size: 14px; color: var(--text-sub); }
