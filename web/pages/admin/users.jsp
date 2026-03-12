@@ -330,19 +330,19 @@
             }
 
             .btn-view {
-                color: #1976d2;
+                color: #FB923C;
             }
 
             .btn-view:hover {
-                background: #e3f2fd;
+                background: #FFEDD5;
             }
 
             .btn-edit {
-                color: #f57c00;
+                color: #1976d2;
             }
 
             .btn-edit:hover {
-                background: #fff3e0;
+                background: #e3f2fd;
             }
 
             .btn-toggle {
@@ -731,7 +731,7 @@
                                                     </button>
                                                     <c:if test="${staff.role.toString() != 'admin'}">
                                                         <button class="btn-action btn-edit" onclick="openEditModal(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}', 'staff')" title="Sửa">
-                                                            <i class="fas fa-edit"></i>
+                                                            <i class="fas fa-pen-to-square"></i>
                                                         </button>
                                                         <button class="btn-action btn-toggle" onclick="toggleStatus('${staff.phone}', '${staff.fullName}')" title="Kích hoạt/Vô hiệu hóa">
                                                             <i class="fas fa-toggle-on"></i>
@@ -850,7 +850,7 @@
                                                         <i class="fas fa-eye"></i>
                                                     </button>
                                                     <button class="btn-action btn-edit" onclick="openEditModal(${patient.userId}, '${patient.fullName}', '${patient.phone}', '${patient.email}', '${patient.role}', '${patient.status}', 'patient')" title="Sửa">
-                                                        <i class="fas fa-edit"></i>
+                                                        <i class="fas fa-pen-to-square"></i>
                                                     </button>
                                                     <button class="btn-action btn-toggle" onclick="toggleStatus('${patient.phone}', '${patient.fullName}')" title="Kích hoạt/Vô hiệu hóa">
                                                         <i class="fas fa-toggle-on"></i>
@@ -1020,7 +1020,7 @@
         <div id="editAccountModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <i class="fas fa-edit"></i>
+                    <i class="fas fa-pen-to-square"></i>
                     <span>Chỉnh sửa tài khoản</span>
                     <button class="modal-close" onclick="closeModal('editAccountModal')">×</button>
                 </div>

@@ -286,7 +286,7 @@
                 border: none;
                 background: none;
                 cursor: pointer;
-                font-size: 15px;
+                font-size: 16px;
                 color: #1976d2;
                 padding: 6px 10px;
                 border-radius: 4px;
@@ -556,7 +556,7 @@
                                                             data-shift-type="${item.shiftCode}"
                                                             data-max-patients="${item.maxPatients}"
                                                             onclick="openEditModal(this)">
-                                                        <i class="fas fa-pen"></i>
+                                                        <i class="fas fa-pen-to-square"></i>
                                                     </button>
                                                     <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules" onsubmit="return confirm('Bạn có chắc muốn xóa ca làm việc này?');">
                                                         <input type="hidden" name="action" value="delete">
@@ -637,7 +637,7 @@
         <!-- MODAL CẬP NHẬT CA LÀM VIỆC -->
         <div class="modal" id="editModal">
             <div class="modal-content">
-                <div class="modal-title"><i class="fas fa-edit"></i> Cập nhật ca làm việc</div>
+                <div class="modal-title"><i class="fas fa-pen-to-square"></i> Cập nhật ca làm việc</div>
                 <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="shiftId" id="editShiftId">

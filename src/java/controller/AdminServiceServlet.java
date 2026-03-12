@@ -18,11 +18,13 @@ import model.User;
 public class AdminServiceServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 10;
+    private static final int MAX_SERVICE_NAME_LENGTH = 100;
+    private static final BigDecimal MAX_SERVICE_PRICE = new BigDecimal("1000000000");
+
     private final ServiceDAO serviceDAO = new ServiceDAO();
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-
         HttpSession session = req.getSession(false);
 
         if (session == null || session.getAttribute("account") == null) {
@@ -41,17 +43,13 @@ public class AdminServiceServlet extends HttpServlet {
         try {
             if ("add".equals(action)) {
                 handleAdd(req);
-                req.setAttribute("success", "Thêm dịch vụ thành công");
             } else if ("update".equals(action)) {
                 handleUpdate(req);
-                req.setAttribute("success", "Cập nhật dịch vụ thành công");
             } else if ("delete".equals(action)) {
                 handleDelete(req);
-                req.setAttribute("success", "Xóa dịch vụ thành công");
             }
 
             loadPage(req, resp);
-
         } catch (Exception e) {
             req.setAttribute("error", "Lỗi: " + e.getMessage());
             loadPage(req, resp);
@@ -60,7 +58,6 @@ public class AdminServiceServlet extends HttpServlet {
 
     private void loadPage(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-
         String search = trim(firstNonBlank(req.getParameter("filterSearch"), req.getParameter("search")));
         String category = trim(firstNonBlank(req.getParameter("filterCategory"), req.getParameter("category")));
         String minPriceStr = trim(firstNonBlank(req.getParameter("filterMinPrice"), req.getParameter("minPrice")));
@@ -102,8 +99,8 @@ public class AdminServiceServlet extends HttpServlet {
             }
         }
 
-        req.setAttribute("services", services); // full list after filter/search
-        applyPaging(req, services, page);       // paged list for table render
+        req.setAttribute("services", services);
+        applyPaging(req, services, page);
 
         req.setAttribute("searchKeyword", search);
         req.setAttribute("filterCategory", category.isEmpty() ? "all" : category);
@@ -114,30 +111,234 @@ public class AdminServiceServlet extends HttpServlet {
     }
 
     private void handleAdd(HttpServletRequest req) {
+        String name = normalizeServiceName(req.getParameter("name"));
+        String serviceType = trim(req.getParameter("serviceType"));
+        String priceRaw = trim(req.getParameter("price"));
+
+        if (name.isEmpty() || serviceType.isEmpty() || priceRaw.isEmpty()) {
+            req.setAttribute("error", "Vui lòng nhập đầy đủ thông tin");
+            keepAddForm(req, name, serviceType, priceRaw);
+
+            if (name.isEmpty()) {
+                req.setAttribute("addNameError", "Tên dịch vụ không được để trống");
+            }
+            if (serviceType.isEmpty()) {
+                req.setAttribute("addServiceTypeError", "Vui lòng chọn danh mục");
+            }
+            if (priceRaw.isEmpty()) {
+                req.setAttribute("addPriceError", "Giá không được để trống");
+            }
+            return;
+        }
+
+        if (name.length() > MAX_SERVICE_NAME_LENGTH) {
+            req.setAttribute("error", "Tên dịch vụ không được vượt quá " + MAX_SERVICE_NAME_LENGTH + " ký tự");
+            keepAddForm(req, name, serviceType, priceRaw);
+            req.setAttribute("addNameError", "Tên dịch vụ tối đa " + MAX_SERVICE_NAME_LENGTH + " ký tự");
+            return;
+        }
+
+        if (!isValidServiceType(serviceType)) {
+            req.setAttribute("error", "Danh mục không hợp lệ");
+            keepAddForm(req, name, serviceType, priceRaw);
+            req.setAttribute("addServiceTypeError", "Danh mục không hợp lệ");
+            return;
+        }
+
+        if (serviceDAO.isServiceExistNormalized(name, serviceType, null)) {
+            req.setAttribute("error", "Dịch vụ đã tồn tại");
+            keepAddForm(req, name, serviceType, priceRaw);
+            req.setAttribute("addNameError", "Dịch vụ đã tồn tại trong danh mục này");
+            return;
+        }
+
+        if (!priceRaw.matches("\\d+")) {
+            req.setAttribute("error", "Giá phải là số nguyên không âm");
+            keepAddForm(req, name, serviceType, priceRaw);
+            req.setAttribute("addPriceError", "Giá phải là số nguyên không âm");
+            return;
+        }
+
+        BigDecimal price = parseAndValidatePrice(priceRaw, false);
+        if (price == null) {
+            req.setAttribute("error", "Giá không hợp lệ");
+            keepAddForm(req, name, serviceType, priceRaw);
+            req.setAttribute("addPriceError", "Giá không hợp lệ");
+            return;
+        }
+
+        if (price.compareTo(BigDecimal.ZERO) < 0) {
+            req.setAttribute("error", "Giá phải lớn hơn hoặc bằng 0");
+            keepAddForm(req, name, serviceType, priceRaw);
+            req.setAttribute("addPriceError", "Giá phải lớn hơn hoặc bằng 0");
+            return;
+        }
+
+        if (price.compareTo(MAX_SERVICE_PRICE) > 0) {
+            req.setAttribute("error", "Giá vượt quá giới hạn tối đa");
+            keepAddForm(req, name, serviceType, priceRaw);
+            req.setAttribute("addPriceError", "Giá tối đa là " + MAX_SERVICE_PRICE.toPlainString());
+            return;
+        }
+
         ServicePrice s = new ServicePrice();
-        s.setName(req.getParameter("name"));
-        s.setServiceType(req.getParameter("serviceType"));
-        s.setPrice(new BigDecimal(req.getParameter("price")));
-        serviceDAO.addService(s);
+        s.setName(name);
+        s.setServiceType(serviceType);
+        s.setPrice(price);
+
+        int affectedRows = serviceDAO.addService(s);
+        if (affectedRows > 0) {
+            req.setAttribute("success", "Thêm dịch vụ thành công");
+            return;
+        }
+
+        req.setAttribute("error", "Không thể thêm dịch vụ");
+        keepAddForm(req, name, serviceType, priceRaw);
     }
 
     private void handleUpdate(HttpServletRequest req) {
+        String serviceIdRaw = trim(req.getParameter("serviceId"));
+        String name = normalizeServiceName(req.getParameter("name"));
+        String serviceType = trim(req.getParameter("serviceType"));
+        String priceRaw = trim(req.getParameter("price"));
+
+        if (serviceIdRaw.isEmpty()) {
+            req.setAttribute("error", "Dịch vụ không hợp lệ");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            return;
+        }
+
+        if (name.isEmpty() || serviceType.isEmpty() || priceRaw.isEmpty()) {
+            req.setAttribute("error", "Vui lòng nhập đầy đủ thông tin");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+
+            if (name.isEmpty()) {
+                req.setAttribute("editNameError", "Tên dịch vụ không được để trống");
+            }
+            if (serviceType.isEmpty()) {
+                req.setAttribute("editServiceTypeError", "Vui lòng chọn danh mục");
+            }
+            if (priceRaw.isEmpty()) {
+                req.setAttribute("editPriceError", "Giá không được để trống");
+            }
+            return;
+        }
+
+        int serviceId;
+        try {
+            serviceId = Integer.parseInt(serviceIdRaw);
+        } catch (Exception e) {
+            req.setAttribute("error", "Dịch vụ không hợp lệ");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            return;
+        }
+
+        ServicePrice existingService = serviceDAO.getServiceById(serviceId);
+        if (existingService == null) {
+            req.setAttribute("error", "Dịch vụ không tồn tại");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            return;
+        }
+
+        if (name.length() > MAX_SERVICE_NAME_LENGTH) {
+            req.setAttribute("error", "Tên dịch vụ không được vượt quá " + MAX_SERVICE_NAME_LENGTH + " ký tự");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            req.setAttribute("editNameError", "Tên dịch vụ tối đa " + MAX_SERVICE_NAME_LENGTH + " ký tự");
+            return;
+        }
+
+        if (!isValidServiceType(serviceType)) {
+            req.setAttribute("error", "Danh mục không hợp lệ");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            req.setAttribute("editServiceTypeError", "Danh mục không hợp lệ");
+            return;
+        }
+
+        if (serviceDAO.isServiceExistNormalized(name, serviceType, serviceId)) {
+            req.setAttribute("error", "Dịch vụ đã tồn tại");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            req.setAttribute("editNameError", "Dịch vụ đã tồn tại trong danh mục này");
+            return;
+        }
+
+        if (!priceRaw.matches("\\d+")) {
+            req.setAttribute("error", "Giá phải là số nguyên không âm");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            req.setAttribute("editPriceError", "Giá phải là số nguyên không âm");
+            return;
+        }
+
+        BigDecimal price = parseAndValidatePrice(priceRaw, false);
+        if (price == null) {
+            req.setAttribute("error", "Giá không hợp lệ");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            req.setAttribute("editPriceError", "Giá không hợp lệ");
+            return;
+        }
+
+        if (price.compareTo(BigDecimal.ZERO) < 0) {
+            req.setAttribute("error", "Giá phải lớn hơn hoặc bằng 0");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            req.setAttribute("editPriceError", "Giá phải lớn hơn hoặc bằng 0");
+            return;
+        }
+
+        if (price.compareTo(MAX_SERVICE_PRICE) > 0) {
+            req.setAttribute("error", "Giá vượt quá giới hạn tối đa");
+            keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
+            req.setAttribute("editPriceError", "Giá tối đa là " + MAX_SERVICE_PRICE.toPlainString());
+            return;
+        }
+
         ServicePrice s = new ServicePrice();
-        s.setServiceId(Integer.parseInt(req.getParameter("serviceId")));
-        s.setName(req.getParameter("name"));
-        s.setServiceType(req.getParameter("serviceType"));
-        s.setPrice(new BigDecimal(req.getParameter("price")));
-        serviceDAO.updateService(s);
+        s.setServiceId(serviceId);
+        s.setName(name);
+        s.setServiceType(serviceType);
+        s.setPrice(price);
+
+        int affectedRows = serviceDAO.updateService(s);
+        if (affectedRows > 0) {
+            req.setAttribute("success", "Cập nhật dịch vụ thành công");
+            return;
+        }
+
+        req.setAttribute("error", "Không thể cập nhật dịch vụ");
+        keepEditForm(req, serviceIdRaw, name, serviceType, priceRaw);
     }
 
     private void handleDelete(HttpServletRequest req) {
-        int id = Integer.parseInt(req.getParameter("serviceId"));
-        serviceDAO.deleteService(id);
+        String serviceIdRaw = trim(req.getParameter("serviceId"));
+
+        if (serviceIdRaw.isEmpty()) {
+            req.setAttribute("error", "Yêu cầu xóa không hợp lệ");
+            return;
+        }
+
+        int id;
+        try {
+            id = Integer.parseInt(serviceIdRaw);
+        } catch (Exception e) {
+            req.setAttribute("error", "Yêu cầu xóa không hợp lệ");
+            return;
+        }
+
+        ServicePrice existingService = serviceDAO.getServiceById(id);
+        if (existingService == null) {
+            req.setAttribute("error", "Dịch vụ không tồn tại hoặc đã bị xóa");
+            return;
+        }
+
+        int affectedRows = serviceDAO.deleteService(id);
+        if (affectedRows > 0) {
+            req.setAttribute("success", "Xóa dịch vụ thành công");
+            return;
+        }
+
+        req.setAttribute("error", "Không thể xóa dịch vụ");
     }
 
     private void applyPaging(HttpServletRequest req, List<ServicePrice> fullList, int page) {
         List<ServicePrice> safe = fullList != null ? fullList : new ArrayList<>();
-
         int totalRecords = safe.size();
         int totalPages = calculateTotalPages(totalRecords, PAGE_SIZE);
 
@@ -176,16 +377,58 @@ public class AdminServiceServlet extends HttpServlet {
         if (data == null || data.isEmpty()) {
             return new ArrayList<>();
         }
+
         int from = (page - 1) * pageSize;
         if (from < 0 || from >= data.size()) {
             return new ArrayList<>();
         }
+
         int to = Math.min(from + pageSize, data.size());
         return data.subList(from, to);
     }
 
+    private BigDecimal parseAndValidatePrice(String priceRaw, boolean allowDecimal) {
+        if (priceRaw == null || priceRaw.isBlank()) {
+            return null;
+        }
+
+        String pattern = allowDecimal ? "\\d+(\\.\\d+)?" : "\\d+";
+        if (!priceRaw.matches(pattern)) {
+            return null;
+        }
+
+        try {
+            return new BigDecimal(priceRaw);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean isValidServiceType(String serviceType) {
+        return "booking_fee".equals(serviceType) || "lab".equals(serviceType);
+    }
+
     private String trim(String s) {
         return s == null ? "" : s.trim();
+    }
+
+    private String normalizeServiceName(String s) {
+        return trim(s).replaceAll("\\s+", " ");
+    }
+
+    private void keepAddForm(HttpServletRequest req, String name, String serviceType, String priceRaw) {
+        req.setAttribute("addModalOpen", true);
+        req.setAttribute("addName", name);
+        req.setAttribute("addServiceType", serviceType);
+        req.setAttribute("addPrice", priceRaw);
+    }
+
+    private void keepEditForm(HttpServletRequest req, String serviceIdRaw, String name, String serviceType, String priceRaw) {
+        req.setAttribute("editModalOpen", true);
+        req.setAttribute("editServiceId", serviceIdRaw);
+        req.setAttribute("editName", name);
+        req.setAttribute("editServiceType", serviceType);
+        req.setAttribute("editPrice", priceRaw);
     }
 
     private String firstNonBlank(String a, String b) {

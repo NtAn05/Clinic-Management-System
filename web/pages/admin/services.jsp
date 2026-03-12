@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <!DOCTYPE html>
@@ -22,7 +22,7 @@
 
             .container {
                 padding: 30px 50px;
-                max-width: 1200px;
+                max-width: 1400px;
                 margin: 0 auto;
             }
 
@@ -72,8 +72,7 @@
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 20px;
-                border-bottom: 2px solid #f0f0f0;
-                padding-bottom: 15px;
+                padding-bottom: 4px;
             }
 
             .table-header h3 {
@@ -81,101 +80,46 @@
                 color: #333;
             }
 
-            .btn-submit {
-                background: #4caf50;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .btn-submit:hover {
-                background: #45a049;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-            }
-
-            .add-form {
-                background: #f9f9f9;
+            .toolbar {
+                background: white;
                 padding: 20px;
-                border-radius: 8px;
+                border-radius: 10px;
                 margin-bottom: 20px;
-            }
-
-            .form-grid {
                 display: grid;
-                grid-template-columns: 1fr 1fr 1fr auto;
-                gap: 10px;
-                align-items: end;
-            }
-
-            .form-group {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .form-group label {
-                font-weight: 600;
-                margin-bottom: 5px;
-                font-size: 13px;
-                color: #333;
-            }
-
-            .form-group input {
-                padding: 8px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                font-family: inherit;
-                font-size: 13px;
-            }
-
-            .form-group input:focus {
-                outline: none;
-                border-color: #0061ff;
-                box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
-            }
-
-            /* Search & Filter Styles */
-            .search-filter-section {
-                background: #f8f9fa;
-                padding: 20px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-                border: 1px solid #e0e0e0;
-            }
-
-            .search-form {
-                margin: 0;
-            }
-
-            .search-grid {
-                display: grid;
-                grid-template-columns: repeat(4, minmax(180px, 1fr)) auto;
                 gap: 12px;
                 align-items: end;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             }
 
-            .search-group {
-                display: flex;
-                flex-direction: column;
+            .toolbar-service {
+                grid-template-columns: repeat(4, minmax(180px, 1fr)) auto;
+            }
+
+            .search-box {
                 min-width: 0;
             }
 
-            .search-group label {
+            .search-box label {
+                display: block;
                 font-weight: 600;
-                margin-bottom: 5px;
-                font-size: 13px;
+                margin-bottom: 8px;
                 color: #333;
-                display: flex;
-                align-items: center;
-                gap: 5px;
+                font-size: 13px;
+            }
+
+            .search-box input {
+                width: 100%;
+                padding: 10px 15px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                transition: all 0.3s ease;
+            }
+
+            .search-box input:focus {
+                outline: none;
+                border-color: #0061ff;
+                box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
             }
 
             .filter-box {
@@ -207,64 +151,55 @@
                 box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
             }
 
-            .search-input, .filter-select, .price-input {
-                padding: 10px 15px;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                font-family: inherit;
-                font-size: 14px;
-                width: 100%;
-            }
-
-            .search-input:focus, .filter-select:focus, .price-input:focus {
-                outline: none;
-                border-color: #0061ff;
-                box-shadow: 0 0 0 2px rgba(0, 97, 255, 0.1);
-            }
-
-            .button-group {
+            .toolbar-buttons {
                 display: flex;
-                gap: 8px;
+                gap: 10px;
                 align-self: end;
             }
 
-            .btn-filter {
-                background: #0061ff;
-                color: white;
-                border: none;
+            .btn-search, .btn-reset, .btn-add {
                 padding: 10px 16px;
+                border: none;
                 border-radius: 6px;
                 cursor: pointer;
-                font-size: 14px;
                 font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                transition: all 0.3s ease;
-            }
-
-            .btn-filter:hover {
-                background: #0052cc;
-                transform: translateY(-1px);
-            }
-
-            .btn-clear {
-                color: #666;
-                text-decoration: none;
-                padding: 10px 16px;
-                border-radius: 6px;
                 font-size: 14px;
-                font-weight: 700;
+                transition: all 0.3s ease;
                 display: flex;
                 align-items: center;
-                gap: 5px;
-                transition: all 0.3s ease;
-                border: 1px solid #ddd;
+                gap: 6px;
+                text-decoration: none;
             }
 
-            .btn-clear:hover {
+            .btn-search {
+                background: #0061ff;
+                color: white;
+            }
+
+            .btn-search:hover {
+                background: #0052cc;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 97, 255, 0.3);
+            }
+
+            .btn-reset {
                 background: #f0f0f0;
                 color: #333;
+            }
+
+            .btn-reset:hover {
+                background: #e0e0e0;
+            }
+
+            .btn-add {
+                background: #4caf50;
+                color: white;
+            }
+
+            .btn-add:hover {
+                background: #45a049;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
             }
 
             .pagination-wrapper {
@@ -277,14 +212,14 @@
             }
 
             .page-link {
-                min-width: 36px;
-                padding: 10px 14px;
-                border: 1px solid #d9d9d9;
-                border-radius: 10px;
+                min-width: 34px;
+                padding: 8px 12px;
+                border: 1px solid #dcdcdc;
+                border-radius: 6px;
                 background: #fff;
                 color: #333;
                 text-decoration: none;
-                font-weight: 500;
+                font-weight: 600;
                 text-align: center;
                 display: inline-flex;
                 align-items: center;
@@ -309,18 +244,28 @@
             }
 
             @media (max-width: 768px) {
-                .search-grid {
-                    grid-template-columns: 1fr;
-                    gap: 10px;
+                .container {
+                    padding: 20px;
                 }
-                
-                .button-group {
+
+                .toolbar {
+                    grid-template-columns: 1fr;
+                }
+
+                .search-box,
+                .filter-box {
+                    width: 100%;
+                    min-width: unset;
+                }
+
+                .toolbar-buttons {
                     justify-content: stretch;
                     width: 100%;
                 }
 
-                .button-group .btn-filter,
-                .button-group .btn-clear {
+                .toolbar-buttons .btn-search,
+                .toolbar-buttons .btn-reset,
+                .toolbar-buttons .btn-add {
                     flex: 1;
                     justify-content: center;
                 }
@@ -352,10 +297,10 @@
 
             .action-buttons {
                 display: flex;
-                gap: 8px;
+                flex-wrap: wrap;
             }
 
-            .btn-edit, .btn-delete {
+            .btn-action {
                 border: none;
                 background: none;
                 cursor: pointer;
@@ -363,6 +308,9 @@
                 padding: 6px 10px;
                 border-radius: 4px;
                 transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 4px;
             }
 
             .btn-edit {
@@ -397,6 +345,7 @@
                 height: 100%;
                 background-color: rgba(0, 0, 0, 0.5);
                 animation: fadeIn 0.3s ease;
+                overflow-y: auto;
             }
 
             @keyframes fadeIn {
@@ -414,7 +363,7 @@
                 padding: 30px;
                 border-radius: 10px;
                 width: 90%;
-                max-width: 500px;
+                max-width: 550px;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                 animation: slideUp 0.3s ease;
             }
@@ -434,36 +383,64 @@
                 font-size: 20px;
                 font-weight: 600;
                 color: #0061ff;
-                margin-bottom: 20px;
+                margin-bottom: 25px;
                 display: flex;
                 align-items: center;
                 gap: 10px;
+                border-bottom: 2px solid #f0f0f0;
+                padding-bottom: 15px;
             }
 
-            .form-group-modal {
-                margin-bottom: 15px;
+            .modal-close {
+                margin-left: auto;
+                cursor: pointer;
+                font-size: 24px;
+                line-height: 1;
+                background: none;
+                border: none;
+                color: #999;
+                transition: all 0.3s ease;
             }
 
-            .form-group-modal label {
+            .modal-close:hover {
+                color: #333;
+            }
+
+            .form-group {
+                margin-bottom: 18px;
+            }
+
+            .form-group label {
                 display: block;
                 font-weight: 600;
                 margin-bottom: 8px;
                 color: #333;
+                font-size: 14px;
             }
 
-            .form-group-modal input {
+            .form-group input,
+            .form-group select {
                 width: 100%;
-                padding: 10px;
+                padding: 10px 15px;
                 border: 1px solid #ddd;
                 border-radius: 6px;
                 font-size: 14px;
                 font-family: inherit;
+                transition: all 0.3s ease;
             }
 
-            .form-group-modal input:focus {
+            .form-group input:focus,
+            .form-group select:focus {
                 outline: none;
                 border-color: #0061ff;
                 box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1);
+            }
+
+            .field-error {
+                margin-top: 6px;
+                color: #dc3545;
+                font-size: 13px;
+                font-weight: 600;
             }
 
             .modal-footer {
@@ -484,13 +461,16 @@
                 cursor: pointer;
                 font-weight: 600;
                 transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
 
             .btn-cancel:hover {
                 background: #e0e0e0;
             }
 
-            .btn-submit-modal {
+            .btn-submit {
                 padding: 10px 20px;
                 background: #0061ff;
                 color: white;
@@ -499,9 +479,12 @@
                 cursor: pointer;
                 font-weight: 600;
                 transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
 
-            .btn-submit-modal:hover {
+            .btn-submit:hover {
                 background: #0052cc;
             }
         </style>
@@ -519,7 +502,7 @@
             </c:if>
 
             <!-- Thông báo lỗi -->
-            <c:if test="${not empty error}">
+            <c:if test="${not empty error and not addModalOpen and not editModalOpen}">
                 <div class="alert error">
                     <i class="fas fa-exclamation-circle"></i>
                     ${error}
@@ -529,48 +512,43 @@
             <div class="table-container">
                 <div class="table-header">
                     <h3><i class="fas fa-list"></i> Danh sách Dịch vụ</h3>
-                    <button class="btn-submit" onclick="openAddModal()">
+                    <button class="btn-add" onclick="openAddModal()">
                         <i class="fas fa-plus"></i> Thêm Dịch vụ
                     </button>
                 </div>
 
                 <!-- Search & Filter -->
-                <div class="search-filter-section">
-                    <form method="GET" action="${pageContext.request.contextPath}/admin-services" class="search-form">
-                        <div class="search-grid">
-                            <div class="search-group">
+                <div class="toolbar toolbar-service">
+                    <form method="GET" action="${pageContext.request.contextPath}/admin-services" style="display: contents;">
+                            <div class="search-box">
                                 <label><i class="fas fa-search"></i> Tìm kiếm</label>
-                                <input type="text" name="search" value="${searchKeyword}" placeholder="Tên dịch vụ..." class="search-input" onkeypress="if(event.keyCode==13) this.form.submit()">
+                                <input type="text" name="search" value="${searchKeyword}" placeholder="Tên dịch vụ..." onkeypress="if(event.keyCode==13) this.form.submit()">
                             </div>
                             <div class="filter-box">
                                 <label><i class="fas fa-filter"></i> Danh mục</label>
-                                <select name="category" class="filter-select" onchange="this.form.submit()">
+                                <select name="category" onchange="this.form.submit()">
                                     <option value="all" ${filterCategory == 'all' ? 'selected' : ''}>-- Tất cả --</option>
                                     <option value="booking_fee" ${filterCategory == 'booking_fee' ? 'selected' : ''}>Khám & tư vấn</option>
                                     <option value="lab" ${filterCategory == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
                                 </select>
                             </div>
-                            <div class="search-group">
+                            <div class="search-box">
                                 <label><i class="fas fa-dollar-sign"></i> Giá từ</label>
-                                <input type="number" name="minPrice" value="${minPriceValue}" min="0" placeholder="0" class="price-input" onchange="this.form.submit()">
+                                <input type="number" name="minPrice" value="${minPriceValue}" min="0" placeholder="0" onchange="this.form.submit()">
                             </div>
-                            <div class="search-group">
+                            <div class="search-box">
                                 <label><i class="fas fa-dollar-sign"></i> Giá đến</label>
-                                <input type="number" name="maxPrice" value="${maxPriceValue}" min="0" placeholder="Không giới hạn" class="price-input" onchange="this.form.submit()">
+                                <input type="number" name="maxPrice" value="${maxPriceValue}" min="0" placeholder="Không giới hạn" onchange="this.form.submit()">
                             </div>
                             <input type="hidden" name="page" value="1">
-                            <div class="search-group">
-                                <label>&nbsp;</label>
-                                <div class="button-group">
-                                    <button type="submit" class="btn-filter">
+                            <div class="toolbar-buttons">
+                                    <button type="submit" class="btn-search">
                                         <i class="fas fa-search"></i> Tìm
                                     </button>
-                                    <a href="${pageContext.request.contextPath}/admin-services" class="btn-clear">
+                                    <a href="${pageContext.request.contextPath}/admin-services" class="btn-reset">
                                         <i class="fas fa-redo"></i> Đặt lại
                                     </a>
-                                </div>
                             </div>
-                        </div>
                     </form>
                 </div>
 
@@ -613,8 +591,8 @@
                                             <td>${service.price}</td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <button class="btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;${service.price}&quot;)" title="Chỉnh sửa">
-                                                        <i class="fas fa-edit"></i>
+                                                    <button class="btn-action btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;${service.price}&quot;)" title="Chỉnh sửa">
+                                                        <i class="fas fa-pen-to-square"></i>
                                                     </button>
                                                     <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
                                                         <input type="hidden" name="action" value="delete">
@@ -624,7 +602,7 @@
                                                         <input type="hidden" name="filterMinPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}">
                                                         <input type="hidden" name="filterMaxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}">
                                                         <input type="hidden" name="filterPage" value="${currentPage}">
-                                                        <button type="submit" class="btn-delete" title="Xóa">
+                                                        <button type="submit" class="btn-action btn-delete" title="Xóa">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </form>
@@ -707,9 +685,10 @@
                 <div class="modal-header">
                     <i class="fas fa-plus-circle"></i>
                     <span>Thêm Dịch vụ Mới</span>
+                    <button class="modal-close" onclick="closeAddModal()" type="button">×</button>
                 </div>
 
-                <form method="POST" action="${pageContext.request.contextPath}/admin-services">
+                <form method="POST" action="${pageContext.request.contextPath}/admin-services" novalidate>
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="filterSearch" value="${searchKeyword}">
                     <input type="hidden" name="filterCategory" value="${filterCategory}">
@@ -717,30 +696,46 @@
                     <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
 
-                    <div class="form-group-modal">
+                    <c:if test="${not empty error and addModalOpen}">
+                        <div class="alert error" style="margin-bottom: 12px;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${error}
+                        </div>
+                    </c:if>
+
+                    <div class="form-group">
                         <label>Tên dịch vụ <span style="color: red;">*</span></label>
-                        <input type="text" name="name" required placeholder="Nhập tên dịch vụ">
+                        <input type="text" name="name" required placeholder="Nhập tên dịch vụ" value="${addName}">
+                        <c:if test="${not empty addNameError}">
+                            <div class="field-error">${addNameError}</div>
+                        </c:if>
                     </div>
 
-                    <div class="form-group-modal">
+                    <div class="form-group">
                         <label>Danh mục <span style="color: red;">*</span></label>
-                        <select name="serviceType" class="filter-select" required>
-                            <option value="">-- Chọn danh mục --</option>
-                            <option value="booking_fee">Khám & tư vấn</option>
-                            <option value="lab">Kiểm tra chuyên sâu</option>
+                        <select name="serviceType" required>
+                            <option value="" ${empty addServiceType ? 'selected' : ''}>-- Chọn danh mục --</option>
+                            <option value="booking_fee" ${addServiceType == 'booking_fee' ? 'selected' : ''}>Khám & tư vấn</option>
+                            <option value="lab" ${addServiceType == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
                         </select>
+                        <c:if test="${not empty addServiceTypeError}">
+                            <div class="field-error">${addServiceTypeError}</div>
+                        </c:if>
                     </div>
 
-                    <div class="form-group-modal">
+                    <div class="form-group">
                         <label>Giá (VNĐ) <span style="color: red;">*</span></label>
-                        <input type="number" name="price" min="0" required placeholder="0">
+                        <input type="number" name="price" min="0" required placeholder="0" value="${addPrice}">
+                        <c:if test="${not empty addPriceError}">
+                            <div class="field-error">${addPriceError}</div>
+                        </c:if>
                     </div>
 
                     <div class="modal-footer">
                         <button type="button" class="btn-cancel" onclick="closeAddModal()">
                             <i class="fas fa-times"></i> Hủy
                         </button>
-                        <button type="submit" class="btn-submit-modal">
+                        <button type="submit" class="btn-submit">
                             <i class="fas fa-save"></i> Thêm dịch vụ
                         </button>
                     </div>
@@ -752,43 +747,60 @@
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <i class="fas fa-edit"></i>
+                    <i class="fas fa-pen-to-square"></i>
                     <span>Chỉnh sửa Dịch vụ</span>
+                    <button class="modal-close" onclick="closeEditModal()" type="button">×</button>
                 </div>
 
-                <form method="POST" action="${pageContext.request.contextPath}/admin-services">
+                <form method="POST" action="${pageContext.request.contextPath}/admin-services" novalidate>
                     <input type="hidden" name="action" value="update">
-                    <input type="hidden" name="serviceId" id="editServiceId">
+                    <input type="hidden" name="serviceId" id="editServiceId" value="${editServiceId}">
                     <input type="hidden" name="filterSearch" value="${searchKeyword}">
                     <input type="hidden" name="filterCategory" value="${filterCategory}">
                     <input type="hidden" name="filterMinPrice" value="${minPriceValue}">
                     <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
 
-                    <div class="form-group-modal">
+                    <c:if test="${not empty error and editModalOpen}">
+                        <div class="alert error" style="margin-bottom: 12px;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${error}
+                        </div>
+                    </c:if>
+
+                    <div class="form-group">
                         <label>Tên dịch vụ <span style="color: red;">*</span></label>
-                        <input type="text" name="name" id="editServiceName" required placeholder="Nhập tên dịch vụ">
+                        <input type="text" name="name" id="editServiceName" required placeholder="Nhập tên dịch vụ" value="${editName}">
+                        <c:if test="${not empty editNameError}">
+                            <div class="field-error">${editNameError}</div>
+                        </c:if>
                     </div>
 
-                    <div class="form-group-modal">
+                    <div class="form-group">
                         <label>Danh mục <span style="color: red;">*</span></label>
-                        <select name="serviceType" id="editServiceType" class="filter-select" required>
-                            <option value="">-- Chọn danh mục --</option>
-                            <option value="booking_fee">Khám & tư vấn</option>
-                            <option value="lab">Kiểm tra chuyên sâu</option>
+                        <select name="serviceType" id="editServiceType" required>
+                            <option value="" ${empty editServiceType ? 'selected' : ''}>-- Chọn danh mục --</option>
+                            <option value="booking_fee" ${editServiceType == 'booking_fee' ? 'selected' : ''}>Khám & tư vấn</option>
+                            <option value="lab" ${editServiceType == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
                         </select>
+                        <c:if test="${not empty editServiceTypeError}">
+                            <div class="field-error">${editServiceTypeError}</div>
+                        </c:if>
                     </div>
 
-                    <div class="form-group-modal">
+                    <div class="form-group">
                         <label>Giá (VNĐ) <span style="color: red;">*</span></label>
-                        <input type="number" name="price" id="editServicePrice" min="0" required placeholder="0">
+                        <input type="number" name="price" id="editServicePrice" min="0" required placeholder="0" value="${editPrice}">
+                        <c:if test="${not empty editPriceError}">
+                            <div class="field-error">${editPriceError}</div>
+                        </c:if>
                     </div>
 
                     <div class="modal-footer">
                         <button type="button" class="btn-cancel" onclick="closeEditModal()">
                             <i class="fas fa-times"></i> Hủy
                         </button>
-                        <button type="submit" class="btn-submit-modal">
+                        <button type="submit" class="btn-submit">
                             <i class="fas fa-save"></i> Lưu thay đổi
                         </button>
                     </div>
@@ -842,7 +854,19 @@
                         setTimeout(() => alert.remove(), 300);
                     }, 5000);
                 });
+
+                const shouldOpenAddModal = '${addModalOpen}' === 'true';
+                const shouldOpenEditModal = '${editModalOpen}' === 'true';
+                if (shouldOpenAddModal) {
+                    openAddModal();
+                }
+                if (shouldOpenEditModal) {
+                    document.getElementById('editModal').style.display = 'block';
+                }
             });
         </script>
     </body>
 </html>
+
+
+
