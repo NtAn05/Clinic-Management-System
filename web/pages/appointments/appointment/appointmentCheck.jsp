@@ -136,12 +136,12 @@
                             <input type="hidden" name="userID" value="${sessionScope.account.userId}">
                             <input type="hidden" name="pricePay" value="${doctor.price}">
                             <input type="hidden" name="bookingStyle"
-                               value="${roleName == 'receptionist' ? 'walk_in' : 'online'}">
+                                   value="${sessionScope.roleName == 'receptionist' ? 'walk_in' : 'online'}">
                             <!-- ACTION -->
 
                             <div class="actions">
                                 <button type="button"  class="btn-outline"
-                                         onclick="history.back()">
+                                        onclick="history.back()">
                                     Chỉnh sửa thông tin
                                 </button>
 

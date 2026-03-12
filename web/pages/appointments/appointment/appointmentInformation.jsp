@@ -54,7 +54,7 @@
                         <input type="hidden" name="doctorID" value="${doctor.doctorId}">
                         <input type="hidden" name="userID" value="${sessionScope.account.userId}">
                         <input type="hidden" name="bookingStyle"
-                               value="${roleName == 'receptionist' ? 'walk_in' : 'online'}">
+                               value="${sessionScope.roleName == 'receptionist' ? 'walk_in' : 'online'}">
                         <div class="card-box">
                             <h3>Thông tin của bạn</h3>
 
@@ -76,7 +76,8 @@
 
                                 <div>
                                     <label>Ngày sinh *</label>
-                                    <input type="date" name="dateofbirth" value="${patient.dateofbirth}">
+                                    <input type="date" name="dateofbirth" value="${patient.dob}" >
+                                    <span style="color:red">${errorDOB}</span>
                                 </div>
 
                                 <div>
@@ -87,14 +88,10 @@
                                     </select>
                                 </div>
 
-                                <div>
-                                    <label>Địa chỉ</label>
-                                    <input type="text" name="address" value="${patient.address}">
-                                </div>
                             </div>
 
                             <label>Ghi chú bệnh lý</label>
-                            <textarea name="note" placeholder="Nhập triệu chứng nếu có">${patient.note}</textarea>
+                            <textarea name="note" placeholder="Nhập triệu chứng nếu có">${note}</textarea>
                         </div>
 
                         <!-- DATE & TIME -->

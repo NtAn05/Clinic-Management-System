@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import model.Appointment;
@@ -53,11 +54,18 @@ public class AppointmentServlet extends HttpServlet {
         String email = request.getParameter("email");
 
         String dateofbirth = request.getParameter("dateofbirth");
-        LocalDate localDate = LocalDate.parse(dateofbirth);
-        java.sql.Date birthDate = java.sql.Date.valueOf(localDate);
 
+        LocalDate localDate = null;
+        Date birthDate = null;
+
+        if (dateofbirth != null && !dateofbirth.isEmpty()) {
+            localDate = LocalDate.parse(dateofbirth); // yyyy-MM-dd, parse thẳng được
+            birthDate = Date.valueOf(localDate);
+        }
+        System.out.println("DEBUG dateofbirth: " + dateofbirth);
+System.out.println("DEBUG localDate: " + localDate);
+System.out.println("DEBUG checkDOB: " + checkDOB(localDate));
         String gender = request.getParameter("gender");
-        String address = request.getParameter("address");
         String note = request.getParameter("note");
         String bookingStyle = request.getParameter("bookingStyle");
         String date = request.getParameter("date");
@@ -74,26 +82,36 @@ public class AppointmentServlet extends HttpServlet {
         request.setAttribute("doctor", doctor);
 
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-        Appointment appointment = new Appointment(1, doctorId, 1, "online", sqlDate, sqlTime, "booked", note);
+        Appointment appointment = new Appointment(1, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
 
         // Validate thông tin
         String errorPhone = "";
+        String errorName = "";
         String errorEmail = "";
+        String errorDOB = "";
         String status = "";
 
         if (!checkPhone(sdt)) {
             errorPhone = "Phone must form 0xxx xxx xxx";
         } else if (!checkEmail(email)) {
             errorEmail = "abc@xxx.com";
+        } else if (!checkName(name)) {
+            errorName = "Name not null";
+        } else if (!checkDOB(localDate)) {
+            errorDOB = "Date of birth must be between 1900 and today";
+            
         } else {
             status = "yes";
         }
-
+        System.out.println("DOB nhận được: " + localDate);
+System.out.println("Check kết quả: " + checkDOB(localDate));
+        request.setAttribute("errorName", errorName);   // thêm dòng này
+        request.setAttribute("errorDOB", errorDOB);
         request.setAttribute("errorPhone", errorPhone);
         request.setAttribute("errorEmail", errorEmail);
         request.setAttribute("appointment", appointment);
         request.setAttribute("patient", patient);
-        request.setAttribute("address", address);
+        request.setAttribute("note", note);
 
         request.setAttribute("status", status);
         request.setAttribute("time", timeStr);
@@ -121,7 +139,7 @@ public class AppointmentServlet extends HttpServlet {
                 CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
                         .orderCode(orderCode)
                         .amount(amount)
-                        .description(name + " thanh toan")
+                        .description(name + "")
                         .returnUrl("http://localhost:8080/PhongKhamDaLieu/appointmentpaymentservlet")
                         .cancelUrl("http://localhost:8080/PhongKhamDaLieu/pages/appointments/appointment/appointmentFailPayment.jsp")
                         .build();
@@ -169,4 +187,20 @@ public class AppointmentServlet extends HttpServlet {
         }
         return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
+
+    private boolean checkName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+        return name.trim().length() >= 2 && name.trim().length() <= 50;
+    }
+
+    private boolean checkDOB(LocalDate dob) {
+    if (dob == null) return false;
+    LocalDate minDate = LocalDate.of(1990, 1, 1);
+    LocalDate today = LocalDate.now();
+    
+    return (dob.compareTo(minDate) >= 0) && (dob.compareTo(today) <= 0);
+}
+
 }
