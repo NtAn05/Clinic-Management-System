@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/pages/examination/exam.css">
     </head>
     <body>
-
+        <jsp:include page="/common/header.jsp" />
         <div class="exam-container">
             <c:if test="${not empty pageError}">
                 <div class="alert-error">${pageError}</div>
@@ -221,8 +221,8 @@
                     <div class="tab-content ${activeTab == 'prescription' ? 'active' : ''}" id="prescription">
                         <div class="card">
                             <h3>Đơn thuốc</h3>
-                            <label>Ghi chú đơn thuốc</label>
-                            <textarea rows="2" name="prescriptionNote" placeholder="Lưu ý chung cho bệnh nhân khi dùng thuốc..."></textarea>
+<!--                            <label>Ghi chú đơn thuốc</label>
+                            <textarea rows="2" name="prescriptionNote" placeholder="Lưu ý chung cho bệnh nhân khi dùng thuốc..."></textarea>-->
 
                             <div id="rxList" class="rx-list">
                                 <c:if test="${not empty prescriptionItems}">
@@ -241,8 +241,6 @@
                                             <input name="dosage" placeholder="Liều dùng" value="${item.dosage}">
                                             <input name="frequency" placeholder="Số lần/ngày" value="${item.frequency}">
                                             <input name="durationDays" placeholder="Số ngày" value="${item.durationDays}">
-                                            <input name="quantity" placeholder="Số lượng" value="${item.quantity}">
-                                            <input name="instruction" placeholder="Hướng dẫn" value="${item.instruction}">
                                         </div>
                                     </c:forEach>
                                 </c:if>
@@ -326,8 +324,6 @@
             <input name="dosage" placeholder="Liều dùng">
             <input name="frequency" placeholder="Số lần/ngày">
             <input name="durationDays" placeholder="Số ngày">
-            <input name="quantity" placeholder="Số lượng">
-            <input name="instruction" placeholder="Hướng dẫn">
         </template>
 
         <script>
@@ -377,6 +373,6 @@
                 document.querySelectorAll('#rxList select[name="medicineId"]').forEach(syncMedicineName);
             });
         </script>
-
+        <jsp:include page="/common/footer.jsp" />
     </body>
 </html>

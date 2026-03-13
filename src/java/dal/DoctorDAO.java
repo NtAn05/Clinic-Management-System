@@ -13,6 +13,7 @@ import model.ExaminationHistoryItem;
 import model.MedicalRecord;
 import model.Medicine;
 import model.PrescriptionItem;
+import model.ScheduleChangeRequest;
 
 public class DoctorDAO extends DBContext {
 
@@ -464,6 +465,175 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
+    public List<ScheduleChangeRequest> getScheduleChangeRequestsByDoctor(int doctorId, int limit) {
+        List<ScheduleChangeRequest> list = new ArrayList<>();
+        String sql = """
+            SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
+                   r.reason, r.status, r.requested_at, r.admin_note,
+                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
+                   i.start_time, i.end_time, i.max_patients
+            FROM schedule_change_requests r
+            LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
+            WHERE r.doctor_id = ?
+            ORDER BY r.requested_at DESC
+            LIMIT ?
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            st.setInt(2, limit);
+            ResultSet rs = st.executeQuery();
+
+            while (rs.next()) {
+                ScheduleChangeRequest request = new ScheduleChangeRequest();
+                request.setRequestId(rs.getInt("request_id"));
+                request.setDoctorId(rs.getInt("doctor_id"));
+                request.setRequestType(rs.getString("request_type"));
+                request.setScopeType(rs.getString("scope_type"));
+                request.setReason(rs.getString("reason"));
+                request.setStatus(rs.getString("status"));
+                request.setRequestedAt(rs.getTimestamp("requested_at"));
+                request.setAdminNote(rs.getString("admin_note"));
+                request.setActionType(rs.getString("action_type"));
+
+                int targetShiftId = rs.getInt("target_shift_id");
+                request.setTargetShiftId(rs.wasNull() ? null : targetShiftId);
+
+                request.setWorkDate(rs.getDate("work_date"));
+                int dayOfWeek = rs.getInt("day_of_week");
+                request.setDayOfWeek(rs.wasNull() ? null : dayOfWeek);
+
+                Time startTime = rs.getTime("start_time");
+                if (startTime != null) {
+                    request.setStartTime(startTime.toLocalTime());
+                }
+
+                Time endTime = rs.getTime("end_time");
+                if (endTime != null) {
+                    request.setEndTime(endTime.toLocalTime());
+                }
+
+                int maxPatients = rs.getInt("max_patients");
+                request.setMaxPatients(rs.wasNull() ? null : maxPatients);
+                list.add(request);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public boolean createScheduleChangeRequest(
+            int doctorId,
+            String requestType,
+            String scopeType,
+            String reason,
+            String actionType,
+            Integer targetShiftId,
+            Date workDate,
+            Integer dayOfWeek,
+            LocalTime startTime,
+            LocalTime endTime,
+            Integer maxPatients
+    ) {
+        String insertRequestSql = """
+            INSERT INTO schedule_change_requests
+            (doctor_id, request_type, scope_type, reason, status, requested_at)
+            VALUES (?, ?, ?, ?, 'PENDING', NOW())
+        """;
+
+        String insertItemSql = """
+            INSERT INTO schedule_change_request_items
+            (request_id, action_type, target_shift_id, work_date, day_of_week, start_time, end_time, max_patients)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try {
+            boolean originalAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+
+            int requestId;
+            try (PreparedStatement insertRequest = connection.prepareStatement(insertRequestSql, Statement.RETURN_GENERATED_KEYS)) {
+                insertRequest.setInt(1, doctorId);
+                insertRequest.setString(2, requestType);
+                insertRequest.setString(3, scopeType);
+                insertRequest.setString(4, reason);
+                if (insertRequest.executeUpdate() == 0) {
+                    connection.rollback();
+                    return false;
+                }
+
+                try (ResultSet keys = insertRequest.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        connection.rollback();
+                        return false;
+                    }
+                    requestId = keys.getInt(1);
+                }
+            }
+
+            try (PreparedStatement insertItem = connection.prepareStatement(insertItemSql)) {
+                insertItem.setInt(1, requestId);
+                insertItem.setString(2, actionType);
+
+                if (targetShiftId == null) {
+                    insertItem.setNull(3, Types.INTEGER);
+                } else {
+                    insertItem.setInt(3, targetShiftId);
+                }
+
+                if (workDate == null) {
+                    insertItem.setNull(4, Types.DATE);
+                } else {
+                    insertItem.setDate(4, workDate);
+                }
+
+                if (dayOfWeek == null) {
+                    insertItem.setNull(5, Types.TINYINT);
+                } else {
+                    insertItem.setInt(5, dayOfWeek);
+                }
+
+                if (startTime == null) {
+                    insertItem.setNull(6, Types.TIME);
+                } else {
+                    insertItem.setTime(6, Time.valueOf(startTime));
+                }
+
+                if (endTime == null) {
+                    insertItem.setNull(7, Types.TIME);
+                } else {
+                    insertItem.setTime(7, Time.valueOf(endTime));
+                }
+
+                if (maxPatients == null) {
+                    insertItem.setNull(8, Types.INTEGER);
+                } else {
+                    insertItem.setInt(8, maxPatients);
+                }
+
+                if (insertItem.executeUpdate() == 0) {
+                    connection.rollback();
+                    return false;
+                }
+            }
+
+            connection.commit();
+            connection.setAutoCommit(originalAutoCommit);
+            return true;
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+                connection.setAutoCommit(true);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
     //thống kê số liệu 
     public DoctorDashboardStats getDashboardStats(int doctorId) {
         DoctorDashboardStats stats = new DoctorDashboardStats();
@@ -1179,7 +1349,7 @@ public class DoctorDAO extends DBContext {
                 item.setMedicineName(rs.getString("medicine_name"));
                 item.setDosage(rs.getString("dosage"));
                 item.setFrequency(rs.getString("frequency"));
-                item.setDurationDays(rs.getString("duration"));
+                item.setDurationDays(rs.getString("duration_value"));
                 list.add(item);
             }
         } catch (SQLException e) {

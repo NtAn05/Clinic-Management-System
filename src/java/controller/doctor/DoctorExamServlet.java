@@ -314,8 +314,6 @@ public class DoctorExamServlet extends HttpServlet {
         String[] dosages = request.getParameterValues("dosage");
         String[] frequencies = request.getParameterValues("frequency");
         String[] durations = request.getParameterValues("durationDays");
-        String[] quantities = request.getParameterValues("quantity");
-        String[] instructions = request.getParameterValues("instruction");
 
         if (medicineIds == null && medicineNames == null) {
             return items;
@@ -344,8 +342,6 @@ public class DoctorExamServlet extends HttpServlet {
             item.setDosage(getArrayValue(dosages, i));
             item.setFrequency(getArrayValue(frequencies, i));
             item.setDurationDays(getArrayValue(durations, i));
-            item.setQuantity(getArrayValue(quantities, i));
-            item.setInstruction(getArrayValue(instructions, i));
             items.add(item);
         }
 
