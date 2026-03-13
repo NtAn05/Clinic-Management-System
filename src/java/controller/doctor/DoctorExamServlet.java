@@ -143,7 +143,7 @@ public class DoctorExamServlet extends HttpServlet {
             request.setAttribute("doctorNote", extractSection(notes, SECTION_DOCTOR_NOTE));
             request.setAttribute("treatmentPlan", extractSection(notes, SECTION_TREATMENT_PLAN));
             request.setAttribute("labRequestInstruction", extractSection(notes, SECTION_LAB_REQUEST));
-            
+
             List<PrescriptionItem> prescriptionItems = doctorDAO.getPrescriptionItemsByAppointment(appointmentId);
             request.setAttribute("prescriptionItems", prescriptionItems);
             List<Medicine> medicineList = doctorDAO.getAllMedicines();
@@ -250,7 +250,7 @@ public class DoctorExamServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=" + errorTab + "&error=" + requiredFieldError);
             return;
         }
-        
+
         String notes = buildMedicalRecordNote(allergies, chronic, family, social, vaccination, clinicalResult, doctorNote, treatmentPlan, labRequestInstruction);
 
         if ("savePrescription".equalsIgnoreCase(action)) {
@@ -270,7 +270,7 @@ public class DoctorExamServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=prescription&success=prescriptionSaved");
             return;
         }
-        
+
         if ("finish".equalsIgnoreCase(action)) {
             boolean finished = doctorDAO.saveMedicalRecordAndFinishExamination(appointmentId, symptoms, diagnosis, notes);
             if (!finished) {
@@ -296,7 +296,7 @@ public class DoctorExamServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&error=labRequestFailed");
             return;
         }
-        
+
         boolean saved = doctorDAO.upsertMedicalRecord(appointmentId, symptoms, diagnosis, notes);
         if (!saved) {
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
@@ -310,31 +310,37 @@ public class DoctorExamServlet extends HttpServlet {
         List<PrescriptionItem> items = new java.util.ArrayList<>();
 
         String[] medicineIds = request.getParameterValues("medicineId");
+        String[] medicineNames = request.getParameterValues("medicineName");
         String[] dosages = request.getParameterValues("dosage");
         String[] frequencies = request.getParameterValues("frequency");
         String[] durations = request.getParameterValues("durationDays");
         String[] quantities = request.getParameterValues("quantity");
         String[] instructions = request.getParameterValues("instruction");
 
-        if (medicineIds == null) {
+        if (medicineIds == null && medicineNames == null) {
             return items;
         }
 
-        for (int i = 0; i < medicineIds.length; i++) {
-            String medicineIdRaw = cleanText(medicineIds[i]);
-            if (medicineIdRaw.isEmpty()) {
-                continue;
-            }
-
-            int medicineId;
-            try {
-                medicineId = Integer.parseInt(medicineIdRaw);
-            } catch (NumberFormatException ex) {
-                continue;
-            }
+        int rowCount = medicineIds != null ? medicineIds.length : medicineNames.length;
+        for (int i = 0; i < rowCount; i++) {
+            String medicineIdRaw = getArrayValue(medicineIds, i);
+            String medicineNameRaw = getArrayValue(medicineNames, i);
 
             PrescriptionItem item = new PrescriptionItem();
-            item.setMedicineId(medicineId);
+            item.setMedicineName(medicineNameRaw);
+
+            if (!medicineIdRaw.isEmpty()) {
+                try {
+                    item.setMedicineId(Integer.parseInt(medicineIdRaw));
+                } catch (NumberFormatException ex) {
+                    item.setMedicineId(0);
+                }
+            }
+
+            if (item.getMedicineId() <= 0 && medicineNameRaw.isEmpty()) {
+                continue;
+            }
+
             item.setDosage(getArrayValue(dosages, i));
             item.setFrequency(getArrayValue(frequencies, i));
             item.setDurationDays(getArrayValue(durations, i));
@@ -352,7 +358,7 @@ public class DoctorExamServlet extends HttpServlet {
         }
         return cleanText(values[index]);
     }
-    
+
     // Chuẩn hóa dữ liệu nhập cho form khám.
     // Giải quyết null và khoảng trắng dư để tránh lỗi validate/ghi DB.
     // null -> "", còn lại trim().
@@ -388,7 +394,7 @@ public class DoctorExamServlet extends HttpServlet {
 
         return "";
     }
-    
+
     // Gộp (tiền sử, kết quả khám, ghi chú...) thành 1 field "notes.
     // Dùng section header dạng [SECTION] + nội dung tương ứng, tách ra để parse ngược khi tải lại. 
     private String buildMedicalRecordNote(

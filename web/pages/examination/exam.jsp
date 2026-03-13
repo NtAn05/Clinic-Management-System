@@ -142,7 +142,6 @@
                         <c:if test="${examData.status != 'done'}">
                             <div class="card">
                                 <h3>Tạo yêu cầu xét nghiệm</h3>
-                                <p class="muted">Nhập chỉ định xét nghiệm theo mẫu tương tự tạo đơn thuốc.</p>
                                 <div id="labRequestList" class="rx-list">
                                     <div class="rx-row lab-row">
                                         <select name="labTestType">
@@ -222,47 +221,39 @@
                     <div class="tab-content ${activeTab == 'prescription' ? 'active' : ''}" id="prescription">
                         <div class="card">
                             <h3>Đơn thuốc</h3>
-                            <p class="muted">Tạo đơn thuốc bằng cách chọn thuốc từ danh mục trong cơ sở dữ liệu.</p>
-
                             <label>Ghi chú đơn thuốc</label>
                             <textarea rows="2" name="prescriptionNote" placeholder="Lưu ý chung cho bệnh nhân khi dùng thuốc..."></textarea>
 
                             <div id="rxList" class="rx-list">
-                                <c:choose>
-                                    <c:when test="${not empty prescriptionItems}">
-                                        <c:forEach var="item" items="${prescriptionItems}">
-                                            <div class="rx-row">
-                                                <select name="medicineId" required>
-                                                    <option value="">Chọn thuốc</option>
-                                                    <c:forEach var="m" items="${medicineList}">
-                                                        <option value="${m.medicineId}" ${m.medicineId == item.medicineId ? 'selected' : ''}>${m.medicineName}${empty m.unit ? '' : ' ('}${empty m.unit ? '' : m.unit}${empty m.unit ? '' : ')'}</option>
-                                                    </c:forEach>
-                                                </select>
-                                                <input name="dosage" placeholder="Liều dùng" value="${item.dosage}">
-                                                <input name="frequency" placeholder="Số lần/ngày" value="${item.frequency}">
-                                                <input name="durationDays" placeholder="Số ngày" value="${item.durationDays}">
-                                                <input name="quantity" placeholder="Số lượng" value="${item.quantity}">
-                                                <input name="instruction" placeholder="Hướng dẫn" value="${item.instruction}">
-                                            </div>
-                                        </c:forEach>
-                                    </c:when>
-                                    <c:otherwise>
+                                <c:if test="${not empty prescriptionItems}">
+                                    <c:forEach var="item" items="${prescriptionItems}">
                                         <div class="rx-row">
-                                            <select name="medicineId" required>
+                                            <select name="medicineId" onchange="syncMedicineName(this)">
                                                 <option value="">Chọn thuốc</option>
+                                                <c:if test="${item.medicineId <= 0 && not empty item.medicineName}">
+                                                    <option value="" selected>${item.medicineName} (không còn trong danh mục)</option>
+                                                </c:if>
                                                 <c:forEach var="m" items="${medicineList}">
-                                                    <option value="${m.medicineId}">${m.medicineName}${empty m.unit ? '' : ' ('}${empty m.unit ? '' : m.unit}${empty m.unit ? '' : ')'}</option>
+                                                    <option value="${m.medicineId}" ${m.medicineId == item.medicineId ? 'selected' : ''}>${m.medicineName}${empty m.unit ? '' : ' ('}${empty m.unit ? '' : m.unit}${empty m.unit ? '' : ')'}</option>
                                                 </c:forEach>
                                             </select>
-                                            <input name="dosage" placeholder="Liều dùng">
-                                            <input name="frequency" placeholder="Số lần/ngày">
-                                            <input name="durationDays" placeholder="Số ngày">
-                                            <input name="quantity" placeholder="Số lượng">
-                                            <input name="instruction" placeholder="Hướng dẫn">
+                                            <input type="hidden" name="medicineName" value="${item.medicineName}">
+                                            <input name="dosage" placeholder="Liều dùng" value="${item.dosage}">
+                                            <input name="frequency" placeholder="Số lần/ngày" value="${item.frequency}">
+                                            <input name="durationDays" placeholder="Số ngày" value="${item.durationDays}">
+                                            <input name="quantity" placeholder="Số lượng" value="${item.quantity}">
+                                            <input name="instruction" placeholder="Hướng dẫn" value="${item.instruction}">
                                         </div>
-                                    </c:otherwise>
-                                </c:choose>
+                                    </c:forEach>
+                                </c:if>
                             </div>
+
+                            <c:if test="${empty prescriptionItems}">
+                                <p id="rxEmptyHint" class="muted">Chưa có thuốc trong đơn. Bấm <strong>+ Thêm thuốc</strong> để bắt đầu kê toa.</p>
+                            </c:if>
+                            <c:if test="${not empty prescriptionItems}">
+                                <p id="rxEmptyHint" class="muted" style="display:none;">Chưa có thuốc trong đơn. Bấm <strong>+ Thêm thuốc</strong> để bắt đầu kê toa.</p>
+                            </c:if>
                             <div class="actions">
                                 <button type="button" class="btn-outline" onclick="addRxRow()">+ Thêm thuốc</button>
                                 <button type="submit" class="btn-primary" name="action" value="savePrescription">💊 Lưu đơn thuốc</button>
@@ -325,12 +316,13 @@
         </div>
 
         <template id="rxTemplate">
-            <select name="medicineId" required>
+            <select name="medicineId" onchange="syncMedicineName(this)">
                 <option value="">Chọn thuốc</option>
                 <c:forEach var="m" items="${medicineList}">
                     <option value="${m.medicineId}">${m.medicineName}${empty m.unit ? '' : ' ('}${empty m.unit ? '' : m.unit}${empty m.unit ? '' : ')'}</option>
                 </c:forEach>
             </select>
+            <input type="hidden" name="medicineName" value="">
             <input name="dosage" placeholder="Liều dùng">
             <input name="frequency" placeholder="Số lần/ngày">
             <input name="durationDays" placeholder="Số ngày">
@@ -338,7 +330,8 @@
             <input name="instruction" placeholder="Hướng dẫn">
         </template>
 
-        <script>            function showTab(id) {
+        <script>
+            function showTab(id) {
                 document.querySelectorAll('.tab').forEach(t => {
                     t.classList.toggle('active', t.dataset.target === id);
                 });
@@ -347,13 +340,42 @@
                 });
             }
 
+            function syncMedicineName(selectElement) {
+                const row = selectElement.closest('.rx-row');
+                if (!row) {
+                    return;
+                }
+                const hidden = row.querySelector('input[name="medicineName"]');
+                if (!hidden) {
+                    return;
+                }
+
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                if (selectedOption && selectElement.value) {
+                    hidden.value = selectedOption.textContent.trim();
+                    return;
+                }
+
+                if (!hidden.value) {
+                    hidden.value = '';
+                }
+            }
+
             function addRxRow() {
                 const wrap = document.getElementById('rxList');
                 const row = document.createElement('div');
                 row.className = 'rx-row';
                 row.innerHTML = document.getElementById('rxTemplate').innerHTML;
                 wrap.appendChild(row);
+                const emptyHint = document.getElementById('rxEmptyHint');
+                if (emptyHint) {
+                    emptyHint.style.display = 'none';
+                }
             }
+            
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('#rxList select[name="medicineId"]').forEach(syncMedicineName);
+            });
         </script>
 
     </body>
