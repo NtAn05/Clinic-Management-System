@@ -62,16 +62,19 @@
                                 <div>
                                     <label>Họ và tên *</label>
                                     <input type="text" name="name" value="${patient.fullName}" required>
+                                    <span style="color:red">${errorName}</span>
                                 </div>
 
                                 <div>
                                     <label>Số điện thoại *</label>
                                     <input type="text" name="sdt" value="${patient.phone}" required>
+                                    <span style="color:red">${errorPhone}</span>
                                 </div>
 
                                 <div>
                                     <label>Email *</label>
                                     <input type="email" name="email" value="${patient.email}" required>
+                                    <span style="color:red">${errorEmail}</span>
                                 </div>
 
                                 <div>
