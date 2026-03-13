@@ -165,6 +165,132 @@ public class DoctorDAO extends DBContext {
         }
     }
 
+    public boolean doctorExists(int doctorId) {
+        String sql = "SELECT 1 FROM doctors WHERE doctor_id = ? LIMIT 1";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isDoctorActive(int doctorId) {
+        String sql = """
+            SELECT 1
+            FROM doctors d
+            JOIN users u ON d.user_id = u.user_id
+            WHERE d.doctor_id = ? AND u.role = 'doctor' AND u.status = 'active'
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public DoctorShift getDoctorShiftById(int shiftId) {
+        String sql = """
+            SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
+            FROM doctor_shifts
+            WHERE shift_id = ?
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    DoctorShift s = new DoctorShift();
+                    s.setShiftId(rs.getInt("shift_id"));
+                    s.setDoctorId(rs.getInt("doctor_id"));
+                    s.setDayOfWeek(rs.getInt("day_of_week"));
+                    s.setStartTime(rs.getTime("start_time").toLocalTime());
+                    s.setEndTime(rs.getTime("end_time").toLocalTime());
+                    s.setMaxPatients(rs.getInt("max_patients"));
+                    return s;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean shiftExists(int shiftId) {
+        String sql = "SELECT 1 FROM doctor_shifts WHERE shift_id = ? LIMIT 1";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isShiftOwnedByDoctor(int shiftId, int doctorId) {
+        String sql = """
+            SELECT 1
+            FROM doctor_shifts
+            WHERE shift_id = ? AND doctor_id = ?
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            st.setInt(2, doctorId);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hasUpcomingAppointmentsForShift(int shiftId) {
+        String sql = """
+            SELECT 1
+            FROM appointments
+            WHERE shift_id = ?
+              AND (
+                  appointment_date > CURRENT_DATE
+                  OR (appointment_date = CURRENT_DATE AND appointment_time >= CURRENT_TIME)
+              )
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hasAnyAppointmentsForShift(int shiftId) {
+        String sql = "SELECT 1 FROM appointments WHERE shift_id = ? LIMIT 1";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public void updateDoctorShift(int shiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
         String sql = """
             UPDATE doctor_shifts
