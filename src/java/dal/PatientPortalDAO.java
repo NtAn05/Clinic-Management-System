@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import model.MedicalRecord;
+import model.Patient;
 import model.PrescriptionItem;
 
 public class PatientPortalDAO extends DBContext {
@@ -14,11 +15,44 @@ public class PatientPortalDAO extends DBContext {
     private static final String SECTION_DOCTOR_NOTE = "GHI CHÚ BÁC SĨ";
     private static final String SECTION_TREATMENT_PLAN = "PHƯƠNG ÁN ĐIỀU TRỊ";
 
-    public List<MedicalRecord> getMedicalRecordsByUserId(int userId) {
-        List<MedicalRecord> list = new ArrayList<>();
+    public List<Patient> getPatientsByUserId(int userId) {
+        List<Patient> patients = new ArrayList<>();
 
         String sql = """
+                     SELECT patient_id, full_name, phone, dob, email, gender
+                                 FROM patients
+                                 WHERE user_id = ?
+                                 ORDER BY full_name
+                             """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Patient patient = new Patient();
+                patient.setPatientId(rs.getLong("patient_id"));
+                patient.setFullName(rs.getString("full_name"));
+                patient.setPhone(rs.getString("phone"));
+                patient.setDob(rs.getDate("dob"));
+                patient.setEmail(rs.getString("email"));
+                patient.setGender(rs.getString("gender"));
+                patients.add(patient);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return patients;
+    }
+
+    public List<MedicalRecord> getMedicalRecordsByUserId(int userId, Long patientId) {
+        List<MedicalRecord> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("""
             SELECT
+                p.patient_id,
+                p.full_name AS patient_name,
                 a.appointment_id,
                 a.appointment_date,
                 a.appointment_time,
@@ -33,11 +67,19 @@ public class PatientPortalDAO extends DBContext {
             LEFT JOIN users du ON du.user_id = d.user_id
             JOIN medical_records mr ON mr.appointment_id = a.appointment_id
             WHERE p.user_id = ?
-            ORDER BY a.appointment_date DESC, a.appointment_time DESC, mr.updated_at DESC
-        """;
+            """);
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        if (patientId != null) {
+            sql.append(" AND p.patient_id = ? ");
+        }
+
+        sql.append(" ORDER BY a.appointment_date DESC, a.appointment_time DESC, mr.updated_at DESC ");
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             ps.setInt(1, userId);
+            if (patientId != null) {
+                ps.setLong(2, patientId);
+            }
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -45,6 +87,8 @@ public class PatientPortalDAO extends DBContext {
                 String notes = rs.getString("notes");
                 String history = extractSection(notes, SECTION_HISTORY);
 
+                item.setPatientId(rs.getLong("patient_id"));
+                item.setPatientName(rs.getString("patient_name"));
                 item.setAppointmentId(rs.getLong("appointment_id"));
                 item.setAppointmentDate(rs.getDate("appointment_date"));
                 item.setAppointmentTime(rs.getTime("appointment_time"));
@@ -121,11 +165,14 @@ public class PatientPortalDAO extends DBContext {
 
         return "";
     }
-public List<MedicalRecord> getPrescriptionsByUserId(int userId) {
+
+    public List<MedicalRecord> getPrescriptionsByUserId(int userId, Long patientId) {
         List<MedicalRecord> list = new ArrayList<>();
 
-        String sql = """
+        StringBuilder sql = new StringBuilder("""
             SELECT
+                pt.patient_id,
+                pt.full_name AS patient_name,
                 p.prescription_id,
                 p.notes AS prescription_note,
                 p.created_at,
@@ -138,20 +185,31 @@ public List<MedicalRecord> getPrescriptionsByUserId(int userId) {
             JOIN appointments a ON a.patient_id = pt.patient_id
             JOIN prescriptions p ON p.appointment_id = a.appointment_id
             LEFT JOIN medical_records mr ON mr.appointment_id = a.appointment_id
+            JOIN prescriptions p ON p.record_id = mr.record_id
             LEFT JOIN doctors d ON d.doctor_id = p.doctor_id
             LEFT JOIN users du ON du.user_id = d.user_id
             WHERE pt.user_id = ?
-            ORDER BY p.created_at DESC
-        """;
+            """);
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        if (patientId != null) {
+            sql.append(" AND pt.patient_id = ? ");
+        }
+
+        sql.append(" ORDER BY p.created_at DESC ");
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             ps.setInt(1, userId);
+            if (patientId != null) {
+                ps.setLong(2, patientId);
+            }
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 MedicalRecord item = new MedicalRecord();
+                item.setPatientId(rs.getLong("patient_id"));
+                item.setPatientName(rs.getString("patient_name"));
                 item.setPrescriptionId(rs.getInt("prescription_id"));
-                item.setPrescriptionNote(rs.getString("prescription_note"));
+                item.setPrescriptionNote("");
                 item.setAppointmentId(rs.getLong("appointment_id"));
                 item.setAppointmentDate(rs.getDate("appointment_date"));
                 item.setAppointmentTime(rs.getTime("appointment_time"));
@@ -175,16 +233,11 @@ public List<MedicalRecord> getPrescriptionsByUserId(int userId) {
             SELECT
                 pi.item_id,
                 pi.prescription_id,
-                pi.medicine_id,
-                m.medicine_name,
-                m.unit,
+                pi.medicine_name,
                 pi.dosage,
                 pi.frequency,
-                pi.duration_days,
-                pi.instruction,
-                pi.quantity
+                pi.duration
             FROM prescription_items pi
-            JOIN medicines m ON m.medicine_id = pi.medicine_id
             WHERE pi.prescription_id = ?
             ORDER BY pi.item_id
         """;
@@ -197,14 +250,9 @@ public List<MedicalRecord> getPrescriptionsByUserId(int userId) {
                 PrescriptionItem item = new PrescriptionItem();
                 item.setItemId(rs.getInt("item_id"));
                 item.setPrescriptionId(rs.getInt("prescription_id"));
-                item.setMedicineId(rs.getInt("medicine_id"));
                 item.setMedicineName(rs.getString("medicine_name"));
-                item.setUnit(rs.getString("unit"));
                 item.setDosage(rs.getString("dosage"));
-                item.setFrequency(rs.getString("frequency"));
-                item.setDurationDays(rs.getString("duration_days"));
-                item.setInstruction(rs.getString("instruction"));
-                item.setQuantity(rs.getString("quantity"));
+                item.setDurationDays(rs.getString("duration"));
                 list.add(item);
             }
         } catch (SQLException e) {

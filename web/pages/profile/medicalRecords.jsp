@@ -17,6 +17,18 @@
                 <p>Theo dõi lại các lần khám trước đây: triệu chứng, chẩn đoán, tiền sử, ghi chú bác sĩ và phương án điều trị.</p>
             </section>
 
+            <section class="filter-card">
+                <form method="get" action="${pageContext.request.contextPath}/patient-medical-records" class="filter-form">
+                    <label for="patientId">Chọn bệnh nhân</label>
+                    <select id="patientId" name="patientId" onchange="this.form.submit()">
+                        <option value="">Tất cả bệnh nhân</option>
+                        <c:forEach var="p" items="${patients}">
+                            <option value="${p.patientId}" ${selectedPatientId == p.patientId ? 'selected' : ''}>${p.fullName}</option>
+                        </c:forEach>
+                    </select>
+                </form>
+            </section>
+
             <section class="stat-row">
                 <div class="stat-card">
                     <div class="stat-label">Tổng hồ sơ đã lưu</div>
@@ -37,6 +49,7 @@
                             <div class="record-head">
                                 <div>
                                     <span class="record-id">#${item.appointmentId}</span>
+                                    <span class="patient-chip">Bệnh nhân: ${item.patientName}</span>
                                     <span class="doctor-chip">Bác sĩ: ${item.doctorName}</span>
                                 </div>
                                 <div class="record-date">

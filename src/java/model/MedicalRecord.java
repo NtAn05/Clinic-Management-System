@@ -12,7 +12,9 @@ import java.util.List;
 public class MedicalRecord {
 
     private long appointmentId;
-     private Date appointmentDate;
+    private long patientId;
+    private String patientName;
+    private Date appointmentDate;
     private Time appointmentTime;
     private String doctorName;
     private String symptoms;
@@ -39,6 +41,22 @@ public class MedicalRecord {
         this.appointmentId = appointmentId;
     }
 
+    public long getPatientId() {
+        return patientId;
+    }
+
+    public void setPatientId(long patientId) {
+        this.patientId = patientId;
+    }
+
+    public String getPatientName() {
+        return patientName;
+    }
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+    
     public Date getAppointmentDate() {
         return appointmentDate;
     }

@@ -682,15 +682,16 @@ public class DoctorDAO extends DBContext {
             }
 
             String insertSql = """
-                INSERT INTO medical_records (appointment_id, symptoms, diagnosis, notes, updated_at)
-                VALUES (?, ?, ?, ?, NOW())
+                INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
+                VALUES (?, (SELECT doctor_id FROM appointments WHERE appointment_id = ?), ?, ?, ?, NOW())
             """;
 
             try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
                 insert.setLong(1, appointmentId);
-                insert.setString(2, symptoms);
-                insert.setString(3, diagnosis);
-                insert.setString(4, notes);
+                insert.setLong(2, appointmentId);
+                insert.setString(3, symptoms);
+                insert.setString(4, diagnosis);
+                insert.setString(5, notes);
                 return insert.executeUpdate() > 0;
             }
         } catch (SQLException e) {
@@ -708,8 +709,8 @@ public class DoctorDAO extends DBContext {
             WHERE appointment_id = ?
         """;
         String insertRecordSql = """
-            INSERT INTO medical_records (appointment_id, symptoms, diagnosis, notes, updated_at)
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
+            VALUES (?, (SELECT doctor_id FROM appointments WHERE appointment_id = ?), ?, ?, ?, NOW())
         """;
         String finishSql = """
             UPDATE exam_queue
@@ -742,9 +743,10 @@ public class DoctorDAO extends DBContext {
             } else {
                 try (PreparedStatement insert = connection.prepareStatement(insertRecordSql)) {
                     insert.setLong(1, appointmentId);
-                    insert.setString(2, symptoms);
-                    insert.setString(3, diagnosis);
-                    insert.setString(4, notes);
+                    insert.setLong(2, appointmentId);
+                    insert.setString(3, symptoms);
+                    insert.setString(4, diagnosis);
+                    insert.setString(5, notes);
                     if (insert.executeUpdate() == 0) {
                         connection.rollback();
                         return false;
@@ -787,8 +789,8 @@ public class DoctorDAO extends DBContext {
             WHERE appointment_id = ?
         """;
         String insertRecordSql = """
-            INSERT INTO medical_records (appointment_id, symptoms, diagnosis, notes, updated_at)
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
+            VALUES (?, (SELECT doctor_id FROM appointments WHERE appointment_id = ?), ?, ?, ?, NOW())
         """;
         String insertLabSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
         String deleteQueueSql = "DELETE FROM exam_queue WHERE appointment_id = ?";
@@ -818,9 +820,10 @@ public class DoctorDAO extends DBContext {
             } else {
                 try (PreparedStatement insert = connection.prepareStatement(insertRecordSql)) {
                     insert.setLong(1, appointmentId);
-                    insert.setString(2, symptoms);
-                    insert.setString(3, diagnosis);
-                    insert.setString(4, notes);
+                    insert.setLong(2, appointmentId);
+                    insert.setString(3, symptoms);
+                    insert.setString(4, diagnosis);
+                    insert.setString(5, notes);
                     if (insert.executeUpdate() == 0) {
                         connection.rollback();
                         return 0;
@@ -915,19 +918,14 @@ public class DoctorDAO extends DBContext {
         }
 
         String deleteItemsSql = "DELETE FROM prescription_items WHERE prescription_id = ?";
-        String upsertPrescriptionSql = """
-            INSERT INTO prescriptions (appointment_id, doctor_id, notes, created_at)
-            VALUES (?, ?, ?, NOW())
-            ON DUPLICATE KEY UPDATE
-                doctor_id = VALUES(doctor_id),
-                notes = VALUES(notes),
-                created_at = NOW()
-        """;
-        String findPrescriptionSql = "SELECT prescription_id FROM prescriptions WHERE appointment_id = ? LIMIT 1";
+        String findRecordSql = "SELECT record_id FROM medical_records WHERE appointment_id = ? LIMIT 1";
+        String findPrescriptionSql = "SELECT prescription_id FROM prescriptions WHERE record_id = ? LIMIT 1";
+        String insertPrescriptionSql = "INSERT INTO prescriptions (record_id, doctor_id, created_at) VALUES (?, ?, NOW())";
+        String updatePrescriptionSql = "UPDATE prescriptions SET doctor_id = ?, created_at = NOW() WHERE prescription_id = ?";
         String insertItemSql = """
             INSERT INTO prescription_items
-                (prescription_id, medicine_id, dosage, frequency, duration_days, instruction, quantity)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (prescription_id, medicine_name, dosage, frequency, duration)
+            VALUES (?, ?, ?, ?, ?)
         """;
 
         boolean originalAutoCommit;
@@ -940,24 +938,48 @@ public class DoctorDAO extends DBContext {
 
         try {
             connection.setAutoCommit(false);
-
-            try (PreparedStatement upsert = connection.prepareStatement(upsertPrescriptionSql)) {
-                upsert.setLong(1, appointmentId);
-                upsert.setInt(2, doctorId);
-                upsert.setString(3, prescriptionNote);
-                upsert.executeUpdate();
-            }
-
-            int prescriptionId;
-            try (PreparedStatement find = connection.prepareStatement(findPrescriptionSql)) {
-                find.setLong(1, appointmentId);
-                try (ResultSet rs = find.executeQuery()) {
+            int recordId;
+            try (PreparedStatement findRecord = connection.prepareStatement(findRecordSql)) {
+                findRecord.setLong(1, appointmentId);
+                try (ResultSet rs = findRecord.executeQuery()) {
                     if (!rs.next()) {
                         connection.rollback();
                         return false;
                     }
-                    prescriptionId = rs.getInt("prescription_id");
+                    recordId = rs.getInt("record_id");
                 }
+            }
+
+            int prescriptionId;
+            try (PreparedStatement find = connection.prepareStatement(findPrescriptionSql)) {
+                find.setInt(1, recordId);
+                try (ResultSet rs = find.executeQuery()) {
+                    if (rs.next()) {
+                        prescriptionId = rs.getInt("prescription_id");
+                    } else {
+                        try (PreparedStatement insertPrescription = connection.prepareStatement(insertPrescriptionSql, Statement.RETURN_GENERATED_KEYS)) {
+                            insertPrescription.setInt(1, recordId);
+                            insertPrescription.setInt(2, doctorId);
+                            if (insertPrescription.executeUpdate() == 0) {
+                                connection.rollback();
+                                return false;
+                            }
+                            try (ResultSet keys = insertPrescription.getGeneratedKeys()) {
+                                if (!keys.next()) {
+                                    connection.rollback();
+                                    return false;
+                                }
+                                prescriptionId = keys.getInt(1);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            try (PreparedStatement updatePrescription = connection.prepareStatement(updatePrescriptionSql)) {
+                updatePrescription.setInt(1, doctorId);
+                updatePrescription.setInt(2, prescriptionId);
+                updatePrescription.executeUpdate();
             }
 
             try (PreparedStatement deleteItems = connection.prepareStatement(deleteItemsSql)) {
@@ -967,8 +989,14 @@ public class DoctorDAO extends DBContext {
 
             try (PreparedStatement insertItem = connection.prepareStatement(insertItemSql)) {
                 for (PrescriptionItem item : prescriptionItems) {
+                    String medicineName = item.getMedicineName();
+                    if (medicineName == null || medicineName.isBlank()) {
+                        medicineName = item.getMedicineId() > 0
+                                ? "Medicine #" + item.getMedicineId()
+                                : "Chưa cập nhật";
+                    }
                     insertItem.setInt(1, prescriptionId);
-                    insertItem.setInt(2, item.getMedicineId());
+                    insertItem.setString(2, medicineName);
                     insertItem.setString(3, item.getDosage());
                     insertItem.setString(4, item.getFrequency());
                     insertItem.setString(5, item.getDurationDays());
@@ -1005,18 +1033,14 @@ public class DoctorDAO extends DBContext {
             SELECT
                 pi.item_id,
                 pi.prescription_id,
-                pi.medicine_id,
-                m.medicine_name,
-                m.unit,
+                pi.medicine_name,
                 pi.dosage,
                 pi.frequency,
-                pi.duration_days,
-                pi.instruction,
-                pi.quantity
+                pi.duration
             FROM prescriptions p
+            JOIN medical_records mr ON mr.record_id = p.record_id
             JOIN prescription_items pi ON pi.prescription_id = p.prescription_id
-            JOIN medicines m ON m.medicine_id = pi.medicine_id
-            WHERE p.appointment_id = ?
+            WHERE mr.appointment_id = ?
             ORDER BY pi.item_id
         """;
 
@@ -1028,14 +1052,10 @@ public class DoctorDAO extends DBContext {
                 PrescriptionItem item = new PrescriptionItem();
                 item.setItemId(rs.getInt("item_id"));
                 item.setPrescriptionId(rs.getInt("prescription_id"));
-                item.setMedicineId(rs.getInt("medicine_id"));
                 item.setMedicineName(rs.getString("medicine_name"));
-                item.setUnit(rs.getString("unit"));
                 item.setDosage(rs.getString("dosage"));
                 item.setFrequency(rs.getString("frequency"));
-                item.setDurationDays(rs.getString("duration_days"));
-                item.setInstruction(rs.getString("instruction"));
-                item.setQuantity(rs.getString("quantity"));
+                item.setDurationDays(rs.getString("duration"));
                 list.add(item);
             }
         } catch (SQLException e) {
