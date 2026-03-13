@@ -22,6 +22,18 @@
                 <h1>Tra cứu đơn thuốc</h1>
                 <p>Xem lại các đơn thuốc đã được bác sĩ kê trong các lần khám trước.</p>
             </section>
+            
+            <section class="filter-card">
+                <form method="get" action="${pageContext.request.contextPath}/patient-prescription" class="filter-form">
+                    <label for="patientId">Chọn bệnh nhân</label>
+                    <select id="patientId" name="patientId" onchange="this.form.submit()">
+                        <option value="">Tất cả bệnh nhân</option>
+                        <c:forEach var="p" items="${patients}">
+                            <option value="${p.patientId}" ${selectedPatientId == p.patientId ? 'selected' : ''}>${p.fullName}</option>
+                        </c:forEach>
+                    </select>
+                </form>
+            </section>
 
             <c:if test="${empty prescriptions}">
                 <div class="empty-card">Bạn chưa có đơn thuốc nào.</div>
@@ -34,6 +46,7 @@
                             <div class="rx-head">
                                 <div>
                                     <span class="rx-id">Đơn #${rx.prescriptionId}</span>
+                                    <span class="patient-chip">Bệnh nhân: ${rx.patientName}</span>
                                     <span class="doctor-chip">Bác sĩ: ${rx.doctorName}</span>
                                 </div>
                                 <div class="rx-date">
