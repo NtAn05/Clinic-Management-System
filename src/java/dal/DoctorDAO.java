@@ -1000,8 +1000,6 @@ public class DoctorDAO extends DBContext {
                     insertItem.setString(3, item.getDosage());
                     insertItem.setString(4, item.getFrequency());
                     insertItem.setString(5, item.getDurationDays());
-                    insertItem.setString(6, item.getInstruction());
-                    insertItem.setString(7, item.getQuantity());
                     insertItem.addBatch();
                 }
                 insertItem.executeBatch();
@@ -1036,7 +1034,7 @@ public class DoctorDAO extends DBContext {
                 pi.medicine_name,
                 pi.dosage,
                 pi.frequency,
-                pi.duration
+                pi.`duration` AS duration_value
             FROM prescriptions p
             JOIN medical_records mr ON mr.record_id = p.record_id
             JOIN prescription_items pi ON pi.prescription_id = p.prescription_id

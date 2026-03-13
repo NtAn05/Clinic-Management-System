@@ -169,12 +169,30 @@ public class PatientPortalDAO extends DBContext {
     public List<MedicalRecord> getPrescriptionsByUserId(int userId, Long patientId) {
         List<MedicalRecord> list = new ArrayList<>();
 
+        try {
+            loadPrescriptionsByRecordSchema(list, userId, patientId);
+            return list;
+        } catch (SQLException ignored) {
+            list.clear();
+        }
+
+        try {
+            loadPrescriptionsByAppointmentSchema(list, userId, patientId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    private void loadPrescriptionsByRecordSchema(List<MedicalRecord> list, int userId, Long patientId) throws SQLException {
+
         StringBuilder sql = new StringBuilder("""
             SELECT
                 pt.patient_id,
                 pt.full_name AS patient_name,
                 p.prescription_id,
-                p.notes AS prescription_note,
+                '' AS prescription_note,
                 p.created_at,
                 a.appointment_id,
                 a.appointment_date,
@@ -183,7 +201,6 @@ public class PatientPortalDAO extends DBContext {
                 COALESCE(mr.diagnosis, '') AS diagnosis
             FROM patients pt
             JOIN appointments a ON a.patient_id = pt.patient_id
-            JOIN prescriptions p ON p.appointment_id = a.appointment_id
             LEFT JOIN medical_records mr ON mr.appointment_id = a.appointment_id
             JOIN prescriptions p ON p.record_id = mr.record_id
             LEFT JOIN doctors d ON d.doctor_id = p.doctor_id
@@ -197,28 +214,95 @@ public class PatientPortalDAO extends DBContext {
 
         sql.append(" ORDER BY p.created_at DESC ");
 
+        if (patientId != null) {
+            sql.append(" AND pt.patient_id = ? ");
+        }
+
+        sql.append(" ORDER BY p.created_at DESC ");
+
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
-            ps.setInt(1, userId);
+            bindPrescriptionParams(ps, userId, patientId);
             if (patientId != null) {
                 ps.setLong(2, patientId);
             }
             ResultSet rs = ps.executeQuery();
-
             while (rs.next()) {
-                MedicalRecord item = new MedicalRecord();
-                item.setPatientId(rs.getLong("patient_id"));
-                item.setPatientName(rs.getString("patient_name"));
-                item.setPrescriptionId(rs.getInt("prescription_id"));
-                item.setPrescriptionNote("");
-                item.setAppointmentId(rs.getLong("appointment_id"));
-                item.setAppointmentDate(rs.getDate("appointment_date"));
-                item.setAppointmentTime(rs.getTime("appointment_time"));
-                item.setDoctorName(rs.getString("doctor_name"));
-                item.setDiagnosis(rs.getString("diagnosis"));
-                item.setUpdatedAt(rs.getTimestamp("created_at"));
-                item.setPrescriptionItems(getPrescriptionItemsByPrescriptionId(item.getPrescriptionId()));
-                list.add(item);
+                list.add(mapPrescriptionRecord(rs));
             }
+        }
+    }
+
+    private void loadPrescriptionsByAppointmentSchema(List<MedicalRecord> list, int userId, Long patientId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT
+                pt.patient_id,
+                pt.full_name AS patient_name,
+                p.prescription_id,
+                COALESCE(p.notes, '') AS prescription_note,
+                p.created_at,
+                a.appointment_id,
+                a.appointment_date,
+                a.appointment_time,
+                COALESCE(du.full_name, 'Chưa cập nhật') AS doctor_name,
+                COALESCE(mr.diagnosis, '') AS diagnosis
+            FROM patients pt
+            JOIN appointments a ON a.patient_id = pt.patient_id
+            JOIN prescriptions p ON p.appointment_id = a.appointment_id
+            LEFT JOIN medical_records mr ON mr.appointment_id = a.appointment_id
+            LEFT JOIN doctors d ON d.doctor_id = p.doctor_id
+            LEFT JOIN users du ON du.user_id = d.user_id
+            WHERE pt.user_id = ?
+        """);
+
+        if (patientId != null) {
+            sql.append(" AND pt.patient_id = ? ");
+        }
+
+        sql.append(" ORDER BY p.created_at DESC ");
+
+        try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            bindPrescriptionParams(ps, userId, patientId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapPrescriptionRecord(rs));
+            }
+        }
+    }
+
+    private void bindPrescriptionParams(PreparedStatement ps, int userId, Long patientId) throws SQLException {
+        ps.setInt(1, userId);
+        if (patientId != null) {
+            ps.setLong(2, patientId);
+        }
+    }
+
+    private MedicalRecord mapPrescriptionRecord(ResultSet rs) throws SQLException {
+        MedicalRecord item = new MedicalRecord();
+        item.setPatientId(rs.getLong("patient_id"));
+        item.setPatientName(rs.getString("patient_name"));
+        item.setPrescriptionId(rs.getInt("prescription_id"));
+        item.setPrescriptionNote(rs.getString("prescription_note"));
+        item.setAppointmentId(rs.getLong("appointment_id"));
+        item.setAppointmentDate(rs.getDate("appointment_date"));
+        item.setAppointmentTime(rs.getTime("appointment_time"));
+        item.setDoctorName(rs.getString("doctor_name"));
+        item.setDiagnosis(rs.getString("diagnosis"));
+        item.setUpdatedAt(rs.getTimestamp("created_at"));
+        item.setPrescriptionItems(getPrescriptionItemsByPrescriptionId(item.getPrescriptionId()));
+        return item;
+    }
+
+    private List<PrescriptionItem> getPrescriptionItemsByPrescriptionId(int prescriptionId) {
+        List<PrescriptionItem> list = new ArrayList<>();
+        try {
+            loadPrescriptionItemsSimpleSchema(list, prescriptionId);
+            return list;
+        } catch (SQLException ignored) {
+            list.clear();
+        }
+
+        try {
+            loadPrescriptionItemsMedicineSchema(list, prescriptionId);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -226,9 +310,37 @@ public class PatientPortalDAO extends DBContext {
         return list;
     }
 
-    private List<PrescriptionItem> getPrescriptionItemsByPrescriptionId(int prescriptionId) {
-        List<PrescriptionItem> list = new ArrayList<>();
+    private void loadPrescriptionItemsSimpleSchema(List<PrescriptionItem> list, int prescriptionId) throws SQLException {
+        String sql = """
+            SELECT
+                pi.item_id,
+                pi.prescription_id,
+                pi.medicine_name,
+                pi.dosage,
+                pi.frequency,
+                pi.`duration` AS duration_value
+            FROM prescription_items pi
+            WHERE pi.prescription_id = ?
+            ORDER BY pi.item_id
+        """;
 
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, prescriptionId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                PrescriptionItem item = new PrescriptionItem();
+                item.setItemId(rs.getInt("item_id"));
+                item.setPrescriptionId(rs.getInt("prescription_id"));
+                item.setMedicineName(rs.getString("medicine_name"));
+                item.setDosage(rs.getString("dosage"));
+                item.setFrequency(rs.getString("frequency"));
+                item.setDurationDays(rs.getString("duration_value"));
+                list.add(item);
+            }
+        }
+    }
+
+    private void loadPrescriptionItemsMedicineSchema(List<PrescriptionItem> list, int prescriptionId) throws SQLException {
         String sql = """
             SELECT
                 pi.item_id,
@@ -255,11 +367,6 @@ public class PatientPortalDAO extends DBContext {
                 item.setDurationDays(rs.getString("duration"));
                 list.add(item);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-
-        return list;
     }
-
 }
