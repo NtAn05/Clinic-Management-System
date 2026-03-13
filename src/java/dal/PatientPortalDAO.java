@@ -171,9 +171,12 @@ public class PatientPortalDAO extends DBContext {
 
         try {
             loadPrescriptionsByRecordSchema(list, userId, patientId);
-            return list;
         } catch (SQLException ignored) {
             list.clear();
+        }
+
+        if (!list.isEmpty()) {
+            return list;
         }
 
         try {
@@ -222,9 +225,6 @@ public class PatientPortalDAO extends DBContext {
 
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             bindPrescriptionParams(ps, userId, patientId);
-            if (patientId != null) {
-                ps.setLong(2, patientId);
-            }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 list.add(mapPrescriptionRecord(rs));
