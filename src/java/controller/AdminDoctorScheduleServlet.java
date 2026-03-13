@@ -39,18 +39,19 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     private static final LocalTime MORNING_END = LocalTime.of(11, 30);
     private static final LocalTime AFTERNOON_START = LocalTime.of(13, 0);
     private static final LocalTime AFTERNOON_END = LocalTime.of(16, 30);
+    private static final int MIN_MAX_PATIENTS = 1;
+    private static final int MAX_MAX_PATIENTS = 100;
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!isAdmin(req, resp)) {
+    protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("account") == null) {
+            resp.sendRedirect(req.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
-        loadPage(req, resp);
-    }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!isAdmin(req, resp)) {
+        User user = (User) session.getAttribute("account");
+        if (user.getRole() != Role.admin) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ admin mới được truy cập");
             return;
         }
 
@@ -66,25 +67,28 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                 handleDeleteShift(req, doctorDAO);
             }
         } catch (Exception e) {
-            req.setAttribute("error", "Không thể cập nhật lịch làm việc: " + e.getMessage());
+            String actionLabel = "xử lý";
+            if ("add".equals(action)) {
+                actionLabel = "thêm";
+            } else if ("update".equals(action)) {
+                actionLabel = "cập nhật";
+            } else if ("delete".equals(action)) {
+                actionLabel = "xóa";
+            }
+            req.setAttribute("error", "Không thể " + actionLabel + " lịch làm việc: " + e.getMessage());
         }
 
         loadPage(req, resp);
     }
 
-    private boolean isAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("account") == null) {
-            resp.sendRedirect(req.getContextPath() + "/pages/auth/login.jsp");
-            return false;
-        }
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp);
+    }
 
-        User account = (User) session.getAttribute("account");
-        if (account.getRole() != Role.admin) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ quản trị viên mới được truy cập");
-            return false;
-        }
-        return true;
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp);
     }
 
     private void loadPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -93,16 +97,17 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         List<Doctor> activeDoctors = doctorDAO.getActiveDoctorsForSchedule();
 
         boolean isGetRequest = "GET".equalsIgnoreCase(req.getMethod());
+        boolean hasActionParam = req.getParameter("action") != null && !req.getParameter("action").isBlank();
         String keyword = trim(firstNonBlank(req.getParameter("filterKeyword"), req.getParameter("keyword")));
         String dayFilterParam = firstNonBlank(
                 req.getParameter("filterDayOfWeek"),
-                isGetRequest ? req.getParameter("dayOfWeek") : null
+                (isGetRequest && !hasActionParam) ? req.getParameter("dayOfWeek") : null
         );
         Integer selectedDay = parseNullableDay(dayFilterParam);
         int weekOffset = parseInt(firstNonBlank(req.getParameter("filterWeekOffset"), req.getParameter("weekOffset")), 0);
 
         String selectedShiftType = normalizeShiftType(req.getParameter("filterShiftType"));
-        if (selectedShiftType.isEmpty() && isGetRequest) {
+        if (selectedShiftType.isEmpty() && isGetRequest && !hasActionParam) {
             selectedShiftType = normalizeShiftType(req.getParameter("shiftType"));
         }
 
@@ -178,6 +183,10 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         ShiftTime shiftTime = resolveShiftType(req.getParameter("shiftType"));
         int maxPatients = requiredInt(req.getParameter("maxPatients"), "Vui lòng nhập số bệnh nhân tối đa");
 
+        if (!doctorDAO.doctorExists(doctorId)) {
+            throw new IllegalArgumentException("Bác sĩ không tồn tại trong hệ thống");
+        }
+
         boolean activeDoctorExists = doctorDAO.getActiveDoctorsForSchedule().stream()
                 .anyMatch(d -> d.getDoctorId() == doctorId);
         if (!activeDoctorExists) {
@@ -203,6 +212,20 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
 
         validateShift(dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
 
+        if (!doctorDAO.doctorExists(doctorId)) {
+            throw new IllegalArgumentException("Bác sĩ không tồn tại trong hệ thống");
+        }
+        if (!doctorDAO.isDoctorActive(doctorId)) {
+            throw new IllegalArgumentException("Chỉ có thể cập nhật lịch cho bác sĩ đang hoạt động");
+        }
+
+        if (!doctorDAO.shiftExists(shiftId)) {
+            throw new IllegalArgumentException("Ca làm việc không tồn tại");
+        }
+        if (!doctorDAO.isShiftOwnedByDoctor(shiftId, doctorId)) {
+            throw new IllegalArgumentException("Ca làm việc không thuộc bác sĩ được chọn");
+        }
+
         if (doctorDAO.hasShiftConflict(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, shiftId)) {
             throw new IllegalArgumentException("Khung giờ bị trùng với ca làm việc đã có");
         }
@@ -213,6 +236,16 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
 
     private void handleDeleteShift(HttpServletRequest req, DoctorDAO doctorDAO) throws SQLException {
         int shiftId = requiredInt(req.getParameter("shiftId"), "Thiếu mã ca làm việc");
+        if (!doctorDAO.shiftExists(shiftId)) {
+            throw new IllegalArgumentException("Ca làm việc không tồn tại");
+        }
+        if (doctorDAO.hasUpcomingAppointmentsForShift(shiftId)) {
+            throw new IllegalArgumentException("Không thể xóa ca làm việc vì vẫn còn lịch hẹn hiện tại/tương lai");
+        }
+        if (doctorDAO.hasAnyAppointmentsForShift(shiftId)) {
+            throw new IllegalArgumentException("Không thể xóa ca làm việc đã từng có lịch hẹn (ràng buộc dữ liệu lịch sử)");
+        }
+
         doctorDAO.deleteDoctorShift(shiftId);
         req.setAttribute("success", "Đã xóa ca làm việc thành công");
     }
@@ -231,12 +264,23 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         if (dayOfWeek < 0 || dayOfWeek > 6) {
             throw new IllegalArgumentException("Thứ không hợp lệ");
         }
+        if (startTime == null || endTime == null) {
+            throw new IllegalArgumentException("Khung giờ ca làm việc không hợp lệ");
+        }
         if (!startTime.isBefore(endTime)) {
             throw new IllegalArgumentException("Giờ bắt đầu phải nhỏ hơn giờ kết thúc");
         }
-        if (maxPatients <= 0) {
-            throw new IllegalArgumentException("Số bệnh nhân tối đa phải lớn hơn 0");
+        if (!isDefinedShiftTime(startTime, endTime)) {
+            throw new IllegalArgumentException("Khung giờ phải thuộc ca sáng (07:00 - 11:30) hoặc ca chiều (13:00 - 16:30)");
         }
+        if (maxPatients < MIN_MAX_PATIENTS || maxPatients > MAX_MAX_PATIENTS) {
+            throw new IllegalArgumentException("Số bệnh nhân tối đa phải trong khoảng 1 đến 100");
+        }
+    }
+
+    private boolean isDefinedShiftTime(LocalTime startTime, LocalTime endTime) {
+        return (MORNING_START.equals(startTime) && MORNING_END.equals(endTime))
+                || (AFTERNOON_START.equals(startTime) && AFTERNOON_END.equals(endTime));
     }
 
     private int requiredInt(String value, String error) {
@@ -334,13 +378,30 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     }
 
     private String getShiftCode(LocalTime startTime, LocalTime endTime) {
+        if (startTime == null || endTime == null || !startTime.isBefore(endTime)) {
+            return "";
+        }
         if (MORNING_START.equals(startTime) && MORNING_END.equals(endTime)) {
             return SHIFT_MORNING;
         }
         if (AFTERNOON_START.equals(startTime) && AFTERNOON_END.equals(endTime)) {
             return SHIFT_AFTERNOON;
         }
-        return SHIFT_MORNING;
+        long morningMinutes = overlapMinutes(startTime, endTime, MORNING_START, MORNING_END);
+        long afternoonMinutes = overlapMinutes(startTime, endTime, AFTERNOON_START, AFTERNOON_END);
+        if (morningMinutes == 0 && afternoonMinutes == 0) {
+            return startTime.isBefore(AFTERNOON_START) ? SHIFT_MORNING : SHIFT_AFTERNOON;
+        }
+        return morningMinutes >= afternoonMinutes ? SHIFT_MORNING : SHIFT_AFTERNOON;
+    }
+
+    private long overlapMinutes(LocalTime aStart, LocalTime aEnd, LocalTime bStart, LocalTime bEnd) {
+        LocalTime maxStart = aStart.isAfter(bStart) ? aStart : bStart;
+        LocalTime minEnd = aEnd.isBefore(bEnd) ? aEnd : bEnd;
+        if (!maxStart.isBefore(minEnd)) {
+            return 0;
+        }
+        return java.time.Duration.between(maxStart, minEnd).toMinutes();
     }
 
     private String getShiftLabel(String shiftCode) {

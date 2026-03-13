@@ -623,7 +623,7 @@
                         </div>
                         <div class="field">
                             <label>Số bệnh nhân tối đa</label>
-                            <input type="number" name="maxPatients" min="1" max="200" value="20" required>
+                            <input type="number" name="maxPatients" min="1" max="100" value="20" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -668,7 +668,7 @@
                         </div>
                         <div class="field">
                             <label>Số bệnh nhân tối đa</label>
-                            <input type="number" name="maxPatients" id="editMaxPatients" min="1" max="200" required>
+                            <input type="number" name="maxPatients" id="editMaxPatients" min="1" max="100" required>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -679,6 +679,8 @@
             </div>
         </div>
 
+        <jsp:include page="../../common/footer.jsp" />
+                    
         <script>
             // Áp dụng bộ lọc
             function submitFilterForm() {

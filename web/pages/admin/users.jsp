@@ -1087,6 +1087,8 @@
             </div>
         </div>
 
+        <jsp:include page="../../common/footer.jsp" />
+                        
         <script>
             let currentTab = '${currentTab}' || 'staff';
 

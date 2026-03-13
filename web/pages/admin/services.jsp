@@ -808,6 +808,8 @@
             </div>
         </div>
 
+        <jsp:include page="../../common/footer.jsp" />
+                
         <script>
             // Mở modal thêm
             function openAddModal() {

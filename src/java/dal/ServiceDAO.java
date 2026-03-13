@@ -15,7 +15,7 @@ import model.ServicePrice;
  */
 public class ServiceDAO extends DBContext {
 
-    //lay toan bo dich vu
+    // lấy toàn bộ dịch vụ
     public List<ServicePrice> getAllServices() {
         List<ServicePrice> list = new ArrayList<>();
         String sql = """
@@ -24,7 +24,6 @@ public class ServiceDAO extends DBContext {
         """;
 
         try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
-
             while (rs.next()) {
                 ServicePrice s = new ServicePrice();
                 s.setServiceId(rs.getInt("service_id"));
@@ -34,12 +33,12 @@ public class ServiceDAO extends DBContext {
                 list.add(s);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Khong the tai danh sach dich vu", e);
+            throw new RuntimeException("Không thể tải danh sách dịch vụ", e);
         }
         return list;
     }
 
-    //lay 1 dich vu theo id
+    // lấy 1 dịch vụ theo id
     public ServicePrice getServiceById(int id) {
         String sql = """
             SELECT service_id, name, service_type, price
@@ -50,7 +49,6 @@ public class ServiceDAO extends DBContext {
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, id);
             ResultSet rs = st.executeQuery();
-
             if (rs.next()) {
                 ServicePrice s = new ServicePrice();
                 s.setServiceId(rs.getInt("service_id"));
@@ -60,7 +58,7 @@ public class ServiceDAO extends DBContext {
                 return s;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Khong the tim dich vu theo ID", e);
+            throw new RuntimeException("Không thể tìm dịch vụ theo ID", e);
         }
         return null;
     }
@@ -79,14 +77,17 @@ public class ServiceDAO extends DBContext {
             FROM service_prices
             WHERE service_type = ?
         """;
+
         if (excludedServiceId != null) {
             sql += " AND service_id <> ?";
         }
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, serviceType);
             if (excludedServiceId != null) {
                 st.setInt(2, excludedServiceId);
             }
+
             ResultSet rs = st.executeQuery();
             while (rs.next()) {
                 String dbName = normalizeName(rs.getString("name"));
@@ -96,11 +97,11 @@ public class ServiceDAO extends DBContext {
             }
             return false;
         } catch (SQLException e) {
-            throw new RuntimeException("Khong the kiem tra trung ten dich vu", e);
+            throw new RuntimeException("Không thể kiểm tra trùng tên dịch vụ", e);
         }
     }
 
-    //update dich vu
+    // update dịch vụ
     public int updateService(ServicePrice s) {
         String sql = """
             UPDATE service_prices
@@ -115,11 +116,11 @@ public class ServiceDAO extends DBContext {
             st.setInt(4, s.getServiceId());
             return st.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Khong the cap nhat dich vu", e);
+            throw new RuntimeException("Không thể cập nhật dịch vụ", e);
         }
     }
 
-    //them dich vu
+    // thêm dịch vụ
     public int addService(ServicePrice s) {
         String sql = """
         INSERT INTO service_prices (name, service_type, price)
@@ -132,19 +133,19 @@ public class ServiceDAO extends DBContext {
             st.setBigDecimal(3, s.getPrice());
             return st.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Khong the them dich vu", e);
+            throw new RuntimeException("Không thể thêm dịch vụ", e);
         }
     }
 
-    //xoa dich vu
+    // xóa dịch vụ
     public int deleteService(int serviceId) {
         String sql = "DELETE FROM service_prices WHERE service_id = ?";
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, serviceId);
             return st.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Khong the xoa dich vu", e);
+            throw new RuntimeException("Không thể xóa dịch vụ", e);
         }
     }
 
