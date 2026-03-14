@@ -101,8 +101,7 @@ body {
     gap: 20px;
 }
 
-.queue-section,
-.shift-section {
+.queue-section{
     background: #ffffff;
     padding: 20px;
     border-radius: 18px;

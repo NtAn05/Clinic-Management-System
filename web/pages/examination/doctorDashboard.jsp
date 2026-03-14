@@ -165,20 +165,6 @@
                         </div>
                     </c:if>
                 </div>
-
-                <div class="shift-section">
-                    <h3>Lịch làm việc hôm nay</h3>
-
-                    <c:forEach var="s" items="${shifts}">
-                        <div class="shift-item">
-                            <span>${s.startTime} - ${s.endTime}</span>
-                            <span>Tối đa ${s.maxPatients}</span>
-                        </div>
-                    </c:forEach>
-                    <c:if test="${empty shifts}">
-                        <p>Hôm nay không có ca làm việc</p>
-                    </c:if>
-                </div>
             </div>
         </div>
 
