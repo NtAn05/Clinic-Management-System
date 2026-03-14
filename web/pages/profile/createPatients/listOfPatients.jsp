@@ -27,7 +27,7 @@
             </h2>
 
             <!-- nút tạo patient -->
-            <a href="${pageContext.request.contextPath}/pages/profile/createPatients/listOfPatients.jsp"
+            <a href="${pageContext.request.contextPath}/pages/profile/createPatients/createPatients.jsp"
                class="btn-add-patient">
                 +
             </a>
@@ -46,6 +46,8 @@
                         <th class="col-dob">Ngày sinh</th>
                         <th class="col-gender">Giới tính</th>
                         <th class="col-phone">Điện thoại</th>
+                        <th></th>
+                        <th></th>
                     </tr>
                 </thead>
 
@@ -79,7 +81,7 @@
                                 </a>
 
                             </td>
-                             <c:if test="${DoctorID} != null">
+                             <c:if test="${DoctorID != null}">
                                 <td class="patient-action">
 
                                 <a class="btn-edit"

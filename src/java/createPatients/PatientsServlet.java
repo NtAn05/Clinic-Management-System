@@ -62,30 +62,50 @@ public class PatientsServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        HttpSession session = request.getSession(false);        
+
+        HttpSession session = request.getSession(false);
+
+        if (session == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
         User account = (User) session.getAttribute("account");
+
+        if (account == null) {
+            response.sendRedirect("login.jsp");
+            return;
+        }
+
         String action = request.getParameter("action");
         String patientID = request.getParameter("id");
         String DoctorID = request.getParameter("btnDoctorID");
 
-        PatientPortalDAO dao= new PatientPortalDAO();
-        
-        if(action.equals("edit")){
-            Patient p = dao.getPatientsByPatientID(patientID);
-            request.setAttribute("p", p);
+        PatientPortalDAO dao = new PatientPortalDAO();
+
+        if ("edit".equals(action) && patientID != null) {
+
+            int patientId = Integer.parseInt(patientID);
+
+            Patient p = dao.getPatientsByPatientID(patientId);
+
+            request.setAttribute("patient", p);
+
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
+            return;
         }
-        if( DoctorID != null){
+
+        if (DoctorID != null) {
             request.setAttribute("DoctorID", DoctorID);
-            
         }
+
         List<Patient> list = dao.getPatientsByUserId(account.getUserId());
-    request.setAttribute("patientList", list);
-            request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
-                    .forward(request, response);
-            
-    
+
+        request.setAttribute("patientList", list);
+
+        request.getRequestDispatcher("/pages/profile/createPatients/listOfPatients.jsp")
+                .forward(request, response);
     }
 
     /**
@@ -99,69 +119,100 @@ public class PatientsServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         String userID = request.getParameter("userID");
         int useId = Integer.parseInt(userID);
-        String name = request.getParameter("name");
+        
         String sdt = request.getParameter("sdt");
+        String patientID = request.getParameter("patientID");
+        String name = request.getParameter("name");
         String email = request.getParameter("email");
         String gender = request.getParameter("gender");
         String dateofbirth = request.getParameter("dateofbirth");
+
         LocalDate localDate = null;
         Date birthDate = null;
+
         if (dateofbirth != null && !dateofbirth.isEmpty()) {
-            localDate = LocalDate.parse(dateofbirth); // yyyy-MM-dd, parse thẳng được
+            localDate = LocalDate.parse(dateofbirth);
             birthDate = Date.valueOf(localDate);
         }
+
         String submit = request.getParameter("btnSubmit");
+
         String errorPhone = "";
         String errorName = "";
         String errorEmail = "";
         String errorDOB = "";
-        String status = "";
+
+        boolean valid = true;
+
         if (!checkPhone(sdt)) {
-            errorPhone = "Phone must form 0xxx xxx xxx(10 number)";
-        } else if (!checkEmail(email)) {
-            errorEmail = "abc@xxx.com";
-        } else if (!checkName(name)) {
-            errorName = "Name not null ";
-        } else if (!checkDOB(localDate)) {
-            errorDOB = "Date of birth must be between 1900 and today";
-            
-        } else {
-            status = "yes";
+            errorPhone = "Phone must form 0xxx xxx xxx (10 numbers)";
+            valid = false;
         }
-        PatientPortalDAO dao= new PatientPortalDAO();
-        Patient patient =new Patient(useId, name, name, birthDate, email, gender);
-        if(submit.equals("edit")){
-            dao.editPatient(patient);
-             request.getRequestDispatcher("/createpatientsservlet").forward(request, response);}
-        
-        if (status.equals("yes")) {
-            dao.addPatient(patient);
-            request.getRequestDispatcher("/createpatientsservlet")
-                    .forward(request, response);
+
+        if (!checkEmail(email)) {
+            errorEmail = "abc@xxx.com";
+            valid = false;
+        }
+
+        if (!checkName(name)) {
+            errorName = "Name not null";
+            valid = false;
+        }
+
+        if (!checkDOB(localDate)) {
+            errorDOB = "Date of birth must be between 1900 and today";
+            valid = false;
+        }
+
+        PatientPortalDAO dao = new PatientPortalDAO();
+
+        Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
+
+        if (valid) {
+
+            if ("edit".equals(submit)) {
+                
+                dao.editPatient(patientID ,patient);
+
+            } else {
+
+                dao.addPatient(patient);
+
+            }
+
+            response.sendRedirect("createpatientsservlet");
+            return;
+
         } else {
+
+            request.setAttribute("errorPhone", errorPhone);
+            request.setAttribute("errorEmail", errorEmail);
+            request.setAttribute("errorName", errorName);
+            request.setAttribute("errorDOB", errorDOB);
+
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
         }
     }
 
-   
     @Override
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
 
     private boolean checkPhone(String sdt) {
-        if (sdt == null) {
-            return true;
+        if (sdt == null || sdt.trim().isEmpty()) {
+            return true; // cho phép null
         }
         return sdt.matches("^0\\d{9}$");
     }
 
     private boolean checkEmail(String email) {
-        if (email == null) {
-            return true;
+        if (email == null || email.trim().isEmpty()) {
+            return true; // cho phép null
         }
         return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
@@ -174,11 +225,13 @@ public class PatientsServlet extends HttpServlet {
     }
 
     private boolean checkDOB(LocalDate dob) {
-    if (dob == null) return false;
-    LocalDate minDate = LocalDate.of(1990, 1, 1);
-    LocalDate today = LocalDate.now();
-    
-    return (dob.compareTo(minDate) >= 0) && (dob.compareTo(today) <= 0);
-}
+        if (dob == null) {
+            return false;
+        }
+        LocalDate minDate = LocalDate.of(1990, 1, 1);
+        LocalDate today = LocalDate.now();
+
+        return (dob.compareTo(minDate) >= 0) && (dob.compareTo(today) <= 0);
+    }
 
 }

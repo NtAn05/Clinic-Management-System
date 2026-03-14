@@ -85,7 +85,7 @@ public class listOfAppointment extends HttpServlet {
             throws ServletException, IOException {
         long id = Long.parseLong(request.getParameter("id"));
         String status = request.getParameter("status");
-
+        String up = request.getParameter("up");
         AppointmentDAO dao = new AppointmentDAO();
 
         dao.updateStatus(id, status);
@@ -102,8 +102,12 @@ public class listOfAppointment extends HttpServlet {
         }
         SystemLogService.logWithSession(session, action,
                 "Cập nhật trạng thái lịch hẹn appointmentId=" + id + " -> " + status);
+        if(up!= null){
+             response.sendRedirect("historyofappointmentservlet");
 
+        }else{
         response.sendRedirect("listofappointment");
+        }
     }
 
     /**

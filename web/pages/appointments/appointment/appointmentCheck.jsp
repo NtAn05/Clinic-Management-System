@@ -24,7 +24,7 @@
 
                 <!-- LEFT -->
                 <div class="main">
-✓
+
                     <!-- STEPS -->
                     <div class="steps-wrapper">
                         <div class="step-circle active">
@@ -77,7 +77,7 @@
                                     <p>${patient.getGender()}</p>
                                 </div>
 
-                                
+
                             </div>
                             <div>
                                 <label>Ghi chú bệnh lý</label>
@@ -87,27 +87,47 @@
 
                             <!-- NGÀY + CA KHÁM -->
                             <div class="card-box">
-                            <h3>Chọn ngày và ca khám</h3>
+                                <h3>Chọn ngày và ca khám</h3>
 
-                            <label>Ngày khám *</label>
-                            <div class="time-slots" id="dateRadios"></div>
+                                <label>Ngày khám *</label>
 
-                            <div class="time-slots">
-                                <input type="radio" name="time" id="morning" value="08:00" checked>
-                                <label for="morning" class="slot">
-                                    <strong>Ca sáng</strong>
-                                    <span>08:00 - 11:30</span>
-                                </label>
+                                <div class="time-slots" id="dateRadios">
 
-                                <input type="radio" name="time" id="afternoon" value="13:00">
-                                <label for="afternoon" class="slot">
-                                    <strong>Ca chiều</strong>
-                                    <span>13:00 - 17:00</span>
-                                </label>
+                                    <c:forEach items="${dates}" var="d" varStatus="s">
+
+                                        <input type="radio" 
+                                               name="appointment_date"
+                                               id="date${s.index}"
+                                               value="${d}"
+                                               ${s.index == 0 ? "checked" : ""}>
+
+                                        <label for="date${s.index}" class="slot">
+                                            <strong>${d}</strong>
+                                        </label>
+
+                                    </c:forEach>
+
+                                </div>
+
+                                <div class="time-slots">
+
+                                    <input type="radio" name="time" id="morning" value="08:00" checked>
+                                    <label for="morning" class="slot">
+                                        <strong>Ca sáng</strong>
+                                        <span>08:00 - 11:30</span>
+                                    </label>
+
+                                    <input type="radio" name="time" id="afternoon" value="13:00">
+                                    <label for="afternoon" class="slot">
+                                        <strong>Ca chiều</strong>
+                                        <span>13:00 - 17:00</span>
+                                    </label>
+
+                                </div>
+
                             </div>
-                        </div>
 
-   
+
                             <input type="hidden" name="doctorID" value="${doctor.getDoctorId()}">
                             <input type="hidden" name="patientID" value="${patient.getPatientId()}">
                             <input type="hidden" name="userID" value="${sessionScope.account.userId}">
@@ -117,10 +137,10 @@
                             <!-- ACTION -->
 
                             <div class="actions">
-                            <button type="button" class="btn-outline"
-                                    onclick="location.href = '${pageContext.request.contextPath}/listofdoctorservlet'">
-                                Quay lại
-                            </button>
+                                <button type="button" class="btn-outline"
+                                        onclick="location.href = '${pageContext.request.contextPath}/listofdoctorservlet'">
+                                    Quay lại
+                                </button>
 
 
 

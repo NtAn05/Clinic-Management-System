@@ -22,6 +22,14 @@
 
             <h3>Lịch sử các cuộc hẹn</h3>
             <p>Chi tiết các cuộc hẹn</p>
+            <div class="status-filter">
+                <a href="#" onclick="filterStatus('all')">Tất cả</a>
+                <a href="#" onclick="filterStatus('booked')">Đã đặt</a>
+                <a href="#" onclick="filterStatus('checked_in')">Đã check-in</a>
+                <a href="#" onclick="filterStatus('waiting')">Đang chờ</a>
+                <a href="#" onclick="filterStatus('completed')">Hoàn thành</a>
+                <a href="#" onclick="filterStatus('cancelled')">Đã hủy</a>
+            </div>
 
             <!-- ================= PROFILE HEADER ================= -->
             <div class="appointment-list">
@@ -58,7 +66,25 @@
                             <p><strong>Giờ:</strong> ${a.appointmentTime}</p>
                         </div>
 
-                        <button class="status-btn">${a.status}</button>
+                        <div class="card-actions">
+
+                            <button class="status-btn">${a.status}</button>
+
+                            <c:if test="${a.status == 'booked'}">
+                                <form action="historyofappointmentservlet" method="post">
+                                    <input type="hidden" name="id" value="${a.appointmentId}">
+                                    <button class="cancel-btn" 
+                                            name="status" 
+                                            value="cancelled">
+                                        Hủy lịch
+                                    </button>
+
+                                </form>
+                            </c:if>
+
+
+
+                        </div>
 
                     </div>
 
@@ -121,6 +147,23 @@
 
             function closeModal() {
                 document.getElementById("modal").style.display = "none";
+            }
+            function filterStatus(status) {
+
+                let cards = document.querySelectorAll(".appointment-card");
+
+                cards.forEach(card => {
+
+                    let cardStatus = card.dataset.status;
+
+                    if (status === "all" || cardStatus === status) {
+                        card.style.display = "block";
+                    } else {
+                        card.style.display = "none";
+                    }
+
+                });
+
             }
         </script>
 

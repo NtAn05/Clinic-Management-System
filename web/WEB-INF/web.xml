@@ -62,7 +62,7 @@
     </servlet>
     <servlet>
         <servlet-name>DoctorScheduleRequestServlet</servlet-name>
-        <servlet-class>controller.doctor.DoctorScheduleRequestServlet</servlet-class>       
+        <servlet-class>controller.doctor.DoctorScheduleRequestServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>PatientsServlet</servlet-name>
@@ -162,10 +162,10 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>DoctorScheduleRequestServlet</servlet-name>
-        <url-pattern>/doctor/schedule-request</url-pattern>   
+        <url-pattern>/doctor/schedule-request</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>PatientsServlet</servlet-name>
-        <url-pattern>/createpatientsservlet</url-pattern>   
+        <url-pattern>/createpatientsservlet</url-pattern>
     </servlet-mapping>
 </web-app>

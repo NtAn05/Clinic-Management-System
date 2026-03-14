@@ -26,7 +26,7 @@
                     <!-- FORM thông tin -->
                     <form method="post" action="${pageContext.request.contextPath}/createpatientsservlet">
                         <input type="hidden" name="userID" value="${sessionScope.account.userId}">
-                       
+                        <input type="hidden" name="patientID" value="${patient.getPatientId()}">
                         <div class="card-box">
                             <h3>Thông tin của bạn</h3>
 
@@ -36,7 +36,7 @@
                                     <input type="text" name="name" value="${patient.fullName}" required>
                                     <span style="color:red">${errorName}</span>
                                 </div>
-
+                               
                                 <div>
                                     <label>Số điện thoại ( Không bắt buộc )</label>
                                     <input type="text" name="sdt" value="${patient.phone}" >
@@ -71,13 +71,19 @@
                        
                         <div class="actions">
                             <button type="button" class="btn-outline"
-                                    onclick="location.href = '${pageContext.request.contextPath}/index.jsp'">
+                                    onclick="location.href = '${pageContext.request.contextPath}/createpatientservlet'">
                                 Hủy
                             </button>
-
+                                    <c:if test="${patient.getPatientId() != null}">
+                                        <button type="submit" name="btnSubmit" value="edit" class="btn-primary">
+                                Lưu hồ sơ
+                            </button>
+                                    </c:if>
+                                <c:if test="${patient.getPatientId() == null}">
                             <button type="submit" name="btnSubmit" value="create" class="btn-primary">
                                 Tạo hồ sơ
                             </button>
+                            </c:if>
                         </div>
 
                     </form>

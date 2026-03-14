@@ -1,45 +1,86 @@
 .patient-container{
-    width:900px;
-    margin:auto;
+    max-width:1000px;
+    margin:40px auto;
+    background:#fff;
+    padding:25px 30px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
 }
 
+/* Header */
 .patient-header{
     display:flex;
     justify-content:space-between;
     align-items:center;
+    margin-bottom:20px;
 }
 
+.patient-header h2{
+    font-size:26px;
+    font-weight:600;
+    color:#333;
+}
+
+/* Add button */
 .btn-add-patient{
-    width:40px;
-    height:40px;
+    width:45px;
+    height:45px;
     border-radius:50%;
-    background:#2ecc71;
+    background:linear-gradient(135deg,#2ecc71,#27ae60);
     color:white;
     text-align:center;
-    line-height:40px;
-    font-size:25px;
+    line-height:45px;
+    font-size:26px;
     text-decoration:none;
+    box-shadow:0 3px 8px rgba(0,0,0,0.15);
+    transition:all 0.25s ease;
 }
 
+.btn-add-patient:hover{
+    transform:scale(1.1);
+    box-shadow:0 5px 12px rgba(0,0,0,0.2);
+}
+
+/* Table */
 .patient-table{
     width:100%;
     border-collapse:collapse;
+    border-radius:10px;
+    overflow:hidden;
 }
 
+/* Table header */
 .patient-table th{
-    background:#f5f5f5;
+    background:#f3f6fb;
+    font-weight:600;
+    color:#444;
+    text-align:left;
 }
 
+/* Table cells */
 .patient-table th,
 .patient-table td{
-    padding:12px;
-    border-bottom:1px solid #ddd;
+    padding:14px 16px;
+    border-bottom:1px solid #eee;
+    font-size:15px;
 }
 
+/* Row hover */
 .patient-row{
-    cursor:pointer;
+    transition:background 0.2s ease;
 }
 
 .patient-row:hover{
-    background:#f9f9f9;
+    background:#f8fbff;
+}
+
+/* Edit link */
+.patient-table a{
+    color:#3498db;
+    text-decoration:none;
+    font-weight:500;
+}
+
+.patient-table a:hover{
+    text-decoration:underline;
 }

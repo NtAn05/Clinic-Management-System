@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpSession;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import model.Appointment;
 import model.Doctor;
 import model.Patient;
@@ -29,15 +30,26 @@ public class AppointmentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         String doctorID = request.getParameter("doctor");
         String patientID = request.getParameter("patientid");
 
+        int patientId = Integer.parseInt(patientID);
+        int doctorId = Integer.parseInt(doctorID);
+
         AppointmentDAO dao = new AppointmentDAO();
-        PatientPortalDAO daos =new PatientPortalDAO();
-        Patient p = daos.getPatientsByPatientID(patientID);
+        PatientPortalDAO daos = new PatientPortalDAO();
+
+        Patient p = daos.getPatientsByPatientID(patientId);
         Doctor doctor = dao.getDoctorById(doctorID);
+
+        // lấy ngày có thể đặt
+        List<LocalDate> availableDates = dao.getAvailableDates(doctorId);
+
         request.setAttribute("doctor", doctor);
         request.setAttribute("patient", p);
+        request.setAttribute("dates", availableDates);
+
         request.getRequestDispatcher("/pages/appointments/appointment/appointmentCheck.jsp")
                 .forward(request, response);
     }
@@ -51,12 +63,12 @@ public class AppointmentServlet extends HttpServlet {
 
         String doctorID = request.getParameter("doctorID");
         int doctorId = Integer.parseInt(doctorID);
-String patientID = request.getParameter("patientID");
-        int patientId = Integer.parseInt(doctorID);
+        String patientID = request.getParameter("patientID");
+        int patientId = Integer.parseInt(patientID);
         String note = request.getParameter("note");
         String bookingStyle = request.getParameter("bookingStyle");
-        String date = request.getParameter("date");
-        java.sql.Date sqlDate = java.sql.Date.valueOf(date);
+        String dateStr = request.getParameter("appointment_date");
+        java.sql.Date sqlDate = java.sql.Date.valueOf(dateStr);
         String timeStr = request.getParameter("time");
 
         LocalTime localTime = LocalTime.parse(timeStr);
@@ -66,10 +78,8 @@ String patientID = request.getParameter("patientID");
         // Tạo đối tượng
         AppointmentDAO dao = new AppointmentDAO();
         PatientPortalDAO daos = new PatientPortalDAO();
-        Patient patient = daos.getPatientsByPatientID(patientID);
+        Patient patient = daos.getPatientsByPatientID(patientId);
         Appointment appointment = new Appointment(patientId, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
-        
-        
 
         if (submit != null && submit.equalsIgnoreCase("thanhtoan")) {
 
@@ -113,9 +123,6 @@ String patientID = request.getParameter("patientID");
             }
         }
 
-      
-            
-        
     }
 
     @Override

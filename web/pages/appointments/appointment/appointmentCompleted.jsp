@@ -16,31 +16,25 @@
 
                 <div class="main">
 
+                    <div class="main">
+
+                    <!-- STEPS -->
                     <div class="steps-wrapper">
-                        <div class="step-circle done">
+                        <div class="step-circle active">
                             <span>✓</span>
-                            <p>Thông tin bệnh nhân</p>
+                            <p>Xác nhận và chọn ca</p>
                         </div>
                         <div class="step-line"></div>
-
-                        <div class="step-circle done">
-                            <span>✓</span>
-                            <p>Xác nhận</p>
-                        </div>
-                        <div class="step-line"></div>
-
-                        <div class="step-circle done">
+                        <div class="step-circle">
                             <span>✓</span>
                             <p>Thanh toán</p>
                         </div>
                         <div class="step-line"></div>
-
-                        <div class="step-circle active">
-                            <span>4</span>
+                        <div class="step-circle">
+                            <span>✓</span>
                             <p>Hoàn tất</p>
-                        </div>
+                        </div>                        
                     </div>
-
                     <div class="card-box">
                         <h3>Cảm ơn đã đặt lịch hẹn</h3>
 

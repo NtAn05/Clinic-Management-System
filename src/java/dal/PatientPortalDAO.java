@@ -175,7 +175,7 @@ public class PatientPortalDAO extends DBContext {
             list.clear();
         }
 
-         if (!list.isEmpty()) {
+        if (!list.isEmpty()) {
             return list;
         }
 
@@ -216,7 +216,6 @@ public class PatientPortalDAO extends DBContext {
 //        }
 //
 //        sql.append(" ORDER BY p.created_at DESC ");
-
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             bindPrescriptionParams(ps, userId, patientId);
             ResultSet rs = ps.executeQuery();
@@ -364,67 +363,101 @@ public class PatientPortalDAO extends DBContext {
         }
     }
 
-    public void editPatient(Patient patient) {
-        String sql = "UPDATE Patient SET fullName=?, phone=?, dob=?, email=?, gender=? WHERE patientId=?";
+    public void editPatient(String patientID, Patient patient) {
 
-    try {
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setString(1, patient.getFullName());
-        ps.setString(2, patient.getPhone());
-        ps.setDate(3, patient.getDob());
-        ps.setString(4, patient.getEmail());
-        ps.setString(5, patient.getGender());
-        ps.setLong(6, patient.getPatientId());
+        String sql = "UPDATE patients SET full_name=?, phone=?, dob=?, email=?, gender=? WHERE patient_id=?";
 
-        ps.executeUpdate();
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+
+            ps.setString(1, patient.getFullName());
+
+            if (patient.getPhone() == null || patient.getPhone().isEmpty()) {
+                ps.setNull(2, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(2, patient.getPhone());
+            }
+
+            ps.setDate(3, patient.getDob());
+
+            if (patient.getEmail() == null || patient.getEmail().isEmpty()) {
+                ps.setNull(4, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(4, patient.getEmail());
+            }
+
+            ps.setString(5, patient.getGender());
+            ps.setLong(6, Long.parseLong(patientID));
+
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void addPatient(Patient patient) {
-          String sql = "INSERT INTO Patient (userId, fullName, phone, dob, email, gender) VALUES (?, ?, ?, ?, ?, ?)";
 
-    try {
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setInt(1, patient.getUserId());
-        ps.setString(2, patient.getFullName());
-        ps.setString(3, patient.getPhone());
-        ps.setDate(4, patient.getDob());
-        ps.setString(5, patient.getEmail());
-        ps.setString(6, patient.getGender());
+        String sql = "INSERT INTO patients (user_id, full_name, phone, dob, email, gender) VALUES (?, ?, ?, ?, ?, ?)";
 
-        ps.executeUpdate();
-    } catch (Exception e) {
-        e.printStackTrace();
-    } }
-    
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
 
-    public Patient getPatientsByPatientID(String patientID) {
-String sql = "SELECT * FROM Patient WHERE patientId = ?";
+            ps.setInt(1, patient.getUserId());
+            ps.setString(2, patient.getFullName());
 
-    try {
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setString(1, patientID);
+            if (patient.getPhone() == null || patient.getPhone().isEmpty()) {
+                ps.setNull(3, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(3, patient.getPhone());
+            }
 
-        ResultSet rs = ps.executeQuery();
+            ps.setDate(4, patient.getDob());
 
-        if (rs.next()) {
-            Patient p = new Patient();
-            p.setPatientId(rs.getLong("patientId"));
-            p.setUserId(rs.getInt("userId"));
-            p.setFullName(rs.getString("fullName"));
-            p.setPhone(rs.getString("phone"));
-            p.setDob(rs.getDate("dob"));
-            p.setEmail(rs.getString("email"));
-            p.setGender(rs.getString("gender"));
+            if (patient.getEmail() == null || patient.getEmail().isEmpty()) {
+                ps.setNull(5, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(5, patient.getEmail());
+            }
 
-            return p;
+            ps.setString(6, patient.getGender());
+
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-    } catch (Exception e) {
-        e.printStackTrace();
     }
 
-    return null;    }
+    public Patient getPatientsByPatientID(long patientID) {
+
+        String sql = "SELECT * FROM patients WHERE patient_id = ?";
+
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setLong(1, patientID);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+
+                Patient p = new Patient();
+
+                p.setPatientId(rs.getLong("patient_id"));
+                p.setUserId(rs.getInt("user_id"));
+                p.setFullName(rs.getString("full_name"));
+                p.setPhone(rs.getString("phone"));
+                p.setDob(rs.getDate("dob"));
+                p.setEmail(rs.getString("email"));
+                p.setGender(rs.getString("gender"));
+
+                return p;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

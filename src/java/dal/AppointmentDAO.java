@@ -8,6 +8,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import model.Appointment;
@@ -477,5 +478,70 @@ public class AppointmentDAO extends DBContext {
         }
 
         return -1;
+    }
+
+    public List<LocalDate> getAvailableDates(int doctorId) {
+
+        List<LocalDate> list = new ArrayList<>();
+
+        String sql = "SELECT shift_id, day_of_week, max_patients FROM doctor_shifts WHERE doctor_id = ?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setInt(1, doctorId);
+            ResultSet rs = st.executeQuery();
+
+            List<Integer> days = new ArrayList<>();
+            int maxPatients = 20;
+
+            while (rs.next()) {
+                days.add(rs.getInt("day_of_week"));
+                maxPatients = rs.getInt("max_patients");
+            }
+
+            LocalDate today = LocalDate.now();
+
+            for (int i = 0; i < 14; i++) {
+
+                LocalDate date = today.plusDays(i);
+                int dayOfWeek = date.getDayOfWeek().getValue();
+
+                if (days.contains(dayOfWeek)) {
+
+                    int booked = countPatients(doctorId, Date.valueOf(date));
+
+                    if (booked < maxPatients) {
+                        list.add(date);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public int countPatients(int doctorId, Date date) {
+
+        String sql = "SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND appointment_date = ?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setInt(1, doctorId);
+            st.setDate(2, date);
+
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
     }
 }
