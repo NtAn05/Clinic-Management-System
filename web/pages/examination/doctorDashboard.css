@@ -13,7 +13,7 @@ body {
 }
 
 .dashboard-container {
-    max-width: 1200px;
+    max-width: 1280px;
     width: 100%;
     margin: 0 auto;
     padding: 20px;
@@ -97,11 +97,12 @@ body {
 
 .content {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr;
     gap: 20px;
 }
 
 .queue-section{
+    grid-column: 1 / -1;
     background: #ffffff;
     padding: 20px;
     border-radius: 18px;
@@ -216,10 +217,10 @@ body {
 
 .queue-table-header {
     display: grid;
-    grid-template-columns: 70px minmax(150px, 1.3fr) 120px 130px minmax(180px, 2fr) 130px 140px;
+    grid-template-columns: minmax(56px, 0.5fr) minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(220px, 2fr) minmax(120px, 0.9fr) minmax(130px, 1fr);
     gap: 10px;
     align-items: center;
-    padding: 0 14px;
+    padding: 0 16px;
     color: #64748b;
     font-size: 12px;
     text-transform: uppercase;
@@ -232,7 +233,7 @@ body {
     border-radius: 14px;
     padding: 14px 16px;
     display: grid;
-    grid-template-columns: 70px minmax(150px, 1.3fr) 120px 130px minmax(180px, 2fr) 130px 140px;
+    grid-template-columns: minmax(56px, 0.5fr) minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(220px, 2fr) minmax(120px, 0.9fr) minmax(130px, 1fr);
     gap: 10px;
     align-items: center;
     cursor: pointer;
@@ -277,6 +278,13 @@ body {
 
 .queue-state,
 .queue-action {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.queue-table-header span:nth-child(6),
+.queue-table-header span:nth-child(7) {
     justify-self: end;
 }
 

@@ -641,15 +641,16 @@ public class DoctorDAO extends DBContext {
         SELECT 
             COUNT(*) AS total,
             SUM(CASE WHEN q.status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
-                    SUM(CASE WHEN q.status = 'examining' THEN 1 ELSE 0 END) AS examining,
-                    SUM(CASE WHEN q.status = 'done' THEN 1 ELSE 0 END) AS done,
-                    SUM(CASE WHEN q.status = 'done' AND a.appointment_date = CURDATE() THEN 1 ELSE 0 END) AS done_today,
-                    SUM(CASE WHEN q.status = 'done' AND a.appointment_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) AND a.appointment_date <= CURDATE() THEN 1 ELSE 0 END) AS done_this_week,
-                    SUM(CASE WHEN q.status = 'done' AND YEAR(a.appointment_date) = YEAR(CURDATE()) AND MONTH(a.appointment_date) = MONTH(CURDATE()) THEN 1 ELSE 0 END) AS done_this_month
-                FROM exam_queue q
-                JOIN appointments a ON q.appointment_id = a.appointment_id
-                WHERE q.doctor_id = ?
-    """;
+            SUM(CASE WHEN q.status = 'examining' THEN 1 ELSE 0 END) AS examining,
+            SUM(CASE WHEN q.status = 'done' THEN 1 ELSE 0 END) AS done,
+            SUM(CASE WHEN q.status = 'done' AND DATE(mr.updated_at) = CURDATE() THEN 1 ELSE 0 END) AS done_today,
+            SUM(CASE WHEN q.status = 'done' AND YEARWEEK(mr.updated_at, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END) AS done_this_week,
+            SUM(CASE WHEN q.status = 'done' AND YEAR(mr.updated_at) = YEAR(CURDATE()) AND MONTH(mr.updated_at) = MONTH(CURDATE()) THEN 1 ELSE 0 END) AS done_this_month
+            FROM exam_queue q
+            JOIN appointments a ON q.appointment_id = a.appointment_id
+            LEFT JOIN medical_records mr ON mr.appointment_id = a.appointment_id
+            WHERE q.doctor_id = ?
+        """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, doctorId);
