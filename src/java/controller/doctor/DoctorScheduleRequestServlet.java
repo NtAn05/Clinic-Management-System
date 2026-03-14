@@ -91,6 +91,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             error = "Vui lòng chọn ngày áp dụng cho yêu cầu tạm thời.";
         }
 
+
         if (error == null && "WEEKLY_TEMPLATE".equals(scopeType) && dayOfWeek == null) {
             error = "Vui lòng chọn thứ áp dụng cho yêu cầu thay đổi lịch tuần.";
         }
@@ -106,6 +107,10 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
 
         if (error == null && ("UPDATE".equals(actionType) || "REMOVE".equals(actionType)) && targetShiftId == null) {
             error = "Vui lòng chọn ca gốc cần cập nhật hoặc hủy.";
+        }
+
+        if (error == null && targetShiftId != null && !doctorDAO.isShiftOwnedByDoctor(targetShiftId, doctor.getDoctorId())) {
+            error = "Ca gốc không thuộc lịch làm việc của bạn.";
         }
 
         if (error != null) {
@@ -144,8 +149,14 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         if (!("TEMPORARY".equals(requestType) || "PERMANENT".equals(requestType))) {
             return "Loại yêu cầu không hợp lệ.";
         }
-        if (!("ONE_DATE".equals(scopeType) || "DATE_RANGE".equals(scopeType) || "WEEKLY_TEMPLATE".equals(scopeType))) {
+        if (!("ONE_DATE".equals(scopeType) || "WEEKLY_TEMPLATE".equals(scopeType))) {
             return "Phạm vi áp dụng không hợp lệ.";
+        }
+        if ("TEMPORARY".equals(requestType) && !"ONE_DATE".equals(scopeType)) {
+            return "Yêu cầu tạm thời chỉ được áp dụng theo ONE_DATE.";
+        }
+        if ("PERMANENT".equals(requestType) && !"WEEKLY_TEMPLATE".equals(scopeType)) {
+            return "Yêu cầu dài hạn chỉ được áp dụng theo WEEKLY_TEMPLATE.";
         }
         if (!("ADD".equals(actionType) || "UPDATE".equals(actionType) || "REMOVE".equals(actionType))) {
             return "Hành động thay đổi ca không hợp lệ.";

@@ -19,8 +19,7 @@
 
         <div class="schedule-request-container">
             <div class="hero-card">
-                <h2>Quản lý lịch làm việc & gửi yêu cầu đổi lịch</h2>
-                <p>Bác sĩ có thể theo dõi lịch tuần hiện tại, tạo đơn tạm thời hoặc thay đổi lịch dài hạn để quản trị viên duyệt.</p>
+                <h2>Quản lý lịch làm việc / Gửi yêu cầu đổi lịch</h2>
             </div>
 
             <c:if test="${not empty sessionScope.scheduleRequestSuccess}">
@@ -35,8 +34,6 @@
             <div class="content-grid">
                 <section class="panel">
                     <h3>Lịch làm việc tuần hiện tại</h3>
-                    <p class="sub">Dữ liệu lấy từ <b>doctor_shifts</b> (template dài hạn).</p>
-
                     <c:choose>
                         <c:when test="${empty weeklyShifts}">
                             <p class="empty">Bạn chưa có ca làm việc nào được cấu hình.</p>
@@ -79,47 +76,54 @@
 
                 <section class="panel">
                     <h3>Tạo đơn yêu cầu đổi lịch</h3>
-                    <form method="post" action="${pageContext.request.contextPath}/doctor/schedule-request" class="request-form">
+                    <form method="post" action="${pageContext.request.contextPath}/doctor/schedule-request" class="request-form" id="scheduleRequestForm">
                         <div class="form-row two-col">
                             <label>Loại yêu cầu
-                                <select name="requestType" required>
-                                    <option value="TEMPORARY">TEMPORARY - Tạm thời</option>
-                                    <option value="PERMANENT">PERMANENT - Dài hạn</option>
+                                <select name="requestType" id="requestType" required>
+                                    <option value="TEMPORARY">Đổi lịch làm việc tạm thời</option>
+                                    <option value="PERMANENT">Đổi lịch làm việc dài hạn</option>
                                 </select>
                             </label>
                             <label>Phạm vi áp dụng
-                                <select name="scopeType" required>
-                                    <option value="ONE_DATE">ONE_DATE - Một ngày cụ thể</option>
-                                    <option value="WEEKLY_TEMPLATE">WEEKLY_TEMPLATE - Theo lịch tuần</option>
-                                    <option value="DATE_RANGE">DATE_RANGE - Khoảng ngày (ghi chú thêm ở lý do)</option>
+                                <select name="scopeType" id="scopeType" required>
+                                    <option value="ONE_DATE">Một ngày cụ thể</option>
+                                    <option value="WEEKLY_TEMPLATE">Theo lịch tuần</option>
                                 </select>
                             </label>
                         </div>
 
+                        <p class="form-hint" id="scopeHint"></p>
+
                         <div class="form-row two-col">
                             <label>Hành động
-                                <select name="actionType" required>
-                                    <option value="ADD">ADD - Thêm ca</option>
-                                    <option value="UPDATE">UPDATE - Sửa ca</option>
-                                    <option value="REMOVE">REMOVE - Hủy ca</option>
+                                <select name="actionType" id="actionType" required>
+                                    <option value="ADD">Thêm ca</option>
+                                    <option value="UPDATE">Sửa ca</option>
+                                    <option value="REMOVE">Hủy ca</option>
                                 </select>
                             </label>
-                            <label>Ca gốc cần sửa/hủy (nếu có)
-                                <select name="targetShiftId">
-                                    <option value="">-- Không chọn --</option>
+                        </div>
+
+                        <div class="form-row" id="targetShiftGroup">
+                            <label>Ca gốc cần sửa/hủy
+                                <select name="targetShiftId" id="targetShiftId">
+                                    <option value="">-- Chọn ca gốc --</option>
                                     <c:forEach var="shift" items="${weeklyShifts}">
-                                        <option value="${shift.shiftId}">#${shift.shiftId} - Thứ ${shift.dayOfWeek} (${shift.startTime} - ${shift.endTime})</option>
+                                        <option value="${shift.shiftId}">#${shift.shiftId} - Thứ ${shift.dayOfWeek+1} (${shift.startTime} - ${shift.endTime})</option>
                                     </c:forEach>
                                 </select>
                             </label>
                         </div>
 
-                        <div class="form-row three-col">
-                            <label>Ngày áp dụng (ONE_DATE)
-                                <input type="date" name="workDate">
+                        <div class="form-row" id="oneDateGroup">
+                            <label>Ngày áp dụng
+                                <input type="date" name="workDate" id="workDate">
                             </label>
-                            <label>Thứ áp dụng (WEEKLY_TEMPLATE)
-                                <select name="dayOfWeek">
+                        </div>
+
+                        <div class="form-row" id="weeklyTemplateGroup">
+                            <label>Thứ áp dụng
+                                <select name="dayOfWeek" id="dayOfWeek">
                                     <option value="">-- Chọn thứ --</option>
                                     <option value="0">Chủ nhật</option>
                                     <option value="1">Thứ 2</option>
@@ -130,18 +134,22 @@
                                     <option value="6">Thứ 7</option>
                                 </select>
                             </label>
-                            <label>Số bệnh nhân tối đa
-                                <input type="number" min="1" name="maxPatients" placeholder="VD: 20">
-                            </label>
                         </div>
 
-                        <div class="form-row two-col">
-                            <label>Giờ bắt đầu
-                                <input type="time" name="startTime">
-                            </label>
-                            <label>Giờ kết thúc
-                                <input type="time" name="endTime">
-                            </label>
+                        <div id="timeAndCapacityGroup">
+                            <div class="form-row two-col">
+                                <label>Giờ bắt đầu
+                                    <input type="time" name="startTime" id="startTime">
+                                </label>
+                                <label>Giờ kết thúc
+                                    <input type="time" name="endTime" id="endTime">
+                                </label>
+                            </div>
+                            <div class="form-row">
+                                <label>Số bệnh nhân tối đa
+                                    <input type="number" min="1" name="maxPatients" id="maxPatients" placeholder="VD: 20">
+                                </label>
+                            </div>
                         </div>
 
                         <div class="form-row">
@@ -195,6 +203,76 @@
             </section>
         </div>
 
+        <script>
+            (function () {
+                const requestType = document.getElementById('requestType');
+                const scopeType = document.getElementById('scopeType');
+                const actionType = document.getElementById('actionType');
+
+                const scopeHint = document.getElementById('scopeHint');
+                const oneDateGroup = document.getElementById('oneDateGroup');
+                const weeklyTemplateGroup = document.getElementById('weeklyTemplateGroup');
+                const targetShiftGroup = document.getElementById('targetShiftGroup');
+                const timeAndCapacityGroup = document.getElementById('timeAndCapacityGroup');
+
+                const oneDateInput = document.getElementById('workDate');
+                const weeklyInput = document.getElementById('dayOfWeek');
+                const targetShiftInput = document.getElementById('targetShiftId');
+                const startInput = document.getElementById('startTime');
+                const endInput = document.getElementById('endTime');
+                const maxPatientsInput = document.getElementById('maxPatients');
+
+                function toggleGroup(group, input, visible) {
+                    group.classList.toggle('hidden', !visible);
+                    input.disabled = !visible;
+                    if (!visible) {
+                        input.value = '';
+                    }
+                }
+
+                function toggleTimeCapacity(visible) {
+                    timeAndCapacityGroup.classList.toggle('hidden', !visible);
+                    [startInput, endInput, maxPatientsInput].forEach(function (input) {
+                        input.disabled = !visible;
+                        if (!visible) {
+                            input.value = '';
+                        }
+                    });
+                }
+
+                function applyTypeScopeRules() {
+                    if (requestType.value === 'TEMPORARY') {
+                        scopeType.value = 'ONE_DATE';
+                        scopeType.querySelector('option[value="WEEKLY_TEMPLATE"]').disabled = true;
+                        scopeHint.textContent = 'Yêu cầu tạm thời chỉ áp dụng cho 1 ngày cụ thể.';
+                    } else {
+                        scopeType.value = 'WEEKLY_TEMPLATE';
+                        scopeType.querySelector('option[value="WEEKLY_TEMPLATE"]').disabled = false;
+                        scopeType.querySelector('option[value="ONE_DATE"]').disabled = true;
+                        scopeHint.textContent = 'Yêu cầu dài hạn sẽ thay đổi lịch tuần chuẩn.';
+                        return;
+                    }
+                    scopeType.querySelector('option[value="ONE_DATE"]').disabled = false;
+                }
+
+                function renderFormBySelection() {
+                    applyTypeScopeRules();
+
+                    const scope = scopeType.value;
+                    const action = actionType.value;
+
+                    toggleGroup(oneDateGroup, oneDateInput, scope === 'ONE_DATE');
+                    toggleGroup(weeklyTemplateGroup, weeklyInput, scope === 'WEEKLY_TEMPLATE');
+                    toggleGroup(targetShiftGroup, targetShiftInput, action === 'UPDATE' || action === 'REMOVE');
+                    toggleTimeCapacity(action === 'ADD' || action === 'UPDATE');
+                }
+
+                requestType.addEventListener('change', renderFormBySelection);
+                scopeType.addEventListener('change', renderFormBySelection);
+                actionType.addEventListener('change', renderFormBySelection);
+                renderFormBySelection();
+            })();
+        </script>
         <jsp:include page="/common/footer.jsp" />
     </body>
 </html>

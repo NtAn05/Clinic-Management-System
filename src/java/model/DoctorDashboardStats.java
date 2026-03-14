@@ -13,7 +13,11 @@ public class DoctorDashboardStats {
     private int waiting;
     private int examining;
     private int done;
-
+    private double completionRate;
+    private int doneToday;
+    private int doneThisWeek;
+    private int doneThisMonth;
+    
     public int getTotal() {
         return total;
     }
@@ -46,5 +50,36 @@ public class DoctorDashboardStats {
         this.done = done;
     }
     
+    public double getCompletionRate() {
+        return completionRate;
+    }
+
+    public void setCompletionRate(double completionRate) {
+        this.completionRate = completionRate;
+    }
+
+    public int getDoneToday() {
+        return doneToday;
+    }
+
+    public void setDoneToday(int doneToday) {
+        this.doneToday = doneToday;
+    }
+
+    public int getDoneThisWeek() {
+        return doneThisWeek;
+    }
+
+    public void setDoneThisWeek(int doneThisWeek) {
+        this.doneThisWeek = doneThisWeek;
+    }
+
+    public int getDoneThisMonth() {
+        return doneThisMonth;
+    }
+
+    public void setDoneThisMonth(int doneThisMonth) {
+        this.doneThisMonth = doneThisMonth;
+    }
     
 }

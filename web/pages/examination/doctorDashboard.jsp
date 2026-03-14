@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -31,9 +32,40 @@
                 <div class="card summary-card examining">
                     <div class="summary-left">
                         <p>Đang khám</p>
+                        <h3>${stats.examining}</h3>
+                    </div>
+                    <div class="summary-icon green">🩺</div>
+                </div>
+
+                <div class="card summary-card done">
+                    <div class="summary-left">
+                        <p>Đã hoàn tất</p>
                         <h3>${stats.done}</h3>
                     </div>
-                    <div class="summary-icon green">❤️</div>
+                    <div class="summary-icon green">✅</div>
+                </div>
+
+                <div class="card summary-card done">
+                    <div class="summary-left">
+                        <p>Tỷ lệ hoàn thành</p>
+                        <h3><fmt:formatNumber value="${stats.completionRate}" maxFractionDigits="1"/>%</h3>
+                    </div>
+                    <div class="summary-icon blue">📈</div>
+                </div>
+            </div>
+
+            <div class="kpi-core-strip">
+                <div class="kpi-chip">
+                    <span class="kpi-label">Ca hoàn tất hôm nay</span>
+                    <strong class="kpi-value">${stats.doneToday}</strong>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-label">Ca hoàn tất tuần này</span>
+                    <strong class="kpi-value">${stats.doneThisWeek}</strong>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-label">Ca hoàn tất tháng này</span>
+                    <strong class="kpi-value">${stats.doneThisMonth}</strong>
                 </div>
             </div>
 
@@ -41,7 +73,7 @@
                 <div class="queue-section">
                     <div class="section-heading">
                         <h3>Danh sách bệnh nhân hôm nay</h3>
-<!--                        <p>Click vào bệnh nhân để mở popup bảng điều khiển.</p>-->
+                        <!--                        <p>Click vào bệnh nhân để mở popup bảng điều khiển.</p>-->
                     </div>
 
                     <div class="queue-filter">
@@ -97,7 +129,7 @@
                             <p class="empty-state">Không có bệnh nhân chờ khám</p>
                         </c:if>
                     </div>
-                            <c:if test="${totalRecords > 0}">
+                    <c:if test="${totalRecords > 0}">
                         <div class="queue-pagination">
                             <span class="pagination-summary">Trang ${currentPage}/${totalPages} • ${totalRecords} bệnh nhân</span>
                             <div class="pagination-actions">

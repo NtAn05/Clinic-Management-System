@@ -633,28 +633,38 @@ public class DoctorDAO extends DBContext {
             return false;
         }
     }
-    
+
     //thống kê số liệu 
     public DoctorDashboardStats getDashboardStats(int doctorId) {
         DoctorDashboardStats stats = new DoctorDashboardStats();
         String sql = """
         SELECT 
             COUNT(*) AS total,
-            SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
-            SUM(CASE WHEN status = 'examining' THEN 1 ELSE 0 END) AS examining,
-            SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) AS done
-        FROM exam_queue
-        WHERE doctor_id = ?
+            SUM(CASE WHEN q.status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
+                    SUM(CASE WHEN q.status = 'examining' THEN 1 ELSE 0 END) AS examining,
+                    SUM(CASE WHEN q.status = 'done' THEN 1 ELSE 0 END) AS done,
+                    SUM(CASE WHEN q.status = 'done' AND a.appointment_date = CURDATE() THEN 1 ELSE 0 END) AS done_today,
+                    SUM(CASE WHEN q.status = 'done' AND a.appointment_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) AND a.appointment_date <= CURDATE() THEN 1 ELSE 0 END) AS done_this_week,
+                    SUM(CASE WHEN q.status = 'done' AND YEAR(a.appointment_date) = YEAR(CURDATE()) AND MONTH(a.appointment_date) = MONTH(CURDATE()) THEN 1 ELSE 0 END) AS done_this_month
+                FROM exam_queue q
+                JOIN appointments a ON q.appointment_id = a.appointment_id
+                WHERE q.doctor_id = ?
     """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, doctorId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                stats.setTotal(rs.getInt("total"));
+                int total = rs.getInt("total");
+                int done = rs.getInt("done");
+                stats.setTotal(total);
                 stats.setWaiting(rs.getInt("waiting"));
                 stats.setExamining(rs.getInt("examining"));
-                stats.setDone(rs.getInt("done"));
+                stats.setDone(done);
+                stats.setCompletionRate(total == 0 ? 0 : (done * 100.0) / total);
+                stats.setDoneToday(rs.getInt("done_today"));
+                stats.setDoneThisWeek(rs.getInt("done_this_week"));
+                stats.setDoneThisMonth(rs.getInt("done_this_month"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1271,7 +1281,7 @@ public class DoctorDAO extends DBContext {
                     }
                 }
             }
-            
+
             try (PreparedStatement updatePrescription = connection.prepareStatement(updatePrescriptionSql)) {
                 updatePrescription.setInt(1, doctorId);
                 updatePrescription.setInt(2, prescriptionId);
