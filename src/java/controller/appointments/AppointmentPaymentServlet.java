@@ -64,20 +64,11 @@ public class AppointmentPaymentServlet extends HttpServlet {
 
         if ("00".equals(code) && "PAID".equals(status)) {
             HttpSession session = request.getSession();
-            Patient patient = (Patient) session.getAttribute("pendingPatient");
             Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
-            if (patient != null && appointment != null) {
+            if ( appointment != null) {
                 AppointmentDAO dao = new AppointmentDAO();
-                long patientId = dao.getPatientIdByEmail(patient.getEmail());
 
-                // nếu chưa tồn tại thì thêm mới
-                if (patientId == -1) {
-                    dao.addPatient(patient);
-                    patientId = dao.getPatientID(patient);
-                }
-                Appointment appointment1 = new Appointment(patientId, appointment.getDoctorId(), appointment.getShiftId(), appointment.getBookingType(), appointment.getAppointmentDate(), appointment.getAppointmentTime(), appointment.getStatus(), appointment.getSymptom());
-                dao.addAppointment(appointment1);
-                session.removeAttribute("pendingPatient");
+                dao.addAppointment(appointment);
                 session.removeAttribute("pendingAppointment");
             }
 
@@ -85,7 +76,6 @@ public class AppointmentPaymentServlet extends HttpServlet {
             request.getRequestDispatcher("/pages/appointments/appointment/appointmentCompleted.jsp")
                     .forward(request, response);
         } else {
-            // ❌ Thanh toán thất bại → không lưu DB
             request.setAttribute("message", "Thanh toán thất bại hoặc đã huỷ!");
             request.getRequestDispatcher("/pages/appointments/appointment/appointmentFailPayment.jsp")
                     .forward(request, response);

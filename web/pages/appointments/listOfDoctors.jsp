@@ -44,7 +44,7 @@
                             </c:if>
 
                             <c:if test="${sessionScope.account != null}">
-                                <form method="get" action="${pageContext.request.contextPath}/appointmentservlet">
+                                <form method="get" action="${pageContext.request.contextPath}/createpatientsservlet">
                                     <button name="btnDoctorID" value="${d.doctorId}">Đặt dịch vụ</button>
                                 </form>
                             </c:if>

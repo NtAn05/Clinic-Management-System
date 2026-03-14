@@ -63,6 +63,8 @@
     <servlet>
         <servlet-name>DoctorScheduleRequestServlet</servlet-name>
         <servlet-class>controller.doctor.DoctorScheduleRequestServlet</servlet-class>
+        <servlet-name>PatientsServlet</servlet-name>
+        <servlet-class>createPatients.PatientsServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
@@ -159,5 +161,7 @@
     <servlet-mapping>
         <servlet-name>DoctorScheduleRequestServlet</servlet-name>
         <url-pattern>/doctor/schedule-request</url-pattern>
+        <servlet-name>PatientsServlet</servlet-name>
+        <url-pattern>/createpatientsservlet</url-pattern>
     </servlet-mapping>
 </web-app>

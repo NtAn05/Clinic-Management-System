@@ -24,31 +24,23 @@
 
                 <!-- LEFT -->
                 <div class="main">
-
+✓
                     <!-- STEPS -->
                     <div class="steps-wrapper">
-                        <div class="step-circle done">
-                            <span>✓</span>
-                            <p>Thông tin bệnh nhân</p>
-                        </div>
-                        <div class="step-line"></div>
-
                         <div class="step-circle active">
-                            <span>2</span>
-                            <p>Xác nhận</p>
+                            <span>1</span>
+                            <p>Xác nhận và chọn ca</p>
                         </div>
                         <div class="step-line"></div>
-
                         <div class="step-circle">
-                            <span>3</span>
+                            <span>2</span>
                             <p>Thanh toán</p>
                         </div>
                         <div class="step-line"></div>
-
                         <div class="step-circle">
-                            <span>4</span>
+                            <span>3</span>
                             <p>Hoàn tất</p>
-                        </div>
+                        </div>                        
                     </div>
 
                     <!-- THÔNG TIN XÁC NHẬN -->
@@ -62,77 +54,62 @@
                                 <div>
                                     <label>Họ và tên</label>
                                     <p >${patient.getFullName()}</p>
-                                    <input type="hidden" name="name" value="${patient.getFullName()}">
                                 </div>
 
 
                                 <div>
                                     <label>Số điện thoại</label>
                                     <p>${patient.getPhone()}</p>
-                                    <input type="hidden" name="sdt" value="${patient.getPhone()}">
                                 </div>
 
                                 <div>
                                     <label>Email</label>
                                     <p>${patient.getEmail()}</p>
-                                    <input type="hidden" name="email" value="${patient.getEmail()}">
                                 </div>
 
                                 <div>
                                     <label>Ngày sinh</label>
                                     <p>${patient.getDob()}</p>
-                                    <input type="hidden" name="dateofbirth" value="${patient.getDob()}">
                                 </div>
 
                                 <div>
                                     <label>Giới tính</label>
                                     <p>${patient.getGender()}</p>
-                                    <input type="hidden" name="gender" value="${patient.getGender()}">
                                 </div>
 
-                                <div>
-                                    <label>Địa chỉ</label>
-                                    <p>${address}</p>
-                                    <input type="hidden" name="address" value="${address}">
-                                </div>
+                                
                             </div>
                             <div>
                                 <label>Ghi chú bệnh lý</label>
-                                <p  class="note-box">${appointment.getSymptom()}</p>
-                                <input type="hidden" name="note" value="${appointment.getSymptom()}">
+                                <input type="text" name="note" >
 
                             </div>
 
                             <!-- NGÀY + CA KHÁM -->
                             <div class="card-box">
-                                <h3>Thời gian khám</h3>
+                            <h3>Chọn ngày và ca khám</h3>
 
-                                <div class="form-grid confirm-view">
-                                    <div>
-                                        <label>Ca khám</label>
-                                        <c:if test="${time == '08:00'}">
-                                            <p>
-                                                <strong>Ca sáng</strong>
-                                                <span>08:00 - 11:00</span>
-                                            </p>
-                                        </c:if>
-                                        <c:if test="${time == '13:00'}">
-                                            <p>
-                                                <strong>Ca chiều</strong>
-                                                <span>13:00 - 17:00</span>
-                                            </p>
-                                        </c:if>
-                                    </div>
+                            <label>Ngày khám *</label>
+                            <div class="time-slots" id="dateRadios"></div>
 
-                                    <div>
-                                        <label>Ngày khám</label>
-                                        <p>${date}</p>
-                                    </div>
-                                </div>
+                            <div class="time-slots">
+                                <input type="radio" name="time" id="morning" value="08:00" checked>
+                                <label for="morning" class="slot">
+                                    <strong>Ca sáng</strong>
+                                    <span>08:00 - 11:30</span>
+                                </label>
+
+                                <input type="radio" name="time" id="afternoon" value="13:00">
+                                <label for="afternoon" class="slot">
+                                    <strong>Ca chiều</strong>
+                                    <span>13:00 - 17:00</span>
+                                </label>
                             </div>
-                            <input type="hidden" name="time" value="${time}">
-                            <input type="hidden" name="date" value="${date}">
+                        </div>
+
+   
                             <input type="hidden" name="doctorID" value="${doctor.getDoctorId()}">
+                            <input type="hidden" name="patientID" value="${patient.getPatientId()}">
                             <input type="hidden" name="userID" value="${sessionScope.account.userId}">
                             <input type="hidden" name="pricePay" value="${doctor.price}">
                             <input type="hidden" name="bookingStyle"
@@ -140,14 +117,14 @@
                             <!-- ACTION -->
 
                             <div class="actions">
-                                <button type="button"  class="btn-outline"
-                                        onclick="history.back()">
-                                    Chỉnh sửa thông tin
-                                </button>
+                            <button type="button" class="btn-outline"
+                                    onclick="location.href = '${pageContext.request.contextPath}/listofdoctorservlet'">
+                                Quay lại
+                            </button>
 
 
 
-                                <button type="submit" name="btnSubmit" value="step2" class="btn-primary">
+                                <button type="submit" name="btnSubmit" value="thanhtoan" class="btn-primary">
                                     Xác nhận & Thanh toán
                                 </button>
 

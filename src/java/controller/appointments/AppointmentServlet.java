@@ -4,6 +4,7 @@ import vn.payos.PayOS;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
 import dal.AppointmentDAO;
+import dal.PatientPortalDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -28,13 +29,16 @@ public class AppointmentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String doctorID = request.getParameter("btnDoctorID");
+        String doctorID = request.getParameter("doctor");
+        String patientID = request.getParameter("patientid");
 
         AppointmentDAO dao = new AppointmentDAO();
+        PatientPortalDAO daos =new PatientPortalDAO();
+        Patient p = daos.getPatientsByPatientID(patientID);
         Doctor doctor = dao.getDoctorById(doctorID);
         request.setAttribute("doctor", doctor);
-
-        request.getRequestDispatcher("/pages/appointments/appointment/appointmentInformation.jsp")
+        request.setAttribute("patient", p);
+        request.getRequestDispatcher("/pages/appointments/appointment/appointmentCheck.jsp")
                 .forward(request, response);
     }
 
@@ -42,30 +46,13 @@ public class AppointmentServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Nhận thông tin
         String userID = request.getParameter("userID");
         int useId = Integer.parseInt(userID);
 
         String doctorID = request.getParameter("doctorID");
         int doctorId = Integer.parseInt(doctorID);
-
-        String name = request.getParameter("name");
-        String sdt = request.getParameter("sdt");
-        String email = request.getParameter("email");
-
-        String dateofbirth = request.getParameter("dateofbirth");
-
-        LocalDate localDate = null;
-        Date birthDate = null;
-
-        if (dateofbirth != null && !dateofbirth.isEmpty()) {
-            localDate = LocalDate.parse(dateofbirth); // yyyy-MM-dd, parse thẳng được
-            birthDate = Date.valueOf(localDate);
-        }
-        System.out.println("DEBUG dateofbirth: " + dateofbirth);
-System.out.println("DEBUG localDate: " + localDate);
-System.out.println("DEBUG checkDOB: " + checkDOB(localDate));
-        String gender = request.getParameter("gender");
+String patientID = request.getParameter("patientID");
+        int patientId = Integer.parseInt(doctorID);
         String note = request.getParameter("note");
         String bookingStyle = request.getParameter("bookingStyle");
         String date = request.getParameter("date");
@@ -78,46 +65,13 @@ System.out.println("DEBUG checkDOB: " + checkDOB(localDate));
 
         // Tạo đối tượng
         AppointmentDAO dao = new AppointmentDAO();
-        Doctor doctor = dao.getDoctorById(doctorID);
-        request.setAttribute("doctor", doctor);
+        PatientPortalDAO daos = new PatientPortalDAO();
+        Patient patient = daos.getPatientsByPatientID(patientID);
+        Appointment appointment = new Appointment(patientId, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
+        
+        
 
-        Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-        Appointment appointment = new Appointment(1, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
-
-        // Validate thông tin
-        String errorPhone = "";
-        String errorName = "";
-        String errorEmail = "";
-        String errorDOB = "";
-        String status = "";
-
-        if (!checkPhone(sdt)) {
-            errorPhone = "Phone must form 0xxx xxx xxx";
-        } else if (!checkEmail(email)) {
-            errorEmail = "abc@xxx.com";
-        } else if (!checkName(name)) {
-            errorName = "Name not null";
-        } else if (!checkDOB(localDate)) {
-            errorDOB = "Date of birth must be between 1900 and today";
-            
-        } else {
-            status = "yes";
-        }
-        System.out.println("DOB nhận được: " + localDate);
-System.out.println("Check kết quả: " + checkDOB(localDate));
-        request.setAttribute("errorName", errorName);   // thêm dòng này
-        request.setAttribute("errorDOB", errorDOB);
-        request.setAttribute("errorPhone", errorPhone);
-        request.setAttribute("errorEmail", errorEmail);
-        request.setAttribute("appointment", appointment);
-        request.setAttribute("patient", patient);
-        request.setAttribute("note", note);
-
-        request.setAttribute("status", status);
-        request.setAttribute("time", timeStr);
-        request.setAttribute("date", date);
-
-        if (submit != null && submit.equalsIgnoreCase("step2")) {
+        if (submit != null && submit.equalsIgnoreCase("thanhtoan")) {
 
             try {
                 String priceStr = request.getParameter("pricePay");
@@ -139,7 +93,7 @@ System.out.println("Check kết quả: " + checkDOB(localDate));
                 CreatePaymentLinkRequest paymentRequest = CreatePaymentLinkRequest.builder()
                         .orderCode(orderCode)
                         .amount(amount)
-                        .description(name + "")
+                        .description(patient.getFullName() + "")
                         .returnUrl("http://localhost:8080/PhongKhamDaLieu/appointmentpaymentservlet")
                         .cancelUrl("http://localhost:8080/PhongKhamDaLieu/pages/appointments/appointment/appointmentFailPayment.jsp")
                         .build();
@@ -159,48 +113,14 @@ System.out.println("Check kết quả: " + checkDOB(localDate));
             }
         }
 
-        // ✅ Xử lý bước xác nhận thông tin (step1)
-        if (status.equals("yes")) {
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentCheck.jsp")
-                    .forward(request, response);
-        } else {
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentInformation.jsp")
-                    .forward(request, response);
-        }
+      
+            
+        
     }
 
     @Override
     public String getServletInfo() {
         return "Short description";
     }
-
-    private boolean checkPhone(String sdt) {
-        if (sdt == null) {
-            return false;
-        }
-        return sdt.matches("^0\\d{9}$");
-    }
-
-    private boolean checkEmail(String email) {
-        if (email == null) {
-            return false;
-        }
-        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    }
-
-    private boolean checkName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return false;
-        }
-        return name.trim().length() >= 2 && name.trim().length() <= 50;
-    }
-
-    private boolean checkDOB(LocalDate dob) {
-    if (dob == null) return false;
-    LocalDate minDate = LocalDate.of(1990, 1, 1);
-    LocalDate today = LocalDate.now();
-    
-    return (dob.compareTo(minDate) >= 0) && (dob.compareTo(today) <= 0);
-}
 
 }

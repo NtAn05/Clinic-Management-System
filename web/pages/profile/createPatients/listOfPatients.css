@@ -1,0 +1,45 @@
+.patient-container{
+    width:900px;
+    margin:auto;
+}
+
+.patient-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.btn-add-patient{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#2ecc71;
+    color:white;
+    text-align:center;
+    line-height:40px;
+    font-size:25px;
+    text-decoration:none;
+}
+
+.patient-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.patient-table th{
+    background:#f5f5f5;
+}
+
+.patient-table th,
+.patient-table td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+}
+
+.patient-row{
+    cursor:pointer;
+}
+
+.patient-row:hover{
+    background:#f9f9f9;
+}

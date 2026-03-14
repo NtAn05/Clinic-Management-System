@@ -363,4 +363,68 @@ public class PatientPortalDAO extends DBContext {
             }
         }
     }
+
+    public void editPatient(Patient patient) {
+        String sql = "UPDATE Patient SET fullName=?, phone=?, dob=?, email=?, gender=? WHERE patientId=?";
+
+    try {
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, patient.getFullName());
+        ps.setString(2, patient.getPhone());
+        ps.setDate(3, patient.getDob());
+        ps.setString(4, patient.getEmail());
+        ps.setString(5, patient.getGender());
+        ps.setLong(6, patient.getPatientId());
+
+        ps.executeUpdate();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    }
+
+    public void addPatient(Patient patient) {
+          String sql = "INSERT INTO Patient (userId, fullName, phone, dob, email, gender) VALUES (?, ?, ?, ?, ?, ?)";
+
+    try {
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setInt(1, patient.getUserId());
+        ps.setString(2, patient.getFullName());
+        ps.setString(3, patient.getPhone());
+        ps.setDate(4, patient.getDob());
+        ps.setString(5, patient.getEmail());
+        ps.setString(6, patient.getGender());
+
+        ps.executeUpdate();
+    } catch (Exception e) {
+        e.printStackTrace();
+    } }
+    
+
+    public Patient getPatientsByPatientID(String patientID) {
+String sql = "SELECT * FROM Patient WHERE patientId = ?";
+
+    try {
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, patientID);
+
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            Patient p = new Patient();
+            p.setPatientId(rs.getLong("patientId"));
+            p.setUserId(rs.getInt("userId"));
+            p.setFullName(rs.getString("fullName"));
+            p.setPhone(rs.getString("phone"));
+            p.setDob(rs.getDate("dob"));
+            p.setEmail(rs.getString("email"));
+            p.setGender(rs.getString("gender"));
+
+            return p;
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return null;    }
 }
