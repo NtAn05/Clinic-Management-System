@@ -1,5 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -374,7 +375,11 @@
                                 <td class="col-time">
                                     <div class="log-meta">
                                         <i class="fa-regular fa-clock"></i>
-                                        <span>${log.createdAt}</span>
+                                        <span>
+                                            <fmt:formatDate value="${log.createdAt}"
+                                                            pattern="dd/MM/yyyy HH:mm"
+                                                            timeZone="Asia/Ho_Chi_Minh"/>
+                                        </span>
                                     </div>
                                 </td>
                                 <td class="col-user">
@@ -471,6 +476,39 @@
                 url.searchParams.set('page', page);
                 window.location.href = url.toString();
             }
+
+            // Auto filter for report: thay đổi dropdown / date là lọc luôn
+            (function () {
+                const form = document.querySelector('.filter-card');
+                if (!form) return;
+
+                const actionSelect = document.getElementById('actionFilter');
+                const fromInput = document.getElementById('fromDate');
+                const toInput = document.getElementById('toDate');
+                const keywordInput = document.getElementById('keyword');
+
+                function submitFilter() {
+                    form.submit();
+                }
+
+                if (actionSelect) {
+                    actionSelect.addEventListener('change', submitFilter);
+                }
+                if (fromInput) {
+                    fromInput.addEventListener('change', submitFilter);
+                }
+                if (toInput) {
+                    toInput.addEventListener('change', submitFilter);
+                }
+                if (keywordInput) {
+                    keywordInput.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            submitFilter();
+                        }
+                    });
+                }
+            })();
         </script>
     </body>
     </html>
