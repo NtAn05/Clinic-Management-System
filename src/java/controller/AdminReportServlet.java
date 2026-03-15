@@ -36,10 +36,12 @@ public class AdminReportServlet extends HttpServlet {
         int[] apptStats = dao.getAppointmentStatusStats();
         int[] labStats = dao.getLabRequestStatusStats();
         BigDecimal[] paymentSummary = dao.getPaymentSummary();
+        java.util.List<model.DoctorProductivity> doctorProductivity = dao.getDoctorProductivity();
 
         request.setAttribute("apptStats", apptStats);
         request.setAttribute("labStats", labStats);
         request.setAttribute("paymentSummary", paymentSummary);
+        request.setAttribute("doctorProductivity", doctorProductivity);
 
         // scalar values tiện dùng trong EL/JS
         request.setAttribute("apptTotal", apptStats[0]);

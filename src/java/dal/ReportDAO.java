@@ -82,5 +82,33 @@ public class ReportDAO extends DBContext {
         }
         return summary;
     }
+
+    public java.util.List<model.DoctorProductivity> getDoctorProductivity() {
+        java.util.List<model.DoctorProductivity> list = new java.util.ArrayList<>();
+        String sql = """
+            SELECT d.doctor_id, u.full_name, 
+                   COUNT(*) AS completed_count
+            FROM appointments a
+            JOIN doctors d ON a.doctor_id = d.doctor_id
+            JOIN users u ON d.user_id = u.user_id
+            WHERE a.status = 'completed'
+            GROUP BY d.doctor_id, u.full_name
+            ORDER BY completed_count DESC
+            LIMIT 10
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            ResultSet rs = st.executeQuery();
+            while (rs.next()) {
+                model.DoctorProductivity dp = new model.DoctorProductivity();
+                dp.setDoctorId(rs.getInt("doctor_id"));
+                dp.setDoctorName(rs.getString("full_name"));
+                dp.setTotalCompletedAppointments(rs.getInt("completed_count"));
+                list.add(dp);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
 

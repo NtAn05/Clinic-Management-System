@@ -37,6 +37,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 18px;
+        flex-wrap: nowrap;
     }
 
     .site-header .brand a {
@@ -67,8 +68,10 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: flex-end;
+        flex: 1;
+        min-width: 0;
     }
 
     .site-header .header-link {
@@ -198,12 +201,11 @@
     @media (max-width: 900px) {
         .site-header .header-inner {
             padding: 10px 14px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .site-header .header-menu {
-            width: 100%;
-            justify-content: flex-start;
+            justify-content: flex-end;
         }
     }
 </style>
@@ -231,8 +233,8 @@
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-system-logs">System logs</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-reports">Reports</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/admin-system-logs">Nhật ký hệ thống</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/admin-reports">Báo cáo phòng khám</a>
                 </c:if>
 
                 <c:if test="${roleName == 'doctor'}">

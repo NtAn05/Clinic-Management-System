@@ -134,10 +134,10 @@
                 <div>
                     <div class="page-title">
                         <i class="fa-solid fa-chart-line"></i>
-                        Báo cáo tổng quan hệ thống
+                        Báo cáo hoạt động phòng khám
                     </div>
                     <div class="page-subtitle">
-                        Tổng hợp nhanh số lượng lịch hẹn, phiếu xét nghiệm và doanh thu thanh toán.
+                        Tổng hợp nhanh lịch hẹn, phiếu xét nghiệm, doanh thu và năng suất làm việc của bác sĩ.
                     </div>
                 </div>
                 <a href="${pageContext.request.contextPath}/admin-users" class="back-link">
@@ -216,59 +216,31 @@
 
                 <div class="card">
                     <div class="card-title">
-                        <i class="fa-solid fa-layer-group"></i>
-                        Bảng tóm tắt nhanh
+                        <i class="fa-solid fa-user-md"></i>
+                        Năng suất làm việc của bác sĩ
                     </div>
                     <div class="table-wrapper">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Nhóm</th>
-                                    <th>Chỉ số</th>
-                                    <th>Giá trị</th>
+                                    <th>Bác sĩ</th>
+                                    <th>Số ca khám hoàn thành</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>Lịch hẹn</td>
-                                    <td>Tổng số lịch</td>
-                                    <td><c:out value="${apptStats[0]}" /></td>
-                                </tr>
-                                <tr>
-                                    <td>Lịch hẹn</td>
-                                    <td>Hoàn thành</td>
-                                    <td><c:out value="${apptCompleted}" /></td>
-                                </tr>
-                                <tr>
-                                    <td>Lịch hẹn</td>
-                                    <td>Đã hủy</td>
-                                    <td><c:out value="${apptCancelled}" /></td>
-                                </tr>
-                                <tr>
-                                    <td>Xét nghiệm</td>
-                                    <td>Tổng số phiếu</td>
-                                    <td><c:out value="${labStats[0]}" /></td>
-                                </tr>
-                                <tr>
-                                    <td>Xét nghiệm</td>
-                                    <td>Hoàn thành</td>
-                                    <td><c:out value="${labStats[3]}" /></td>
-                                </tr>
-                                <tr>
-                                    <td>Thanh toán</td>
-                                    <td>Tổng tạo</td>
-                                    <td><c:out value="${paymentSummary[0]}" /> đ</td>
-                                </tr>
-                                <tr>
-                                    <td>Thanh toán</td>
-                                    <td>Đã thanh toán</td>
-                                    <td><c:out value="${paymentSummary[1]}" /> đ</td>
-                                </tr>
-                                <tr>
-                                    <td>Thanh toán</td>
-                                    <td>Đang chờ</td>
-                                    <td><c:out value="${paymentSummary[2]}" /> đ</td>
-                                </tr>
+                                <c:if test="${empty doctorProductivity}">
+                                    <tr>
+                                        <td colspan="2" style="text-align:center; color:#6b7280; padding:16px;">
+                                            Chưa có dữ liệu thống kê.
+                                        </td>
+                                    </tr>
+                                </c:if>
+                                <c:forEach var="dp" items="${doctorProductivity}">
+                                    <tr>
+                                        <td>${dp.doctorName}</td>
+                                        <td>${dp.totalCompletedAppointments}</td>
+                                    </tr>
+                                </c:forEach>
                             </tbody>
                         </table>
                     </div>
