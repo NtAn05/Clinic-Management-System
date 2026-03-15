@@ -413,6 +413,7 @@
 
                 <c:if test="${roleName == 'doctor'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/doctorDashboard">Quản lý khám bệnh</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/doctor/schedule-request">Lịch làm việc & đổi lịch</a>
                 </c:if>
 
                 <c:if test="${roleName == 'technician'}">

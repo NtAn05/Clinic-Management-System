@@ -1,90 +1,156 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<c:set var="otpSent" value="${requestScope.otpSent or sessionScope.forgotPasswordEmail != null}" />
-<c:set var="verified" value="${requestScope.verified or sessionScope.forgotPasswordVerified == true}" />
-<c:set var="emailValue" value="${not empty requestScope.email ? requestScope.email : sessionScope.forgotPasswordEmail}" />
+<%
+    // Lấy các trạng thái từ Session
+    Boolean isVerified = (Boolean) session.getAttribute("forgotPasswordVerified");
+    if (isVerified == null) isVerified = false;
+
+    Long expiresAt = (Long) session.getAttribute("forgotOtpExpires");
+    long remainingSeconds = 0;
+    
+    // Nếu chưa xác thực và có thời gian thì tính đếm ngược
+    if (!isVerified && expiresAt != null) {
+        remainingSeconds = (expiresAt - System.currentTimeMillis()) / 1000;
+        if (remainingSeconds < 0) remainingSeconds = 0;
+    }
+%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <title>Quên mật khẩu - Phòng khám ABC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7fe; }
-        .wrap { min-height: calc(100vh - 160px); display:flex; align-items:center; justify-content:center; padding: 20px; }
-        .card { background:#fff; width:100%; max-width:430px; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.08); padding:24px; }
-        .card h2 { margin:0 0 8px; color:#0061ff; }
-        .muted { color:#666; font-size:14px; margin-bottom:16px; }
-        .group { margin-bottom:12px; }
-        label { display:block; font-weight:600; margin-bottom:6px; }
-        input { width:100%; padding:11px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; }
-        button { width:100%; padding:11px; border:none; background:#0061ff; color:#fff; border-radius:8px; font-weight:600; cursor:pointer; }
-        .sub-btn { background:#fff; color:#0061ff; border:1px solid #0061ff; margin-top:8px; }
-        .alert-error { background:#ffe6e6; color:#b91c1c; padding:10px; border-radius:8px; margin-bottom:12px; }
-        .alert-success { background:#dff7e6; color:#166534; padding:10px; border-radius:8px; margin-bottom:12px; }
-        .link { margin-top:12px; text-align:center; }
+        :root { --primary: #0061ff; --primary-hover: #0052d6; --bg: #f4f7fe; --text-main: #1f2937; --text-muted: #6b7280; --error-bg: #fee2e2; --error-text: #b91c1c; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; }
+        .main-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+        .forgot-card { background: #fff; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); width: 100%; max-width: 450px; box-sizing: border-box; }
+        .forgot-card h2 { color: var(--primary); margin-top: 0; margin-bottom: 10px; font-size: 26px; }
+        .forgot-card p.subtitle { color: var(--text-muted); font-size: 15px; margin-bottom: 20px; line-height: 1.5; }
+        .timer-display { font-weight: 600; color: #d97706; margin-bottom: 20px; font-size: 15px; }
+        .alert-error { background: var(--error-bg); color: var(--error-text); padding: 14px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; border: 1px solid #fca5a5; }
+        .alert-success { background: #dcfce7; color: #15803d; padding: 14px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; border: 1px solid #86efac; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 14px; color: var(--text-main); }
+        .form-control { width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.2s; }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.1); }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; border: none; margin-bottom: 10px;}
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: white; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-outline:hover:not(:disabled) { background: #f0f5ff; }
+        .btn-outline:disabled { border-color: #9ca3af; color: #9ca3af; cursor: not-allowed; background: #f9fafb; }
+        .back-link { color: #5b21b6; text-decoration: none; font-size: 15px; font-weight: 500; display: inline-block; margin-top: 15px;}
+        .back-link:hover { color: var(--primary); text-decoration: none; }
     </style>
 </head>
 <body>
-    <jsp:include page="/common/header.jsp" />
-    <div class="wrap">
-        <div class="card">
-            <h2>Quên mật khẩu</h2>
-            <p class="muted">Nhập Gmail để nhận OTP và đặt lại mật khẩu.</p>
 
-            <c:if test="${not empty error}"><div class="alert-error">${error}</div></c:if>
-            <c:if test="${not empty success}"><div class="alert-success">${success}</div></c:if>
+<jsp:include page="/common/header.jsp" />
 
-            <c:if test="${not otpSent}">
-                <form method="post" action="${pageContext.request.contextPath}/forgot-password">
-                    <input type="hidden" name="action" value="sendOtp">
-                    <div class="group">
-                        <label>Gmail</label>
-                        <input type="email" name="email" value="${emailValue}" required>
-                    </div>
-                    <button type="submit">Gửi OTP</button>
-                </form>
-            </c:if>
+<div class="main-content">
+    <div class="forgot-card">
+        <h2>Quên mật khẩu</h2>
+        <p class="subtitle">
+            <% if (isVerified) { %>
+                Vui lòng nhập mật khẩu mới cho tài khoản của bạn.
+            <% } else { %>
+                Nhập Gmail để nhận OTP và đặt lại mật khẩu.
+            <% } %>
+        </p>
 
-            <c:if test="${otpSent and not verified}">
-                <form method="post" action="${pageContext.request.contextPath}/forgot-password">
-                    <input type="hidden" name="action" value="verifyOtp">
-                    <div class="group">
-                        <label>Gmail</label>
-                        <input type="email" value="${emailValue}" disabled>
-                    </div>
-                    <div class="group">
-                        <label>OTP</label>
-                        <input type="text" name="otp" maxlength="6" required>
-                    </div>
-                    <button type="submit">Xác thực OTP</button>
-                </form>
-                <form method="post" action="${pageContext.request.contextPath}/forgot-password">
-                    <input type="hidden" name="action" value="sendOtp">
-                    <input type="hidden" name="email" value="${emailValue}">
-                    <button type="submit" class="sub-btn">Gửi lại OTP</button>
-                </form>
-            </c:if>
+        <% if (request.getAttribute("showVerifyForm") != null && !isVerified) { %>
+            <div class="timer-display" id="timerDisplay">Đang tải thời gian...</div>
+        <% } %>
 
-            <c:if test="${verified}">
-                <form method="post" action="${pageContext.request.contextPath}/forgot-password">
-                    <input type="hidden" name="action" value="resetPassword">
-                    <div class="group">
-                        <label>Mật khẩu mới</label>
-                        <input type="password" name="newPassword" minlength="6" required>
-                    </div>
-                    <div class="group">
-                        <label>Nhập lại mật khẩu</label>
-                        <input type="password" name="confirmPassword" minlength="6" required>
-                    </div>
-                    <button type="submit">Đổi mật khẩu</button>
-                </form>
-            </c:if>
+        <% if (request.getAttribute("error") != null) { %>
+            <div class="alert-error"><i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("error") %></div>
+        <% } %>
+        <% if (request.getAttribute("success") != null) { %>
+            <div class="alert-success"><i class="fas fa-check-circle"></i> <%= request.getAttribute("success") %></div>
+        <% } %>
 
-            <div class="link">
-                <a href="${pageContext.request.contextPath}/login">← Quay lại đăng nhập</a>
-            </div>
+        <%-- ĐIỀU HƯỚNG MÀN HÌNH THEO TRẠNG THÁI --%>
+
+        <% if (isVerified) { %>
+            <form action="${pageContext.request.contextPath}/forgot-password" method="POST">
+                <div class="form-group">
+                    <label>Mật khẩu mới</label>
+                    <input type="password" name="newPassword" class="form-control" placeholder="Từ 6 ký tự trở lên" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Xác nhận mật khẩu mới</label>
+                    <input type="password" name="confirmPassword" class="form-control" placeholder="Nhập lại mật khẩu mới" required minlength="6">
+                </div>
+                <button type="submit" name="action" value="resetPassword" class="btn btn-primary">Xác nhận & Đổi mật khẩu</button>
+            </form>
+
+        <% } else if (request.getAttribute("showVerifyForm") != null) { %>
+            <form action="${pageContext.request.contextPath}/forgot-password" method="POST">
+                <div class="form-group">
+                    <label>Gmail</label>
+                    <input type="email" class="form-control" value="${sessionScope.forgotPasswordEmail}" readonly style="background-color: #f9fafb; color: #6b7280;">
+                </div>
+                <div class="form-group">
+                    <label>Mã OTP (6 số)</label>
+                    <input type="text" name="otp" class="form-control" placeholder="Nhập mã OTP" required autocomplete="off" maxlength="6" autofocus>
+                </div>
+                
+                <button type="submit" name="action" value="verifyOtp" class="btn btn-primary">Xác thực OTP</button>
+            </form>
+
+            <form action="${pageContext.request.contextPath}/forgot-password" method="POST">
+                <input type="hidden" name="email" value="${sessionScope.forgotPasswordEmail}">
+                <button type="submit" name="action" value="resend" class="btn btn-outline" id="resendBtn" disabled>Gửi lại OTP</button>
+            </form>
+
+        <% } else { %>
+            <form action="${pageContext.request.contextPath}/forgot-password" method="POST">
+                <div class="form-group">
+                    <label>Gmail đã đăng ký</label>
+                    <input type="email" name="email" class="form-control" value="${email}" placeholder="example@gmail.com" required>
+                </div>
+                <button type="submit" name="action" value="sendOtp" class="btn btn-primary">Gửi OTP</button>
+            </form>
+        <% } %>
+
+        <div style="text-align: center;">
+            <a href="${pageContext.request.contextPath}/login" class="back-link">← Quay lại đăng nhập</a>
         </div>
     </div>
-    <jsp:include page="/common/footer.jsp" />
+</div>
+
+<jsp:include page="/common/footer.jsp" />
+
+<%-- SCRIPT TÍNH 60S GIẢM DẦN CHO TRẠNG THÁI 2 --%>
+<% if (request.getAttribute("showVerifyForm") != null && !isVerified) { %>
+<script>
+    let timeLeft = <%= remainingSeconds %>;
+    const timerDisplay = document.getElementById("timerDisplay");
+    const resendBtn = document.getElementById("resendBtn");
+
+    function updateUI() {
+        if (timeLeft <= 0) {
+            timerDisplay.innerText = "Mã OTP đã hết hạn!";
+            timerDisplay.style.color = "var(--error-text)";
+            resendBtn.innerText = "Gửi lại OTP";
+            resendBtn.disabled = false;
+        } else {
+            timerDisplay.innerText = "Mã OTP sẽ hết hạn sau: " + timeLeft + "s";
+            resendBtn.innerText = "Gửi lại OTP (" + timeLeft + "s)";
+            resendBtn.disabled = true;
+        }
+    }
+
+    updateUI();
+    if (timeLeft > 0) {
+        const countdownTimer = setInterval(function() {
+            timeLeft--;
+            updateUI();
+            if (timeLeft <= 0) clearInterval(countdownTimer);
+        }, 1000);
+    }
+</script>
+<% } %>
+
 </body>
 </html>

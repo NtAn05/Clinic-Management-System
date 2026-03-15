@@ -2,8 +2,8 @@ package controller;
 
 import dal.UserDAO;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.regex.Pattern;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,13 +11,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.EmailOtpService;
+import model.User;
 
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = {"/forgot-password"})
 public class ForgotPasswordServlet extends HttpServlet {
 
     private static final String FP_EMAIL = "forgotPasswordEmail";
     private static final String FP_OTP = "forgotPasswordOtp";
-    private static final String FP_EXPIRES = "forgotPasswordOtpExpires";
+    private static final String FP_EXPIRES = "forgotOtpExpires"; 
     private static final String FP_VERIFIED = "forgotPasswordVerified";
     private static final long OTP_TTL_MS = 60 * 1000;
 
@@ -31,11 +32,10 @@ public class ForgotPasswordServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-
         HttpSession session = request.getSession();
         String action = request.getParameter("action");
 
-        if ("sendOtp".equals(action)) {
+        if ("sendOtp".equals(action) || "resend".equals(action)) {
             handleSendOtp(request, session);
         } else if ("verifyOtp".equals(action)) {
             handleVerifyOtp(request, session);
@@ -48,122 +48,109 @@ public class ForgotPasswordServlet extends HttpServlet {
     }
 
     private void handleSendOtp(HttpServletRequest request, HttpSession session) {
-        String email = normalizeSpace(request.getParameter("email"));
+        String emailInput = request.getParameter("email");
+        if (emailInput != null) emailInput = emailInput.trim();
+        
+        final String email = emailInput; 
         request.setAttribute("email", email);
 
-        if (email == null || email.isBlank() || !Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", email)) {
-            request.setAttribute("error", "Vui lòng nhập Gmail hợp lệ.");
-            return;
-        }
-
         UserDAO dao = new UserDAO();
-        if (!dao.isEmailExist(email)) {
-            request.setAttribute("error", "Gmail chưa tồn tại trong hệ thống.");
+        if (email == null || email.isBlank() || !dao.isEmailExist(email)) {
+            request.setAttribute("error", "Gmail không tồn tại trong hệ thống.");
             return;
         }
 
-        String otpCode = generateOtp();
+        final String otpCode = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
         long expiresAt = System.currentTimeMillis() + OTP_TTL_MS;
 
-        try {
-            EmailOtpService.sendOtp(email, "", otpCode, OTP_TTL_MS / 1000);
-            session.setAttribute(FP_EMAIL, email);
-            session.setAttribute(FP_OTP, otpCode);
-            session.setAttribute(FP_EXPIRES, expiresAt);
-            session.setAttribute(FP_VERIFIED, Boolean.FALSE);
-            request.setAttribute("success", "Đã gửi OTP đặt lại mật khẩu. Mã có hiệu lực 60 giây.");
-            request.setAttribute("otpSent", true);
-        } catch (Exception ex) {
-            request.setAttribute("error", "Không thể gửi OTP. Vui lòng thử lại.");
-        }
+     
+        new Thread(() -> {
+            try {
+                
+                EmailOtpService.sendOtp(email, "Người dùng", otpCode, 60);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }).start();
+
+        session.setAttribute(FP_EMAIL, email);
+        session.setAttribute(FP_OTP, otpCode);
+        session.setAttribute(FP_EXPIRES, expiresAt);
+        session.setAttribute(FP_VERIFIED, false); 
+        
+        request.setAttribute("success", "Đã gửi OTP thành công. Vui lòng kiểm tra Gmail.");
+        request.setAttribute("showVerifyForm", true);
     }
 
     private void handleVerifyOtp(HttpServletRequest request, HttpSession session) {
-        String submittedOtp = normalizeSpace(request.getParameter("otp"));
-        String storedEmail = (String) session.getAttribute(FP_EMAIL);
+        String submittedOtp = request.getParameter("otp");
         String storedOtp = (String) session.getAttribute(FP_OTP);
         Long expiresAt = (Long) session.getAttribute(FP_EXPIRES);
 
-        request.setAttribute("email", storedEmail);
-        request.setAttribute("otpSent", storedEmail != null);
+        request.setAttribute("showVerifyForm", true);
 
-        if (storedEmail == null || storedOtp == null || expiresAt == null) {
-            request.setAttribute("error", "Phiên quên mật khẩu đã hết hạn. Vui lòng gửi lại OTP.");
+        if (storedOtp == null || expiresAt == null || System.currentTimeMillis() > expiresAt) {
+            request.setAttribute("error", "Mã OTP đã hết hạn. Vui lòng gửi lại.");
             return;
         }
-
-        if (System.currentTimeMillis() > expiresAt) {
-            request.setAttribute("error", "OTP đã hết hạn. Vui lòng gửi lại OTP mới.");
-            return;
-        }
-
         if (submittedOtp == null || !submittedOtp.equals(storedOtp)) {
-            request.setAttribute("error", "OTP không chính xác.");
+            request.setAttribute("error", "Mã OTP không chính xác.");
             return;
         }
 
-        session.setAttribute(FP_VERIFIED, Boolean.TRUE);
-        request.setAttribute("verified", true);
-        request.setAttribute("success", "Xác thực OTP thành công. Bạn có thể đặt mật khẩu mới.");
+        session.setAttribute(FP_VERIFIED, true);
+        session.removeAttribute(FP_EXPIRES); 
+        request.setAttribute("success", "Xác thực thành công. Hãy đặt mật khẩu mới.");
     }
 
-    private void handleResetPassword(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-            throws IOException {
-        String storedEmail = (String) session.getAttribute(FP_EMAIL);
-        Boolean verified = (Boolean) session.getAttribute(FP_VERIFIED);
-        String newPassword = request.getParameter("newPassword");
-        String confirmPassword = request.getParameter("confirmPassword");
+    private void handleResetPassword(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ServletException, IOException {
+    String storedEmail = (String) session.getAttribute("forgotPasswordEmail");
+    Boolean isVerified = (Boolean) session.getAttribute("forgotPasswordVerified");
+    String newPassword = request.getParameter("newPassword");
+    String confirmPassword = request.getParameter("confirmPassword");
 
-        if (storedEmail == null || verified == null || !verified) {
-            response.sendRedirect(request.getContextPath() + "/forgot-password");
+    
+    if (storedEmail == null || isVerified == null || !isVerified) {
+        response.sendRedirect(request.getContextPath() + "/forgot-password");
+        return;
+    }
+
+    if (!newPassword.equals(confirmPassword)) {
+        request.setAttribute("error", "Mật khẩu xác nhận không khớp.");
+        request.getRequestDispatcher("/pages/auth/forgot-password.jsp").forward(request, response);
+        return;
+    }
+
+    UserDAO dao = new UserDAO();
+    User user = dao.getUserByEmail(storedEmail);
+
+    if (user != null) {
+        
+        if (dao.checkOldPassword(user.getUserId(), newPassword)) {
+            request.setAttribute("error", "Mật khẩu mới không được giống mật khẩu cũ.");
+            request.getRequestDispatcher("/pages/auth/forgot-password.jsp").forward(request, response);
             return;
         }
 
-        if (newPassword == null || newPassword.length() < 6) {
-            request.setAttribute("error", "Mật khẩu mới phải có ít nhất 6 ký tự.");
-            request.setAttribute("verified", true);
-            request.setAttribute("otpSent", true);
-            request.setAttribute("email", storedEmail);
-            return;
+        
+        try {
+            dao.updatePassword(user.getUserId(), newPassword);
+            
+            
+            session.invalidate();
+
+            
+            String encodedEmail = java.net.URLEncoder.encode(storedEmail, "UTF-8");
+            response.sendRedirect(request.getContextPath() + "/login?reset=true&email=" + encodedEmail);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Lỗi CSDL: " + e.getMessage());
+            request.getRequestDispatcher("/pages/auth/forgot-password.jsp").forward(request, response);
         }
-
-        if (!newPassword.equals(confirmPassword)) {
-            request.setAttribute("error", "Mật khẩu xác nhận không khớp.");
-            request.setAttribute("verified", true);
-            request.setAttribute("otpSent", true);
-            request.setAttribute("email", storedEmail);
-            return;
-        }
-
-        UserDAO dao = new UserDAO();
-        boolean updated = dao.updatePasswordByEmail(storedEmail, newPassword);
-        if (updated) {
-            clearSession(session);
-            response.sendRedirect(request.getContextPath() + "/login?reset=true");
-            return;
-        }
-
-        request.setAttribute("error", "Không thể đặt lại mật khẩu. Vui lòng thử lại.");
-        request.setAttribute("verified", true);
-        request.setAttribute("otpSent", true);
-        request.setAttribute("email", storedEmail);
+    } else {
+        request.setAttribute("error", "Không tìm thấy người dùng.");
+        request.getRequestDispatcher("/pages/auth/forgot-password.jsp").forward(request, response);
     }
-
-    private String normalizeSpace(String value) {
-        if (value == null) {
-            return null;
-        }
-        return value.trim().replaceAll("\\s+", " ");
-    }
-
-    private String generateOtp() {
-        return String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
-    }
-
-    private void clearSession(HttpSession session) {
-        session.removeAttribute(FP_EMAIL);
-        session.removeAttribute(FP_OTP);
-        session.removeAttribute(FP_EXPIRES);
-        session.removeAttribute(FP_VERIFIED);
-    }
+}
 }
