@@ -2,6 +2,7 @@ package controller;
 
 import dal.DoctorDAO;
 import dal.LabRequestDAO;
+import dal.NotificationDAO;
 import model.LabRequest;
 
 import jakarta.servlet.ServletException;
@@ -153,6 +154,17 @@ public class LabQueueServlet extends HttpServlet {
             boolean success = labRequestDAO.updateLabRequestStatus(requestId, newStatus);
             
             if (success) {
+                LabRequest requestInfo = labRequestDAO.getLabRequestById(requestId);
+                    if (requestInfo != null) {
+                        NotificationDAO notificationDAO = new NotificationDAO();
+                        notificationDAO.createNotificationForAppointment(
+                                requestInfo.getAppointmentId(),
+                                "Đã có kết quả xét nghiệm",
+                                "Kết quả xét nghiệm của bạn đã sẵn sàng. Vui lòng truy cập hồ sơ khám để xem chi tiết.",
+                                "lab_result_ready",
+                                "lab_request:" + requestId + ":result_ready"
+                        );
+                    }
                 response.getWriter().write("{\"success\": true}");
             } else {
                 response.getWriter().write("{\"success\": false, \"message\": \"Cập nhật thất bại\"}");

@@ -17,6 +17,20 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+         HttpSession session = request.getSession(false);
+        if (session != null) {
+            Object prefillEmail = session.getAttribute("prefillLoginEmail");
+            Object prefillRole = session.getAttribute("prefillLoginRole");
+            if (prefillEmail != null) {
+                request.setAttribute("email", prefillEmail.toString());
+                session.removeAttribute("prefillLoginEmail");
+            }
+            if (prefillRole != null) {
+                request.setAttribute("role", prefillRole.toString());
+                session.removeAttribute("prefillLoginRole");
+            }
+        }
+
 
         request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
     }

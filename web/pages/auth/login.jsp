@@ -222,7 +222,7 @@
 
                     <div class="options">
                         <label><input type="checkbox"> Ghi nhớ đăng nhập</label>
-                        <a href="#">Quên mật khẩu?</a>
+                       <a href="${pageContext.request.contextPath}/forgot-password" class="forgot-link">Quên mật khẩu?</a>
                     </div>
 
                     <button type="submit" class="btn-submit">Đăng nhập</button>

@@ -5,6 +5,7 @@
 package controller.appointments;
 
 import dal.AppointmentDAO;
+import dal.NotificationDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -67,9 +68,20 @@ public class AppointmentPaymentServlet extends HttpServlet {
             Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
             if ( appointment != null) {
                 AppointmentDAO dao = new AppointmentDAO();
-
+ Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
                 dao.addAppointment(appointment);
+                 if (pendingPatient != null && pendingPatient.getUserId() != null) {
+                    NotificationDAO notificationDAO = new NotificationDAO();
+                    notificationDAO.createNotification(
+                            pendingPatient.getUserId(),
+                            "Đặt lịch thành công",
+                            "Bạn đã đặt lịch khám thành công. Vui lòng đến đúng giờ hẹn để được phục vụ tốt nhất.",
+                            "appointment_booked",
+                            "appointment:booking_success"
+                    );
+                }
                 session.removeAttribute("pendingAppointment");
+                session.removeAttribute("pendingPatient");
             }
 
             request.setAttribute("message", "Đặt lịch và thanh toán thành công!");

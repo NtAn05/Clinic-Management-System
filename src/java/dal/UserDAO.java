@@ -37,64 +37,20 @@ public class UserDAO extends DBContext {
         return null;
     }
 
-   public void registerPatient(
-            String fullName,
-            String phone,
-            String email,
-            String password,
-            java.sql.Date dob,
-            String address,
-            String gender
-    ) throws SQLException {
-
+   public void registerUser(String fullName, String phone, String email, String password) throws SQLException {
         String sqlUser = """
-        INSERT INTO users (full_name, phone, email, password_hash, address, role, status)
-        VALUES (?, ?, ?, ?, ?, 'patient', 'active')
-    """;
+            INSERT INTO users (full_name, phone, email, password_hash, role, status)
+            VALUES (?, ?, ?, ?, 'patient', 'active')
+        """;
 
-        String sqlPatient = """
-        INSERT INTO patients (user_id, full_name, phone, dob, email, gender)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """;
-
-        connection.setAutoCommit(false);
-
-        try (
-                PreparedStatement stUser
-                = connection.prepareStatement(sqlUser, PreparedStatement.RETURN_GENERATED_KEYS)) {
-           
+        try (PreparedStatement stUser = connection.prepareStatement(sqlUser)) {
             stUser.setString(1, fullName);
             stUser.setString(2, phone);
             stUser.setString(3, email);
-            stUser.setString(4, password); 
-            stUser.setString(5, address);
+            stUser.setString(4, password);
             stUser.executeUpdate();
-
-            ResultSet rs = stUser.getGeneratedKeys();
-            if (!rs.next()) {
-                throw new SQLException("Không lấy được user_id");
-            }
-
-            int userId = rs.getInt(1);
-
-            
-            try (PreparedStatement stPatient = connection.prepareStatement(sqlPatient)) {
-                stPatient.setInt(1, userId);
-                stPatient.setString(2, fullName);
-                stPatient.setString(3, phone);
-                stPatient.setDate(4, dob);
-                stPatient.setString(5, email);
-                stPatient.setString(6, gender); // male/female/other
-
-                stPatient.executeUpdate();
-            }
-
-            connection.commit();
         } catch (SQLException e) {
-            connection.rollback();
             throw e;
-        } finally {
-            connection.setAutoCommit(true);
         }
     }
 
@@ -119,6 +75,20 @@ public class UserDAO extends DBContext {
         }
         return false;
     }
+
+
+    public boolean updatePasswordByEmail(String email, String newPassword) {
+        String sql = "UPDATE users SET password_hash = ? WHERE email = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, newPassword);
+            st.setString(2, email);
+            return st.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public List<User> getUsersByRole(Role role) {
         String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE role = ? ORDER BY full_name";
@@ -462,31 +432,24 @@ public class UserDAO extends DBContext {
         }
     }
 
-    public void updateUser(int id, String name, String phone, String email, String address, String image) {
-
-    String sql = """
-        UPDATE users
-        SET full_name = ?,
-            phone = ?,
-            email = ?,
-            address = ?,
-            image_url = ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ?
-    """;
-
-    try {
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setString(1, name);
-        ps.setString(2, phone);
-        ps.setString(3, email);
-        ps.setString(4, address);
-        ps.setString(5, image);
-        ps.setInt(6, id);
-        ps.executeUpdate();
-    } catch (Exception e) {
-        e.printStackTrace();
+   public void updateUser(int id, String name, String phone, String email) {
+        String sql = """
+            UPDATE users
+            SET full_name = ?,
+                phone = ?,
+                email = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+        """;
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, name);
+            ps.setString(2, phone);
+            ps.setString(3, email);
+            ps.setInt(4, id);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-}
-
 }
