@@ -81,7 +81,18 @@
 
                                 </form>
                             </c:if>
+                            <c:if test="${a.status == 'completed'}">
+                                <form action="reportdoctorservlet" >
+                                    <input type="hidden" name="id" value="${a.doctorId}">
 
+                                    <button class="cancel-btn" >
+                                            
+                                            
+                                        Đánh giá
+                                    </button>
+
+                                </form>
+                            </c:if>
 
 
                         </div>

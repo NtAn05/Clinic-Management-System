@@ -37,7 +37,7 @@ public class UserDAO extends DBContext {
         return null;
     }
 
-   public void registerUser(String fullName, String phone, String email, String password) throws SQLException {
+    public void registerUser(String fullName, String phone, String email, String password) throws SQLException {
         String sqlUser = """
             INSERT INTO users (full_name, phone, email, password_hash, role, status)
             VALUES (?, ?, ?, ?, 'patient', 'active')
@@ -76,7 +76,6 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-
     public boolean updatePasswordByEmail(String email, String newPassword) {
         String sql = "UPDATE users SET password_hash = ? WHERE email = ?";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -88,7 +87,6 @@ public class UserDAO extends DBContext {
         }
         return false;
     }
-
 
     public List<User> getUsersByRole(Role role) {
         String sql = "SELECT user_id, full_name, phone, email, role, status FROM users WHERE role = ? ORDER BY full_name";
@@ -221,10 +219,6 @@ public class UserDAO extends DBContext {
         }
         return null;
     }
-
-
-    
-
 
     public List<User> getPatientList() {
         String sql = """
@@ -370,7 +364,7 @@ public class UserDAO extends DBContext {
     public User getUserById1(int userId) {
 
         String sql = "SELECT user_id, full_name, phone, email, password_hash, "
-                + "role, status, address, image_url "
+                + "role, status, image_url "
                 + "FROM users WHERE user_id = ?";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -392,7 +386,6 @@ public class UserDAO extends DBContext {
                     u.setRole(Role.valueOf(rs.getString("role").trim()));
                     u.setStatus(Status.valueOf(rs.getString("status").trim()));
 
-                    u.setAddress(rs.getString("address"));
                     u.setImageUrl(rs.getString("image_url"));
 
                     return u;
@@ -432,24 +425,31 @@ public class UserDAO extends DBContext {
         }
     }
 
-   public void updateUser(int id, String name, String phone, String email) {
+    public void updateUser(int id, String name, String phone, String email, String image) {
+
         String sql = """
-            UPDATE users
-            SET full_name = ?,
-                phone = ?,
-                email = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ?
-        """;
+        UPDATE users
+        SET full_name = ?,
+            phone = ?,
+            email = ?,
+           
+            image_url = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+    """;
+
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setString(1, name);
             ps.setString(2, phone);
             ps.setString(3, email);
-            ps.setInt(4, id);
+
+            ps.setString(4, image);
+            ps.setInt(5, id);
             ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }

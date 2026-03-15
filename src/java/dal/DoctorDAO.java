@@ -1394,4 +1394,48 @@ public class DoctorDAO extends DBContext {
 
         return list;
     }
+    public Doctor getDoctorById(int doctorID) {
+    
+    String sql = """
+        SELECT d.*, 
+               u.full_name,
+               u.phone,
+               u.email
+        FROM doctors d
+        JOIN users u ON d.user_id = u.id
+        WHERE d.doctor_id = ?
+        """;
+
+    try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+        st.setInt(1, doctorID);
+
+        ResultSet rs = st.executeQuery();
+
+        if (rs.next()) {
+
+            Doctor d = new Doctor();
+
+            d.setDoctorId(rs.getInt("doctor_id"));
+            d.setUserId(rs.getInt("user_id"));
+            d.setSpecialization(rs.getString("specialization"));
+            d.setImage(rs.getString("image"));
+            d.setQualification(rs.getString("qualification"));
+            d.setClinic_address(rs.getString("clinic_address"));
+            d.setExperience_years(rs.getInt("experience_years"));
+            d.setRating(rs.getDouble("rating"));
+            d.setPrice(rs.getDouble("price"));
+
+            d.setFullName(rs.getString("full_name"));
+            d.setPhone(rs.getString("phone"));
+            d.setEmail(rs.getString("email"));
+
+            return d;
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return null;}
 }

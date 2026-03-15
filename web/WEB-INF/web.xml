@@ -76,6 +76,10 @@
         <servlet-name>ForgotPasswordServlet</servlet-name>
         <servlet-class>controller.ForgotPasswordServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ReportDoctorServlet</servlet-name>
+        <servlet-class>controller.historyOfAppointment.ReportDoctorServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <url-pattern>/doctorDashboard</url-pattern>
@@ -183,5 +187,9 @@
     <servlet-mapping>
         <servlet-name>ForgotPasswordServlet</servlet-name>
         <url-pattern>/forgot-password</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ReportDoctorServlet</servlet-name>
+        <url-pattern>/reportdoctorservlet</url-pattern>
     </servlet-mapping>
 </web-app>

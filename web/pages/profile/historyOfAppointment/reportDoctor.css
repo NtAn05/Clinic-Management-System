@@ -1,0 +1,132 @@
+/* PAGE LAYOUT */
+.page{
+    width: 1200px;
+    margin: 40px auto;
+}
+
+.content{
+    display: flex;
+    gap: 30px;
+}
+
+/* LEFT SIDE */
+.main{
+    flex: 2;
+}
+
+/* CARD BOX */
+.card-box{
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.card-box h3{
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* QUESTION */
+.question{
+    margin-bottom: 20px;
+}
+
+.question p{
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+/* SELECT */
+.question select{
+    width: 200px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* ACTION BUTTONS */
+.actions{
+    margin-top: 25px;
+    display: flex;
+    gap: 10px;
+}
+
+/* BUTTON PRIMARY */
+.btn-primary{
+    padding: 10px 20px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-primary:hover{
+    background: #3c9d40;
+}
+
+/* BUTTON OUTLINE */
+.btn-outline{
+    padding: 10px 20px;
+    border: 1px solid #888;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-outline:hover{
+    background: #f3f3f3;
+}
+
+/* RIGHT CARD */
+.card{
+    flex: 1;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+}
+
+/* DOCTOR IMAGE */
+.card img{
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+/* DOCTOR NAME */
+.card h3{
+    margin: 10px 0;
+    font-size: 20px;
+}
+
+/* TEXT */
+.degree{
+    font-weight: 500;
+    color: #444;
+}
+
+.desc{
+    font-size: 14px;
+    color: #777;
+}
+
+/* INFO */
+.info{
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    font-size: 14px;
+}
+
+/* PRICE */
+.price{
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff5722;
+}

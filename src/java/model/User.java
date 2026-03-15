@@ -11,7 +11,6 @@ public class User {
     private Role role; 
     private Status status; 
   
-    private String address;
     private String imageUrl;
     public User() {
     }
@@ -35,18 +34,10 @@ public class User {
         this.passwordHash = passwordHash;
         this.role = role;
         this.status = status;
-        this.address = address;
         this.imageUrl = imageUrl;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
+    
     public String getImageUrl() {
         return imageUrl;
     }
