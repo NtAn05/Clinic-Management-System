@@ -76,7 +76,7 @@
                             <td class="patient-action">
 
                                 <a class="btn-edit"
-                                   href="${pageContext.request.contextPath}/createpatientsservlet?action=edit&id=${p.patientId}">
+                                   href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=edit&id=${p.patientId}">
                                     Sửa
                                 </a>
 
