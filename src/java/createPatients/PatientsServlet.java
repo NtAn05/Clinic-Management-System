@@ -95,12 +95,12 @@ public class PatientsServlet extends HttpServlet {
                     .forward(request, response);
             return;
         }
+        request.setAttribute("DoctorID", DoctorId);
 
         if (DoctorID != null) {
             request.setAttribute("DoctorID", DoctorID);
         }
 
-        request.setAttribute("DoctorID", DoctorId);
         List<Patient> list = dao.getPatientsByUserId(account.getUserId());
 
         request.setAttribute("patientList", list);
