@@ -1220,12 +1220,16 @@
                 }
             }
 
-            // Filter nhân viên
-            function filterStaff() {
+            // Search nhân viên
+            function searchStaff() {
+                const keyword = document.getElementById('staffSearch').value.trim();
                 const role = document.getElementById('staffRoleFilter').value;
                 const status = document.getElementById('staffStatusFilter').value;
                 
-                let url = 'admin-users?action=filter&tab=staff&staffPage=1';
+                let url = 'admin-users?action=search&tab=staff&staffPage=1';
+                if (keyword) {
+                    url += '&keyword=' + encodeURIComponent(keyword);
+                }
                 if (role !== 'all') {
                     url += '&role=' + role;
                 }
@@ -1236,37 +1240,17 @@
                 window.location.href = url;
             }
 
-            // Filter bệnh nhân
-            function filterPatient() {
-                const status = document.getElementById('patientFilter').value;
-                
-                let url = 'admin-users?action=filter&tab=patient&patientPage=1';
-                if (status !== 'all') {
-                    url += '&status=' + status;
-                }
-                
-                window.location.href = url;
-            }
-
-            // Search nhân viên
-            function searchStaff() {
-                const keyword = document.getElementById('staffSearch').value.trim();
-                
-                let url = 'admin-users?action=search&tab=staff&staffPage=1';
-                if (keyword) {
-                    url += '&keyword=' + encodeURIComponent(keyword);
-                }
-                
-                window.location.href = url;
-            }
-
             // Search bệnh nhân
             function searchPatient() {
                 const keyword = document.getElementById('patientSearch').value.trim();
+                const status = document.getElementById('patientFilter').value;
                 
-                let url = 'admin-users?action=search&tab=staff&staffPage=1';
+                let url = 'admin-users?action=search&tab=patient&patientPage=1';
                 if (keyword) {
                     url += '&keyword=' + encodeURIComponent(keyword);
+                }
+                if (status !== 'all') {
+                    url += '&status=' + status;
                 }
                 
                 window.location.href = url;
@@ -1297,11 +1281,6 @@
                     }, 5000);
                 });
 
-                // Thêm event listeners cho filter dropdowns
-                document.getElementById('staffRoleFilter').addEventListener('change', filterStaff);
-                document.getElementById('staffStatusFilter').addEventListener('change', filterStaff);
-                document.getElementById('patientFilter').addEventListener('change', filterPatient);
-                
                 // Thêm event listeners cho search inputs
                 document.getElementById('staffSearch').addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {

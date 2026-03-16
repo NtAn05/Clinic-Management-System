@@ -69,9 +69,7 @@ public class PatientsServlet extends HttpServlet {
             response.sendRedirect("login.jsp");
             return;
         }
-
         User account = (User) session.getAttribute("account");
-
         if (account == null) {
             response.sendRedirect("login.jsp");
             return;
@@ -80,6 +78,7 @@ public class PatientsServlet extends HttpServlet {
         String action = request.getParameter("action");
         String patientID = request.getParameter("id");
         String DoctorID = request.getParameter("btnDoctorID");
+        String DoctorId = request.getParameter("DoctorID");
 
         PatientPortalDAO dao = new PatientPortalDAO();
 
@@ -90,11 +89,13 @@ public class PatientsServlet extends HttpServlet {
             Patient p = dao.getPatientsByPatientID(patientId);
 
             request.setAttribute("patient", p);
+            request.setAttribute("DoctorID", DoctorId);
 
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
             return;
         }
+        request.setAttribute("DoctorID", DoctorId);
 
         if (DoctorID != null) {
             request.setAttribute("DoctorID", DoctorID);
@@ -122,9 +123,10 @@ public class PatientsServlet extends HttpServlet {
 
         String userID = request.getParameter("userID");
         int useId = Integer.parseInt(userID);
-        
-        String sdt = request.getParameter("sdt");
+
         String patientID = request.getParameter("patientID");
+        String DoctorID = request.getParameter("DoctorID");
+        String sdt = request.getParameter("sdt");
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String gender = request.getParameter("gender");
@@ -170,12 +172,16 @@ public class PatientsServlet extends HttpServlet {
         PatientPortalDAO dao = new PatientPortalDAO();
 
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-
+        request.setAttribute("errorPhone", errorPhone);
+        request.setAttribute("errorEmail", errorEmail);
+        request.setAttribute("errorName", errorName);
+        request.setAttribute("errorDOB", errorDOB);
+        request.setAttribute("DoctorID", DoctorID);
         if (valid) {
 
             if ("edit".equals(submit)) {
-                
-                dao.editPatient(patientID ,patient);
+
+                dao.editPatient(patientID, patient);
 
             } else {
 
@@ -183,15 +189,10 @@ public class PatientsServlet extends HttpServlet {
 
             }
 
-            response.sendRedirect("createpatientsservlet");
+            response.sendRedirect("createpatientsservlet?DoctorID=" + DoctorID);
             return;
 
         } else {
-
-            request.setAttribute("errorPhone", errorPhone);
-            request.setAttribute("errorEmail", errorEmail);
-            request.setAttribute("errorName", errorName);
-            request.setAttribute("errorDOB", errorDOB);
 
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);

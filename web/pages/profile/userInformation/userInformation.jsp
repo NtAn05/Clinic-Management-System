@@ -62,7 +62,6 @@
                 <div><label>Email</label><p>${user.email}</p></div>
                 <div><label>Vai trò</label><p>${user.role}</p></div>
                 <div><label>Trạng thái</label><p>${user.status}</p></div>
-                <div><label>Địa chỉ</label><p>${user.address}</p></div>
             </div>
 
         </div>
@@ -93,8 +92,8 @@
                     </div>
 
                     <div>
-                        <label>Địa chỉ</label>
-                        <input type="text" name="txtAddress" value="${user.address}">
+                        
+                        <input type="hidden" name="txtAddress" value="">
                     </div>
 
                     <div>

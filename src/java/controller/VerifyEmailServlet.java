@@ -74,21 +74,20 @@ public class VerifyEmailServlet extends HttpServlet {
             return;
         }
 
-        try {
+      try {
             UserDAO dao = new UserDAO();
-            dao.registerPatient(
+            dao.registerUser(
                     pendingData.get("fullName"),
                     pendingData.get("phone"),
                     pendingData.get("email"),
-                    pendingData.get("password"),
-                    Date.valueOf(pendingData.get("dob")),
-                    pendingData.get("address"),
-                    pendingData.get("gender")
+                    pendingData.get("password")
+                    
             );
+            session.setAttribute("prefillLoginEmail", pendingData.get("email"));
+            session.setAttribute("prefillLoginRole", "patient");
             RegisterServlet.clearPendingRegister(session);
-            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp?registered=true");
+            response.sendRedirect(request.getContextPath() + "/login?registered=true");
 
-     
         } catch (Exception e) {
             e.printStackTrace(); 
             request.setAttribute("error", "Lỗi CSDL: " + e.getMessage()); 

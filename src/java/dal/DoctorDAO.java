@@ -14,6 +14,7 @@ import model.MedicalRecord;
 import model.Medicine;
 import model.PrescriptionItem;
 import model.ScheduleChangeRequest;
+import model.ScheduleSwapShiftOption;
 
 public class DoctorDAO extends DBContext {
 
@@ -708,6 +709,43 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
+    
+    public List<ScheduleSwapShiftOption> getSwapShiftOptionsByDate(int requesterDoctorId, int dayOfWeek) {
+        List<ScheduleSwapShiftOption> list = new ArrayList<>();
+        String sql = """
+            SELECT s.shift_id, s.doctor_id, s.day_of_week, s.start_time, s.end_time,
+                   u.full_name AS doctor_name
+            FROM doctor_shifts s
+            JOIN doctors d ON d.doctor_id = s.doctor_id
+            JOIN users u ON u.user_id = d.user_id
+            WHERE s.day_of_week = ?
+              AND s.doctor_id <> ?
+              AND u.role = 'doctor'
+              AND u.status = 'active'
+            ORDER BY u.full_name, s.start_time
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, dayOfWeek);
+            st.setInt(2, requesterDoctorId);
+            ResultSet rs = st.executeQuery();
+
+            while (rs.next()) {
+                ScheduleSwapShiftOption option = new ScheduleSwapShiftOption();
+                option.setShiftId(rs.getInt("shift_id"));
+                option.setDoctorId(rs.getInt("doctor_id"));
+                option.setDoctorName(rs.getString("doctor_name"));
+                option.setDayOfWeek(rs.getInt("day_of_week"));
+                option.setStartTime(rs.getTime("start_time").toLocalTime());
+                option.setEndTime(rs.getTime("end_time").toLocalTime());
+                list.add(option);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
     public List<ScheduleChangeRequest> getScheduleChangeRequestsByDoctor(int doctorId, int limit) {
         List<ScheduleChangeRequest> list = new ArrayList<>();
         String sql = """
@@ -1773,4 +1811,48 @@ public class DoctorDAO extends DBContext {
 
         return list;
     }
+    public Doctor getDoctorById(int doctorID) {
+    
+    String sql = """
+        SELECT d.*, 
+               u.full_name,
+               u.phone,
+               u.email
+        FROM doctors d
+        JOIN users u ON d.user_id = u.id
+        WHERE d.doctor_id = ?
+        """;
+
+    try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+        st.setInt(1, doctorID);
+
+        ResultSet rs = st.executeQuery();
+
+        if (rs.next()) {
+
+            Doctor d = new Doctor();
+
+            d.setDoctorId(rs.getInt("doctor_id"));
+            d.setUserId(rs.getInt("user_id"));
+            d.setSpecialization(rs.getString("specialization"));
+            d.setImage(rs.getString("image"));
+            d.setQualification(rs.getString("qualification"));
+            d.setClinic_address(rs.getString("clinic_address"));
+            d.setExperience_years(rs.getInt("experience_years"));
+            d.setRating(rs.getDouble("rating"));
+            d.setPrice(rs.getDouble("price"));
+
+            d.setFullName(rs.getString("full_name"));
+            d.setPhone(rs.getString("phone"));
+            d.setEmail(rs.getString("email"));
+
+            return d;
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return null;}
 }

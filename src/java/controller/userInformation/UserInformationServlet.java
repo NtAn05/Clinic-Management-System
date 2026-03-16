@@ -117,10 +117,10 @@ public class UserInformationServlet extends HttpServlet {
             String phone = request.getParameter("txtPhone");
             String email = request.getParameter("txtEmail");
 
-            String address = request.getParameter("txtAddress");
+            
             String txtImage = request.getParameter("txtImage");
 
-            users.updateUser(userIDD, name, phone, email, address, txtImage);
+            users.updateUser(userIDD, name, phone, email, txtImage);
             User updatedUser = users.getUserById1(userIDD);
             session.setAttribute("account", updatedUser);
 response.sendRedirect(request.getContextPath() + "/userinformationservlet");        }

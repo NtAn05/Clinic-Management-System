@@ -16,15 +16,15 @@ body{
 /* ================= PAGE ================= */
 
 .page{
-    width:95%;
-    max-width:1100px;
+    width:92%;
+    max-width:1200px;
     margin:auto;
-    margin-bottom:50px;
+    margin-bottom:60px;
 }
 
 .page h3{
-    font-size:26px;
-    margin-bottom:5px;
+    font-size:28px;
+    margin-bottom:6px;
 }
 
 .page p{
@@ -36,32 +36,31 @@ body{
 
 .profile-top{
     background:white;
-    padding:20px 25px;
-
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.05);
+    padding:25px 30px;
+    border-radius:14px;
 
     display:flex;
     justify-content:space-between;
     align-items:center;
 
-    margin-bottom:25px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    margin-bottom:30px;
 }
 
 .profile-left{
     display:flex;
     align-items:center;
-    gap:18px;
+    gap:20px;
 }
 
 /* avatar */
 
 .avatar{
-    width:85px;
-    height:85px;
+    width:90px;
+    height:90px;
     border-radius:50%;
     overflow:hidden;
-    border:3px solid #4e73df;
+    border:4px solid #4e73df;
 }
 
 .avatar img{
@@ -73,14 +72,14 @@ body{
 /* name */
 
 .profile-name h2{
-    font-size:22px;
-    margin-bottom:5px;
+    font-size:23px;
+    margin-bottom:6px;
 }
 
 .profile-role{
     background:#4e73df;
     color:white;
-    padding:4px 10px;
+    padding:4px 12px;
     border-radius:20px;
     font-size:12px;
 }
@@ -91,9 +90,9 @@ body{
     background:#4e73df;
     color:white;
     border:none;
-    padding:10px 18px;
+    padding:10px 20px;
 
-    border-radius:6px;
+    border-radius:8px;
     font-weight:600;
 
     cursor:pointer;
@@ -107,9 +106,9 @@ body{
 /* ================= MAIN LAYOUT ================= */
 
 .main{
-    display:flex;
-    flex-direction:column;
-    gap:20px;
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:25px;
 }
 
 /* ================= INFO BOX ================= */
@@ -117,13 +116,13 @@ body{
 .info-box{
     background:white;
     padding:25px;
+    border-radius:14px;
 
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.05);
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
 }
 
 .info-box h4{
-    margin-bottom:18px;
+    margin-bottom:20px;
     font-size:18px;
     color:#4e73df;
 }
@@ -131,10 +130,10 @@ body{
 /* ================= PROFILE VIEW ================= */
 
 .profile-view .info-box div{
-    display:flex;
-    justify-content:space-between;
+    display:grid;
+    grid-template-columns:160px 1fr;
 
-    padding:10px 0;
+    padding:12px 0;
     border-bottom:1px solid #eee;
 }
 
@@ -208,7 +207,6 @@ body{
     font-weight:600;
 
     cursor:pointer;
-    transition:0.25s;
 }
 
 .profile-edit button:hover{
@@ -221,8 +219,8 @@ body{
     background:white;
     padding:25px;
 
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.05);
+    border-radius:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
 }
 
 .security h4{
@@ -242,13 +240,11 @@ body{
     margin-bottom:5px;
 }
 
-.security input[type="password"]{
+.security input{
     padding:10px;
 
     border-radius:6px;
     border:1px solid #ccc;
-
-    transition:0.25s;
 }
 
 .security input:focus{
@@ -269,8 +265,6 @@ body{
 
     font-weight:600;
     cursor:pointer;
-
-    transition:0.25s;
 }
 
 .security button:hover{
@@ -279,12 +273,16 @@ body{
 
 /* ================= RESPONSIVE ================= */
 
-@media (min-width:768px){
+@media (max-width:900px){
 
     .main{
-        display:grid;
-        grid-template-columns:2fr 1fr;
-        gap:25px;
+        grid-template-columns:1fr;
+    }
+
+    .profile-top{
+        flex-direction:column;
+        gap:15px;
+        align-items:flex-start;
     }
 
 }
