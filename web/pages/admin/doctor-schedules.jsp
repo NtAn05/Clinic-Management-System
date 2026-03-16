@@ -437,6 +437,13 @@
                         <input type="hidden" name="weekOffset" value="${weekOffset}">
                         <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm</button>
                         <a class="btn btn-reset" href="${pageContext.request.contextPath}/admin-doctor-schedules"><i class="fas fa-redo"></i> Đặt lại</a>
+                        <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin-schedule-requests">
+                            <i class="fas fa-clipboard-check"></i>
+                            Duyệt yêu cầu
+                            <c:if test="${pendingRequestCount > 0}">
+                                (${pendingRequestCount})
+                            </c:if>
+                        </a>
                     </div>
                 </form>
             </div>
@@ -753,3 +760,6 @@
         </script>
     </body>
 </html>
+
+
+

@@ -22,7 +22,6 @@
                 height: 100vh;
             }
 
-            
             .auth-form-side {
                 flex: 1;
                 padding: 0 100px;
@@ -42,7 +41,6 @@
                 margin-bottom: 10px;
             }
 
-            
             .role-switch {
                 display: flex;
                 background: #f0f2f5;
@@ -51,7 +49,6 @@
                 margin-bottom: 25px;
             }
 
-            
             .role-switch button {
                 flex: 1;
                 padding: 10px;
@@ -64,14 +61,12 @@
                 transition: all 0.3s ease;
             }
 
-          
             .role-switch button.active {
                 background: white;
                 color: var(--primary);
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
 
-            
             .form-group {
                 margin-bottom: 15px;
             }
@@ -133,7 +128,6 @@
                 font-weight: bold;
             }
 
-            
             .auth-banner-side {
                 flex: 1;
                 background: linear-gradient(135deg, #e0f2ff 0%, #ffffff 100%);
@@ -168,7 +162,7 @@
                 font-weight: 500;
                 display: flex;
                 align-items: center;
-                             gap: 8px; 
+                gap: 8px; 
                 transition: 0.3s;
             }
             
@@ -199,6 +193,13 @@
 
                     <input type="hidden" name="role" id="selected-role" value="patient">
 
+                    <%-- 1. HIỆN THÔNG BÁO XANH KHI ĐỔI MẬT KHẨU THÀNH CÔNG --%>
+                    <c:if test="${param.reset == 'true'}">
+                        <p style="color: #0f5132; text-align: center; font-size: 14px; background: #d1e7dd; padding: 10px; border-radius: 5px; border: 1px solid #badbcc;">
+                            <i class="fas fa-check-circle"></i> Đổi mật khẩu thành công! Vui lòng đăng nhập lại.
+                        </p>
+                    </c:if>
+
                     <c:if test="${param.registered == 'true'}">
                         <p style="color: #0f5132; text-align: center; font-size: 14px; background: #d1e7dd; padding: 10px; border-radius: 5px;">
                             <i class="fas fa-check-circle"></i> Đăng ký thành công! Vui lòng đăng nhập bằng Gmail đã xác thực.
@@ -213,7 +214,9 @@
 
                     <div class="form-group">
                         <label>Gmail</label>
-                        <input type="email" name="email" placeholder="Nhập Gmail" value="${email != null ? email : ''}" required>
+                        <%-- 2. TỰ ĐỘNG LẤY EMAIL TỪ QUÊN MẬT KHẨU SANG --%>
+                        <input type="email" name="email" placeholder="Nhập Gmail" 
+                               value="${not empty param.email ? param.email : (email != null ? email : '')}" required autofocus>
                     </div>
                     <div class="form-group">
                         <label>Mật khẩu</label>
@@ -221,8 +224,11 @@
                     </div>
 
                     <div class="options">
-                        <label><input type="checkbox"> Ghi nhớ đăng nhập</label>
-                        <a href="#">Quên mật khẩu?</a>
+                        <label style="display: flex; align-items: center; gap: 5px; font-weight: normal;">
+                            <input type="checkbox"> Ghi nhớ đăng nhập
+                        </label>
+                        <%-- 3. ĐẢM BẢO LINK QUÊN MẬT KHẨU CHUẨN --%>
+                        <a href="${pageContext.request.contextPath}/forgot-password" class="forgot-link">Quên mật khẩu?</a>
                     </div>
 
                     <button type="submit" class="btn-submit">Đăng nhập</button>
@@ -243,23 +249,18 @@
 
         <script>
             function selectRole(role) {
-               
                 var btnStaff = document.getElementById("btn-staff");
                 var btnPatient = document.getElementById("btn-patient");
-
-               
                 var inputRole = document.getElementById("selected-role");
 
                 if (role === 'staff') {
-                    
                     btnStaff.classList.add("active");
                     btnPatient.classList.remove("active");
-                    inputRole.value = "staff"; // Cập nhật giá trị gửi đi
+                    inputRole.value = "staff";
                 } else {
-                   
                     btnPatient.classList.add("active");
                     btnStaff.classList.remove("active");
-                    inputRole.value = "patient"; // Cập nhật giá trị gửi đi
+                    inputRole.value = "patient";
                 }
             }
         </script>

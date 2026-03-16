@@ -6,6 +6,7 @@ package controller.doctor;
 
 import dal.DoctorDAO;
 import dal.LabRequestDAO;
+import dal.NotificationDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -277,6 +278,14 @@ public class DoctorExamServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
                 return;
             }
+            NotificationDAO notificationDAO = new NotificationDAO();
+            notificationDAO.createNotificationForAppointment(
+                    appointmentId,
+                    "Khám bệnh đã hoàn tất",
+                    "Bác sĩ đã hoàn tất buổi khám của bạn. Vui lòng vào hồ sơ để xem kết quả và chỉ định điều trị.",
+                    "examination_completed",
+                    "appointment:" + appointmentId + ":exam_done"
+            );
             response.sendRedirect(request.getContextPath() + "/doctorDashboard?success=examFinished");
             return;
         }

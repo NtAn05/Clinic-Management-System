@@ -14,6 +14,7 @@ import model.MedicalRecord;
 import model.Medicine;
 import model.PrescriptionItem;
 import model.ScheduleChangeRequest;
+import model.ScheduleSwapShiftOption;
 
 public class DoctorDAO extends DBContext {
 
@@ -147,6 +148,249 @@ public class DoctorDAO extends DBContext {
         } catch (SQLException e) {
             // Keep schedule page working even if sync fails on existing schemas.
             e.printStackTrace();
+        }
+    }
+
+    public List<Doctor> getDoctorsForAdmin(String keyword, String specializationFilter, String qualificationFilter) {
+        syncDoctorProfilesForAllDoctorUsers();
+        List<Doctor> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+            SELECT d.doctor_id, d.user_id, d.specialization, d.qualification, d.experience_years, d.price_booking, d.rating,
+                   u.full_name, u.phone, u.email
+            FROM doctors d
+            JOIN users u ON d.user_id = u.user_id
+            WHERE u.role = 'doctor'
+        """);
+
+        List<Object> params = new ArrayList<>();
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append(" AND (u.full_name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)");
+            String like = "%" + keyword.trim() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (specializationFilter != null && !specializationFilter.isBlank()) {
+            sql.append(" AND d.specialization = ?");
+            params.add(specializationFilter.trim());
+        }
+        if (qualificationFilter != null && !qualificationFilter.isBlank()) {
+            sql.append(" AND d.qualification = ?");
+            params.add(qualificationFilter.trim());
+        }
+        sql.append(" ORDER BY u.full_name");
+
+        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            for (Object param : params) {
+                st.setObject(idx++, param);
+            }
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    Doctor d = new Doctor();
+                    d.setDoctorId(rs.getInt("doctor_id"));
+                    d.setUserId(rs.getInt("user_id"));
+                    d.setSpecialization(rs.getString("specialization"));
+                    d.setQualification(rs.getString("qualification"));
+                    d.setExperience_years(rs.getInt("experience_years"));
+                    d.setPrice(rs.getDouble("price_booking"));
+                    d.setRating(rs.getDouble("rating"));
+                    d.setFullName(rs.getString("full_name"));
+                    d.setPhone(rs.getString("phone"));
+                    d.setEmail(rs.getString("email"));
+                    list.add(d);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<String> getDistinctDoctorSpecializations() {
+        List<String> list = new ArrayList<>();
+        String sql = """
+            SELECT DISTINCT specialization
+            FROM doctors
+            WHERE specialization IS NOT NULL AND specialization <> ''
+            ORDER BY specialization
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
+            while (rs.next()) {
+                list.add(rs.getString("specialization"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<String> getDistinctDoctorQualifications() {
+        List<String> list = new ArrayList<>();
+        String sql = """
+            SELECT DISTINCT qualification
+            FROM doctors
+            WHERE qualification IS NOT NULL AND qualification <> ''
+            ORDER BY qualification
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
+            while (rs.next()) {
+                list.add(rs.getString("qualification"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public Doctor getDoctorByIdForAdmin(int doctorId) {
+        String sql = """
+            SELECT d.doctor_id, d.user_id, d.specialization, d.qualification, d.experience_years, d.price_booking, d.rating,
+                   u.full_name, u.phone, u.email
+            FROM doctors d
+            JOIN users u ON d.user_id = u.user_id
+            WHERE d.doctor_id = ? AND u.role = 'doctor'
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    Doctor d = new Doctor();
+                    d.setDoctorId(rs.getInt("doctor_id"));
+                    d.setUserId(rs.getInt("user_id"));
+                    d.setSpecialization(rs.getString("specialization"));
+                    d.setQualification(rs.getString("qualification"));
+                    d.setExperience_years(rs.getInt("experience_years"));
+                    d.setPrice(rs.getDouble("price_booking"));
+                    d.setRating(rs.getDouble("rating"));
+                    d.setFullName(rs.getString("full_name"));
+                    d.setPhone(rs.getString("phone"));
+                    d.setEmail(rs.getString("email"));
+                    return d;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public int createDoctorWithUser(String fullName, String phone, String email, String password,
+            String specialization, String qualification, int experienceYears, int priceBooking) throws SQLException {
+        String sqlUser = """
+            INSERT INTO users (full_name, phone, email, password_hash, role, status)
+            VALUES (?, ?, ?, ?, 'doctor', 'active')
+        """;
+        String sqlDoctor = """
+            INSERT INTO doctors (user_id, specialization, qualification, experience_years, price_booking)
+            VALUES (?, ?, ?, ?, ?)
+        """;
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+        try {
+            connection.setAutoCommit(false);
+            int userId;
+
+            try (PreparedStatement userSt = connection.prepareStatement(sqlUser, Statement.RETURN_GENERATED_KEYS)) {
+                userSt.setString(1, fullName);
+                userSt.setString(2, phone);
+                userSt.setString(3, email);
+                userSt.setString(4, password);
+                int affected = userSt.executeUpdate();
+                if (affected == 0) {
+                    connection.rollback();
+                    return 0;
+                }
+                try (ResultSet keys = userSt.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        connection.rollback();
+                        return 0;
+                    }
+                    userId = keys.getInt(1);
+                }
+            }
+
+            try (PreparedStatement doctorSt = connection.prepareStatement(sqlDoctor)) {
+                doctorSt.setInt(1, userId);
+                doctorSt.setString(2, specialization);
+                doctorSt.setString(3, qualification);
+                doctorSt.setInt(4, experienceYears);
+                doctorSt.setInt(5, priceBooking);
+                int affected = doctorSt.executeUpdate();
+                if (affected == 0) {
+                    connection.rollback();
+                    return 0;
+                }
+            }
+
+            connection.commit();
+            return userId;
+        } catch (SQLException ex) {
+            connection.rollback();
+            throw ex;
+        } finally {
+            connection.setAutoCommit(originalAutoCommit);
+        }
+    }
+
+    public boolean updateDoctorAndUser(int doctorId, String fullName, String phone, String email,
+            String specialization, String qualification, int experienceYears, int priceBooking) throws SQLException {
+        String sqlGet = "SELECT user_id FROM doctors WHERE doctor_id = ? LIMIT 1";
+        String sqlUser = "UPDATE users SET full_name = ?, phone = ?, email = ? WHERE user_id = ? AND role = 'doctor'";
+        String sqlDoctor = """
+            UPDATE doctors
+            SET specialization = ?, qualification = ?, experience_years = ?, price_booking = ?
+            WHERE doctor_id = ?
+        """;
+
+        boolean originalAutoCommit = connection.getAutoCommit();
+        try {
+            connection.setAutoCommit(false);
+            Integer userId = null;
+            try (PreparedStatement st = connection.prepareStatement(sqlGet)) {
+                st.setInt(1, doctorId);
+                try (ResultSet rs = st.executeQuery()) {
+                    if (rs.next()) {
+                        userId = rs.getInt("user_id");
+                    }
+                }
+            }
+            if (userId == null) {
+                connection.rollback();
+                return false;
+            }
+
+            try (PreparedStatement userSt = connection.prepareStatement(sqlUser)) {
+                userSt.setString(1, fullName);
+                userSt.setString(2, phone);
+                userSt.setString(3, email);
+                userSt.setInt(4, userId);
+                if (userSt.executeUpdate() == 0) {
+                    connection.rollback();
+                    return false;
+                }
+            }
+
+            try (PreparedStatement doctorSt = connection.prepareStatement(sqlDoctor)) {
+                doctorSt.setString(1, specialization);
+                doctorSt.setString(2, qualification);
+                doctorSt.setInt(3, experienceYears);
+                doctorSt.setInt(4, priceBooking);
+                doctorSt.setInt(5, doctorId);
+                if (doctorSt.executeUpdate() == 0) {
+                    connection.rollback();
+                    return false;
+                }
+            }
+
+            connection.commit();
+            return true;
+        } catch (SQLException ex) {
+            connection.rollback();
+            throw ex;
+        } finally {
+            connection.setAutoCommit(originalAutoCommit);
         }
     }
 
@@ -465,6 +709,43 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
+    
+    public List<ScheduleSwapShiftOption> getSwapShiftOptionsByDate(int requesterDoctorId, int dayOfWeek) {
+        List<ScheduleSwapShiftOption> list = new ArrayList<>();
+        String sql = """
+            SELECT s.shift_id, s.doctor_id, s.day_of_week, s.start_time, s.end_time,
+                   u.full_name AS doctor_name
+            FROM doctor_shifts s
+            JOIN doctors d ON d.doctor_id = s.doctor_id
+            JOIN users u ON u.user_id = d.user_id
+            WHERE s.day_of_week = ?
+              AND s.doctor_id <> ?
+              AND u.role = 'doctor'
+              AND u.status = 'active'
+            ORDER BY u.full_name, s.start_time
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, dayOfWeek);
+            st.setInt(2, requesterDoctorId);
+            ResultSet rs = st.executeQuery();
+
+            while (rs.next()) {
+                ScheduleSwapShiftOption option = new ScheduleSwapShiftOption();
+                option.setShiftId(rs.getInt("shift_id"));
+                option.setDoctorId(rs.getInt("doctor_id"));
+                option.setDoctorName(rs.getString("doctor_name"));
+                option.setDayOfWeek(rs.getInt("day_of_week"));
+                option.setStartTime(rs.getTime("start_time").toLocalTime());
+                option.setEndTime(rs.getTime("end_time").toLocalTime());
+                list.add(option);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
     public List<ScheduleChangeRequest> getScheduleChangeRequestsByDoctor(int doctorId, int limit) {
         List<ScheduleChangeRequest> list = new ArrayList<>();
         String sql = """
@@ -522,6 +803,142 @@ public class DoctorDAO extends DBContext {
         }
 
         return list;
+    }
+
+    public List<ScheduleChangeRequest> getScheduleChangeRequestsForAdmin(String statusFilter) {
+        return getScheduleChangeRequestsForAdmin(statusFilter, "ALL", "ALL", "");
+    }
+
+    public List<ScheduleChangeRequest> getScheduleChangeRequestsForAdmin(
+            String statusFilter,
+            String requestTypeFilter,
+            String actionTypeFilter,
+            String keyword
+    ) {
+        List<ScheduleChangeRequest> list = new ArrayList<>();
+        boolean hasStatusFilter = statusFilter != null && !statusFilter.isBlank() && !"ALL".equalsIgnoreCase(statusFilter);
+        boolean hasRequestTypeFilter = requestTypeFilter != null && !requestTypeFilter.isBlank() && !"ALL".equalsIgnoreCase(requestTypeFilter);
+        boolean hasActionTypeFilter = actionTypeFilter != null && !actionTypeFilter.isBlank() && !"ALL".equalsIgnoreCase(actionTypeFilter);
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
+                   r.reason, r.status, r.requested_at, r.admin_note,
+                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
+                   i.start_time, i.end_time, i.max_patients,
+                   u.full_name AS doctor_name
+            FROM schedule_change_requests r
+            JOIN doctors d ON r.doctor_id = d.doctor_id
+            JOIN users u ON d.user_id = u.user_id
+            LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
+        """);
+
+        sql.append(" WHERE 1=1 ");
+        if (hasStatusFilter) {
+            sql.append(" AND r.status = ? ");
+        }
+        if (hasRequestTypeFilter) {
+            sql.append(" AND r.request_type = ? ");
+        }
+        if (hasActionTypeFilter) {
+            sql.append(" AND i.action_type = ? ");
+        }
+        if (hasKeyword) {
+            sql.append(" AND (u.full_name LIKE ? OR r.reason LIKE ? OR CAST(r.request_id AS CHAR) LIKE ?) ");
+        }
+        sql.append(" ORDER BY r.requested_at DESC ");
+
+        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (hasStatusFilter) {
+                st.setString(index++, statusFilter.trim().toUpperCase());
+            }
+            if (hasRequestTypeFilter) {
+                st.setString(index++, requestTypeFilter.trim().toUpperCase());
+            }
+            if (hasActionTypeFilter) {
+                st.setString(index++, actionTypeFilter.trim().toUpperCase());
+            }
+            if (hasKeyword) {
+                String keywordLike = "%" + keyword.trim() + "%";
+                st.setString(index++, keywordLike);
+                st.setString(index++, keywordLike);
+                st.setString(index, keywordLike);
+            }
+            ResultSet rs = st.executeQuery();
+
+            while (rs.next()) {
+                ScheduleChangeRequest request = new ScheduleChangeRequest();
+                request.setRequestId(rs.getInt("request_id"));
+                request.setDoctorId(rs.getInt("doctor_id"));
+                request.setDoctorName(rs.getString("doctor_name"));
+                request.setRequestType(rs.getString("request_type"));
+                request.setScopeType(rs.getString("scope_type"));
+                request.setReason(rs.getString("reason"));
+                request.setStatus(rs.getString("status"));
+                request.setRequestedAt(rs.getTimestamp("requested_at"));
+                request.setAdminNote(rs.getString("admin_note"));
+                request.setActionType(rs.getString("action_type"));
+
+                int targetShiftId = rs.getInt("target_shift_id");
+                request.setTargetShiftId(rs.wasNull() ? null : targetShiftId);
+
+                request.setWorkDate(rs.getDate("work_date"));
+                int dayOfWeek = rs.getInt("day_of_week");
+                request.setDayOfWeek(rs.wasNull() ? null : dayOfWeek);
+
+                Time startTime = rs.getTime("start_time");
+                if (startTime != null) {
+                    request.setStartTime(startTime.toLocalTime());
+                }
+
+                Time endTime = rs.getTime("end_time");
+                if (endTime != null) {
+                    request.setEndTime(endTime.toLocalTime());
+                }
+
+                int maxPatients = rs.getInt("max_patients");
+                request.setMaxPatients(rs.wasNull() ? null : maxPatients);
+                list.add(request);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public int countPendingScheduleChangeRequests() {
+        String sql = "SELECT COUNT(*) FROM schedule_change_requests WHERE status = 'PENDING'";
+        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public boolean reviewScheduleChangeRequest(int requestId, String decision, String adminNote) {
+        String sql = """
+            UPDATE schedule_change_requests
+            SET status = ?, admin_note = ?
+            WHERE request_id = ? AND status = 'PENDING'
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, decision);
+            if (adminNote == null || adminNote.isBlank()) {
+                st.setNull(2, Types.VARCHAR);
+            } else {
+                st.setString(2, adminNote.trim());
+            }
+            st.setInt(3, requestId);
+            return st.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public boolean createScheduleChangeRequest(
@@ -1394,4 +1811,48 @@ public class DoctorDAO extends DBContext {
 
         return list;
     }
+    public Doctor getDoctorById(int doctorID) {
+    
+    String sql = """
+        SELECT d.*, 
+               u.full_name,
+               u.phone,
+               u.email
+        FROM doctors d
+        JOIN users u ON d.user_id = u.id
+        WHERE d.doctor_id = ?
+        """;
+
+    try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+        st.setInt(1, doctorID);
+
+        ResultSet rs = st.executeQuery();
+
+        if (rs.next()) {
+
+            Doctor d = new Doctor();
+
+            d.setDoctorId(rs.getInt("doctor_id"));
+            d.setUserId(rs.getInt("user_id"));
+            d.setSpecialization(rs.getString("specialization"));
+            d.setImage(rs.getString("image"));
+            d.setQualification(rs.getString("qualification"));
+            d.setClinic_address(rs.getString("clinic_address"));
+            d.setExperience_years(rs.getInt("experience_years"));
+            d.setRating(rs.getDouble("rating"));
+            d.setPrice(rs.getDouble("price"));
+
+            d.setFullName(rs.getString("full_name"));
+            d.setPhone(rs.getString("phone"));
+            d.setEmail(rs.getString("email"));
+
+            return d;
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return null;}
 }

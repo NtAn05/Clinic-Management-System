@@ -1,11 +1,12 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ ..Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
-package controller.appointments;
+package controller.historyOfAppointment;
 
 import dal.AppointmentDAO;
-import dal.NotificationDAO;
+import dal.DoctorDAO;
+import dal.RatingDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -13,14 +14,18 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Appointment;
-import model.Patient;
+import java.util.List;
+import model.AppointmentDetail;
+import model.Doctor;
+import model.Rating_review;
+import model.User;
 
 /**
+ * 0
  *
  * @author Admin
  */
-public class AppointmentPaymentServlet extends HttpServlet {
+public class ReportDoctorServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -39,10 +44,10 @@ public class AppointmentPaymentServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet AppointmentPaymentServlet</title>");
+            out.println("<title>Servlet ReportDoctorServlet</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet AppointmentPaymentServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet ReportDoctorServlet at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -60,38 +65,15 @@ public class AppointmentPaymentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String code = request.getParameter("code");
-        String status = request.getParameter("status");
-
-        if ("00".equals(code) && "PAID".equals(status)) {
-            HttpSession session = request.getSession();
-            Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
-            if ( appointment != null) {
-                AppointmentDAO dao = new AppointmentDAO();
- Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
-                dao.addAppointment(appointment);
-                 if (pendingPatient != null && pendingPatient.getUserId() != null) {
-                    NotificationDAO notificationDAO = new NotificationDAO();
-                    notificationDAO.createNotification(
-                            pendingPatient.getUserId(),
-                            "Đặt lịch thành công",
-                            "Bạn đã đặt lịch khám thành công. Vui lòng đến đúng giờ hẹn để được phục vụ tốt nhất.",
-                            "appointment_booked",
-                            "appointment:booking_success"
-                    );
-                }
-                session.removeAttribute("pendingAppointment");
-                session.removeAttribute("pendingPatient");
-            }
-
-            request.setAttribute("message", "Đặt lịch và thanh toán thành công!");
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentCompleted.jsp")
-                    .forward(request, response);
-        } else {
-            request.setAttribute("message", "Thanh toán thất bại hoặc đã huỷ!");
-            request.getRequestDispatcher("/pages/appointments/appointment/appointmentFailPayment.jsp")
-                    .forward(request, response);
-        }
+        String doctorId = request.getParameter("id");
+        AppointmentDAO dao = new AppointmentDAO();
+        Doctor doctor = dao.getDoctorById(doctorId);
+        RatingDAO daos = new RatingDAO();
+        List<Rating_review> list = daos.getQuestions();
+        request.setAttribute("doctor", doctor);
+        request.setAttribute("list", list);
+        request.getRequestDispatcher("/pages/profile/historyOfAppointment/reportDoctor.jsp")
+                .forward(request, response);
     }
 
     /**
@@ -105,7 +87,44 @@ public class AppointmentPaymentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+       
+         int doctorID = Integer.parseInt(request.getParameter("doctorID"));
+
+    HttpSession session = request.getSession();
+    User u = (User) session.getAttribute("account"); // user login
+
+    int userID = u.getUserId();
+
+    RatingDAO dao = new RatingDAO();
+
+    List<Rating_review> questions = dao.getQuestions();
+
+
+    for (Rating_review q : questions) {
+
+        String paramName = "rating_" + q.getId();
+
+        String ratingValue = request.getParameter(paramName);
+
+        if (ratingValue != null && !ratingValue.isEmpty()) {
+
+            int stars = Integer.parseInt(ratingValue);
+
+            dao.insertReviewAnswer(
+                    q.getId(),
+                    stars,
+                    userID,
+                    doctorID
+            );
+        }
+    }
+        Double avg = dao.getAverageRating(doctorID);
+
+if (avg != null) {
+    dao.updateDoctorRating(doctorID, avg);
+}
+        response.sendRedirect(request.getContextPath() + "/historyofappointmentservlet");
+
     }
 
     /**

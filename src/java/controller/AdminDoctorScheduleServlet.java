@@ -174,6 +174,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("selectedShiftType", selectedShiftType);
         req.setAttribute("weekOffset", weekOffset);
         req.setAttribute("weekLabel", weekStart.format(DATE_FMT) + " - " + weekEnd.format(DATE_FMT));
+        req.setAttribute("pendingRequestCount", doctorDAO.countPendingScheduleChangeRequests());
         req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
     }
 

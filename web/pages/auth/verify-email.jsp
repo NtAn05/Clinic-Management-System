@@ -7,7 +7,7 @@
     if (expiresAt != null) {
         remainingSeconds = (expiresAt - System.currentTimeMillis()) / 1000;
         if (remainingSeconds < 0) {
-            remainingSeconds = 0; // Không cho số âm nếu đã quá hạn
+            remainingSeconds = 0; 
         }
     }
 %>
@@ -32,11 +32,21 @@
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
             background: var(--bg);
+            /* Thay đổi để Header/Footer/Main xếp chồng theo chiều dọc */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Container chính chứa Verify Card để đẩy nội dung ra giữa */
+        .main-content {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            padding: 40px 20px;
         }
+
         .verify-card {
             background: #fff;
             padding: 40px;
@@ -144,14 +154,16 @@
             cursor: not-allowed;
             background: #f9fafb;
         }
-        .back-link {
-            display: inline-block;
-            margin-top: 10px;
+        .back-link-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
             color: var(--text-muted);
-            text-decoration: none;
             font-size: 14px;
+            margin-top: 10px;
         }
-        .back-link:hover {
+        .back-link-btn:hover {
             color: var(--text-main);
             text-decoration: underline;
         }
@@ -159,80 +171,76 @@
 </head>
 <body>
 
-<div class="verify-card">
-    <h2>Xác thực Gmail</h2>
-    <p class="subtitle">Nhập mã OTP đã gửi về Gmail của bạn để hoàn tất đăng ký tài khoản.</p>
+<jsp:include page="/common/header.jsp" />
 
-    <div class="timer-display" id="timerDisplay">Đang tải thời gian...</div>
+<div class="main-content">
+    <div class="verify-card">
+        <h2>Xác thực Gmail</h2>
+        <p class="subtitle">Nhập mã OTP đã gửi về Gmail của bạn để hoàn tất đăng ký tài khoản.</p>
 
-    <% if (request.getAttribute("error") != null) { %>
-        <div class="alert-error">
-            <i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("error") %>
-        </div>
-    <% } %>
+        <div class="timer-display" id="timerDisplay">Đang tải thời gian...</div>
 
-    <% if (request.getAttribute("success") != null) { %>
-        <div class="alert-success">
-            <i class="fas fa-check-circle"></i> <%= request.getAttribute("success") %>
-        </div>
-    <% } %>
+        <% if (request.getAttribute("error") != null) { %>
+            <div class="alert-error">
+                <i class="fas fa-exclamation-circle"></i> <%= request.getAttribute("error") %>
+            </div>
+        <% } %>
 
-    <form action="${pageContext.request.contextPath}/verify-email" method="POST" id="verifyForm">
-        <div class="form-group">
-            <label>Mã OTP Gmail</label>
-            <input type="text" name="otp" class="otp-input" placeholder="******" maxlength="6" required autocomplete="off" autofocus>
-        </div>
-        
-        <button type="submit" class="btn btn-primary" id="submitBtn">Xác thực & tạo tài khoản</button>
-    </form>
+        <% if (request.getAttribute("success") != null) { %>
+            <div class="alert-success">
+                <i class="fas fa-check-circle"></i> <%= request.getAttribute("success") %>
+            </div>
+        <% } %>
 
-    <form action="${pageContext.request.contextPath}/verify-email" method="POST">
-        <input type="hidden" name="action" value="resend">
-        <button type="submit" class="btn btn-secondary" id="resendBtn" disabled>
-            Gửi lại OTP mới
-        </button>
-    </form>
+        <form action="${pageContext.request.contextPath}/verify-email" method="POST" id="verifyForm">
+            <div class="form-group">
+                <label>Mã OTP Gmail</label>
+                <input type="text" name="otp" class="otp-input" placeholder="******" maxlength="6" required autocomplete="off" autofocus>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="submitBtn">Xác thực & tạo tài khoản</button>
+        </form>
 
-    <form action="${pageContext.request.contextPath}/verify-email" method="POST" style="margin-top: 10px;">
-        <input type="hidden" name="action" value="cancel">
-        <button type="submit" class="back-link" style="background: none; border: none; cursor: pointer; padding: 0;">← Hủy và trở lại đăng ký</button>
-    </form>
+        <form action="${pageContext.request.contextPath}/verify-email" method="POST">
+            <input type="hidden" name="action" value="resend">
+            <button type="submit" class="btn btn-secondary" id="resendBtn" disabled>
+                Gửi lại OTP mới
+            </button>
+        </form>
+
+        <form action="${pageContext.request.contextPath}/verify-email" method="POST" style="margin-top: 10px;">
+            <input type="hidden" name="action" value="cancel">
+            <button type="submit" class="back-link-btn">← Hủy và trở lại đăng ký</button>
+        </form>
+    </div>
 </div>
 
+<jsp:include page="/common/footer.jsp" />
+
 <script>
-   
     let timeLeft = <%= remainingSeconds %>;
-    
     const timerDisplay = document.getElementById("timerDisplay");
     const resendBtn = document.getElementById("resendBtn");
 
-  
     function updateUI() {
         if (timeLeft <= 0) {
             timerDisplay.innerText = "Mã OTP đã hết hạn";
             timerDisplay.style.color = "var(--error-text)";
-            
-            // Kích hoạt nút Gửi lại OTP
             resendBtn.innerText = "Gửi lại OTP mới";
             resendBtn.disabled = false;
         } else {
             timerDisplay.innerText = "Mã OTP sẽ hết hạn sau: " + timeLeft + "s";
-            
-            
             resendBtn.innerText = "Gửi lại OTP mới (" + timeLeft + "s)";
             resendBtn.disabled = true;
         }
     }
 
- 
     updateUI();
-
 
     if (timeLeft > 0) {
         const countdownTimer = setInterval(function() {
             timeLeft--;
             updateUI();
-            
             if (timeLeft <= 0) {
                 clearInterval(countdownTimer);
             }

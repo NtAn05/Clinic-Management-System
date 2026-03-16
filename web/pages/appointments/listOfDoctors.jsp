@@ -26,7 +26,7 @@
                             <h3>${d.fullName}</h3>
                             <p class="degree">${d.qualification}</p>
                             <p class="desc">${d.specialization}</p>
-                            <p class="desc">${d.clinic_address}</p>
+                            
 
                             <div class="info">
                                 <span>⏱ ${d.experience_years} năm</span>

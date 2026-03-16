@@ -30,6 +30,7 @@ public class ScheduleChangeRequest {
     private LocalTime startTime;
     private LocalTime endTime;
     private Integer maxPatients;
+    private String doctorName;
 
     public ScheduleChangeRequest() {
     }
@@ -173,5 +174,13 @@ public class ScheduleChangeRequest {
 
     public void setMaxPatients(Integer maxPatients) {
         this.maxPatients = maxPatients;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    public void setDoctorName(String doctorName) {
+        this.doctorName = doctorName;
     }
 }

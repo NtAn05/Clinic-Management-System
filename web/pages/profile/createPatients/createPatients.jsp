@@ -27,6 +27,7 @@
                     <form method="post" action="${pageContext.request.contextPath}/createpatientsservlet">
                         <input type="hidden" name="userID" value="${sessionScope.account.userId}">
                         <input type="hidden" name="patientID" value="${patient.getPatientId()}">
+                        <input type="hidden" name="DoctorID" value="${DoctorID}">
                         <div class="card-box">
                             <h3>Thông tin của bạn</h3>
 
@@ -71,7 +72,7 @@
                        
                         <div class="actions">
                             <button type="button" class="btn-outline"
-                                    onclick="location.href = '${pageContext.request.contextPath}/createpatientservlet'">
+                                    onclick="location.href = '${pageContext.request.contextPath}/createpatientsservlet'">
                                 Hủy
                             </button>
                                     <c:if test="${patient.getPatientId() != null}">

@@ -1,133 +1,160 @@
+/* ================= PAGE ================= */
+
 body{
-    background:#f3f4f6;
-    font-family:Arial;
+    background:#f4f6fb;
+    font-family:"Segoe UI", Arial, sans-serif;
 }
 
 .container{
-    width:80%;
+    width:75%;
     margin:auto;
+    margin-top:22px;
+
     background:white;
-    padding:25px;
-    border-radius:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+    padding:28px;
+
+    border-radius:14px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.05);
 }
+
+/* ================= HEADER ================= */
 
 .header{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:20px;
+    margin-bottom:15px;
 }
+
+.header h2{
+    font-size:20px;
+}
+
+.total{
+    font-size:14px;
+    color:#6b7280;
+}
+
+/* ================= FILTER ================= */
 
 .filter-bar{
     display:flex;
-    gap:10px;
+    gap:15px;
     margin-bottom:15px;
 }
 
 .filter-bar select,
 .filter-bar input{
-    padding:8px;
-    border:1px solid #ddd;
-    border-radius:8px;
+    padding:10px 12px;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    font-size:14px;
+}
+
+.filter-bar input{
+    flex:1;
 }
 
 .btn-clear{
     background:white;
-    border:1px solid #ddd;
-    padding:8px 12px;
-    border-radius:8px;
+    border:1px solid #e5e7eb;
+    padding:10px 14px;
+    border-radius:10px;
     cursor:pointer;
 }
+
+.btn-clear:hover{
+    background:#f3f4f6;
+}
+
+/* ================= STATS ================= */
 
 .stats{
     margin-bottom:15px;
 }
 
 .badge{
-    padding:5px 10px;
+    padding:6px 12px;
     border-radius:20px;
     font-size:13px;
     margin-right:10px;
+    font-weight:500;
 }
 
 .blue{
     background:#dbeafe;
-    color:#1e40af;
+    color:#2563eb;
 }
+
 .yellow{
     background:#fef3c7;
-    color:#92400e;
+    color:#b45309;
 }
-.purple{
-    background:#ede9fe;
-    color:#5b21b6;
-}
+
 .green{
     background:#dcfce7;
-    color:#166534;
+    color:#15803d;
 }
+
+/* ================= TABLE ================= */
 
 table{
     width:100%;
     border-collapse:collapse;
+    font-size:14px;
 }
 
 th{
-    background:#f1f5f9;
+    background:#eef2f7;
     padding:12px;
     text-align:left;
+    color:#374151;
+    font-weight:600;
 }
 
 td{
-    padding:12px;
-    border-bottom:1px solid #eee;
+    padding:14px 12px;
+    border-bottom:1px solid #f1f5f9;
 }
 
 tr:hover{
     background:#f9fafb;
 }
 
+/* small text */
+
 .sub{
     font-size:12px;
     color:#6b7280;
 }
 
-/* status */
+/* ================= STATUS ================= */
 
 .status{
-    padding:5px 12px;
+    padding:6px 14px;
     border-radius:20px;
     font-size:12px;
+    font-weight:500;
 }
 
+/* chờ thanh toán */
+
 .status.booked{
-    background:#fef3c7;
+    background:#fde68a;
     color:#92400e;
 }
 
-.status.checked_in{
-    background:#dbeafe;
-    color:#1e40af;
-}
-
-.status.waiting{
-    background:#ede9fe;
-    color:#5b21b6;
-}
+/* đã thanh toán */
 
 .status.completed{
-    background:#dcfce7;
+    background:#bbf7d0;
     color:#166534;
 }
 
-.status.cancelled{
-    background:#fee2e2;
-    color:#991b1b;
-}
+/* ================= BOOKING TYPE ================= */
 
 .booking{
-    padding:4px 10px;
+    padding:5px 12px;
     border-radius:20px;
     font-size:12px;
 }
@@ -142,11 +169,29 @@ tr:hover{
     color:#92400e;
 }
 
+/* ================= BUTTON ================= */
+
 .btn-update{
     background:#16a34a;
     color:white;
     border:none;
-    padding:6px 10px;
-    border-radius:6px;
+
+    padding:8px 14px;
+    border-radius:20px;
+
+    font-size:13px;
+    font-weight:500;
+
     cursor:pointer;
+}
+
+.btn-update:hover{
+    background:#15803d;
+}
+
+/* completed text */
+
+.done{
+    color:#6b7280;
+    font-size:13px;
 }
