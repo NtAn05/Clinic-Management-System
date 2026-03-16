@@ -280,6 +280,7 @@
         </style>
     </head>
     <body>
+        <jsp:include page="/common/header.jsp" />
         <div class="container">
             <div class="page-header">
                 <div>
@@ -469,6 +470,8 @@
             </div>
         </div>
 
+        <jsp:include page="../../common/footer.jsp" />
+                            
         <script>
             function changePage(page) {
                 if (!page || page < 1) return;

@@ -129,6 +129,7 @@
         </style>
     </head>
     <body>
+        <jsp:include page="/common/header.jsp" />
         <div class="container">
             <div class="page-header">
                 <div>
@@ -247,7 +248,7 @@
                 </div>
             </div>
         </div>
-
+        <jsp:include page="../../common/footer.jsp" />
         <script>
             const apptData = {
                 labels: ['Đặt lịch', 'Check-in', 'Chờ khám', 'Hoàn thành', 'Đã hủy'],
