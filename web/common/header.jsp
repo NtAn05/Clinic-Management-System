@@ -230,6 +230,7 @@
                 <c:if test="${roleName == 'admin'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
+<!--                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctors">Quản lý bác sĩ</a>-->
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-system-logs">System logs</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-reports">Reports</a>
