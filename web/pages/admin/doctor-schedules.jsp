@@ -175,6 +175,11 @@
                 font-size: 13px;
                 color: #1e40af;
             }
+            .shift-card.temporary {
+                background: #fff7e6;
+                border-color: #fbbf24;
+                color: #92400e;
+            }
             .shift-section {
                 margin-top: 10px;
                 display: flex;
@@ -493,7 +498,7 @@
                                     <c:forEach var="item" items="${weekGrid[dayKey]}">
                                         <c:if test="${item.shiftCode == 'morning'}">
                                             <c:set var="hasMorning" value="true" />
-                                            <div class="shift-card">
+                                            <div class="shift-card ${item.temporary ? 'temporary' : ''}">
                                                 <div class="shift-name">Bác sĩ ${item.doctorName}</div>
                                                 <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
                                             </div>
@@ -511,7 +516,7 @@
                                     <c:forEach var="item" items="${weekGrid[dayKey]}">
                                         <c:if test="${item.shiftCode == 'afternoon'}">
                                             <c:set var="hasAfternoon" value="true" />
-                                            <div class="shift-card">
+                                            <div class="shift-card ${item.temporary ? 'temporary' : ''}">
                                                 <div class="shift-name">Bác sĩ ${item.doctorName}</div>
                                                 <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
                                             </div>

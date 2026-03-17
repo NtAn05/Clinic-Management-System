@@ -31,6 +31,12 @@ public class ScheduleChangeRequest {
     private LocalTime endTime;
     private Integer maxPatients;
     private String doctorName;
+    private String oldDoctorName;
+    private Integer oldDayOfWeek;
+    private LocalTime oldStartTime;
+    private LocalTime oldEndTime;
+    private String newDoctorName;
+    private Date oldWorkDate;
 
     public ScheduleChangeRequest() {
     }
@@ -182,5 +188,53 @@ public class ScheduleChangeRequest {
 
     public void setDoctorName(String doctorName) {
         this.doctorName = doctorName;
+    }
+
+    public String getOldDoctorName() {
+        return oldDoctorName;
+    }
+
+    public void setOldDoctorName(String oldDoctorName) {
+        this.oldDoctorName = oldDoctorName;
+    }
+
+    public Integer getOldDayOfWeek() {
+        return oldDayOfWeek;
+    }
+
+    public void setOldDayOfWeek(Integer oldDayOfWeek) {
+        this.oldDayOfWeek = oldDayOfWeek;
+    }
+
+    public LocalTime getOldStartTime() {
+        return oldStartTime;
+    }
+
+    public void setOldStartTime(LocalTime oldStartTime) {
+        this.oldStartTime = oldStartTime;
+    }
+
+    public LocalTime getOldEndTime() {
+        return oldEndTime;
+    }
+
+    public void setOldEndTime(LocalTime oldEndTime) {
+        this.oldEndTime = oldEndTime;
+    }
+
+    public String getNewDoctorName() {
+        return newDoctorName;
+    }
+
+    public void setNewDoctorName(String newDoctorName) {
+        this.newDoctorName = newDoctorName;
+    }
+
+    public Date getOldWorkDate() {
+        return oldWorkDate;
+    }
+
+    public void setOldWorkDate(Date oldWorkDate) {
+        this.oldWorkDate = oldWorkDate;
     }
 }

@@ -826,11 +826,37 @@ public class DoctorDAO extends DBContext {
                    r.reason, r.status, r.requested_at, r.admin_note,
                    i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
                    i.start_time, i.end_time, i.max_patients,
-                   u.full_name AS doctor_name
+                   u.full_name AS doctor_name,
+                   u_old.full_name AS old_doctor_name,
+                   s_old.day_of_week AS old_day_of_week,
+                   s_old.start_time AS old_start_time,
+                   s_old.end_time AS old_end_time,
+                   u_new.full_name AS new_doctor_name,
+                   CASE
+                       WHEN i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
+                       THEN DATE_ADD(i.work_date, INTERVAL (s_old.day_of_week - i.day_of_week) DAY)
+                       ELSE NULL
+                   END AS old_work_date
             FROM schedule_change_requests r
             JOIN doctors d ON r.doctor_id = d.doctor_id
             JOIN users u ON d.user_id = u.user_id
             LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
+            LEFT JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
+            LEFT JOIN doctors d_old ON s_old.doctor_id = d_old.doctor_id
+            LEFT JOIN users u_old ON d_old.user_id = u_old.user_id
+            LEFT JOIN doctor_shifts s_new ON s_new.shift_id = (
+                SELECT s2.shift_id
+                FROM doctor_shifts s2
+                WHERE i.action_type = 'UPDATE'
+                  AND s2.day_of_week = i.day_of_week
+                  AND s2.start_time = i.start_time
+                  AND s2.end_time = i.end_time
+                  AND s2.doctor_id <> r.doctor_id
+                ORDER BY s2.shift_id
+                LIMIT 1
+            )
+            LEFT JOIN doctors d_new ON s_new.doctor_id = d_new.doctor_id
+            LEFT JOIN users u_new ON d_new.user_id = u_new.user_id
         """);
 
         sql.append(" WHERE 1=1 ");
@@ -844,7 +870,7 @@ public class DoctorDAO extends DBContext {
             sql.append(" AND i.action_type = ? ");
         }
         if (hasKeyword) {
-            sql.append(" AND (u.full_name LIKE ? OR r.reason LIKE ? OR CAST(r.request_id AS CHAR) LIKE ?) ");
+            sql.append(" AND (u.full_name LIKE ? OR r.reason LIKE ?) ");
         }
         sql.append(" ORDER BY r.requested_at DESC ");
 
@@ -863,7 +889,6 @@ public class DoctorDAO extends DBContext {
                 String keywordLike = "%" + keyword.trim() + "%";
                 st.setString(index++, keywordLike);
                 st.setString(index++, keywordLike);
-                st.setString(index, keywordLike);
             }
             ResultSet rs = st.executeQuery();
 
@@ -899,6 +924,23 @@ public class DoctorDAO extends DBContext {
 
                 int maxPatients = rs.getInt("max_patients");
                 request.setMaxPatients(rs.wasNull() ? null : maxPatients);
+
+                request.setOldDoctorName(rs.getString("old_doctor_name"));
+                int oldDayOfWeek = rs.getInt("old_day_of_week");
+                request.setOldDayOfWeek(rs.wasNull() ? null : oldDayOfWeek);
+
+                Time oldStartTime = rs.getTime("old_start_time");
+                if (oldStartTime != null) {
+                    request.setOldStartTime(oldStartTime.toLocalTime());
+                }
+
+                Time oldEndTime = rs.getTime("old_end_time");
+                if (oldEndTime != null) {
+                    request.setOldEndTime(oldEndTime.toLocalTime());
+                }
+
+                request.setNewDoctorName(rs.getString("new_doctor_name"));
+                request.setOldWorkDate(rs.getDate("old_work_date"));
                 list.add(request);
             }
         } catch (SQLException e) {
@@ -921,24 +963,302 @@ public class DoctorDAO extends DBContext {
     }
 
     public boolean reviewScheduleChangeRequest(int requestId, String decision, String adminNote) {
-        String sql = """
+        String normalizedDecision = decision == null ? "" : decision.trim().toUpperCase();
+        boolean shouldApply = "APPROVED".equals(normalizedDecision);
+        String reviewSql = """
             UPDATE schedule_change_requests
             SET status = ?, admin_note = ?
             WHERE request_id = ? AND status = 'PENDING'
         """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, decision);
-            if (adminNote == null || adminNote.isBlank()) {
-                st.setNull(2, Types.VARCHAR);
-            } else {
-                st.setString(2, adminNote.trim());
+
+        boolean originalAutoCommit = true;
+        try {
+            originalAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+
+            PendingScheduleReview request = getPendingScheduleReviewForUpdate(requestId);
+            if (request == null) {
+                connection.rollback();
+                return false;
             }
-            st.setInt(3, requestId);
-            return st.executeUpdate() > 0;
+
+            if (shouldApply && !applyApprovedScheduleRequest(request)) {
+                connection.rollback();
+                return false;
+            }
+
+            try (PreparedStatement st = connection.prepareStatement(reviewSql)) {
+                st.setString(1, normalizedDecision);
+                if (adminNote == null || adminNote.isBlank()) {
+                    st.setNull(2, Types.VARCHAR);
+                } else {
+                    st.setString(2, adminNote.trim());
+                }
+                st.setInt(3, requestId);
+                if (st.executeUpdate() == 0) {
+                    connection.rollback();
+                    return false;
+                }
+            }
+
+            connection.commit();
+            return true;
         } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                connection.setAutoCommit(originalAutoCommit);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        return false;
+    }
+
+    private PendingScheduleReview getPendingScheduleReviewForUpdate(int requestId) throws SQLException {
+        String sql = """
+            SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
+                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
+                   i.start_time, i.end_time, i.max_patients
+            FROM schedule_change_requests r
+            LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
+            WHERE r.request_id = ? AND r.status = 'PENDING'
+            LIMIT 1
+            FOR UPDATE
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, requestId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                PendingScheduleReview review = new PendingScheduleReview();
+                review.requestId = rs.getInt("request_id");
+                review.doctorId = rs.getInt("doctor_id");
+                review.requestType = rs.getString("request_type");
+                review.scopeType = rs.getString("scope_type");
+                review.actionType = rs.getString("action_type");
+
+                int targetShiftId = rs.getInt("target_shift_id");
+                review.targetShiftId = rs.wasNull() ? null : targetShiftId;
+
+                review.workDate = rs.getDate("work_date");
+                int dayOfWeek = rs.getInt("day_of_week");
+                review.dayOfWeek = rs.wasNull() ? null : dayOfWeek;
+
+                Time startTime = rs.getTime("start_time");
+                review.startTime = startTime == null ? null : startTime.toLocalTime();
+
+                Time endTime = rs.getTime("end_time");
+                review.endTime = endTime == null ? null : endTime.toLocalTime();
+
+                int maxPatients = rs.getInt("max_patients");
+                review.maxPatients = rs.wasNull() ? null : maxPatients;
+                return review;
+            }
+        }
+    }
+
+    private boolean applyApprovedScheduleRequest(PendingScheduleReview request) throws SQLException {
+        if (request.actionType == null || request.actionType.isBlank()) {
+            return true;
+        }
+
+        // One-date/temporary requests are rendered as weekly overlays on schedule view,
+        // so they should not mutate fixed weekly templates in doctor_shifts.
+        if ("TEMPORARY".equalsIgnoreCase(request.requestType)
+                || "ONE_DATE".equalsIgnoreCase(request.scopeType)) {
+            return true;
+        }
+
+        String actionType = request.actionType.trim().toUpperCase();
+        switch (actionType) {
+            case "ADD":
+                return applyApprovedAddRequest(request);
+            case "REMOVE":
+                return applyApprovedRemoveRequest(request);
+            case "UPDATE":
+                return applyApprovedUpdateRequest(request);
+            default:
+                return true;
+        }
+    }
+
+    private boolean applyApprovedAddRequest(PendingScheduleReview request) throws SQLException {
+        if (request.dayOfWeek == null || request.startTime == null || request.endTime == null || request.maxPatients == null) {
+            return false;
+        }
+        if (hasShiftConflict(request.doctorId, request.dayOfWeek, request.startTime, request.endTime, null)) {
+            return false;
+        }
+
+        String sql = """
+            INSERT INTO doctor_shifts (doctor_id, day_of_week, start_time, end_time, max_patients)
+            VALUES (?, ?, ?, ?, ?)
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, request.doctorId);
+            st.setInt(2, request.dayOfWeek);
+            st.setTime(3, Time.valueOf(request.startTime));
+            st.setTime(4, Time.valueOf(request.endTime));
+            st.setInt(5, request.maxPatients);
+            return st.executeUpdate() > 0;
+        }
+    }
+
+    private boolean applyApprovedRemoveRequest(PendingScheduleReview request) throws SQLException {
+        if (request.targetShiftId == null) {
+            // Temporary remove without a weekly shift anchor cannot be persisted to doctor_shifts.
+            return true;
+        }
+
+        DoctorShift shift = getDoctorShiftByIdForUpdate(request.targetShiftId);
+        if (shift == null || shift.getDoctorId() != request.doctorId) {
+            return false;
+        }
+
+        String deleteSql = "DELETE FROM doctor_shifts WHERE shift_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(deleteSql)) {
+            st.setInt(1, request.targetShiftId);
+            return st.executeUpdate() > 0;
+        }
+    }
+
+    private boolean applyApprovedUpdateRequest(PendingScheduleReview request) throws SQLException {
+        if (request.targetShiftId == null || request.dayOfWeek == null || request.startTime == null || request.endTime == null) {
+            return false;
+        }
+
+        DoctorShift requesterShift = getDoctorShiftByIdForUpdate(request.targetShiftId);
+        if (requesterShift == null || requesterShift.getDoctorId() != request.doctorId) {
+            return false;
+        }
+
+        DoctorShift counterpart = findCounterpartShiftForSwap(
+                request.doctorId, request.targetShiftId, request.dayOfWeek, request.startTime, request.endTime
+        );
+
+        int requesterMaxPatients = request.maxPatients != null ? request.maxPatients : requesterShift.getMaxPatients();
+        if (!updateShiftById(
+                requesterShift.getShiftId(),
+                request.dayOfWeek,
+                request.startTime,
+                request.endTime,
+                requesterMaxPatients
+        )) {
+            return false;
+        }
+
+        if (counterpart != null) {
+            return updateShiftById(
+                    counterpart.getShiftId(),
+                    requesterShift.getDayOfWeek(),
+                    requesterShift.getStartTime(),
+                    requesterShift.getEndTime(),
+                    counterpart.getMaxPatients()
+            );
+        }
+        return true;
+    }
+
+    private DoctorShift getDoctorShiftByIdForUpdate(int shiftId) throws SQLException {
+        String sql = """
+            SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
+            FROM doctor_shifts
+            WHERE shift_id = ?
+            LIMIT 1
+            FOR UPDATE
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                DoctorShift s = new DoctorShift();
+                s.setShiftId(rs.getInt("shift_id"));
+                s.setDoctorId(rs.getInt("doctor_id"));
+                s.setDayOfWeek(rs.getInt("day_of_week"));
+                s.setStartTime(rs.getTime("start_time").toLocalTime());
+                s.setEndTime(rs.getTime("end_time").toLocalTime());
+                s.setMaxPatients(rs.getInt("max_patients"));
+                return s;
+            }
+        }
+    }
+
+    private DoctorShift findCounterpartShiftForSwap(int requesterDoctorId, int requesterShiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime) throws SQLException {
+        String sql = """
+            SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
+            FROM doctor_shifts
+            WHERE day_of_week = ?
+              AND start_time = ?
+              AND end_time = ?
+              AND doctor_id <> ?
+              AND shift_id <> ?
+            ORDER BY shift_id
+            LIMIT 1
+            FOR UPDATE
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, dayOfWeek);
+            st.setTime(2, Time.valueOf(startTime));
+            st.setTime(3, Time.valueOf(endTime));
+            st.setInt(4, requesterDoctorId);
+            st.setInt(5, requesterShiftId);
+
+            try (ResultSet rs = st.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                DoctorShift s = new DoctorShift();
+                s.setShiftId(rs.getInt("shift_id"));
+                s.setDoctorId(rs.getInt("doctor_id"));
+                s.setDayOfWeek(rs.getInt("day_of_week"));
+                s.setStartTime(rs.getTime("start_time").toLocalTime());
+                s.setEndTime(rs.getTime("end_time").toLocalTime());
+                s.setMaxPatients(rs.getInt("max_patients"));
+                return s;
+            }
+        }
+    }
+
+    private boolean updateShiftById(int shiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
+        String sql = """
+            UPDATE doctor_shifts
+            SET day_of_week = ?, start_time = ?, end_time = ?, max_patients = ?
+            WHERE shift_id = ?
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, dayOfWeek);
+            st.setTime(2, Time.valueOf(startTime));
+            st.setTime(3, Time.valueOf(endTime));
+            st.setInt(4, maxPatients);
+            st.setInt(5, shiftId);
+            return st.executeUpdate() > 0;
+        }
+    }
+
+    private static final class PendingScheduleReview {
+
+        private int requestId;
+        private int doctorId;
+        private String requestType;
+        private String scopeType;
+        private String actionType;
+        private Integer targetShiftId;
+        private Date workDate;
+        private Integer dayOfWeek;
+        private LocalTime startTime;
+        private LocalTime endTime;
+        private Integer maxPatients;
     }
 
     public boolean createScheduleChangeRequest(

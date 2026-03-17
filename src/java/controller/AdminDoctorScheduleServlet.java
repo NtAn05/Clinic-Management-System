@@ -16,6 +16,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import model.Doctor;
 import model.DoctorShift;
 import model.Role;
+import model.ScheduleChangeRequest;
 import model.User;
 
 public class AdminDoctorScheduleServlet extends HttpServlet {
@@ -143,6 +145,8 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                 scheduleItems.add(toScheduleItem(doctor, shift, weekStart, normalizedDayOfWeek));
             }
         }
+
+        applyApprovedOverrides(doctorDAO, scheduleItems, filteredDoctors, weekStart, weekEnd);
 
         scheduleItems.sort(Comparator
                 .comparing(ScheduleViewItem::getWorkDate)
@@ -374,8 +378,160 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                 shiftCode,
                 getShiftLabel(shiftCode),
                 shift.getMaxPatients(),
-                "Đã xếp"
+                "Da xep",
+                false
         );
+    }
+
+    private void applyApprovedOverrides(
+            DoctorDAO doctorDAO,
+            List<ScheduleViewItem> scheduleItems,
+            List<Doctor> filteredDoctors,
+            LocalDate weekStart,
+            LocalDate weekEnd
+    ) {
+        List<ScheduleChangeRequest> approvedRequests
+                = doctorDAO.getScheduleChangeRequestsForAdmin("APPROVED", "ALL", "ALL", "");
+        if (approvedRequests == null || approvedRequests.isEmpty()) {
+            return;
+        }
+
+        Map<Integer, Doctor> doctorById = new HashMap<>();
+        Map<String, Integer> doctorIdByName = new HashMap<>();
+        for (Doctor doctor : filteredDoctors) {
+            doctorById.put(doctor.getDoctorId(), doctor);
+            if (doctor.getFullName() != null) {
+                doctorIdByName.put(doctor.getFullName().trim().toLowerCase(Locale.ROOT), doctor.getDoctorId());
+            }
+        }
+
+        for (ScheduleChangeRequest request : approvedRequests) {
+            String requestType = request.getRequestType() == null ? "" : request.getRequestType().trim().toUpperCase(Locale.ROOT);
+            String scopeType = request.getScopeType() == null ? "" : request.getScopeType().trim().toUpperCase(Locale.ROOT);
+            boolean temporary = "TEMPORARY".equals(requestType) || "ONE_DATE".equals(scopeType);
+
+            LocalDate newDate = null;
+            LocalDate oldDate = null;
+            if (temporary) {
+                if (request.getWorkDate() == null) {
+                    continue;
+                }
+                newDate = request.getWorkDate().toLocalDate();
+                if (newDate.isBefore(weekStart) || newDate.isAfter(weekEnd)) {
+                    continue;
+                }
+                oldDate = request.getOldWorkDate() != null ? request.getOldWorkDate().toLocalDate() : newDate;
+            } else {
+                if (request.getDayOfWeek() == null) {
+                    continue;
+                }
+                newDate = getDateForDay(weekStart, request.getDayOfWeek());
+                int oldDay = request.getOldDayOfWeek() != null ? request.getOldDayOfWeek() : request.getDayOfWeek();
+                oldDate = getDateForDay(weekStart, oldDay);
+            }
+
+            if (newDate == null || oldDate == null) {
+                continue;
+            }
+
+            Doctor requester = doctorById.get(request.getDoctorId());
+            if (requester == null) {
+                continue;
+            }
+
+            String actionType = request.getActionType() == null
+                    ? "" : request.getActionType().trim().toUpperCase(Locale.ROOT);
+            String newShiftCode = getShiftCode(request.getStartTime(), request.getEndTime());
+            String oldShiftCode = getShiftCode(request.getOldStartTime(), request.getOldEndTime());
+            if ("ADD".equals(actionType)) {
+                removeShift(scheduleItems, request.getDoctorId(), newDate, newShiftCode);
+                addOverlayShift(scheduleItems, requester, newDate,
+                        request.getStartTime(), request.getEndTime(), request.getMaxPatients(), temporary);
+                continue;
+            }
+
+            if ("REMOVE".equals(actionType)) {
+                String removeShiftCode = !oldShiftCode.isEmpty() ? oldShiftCode : newShiftCode;
+                removeShift(scheduleItems, request.getDoctorId(), newDate, removeShiftCode);
+                continue;
+            }
+
+            if ("UPDATE".equals(actionType)) {
+                if (!oldShiftCode.isEmpty()) {
+                    removeShift(scheduleItems, request.getDoctorId(), oldDate, oldShiftCode);
+                }
+                addOverlayShift(scheduleItems, requester, newDate,
+                        request.getStartTime(), request.getEndTime(), request.getMaxPatients(), temporary);
+
+                Integer counterpartDoctorId = findDoctorIdByName(doctorIdByName, request.getNewDoctorName());
+                Doctor counterpart = counterpartDoctorId == null ? null : doctorById.get(counterpartDoctorId);
+                if (counterpart != null) {
+                    if (!newShiftCode.isEmpty()) {
+                        removeShift(scheduleItems, counterpartDoctorId, newDate, newShiftCode);
+                    }
+                    if (!oldShiftCode.isEmpty()) {
+                        addOverlayShift(scheduleItems, counterpart, oldDate,
+                                request.getOldStartTime(), request.getOldEndTime(), request.getMaxPatients(), temporary);
+                    }
+                }
+            }
+        }
+    }
+
+    private Integer findDoctorIdByName(Map<String, Integer> doctorIdByName, String doctorName) {
+        if (doctorName == null || doctorName.isBlank()) {
+            return null;
+        }
+        return doctorIdByName.get(doctorName.trim().toLowerCase(Locale.ROOT));
+    }
+
+    private void removeShift(List<ScheduleViewItem> scheduleItems, int doctorId, LocalDate workDate, String shiftCode) {
+        if (workDate == null || shiftCode == null || shiftCode.isBlank()) {
+            return;
+        }
+        scheduleItems.removeIf(item
+                -> item.getDoctorId() == doctorId
+                && workDate.equals(item.getWorkDate())
+                && shiftCode.equals(item.getShiftCode()));
+    }
+
+    private void addOverlayShift(
+            List<ScheduleViewItem> scheduleItems,
+            Doctor doctor,
+            LocalDate workDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            Integer maxPatients,
+            boolean temporary
+    ) {
+        if (doctor == null || workDate == null || startTime == null || endTime == null || !startTime.isBefore(endTime)) {
+            return;
+        }
+        int dayOfWeek = normalizeDayOfWeek(workDate.getDayOfWeek().getValue());
+        if (dayOfWeek < 0 || dayOfWeek > 6) {
+            return;
+        }
+        String shiftCode = getShiftCode(startTime, endTime);
+        removeShift(scheduleItems, doctor.getDoctorId(), workDate, shiftCode);
+        scheduleItems.add(new ScheduleViewItem(
+                -1,
+                doctor.getDoctorId(),
+                doctor.getFullName(),
+                doctor.getSpecialization(),
+                dayOfWeek,
+                getDayLabel(dayOfWeek),
+                workDate,
+                workDate.format(DATE_FMT),
+                startTime,
+                startTime.format(TIME_FMT),
+                endTime,
+                endTime.format(TIME_FMT),
+                shiftCode,
+                getShiftLabel(shiftCode),
+                maxPatients != null ? maxPatients : 0,
+                temporary ? "Tam thoi" : "Da xep",
+                temporary
+        ));
     }
 
     private String getShiftCode(LocalTime startTime, LocalTime endTime) {
@@ -441,10 +597,12 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         private final String shiftLabel;
         private final int maxPatients;
         private final String status;
+        private final boolean temporary;
 
         public ScheduleViewItem(int shiftId, int doctorId, String doctorName, String specialization, int dayOfWeek,
                 String dayLabel, LocalDate workDate, String workDateText, LocalTime startTime, String startTimeText,
-                LocalTime endTime, String endTimeText, String shiftCode, String shiftLabel, int maxPatients, String status) {
+                LocalTime endTime, String endTimeText, String shiftCode, String shiftLabel, int maxPatients,
+                String status, boolean temporary) {
             this.shiftId = shiftId;
             this.doctorId = doctorId;
             this.doctorName = doctorName;
@@ -461,6 +619,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             this.shiftLabel = shiftLabel;
             this.maxPatients = maxPatients;
             this.status = status;
+            this.temporary = temporary;
         }
 
         public int getShiftId() { return shiftId; }
@@ -479,6 +638,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         public String getShiftLabel() { return shiftLabel; }
         public int getMaxPatients() { return maxPatients; }
         public String getStatus() { return status; }
+        public boolean isTemporary() { return temporary; }
     }
 
     private static class ShiftTime {

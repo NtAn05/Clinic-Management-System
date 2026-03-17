@@ -6,7 +6,7 @@
 <html lang="vi">
     <head>
         <meta charset="UTF-8">
-        <title>Duyet yeu cau doi lich bac si</title>
+        <title>Duyệt yêu cầu đổi lịch bác sĩ</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <style>
             * {
@@ -214,6 +214,15 @@
                 background: #f9f9f9;
             }
 
+            /* Column balance only: keep current layout, tune widths */
+            th:nth-child(1), td:nth-child(1) { width: 18%; } /* Bác sĩ */
+            th:nth-child(2), td:nth-child(2) { width: 10%; } /* Loại yêu cầu */
+            th:nth-child(3), td:nth-child(3) { width: 13%; } /* Phạm vi */
+            th:nth-child(4), td:nth-child(4) { width: 30%; } /* Chi tiết thay đổi */
+            th:nth-child(5), td:nth-child(5) { width: 11%; } /* Lý do */
+            th:nth-child(6), td:nth-child(6) { width: 8%; }  /* Trạng thái */
+            th:nth-child(7), td:nth-child(7) { width: 10%; } /* Thao tác */
+
             .status {
                 display: inline-block;
                 padding: 6px 12px;
@@ -239,7 +248,7 @@
             }
 
             .action-col {
-                width: 150px;
+                width: 10%;
             }
 
             .action-stack {
@@ -402,6 +411,27 @@
                 color: #333;
             }
 
+            .group-title {
+                margin: 10px 0 6px;
+                font-size: 13px;
+                font-weight: 700;
+                color: #0f172a;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
+            }
+
+            .group-box {
+                border: 1px solid #dbe4f3;
+                border-radius: 8px;
+                background: #f8fbff;
+                padding: 8px 12px;
+                margin-bottom: 10px;
+            }
+
+            .group-box .form-info-item {
+                padding: 7px 0;
+            }
+
             .modal-footer {
                 display: flex;
                 gap: 10px;
@@ -456,11 +486,11 @@
             <div class="panel">
                 <div class="head">
                     <div>
-                        <h2>Duyet yeu cau doi lich bac si</h2>
-                        <div class="sub">Don cho duyet hien tai: <strong>${pendingCount}</strong></div>
+                        <h2>Duyệt yêu cầu đổi lịch bác sĩ</h2>
+                        <div class="sub">Đơn chờ duyệt hiện tại: <strong>${pendingCount}</strong></div>
                     </div>
                     <a class="btn-muted" href="${pageContext.request.contextPath}/admin-doctor-schedules">
-                        <i class="fas fa-arrow-left"></i> Quay lai lich bac si
+                        <i class="fas fa-arrow-left"></i> Quay lại lịch bác sĩ
                     </a>
                 </div>
 
@@ -476,38 +506,38 @@
 
             <form id="filterForm" method="GET" action="${pageContext.request.contextPath}/admin-schedule-requests" class="toolbar">
                 <div class="search-box">
-                    <label>Tim kiem</label>
-                    <input type="text" id="keywordInput" name="keyword" value="${keyword}" placeholder="Ten bac si, ma don, ly do...">
+                    <label>Tìm kiếm</label>
+                    <input type="text" id="keywordInput" name="keyword" value="${keyword}" placeholder="Tên bác sĩ, lý do...">
                 </div>
                 <div class="filter-box">
-                    <label>Loai</label>
+                    <label>Phạm vi</label>
                     <select name="requestType" onchange="this.form.submit()">
-                        <option value="ALL" ${requestTypeFilter == 'ALL' ? 'selected' : ''}>Tat ca</option>
-                        <option value="TEMPORARY" ${requestTypeFilter == 'TEMPORARY' ? 'selected' : ''}>Tam thoi</option>
-                        <option value="PERMANENT" ${requestTypeFilter == 'PERMANENT' ? 'selected' : ''}>Vinh vien</option>
+                        <option value="ALL" ${requestTypeFilter == 'ALL' ? 'selected' : ''}>Tất cả</option>
+                        <option value="TEMPORARY" ${requestTypeFilter == 'TEMPORARY' ? 'selected' : ''}>Tạm thời</option>
+                        <option value="PERMANENT" ${requestTypeFilter == 'PERMANENT' ? 'selected' : ''}>Dài hạn</option>
                     </select>
                 </div>
                 <div class="filter-box">
-                    <label>Yeu cau</label>
+                    <label>Loại yêu cầu</label>
                     <select name="actionType" onchange="this.form.submit()">
-                        <option value="ALL" ${actionTypeFilter == 'ALL' ? 'selected' : ''}>Tat ca</option>
-                        <option value="ADD" ${actionTypeFilter == 'ADD' ? 'selected' : ''}>Them ca</option>
-                        <option value="UPDATE" ${actionTypeFilter == 'UPDATE' ? 'selected' : ''}>Cap nhat ca</option>
-                        <option value="REMOVE" ${actionTypeFilter == 'REMOVE' ? 'selected' : ''}>Xoa ca</option>
+                        <option value="ALL" ${actionTypeFilter == 'ALL' ? 'selected' : ''}>Tất cả</option>
+                        <option value="ADD" ${actionTypeFilter == 'ADD' ? 'selected' : ''}>Thêm ca</option>
+                        <option value="UPDATE" ${actionTypeFilter == 'UPDATE' ? 'selected' : ''}>Đổi ca</option>
+                        <option value="REMOVE" ${actionTypeFilter == 'REMOVE' ? 'selected' : ''}>Xóa ca</option>
                     </select>
                 </div>
                 <div class="filter-box">
-                    <label>Trang thai</label>
+                    <label>Trạng thái</label>
                     <select name="status" onchange="this.form.submit()">
-                        <option value="ALL" ${statusFilter == 'ALL' ? 'selected' : ''}>Tat ca</option>
-                        <option value="PENDING" ${statusFilter == 'PENDING' ? 'selected' : ''}>Cho duyet</option>
-                        <option value="APPROVED" ${statusFilter == 'APPROVED' ? 'selected' : ''}>Da duyet</option>
-                        <option value="REJECTED" ${statusFilter == 'REJECTED' ? 'selected' : ''}>Da tu choi</option>
+                        <option value="ALL" ${statusFilter == 'ALL' ? 'selected' : ''}>Tất cả</option>
+                        <option value="PENDING" ${statusFilter == 'PENDING' ? 'selected' : ''}>Chờ duyệt</option>
+                        <option value="APPROVED" ${statusFilter == 'APPROVED' ? 'selected' : ''}>Đã duyệt</option>
+                        <option value="REJECTED" ${statusFilter == 'REJECTED' ? 'selected' : ''}>Đã từ chối</option>
                     </select>
                 </div>
                 <div class="toolbar-buttons">
-                    <button class="btn-search" type="submit"><i class="fas fa-search"></i> Tim</button>
-                    <a class="btn-reset" href="${pageContext.request.contextPath}/admin-schedule-requests"><i class="fas fa-redo"></i> Dat lai</a>
+                    <button class="btn-search" type="submit"><i class="fas fa-search"></i> Tìm</button>
+                    <a class="btn-reset" href="${pageContext.request.contextPath}/admin-schedule-requests"><i class="fas fa-redo"></i> Đặt lại</a>
                 </div>
             </form>
 
@@ -515,20 +545,20 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Bac si</th>
-                            <th>Loai</th>
-                            <th>Yeu cau</th>
-                            <th>Ngay ap dung</th>
-                            <th>Gui luc</th>
-                            <th>Trang thai</th>
-                            <th class="action-col">Thao tac</th>
+                            <th>Bác sĩ</th>
+                            <th>Loại yêu cầu</th>
+                            <th>Phạm vi</th>
+                            <th>Chi tiết thay đổi</th>
+                            <th>Lý do</th>
+                            <th>Trạng thái</th>
+                            <th class="action-col">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         <c:choose>
                             <c:when test="${empty requests}">
                                 <tr>
-                                    <td colspan="7" class="empty">Khong co don phu hop bo loc hien tai.</td>
+                                    <td colspan="7" class="empty">Không có đơn phù hợp bộ lọc hiện tại.</td>
                                 </tr>
                             </c:when>
                             <c:otherwise>
@@ -537,43 +567,146 @@
                                         <td>${item.doctorName}</td>
                                         <td>
                                             <c:choose>
-                                                <c:when test="${item.requestType == 'TEMPORARY'}">Tam thoi</c:when>
-                                                <c:otherwise>Vinh vien</c:otherwise>
+                                                <c:when test="${item.actionType == 'REMOVE'}">Xóa ca</c:when>
+                                                <c:when test="${item.actionType == 'UPDATE'}">Đổi ca</c:when>
+                                                <c:otherwise>Thêm ca</c:otherwise>
                                             </c:choose>
                                         </td>
                                         <td>
                                             <c:choose>
-                                                <c:when test="${item.actionType == 'REMOVE'}">Xoa ca</c:when>
-                                                <c:when test="${item.actionType == 'UPDATE'}">Cap nhat ca</c:when>
-                                                <c:otherwise>Them ca</c:otherwise>
+                                                <c:when test="${item.requestType == 'TEMPORARY'}">Tạm thời</c:when>
+                                                <c:otherwise>Dài hạn</c:otherwise>
                                             </c:choose>
                                         </td>
                                         <td>
                                             <c:choose>
-                                                <c:when test="${item.scopeType == 'ONE_DATE' && not empty item.workDate}">
-                                                    <fmt:formatDate value="${item.workDate}" pattern="dd/MM/yyyy" />
-                                                </c:when>
-                                                <c:when test="${not empty item.dayOfWeek}">
+                                                <c:when test="${item.actionType == 'UPDATE'}">
+                                                    <c:set var="oldDateText" value="-" />
+                                                    <c:set var="newDateText" value="-" />
+                                                    <c:set var="oldShiftText" value="-" />
+                                                    <c:set var="newShiftText" value="-" />
+                                                    <c:set var="newDoctorText" value="${empty item.newDoctorName ? '-' : item.newDoctorName}" />
+
                                                     <c:choose>
-                                                        <c:when test="${item.dayOfWeek == 0}">Chu nhat</c:when>
-                                                        <c:when test="${item.dayOfWeek == 1}">Thu 2</c:when>
-                                                        <c:when test="${item.dayOfWeek == 2}">Thu 3</c:when>
-                                                        <c:when test="${item.dayOfWeek == 3}">Thu 4</c:when>
-                                                        <c:when test="${item.dayOfWeek == 4}">Thu 5</c:when>
-                                                        <c:when test="${item.dayOfWeek == 5}">Thu 6</c:when>
-                                                        <c:otherwise>Thu 7</c:otherwise>
+                                                        <c:when test="${item.requestType == 'PERMANENT'}">
+                                                            <c:choose>
+                                                                <c:when test="${item.oldDayOfWeek == 0}"><c:set var="oldDateText" value="Chủ nhật" /></c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 1}"><c:set var="oldDateText" value="Thứ 2" /></c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 2}"><c:set var="oldDateText" value="Thứ 3" /></c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 3}"><c:set var="oldDateText" value="Thứ 4" /></c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 4}"><c:set var="oldDateText" value="Thứ 5" /></c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 5}"><c:set var="oldDateText" value="Thứ 6" /></c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 6}"><c:set var="oldDateText" value="Thứ 7" /></c:when>
+                                                            </c:choose>
+                                                            <c:choose>
+                                                                <c:when test="${item.dayOfWeek == 0}"><c:set var="newDateText" value="Chủ nhật" /></c:when>
+                                                                <c:when test="${item.dayOfWeek == 1}"><c:set var="newDateText" value="Thứ 2" /></c:when>
+                                                                <c:when test="${item.dayOfWeek == 2}"><c:set var="newDateText" value="Thứ 3" /></c:when>
+                                                                <c:when test="${item.dayOfWeek == 3}"><c:set var="newDateText" value="Thứ 4" /></c:when>
+                                                                <c:when test="${item.dayOfWeek == 4}"><c:set var="newDateText" value="Thứ 5" /></c:when>
+                                                                <c:when test="${item.dayOfWeek == 5}"><c:set var="newDateText" value="Thứ 6" /></c:when>
+                                                                <c:when test="${item.dayOfWeek == 6}"><c:set var="newDateText" value="Thứ 7" /></c:when>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:if test="${not empty item.oldWorkDate}">
+                                                                <fmt:formatDate value="${item.oldWorkDate}" pattern="dd/MM/yyyy" var="oldDateFmt" />
+                                                                <c:set var="oldDateText" value="${oldDateFmt}" />
+                                                            </c:if>
+                                                            <c:if test="${not empty item.workDate}">
+                                                                <fmt:formatDate value="${item.workDate}" pattern="dd/MM/yyyy" var="newDateFmt" />
+                                                                <c:set var="newDateText" value="${newDateFmt}" />
+                                                            </c:if>
+                                                        </c:otherwise>
+                                                    </c:choose>
+
+                                                    <c:choose>
+                                                        <c:when test="${not empty item.oldStartTime and fn:startsWith(item.oldStartTime, '0')}">
+                                                            <c:set var="oldShiftText" value="Sáng" />
+                                                        </c:when>
+                                                        <c:when test="${not empty item.oldStartTime}">
+                                                            <c:set var="oldShiftText" value="Chiều" />
+                                                        </c:when>
+                                                    </c:choose>
+                                                    <c:choose>
+                                                        <c:when test="${not empty item.startTime and fn:startsWith(item.startTime, '0')}">
+                                                            <c:set var="newShiftText" value="Sáng" />
+                                                        </c:when>
+                                                        <c:when test="${not empty item.startTime}">
+                                                            <c:set var="newShiftText" value="Chiều" />
+                                                        </c:when>
+                                                    </c:choose>
+
+                                                    <c:choose>
+                                                        <c:when test="${oldDateText == '-' and oldShiftText == '-'}">
+                                                            Không rõ ca cũ - ${newDateText} ${newShiftText} (${newDoctorText})
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            ${oldDateText} ${oldShiftText} - ${newDateText} ${newShiftText} (${newDoctorText})
+                                                        </c:otherwise>
                                                     </c:choose>
                                                 </c:when>
-                                                <c:otherwise>-</c:otherwise>
+                                                <c:otherwise>
+                                                    <c:choose>
+                                                        <c:when test="${not empty item.workDate}">
+                                                            <fmt:formatDate value="${item.workDate}" pattern="dd/MM/yyyy" />
+                                                        </c:when>
+                                                        <c:when test="${not empty item.oldWorkDate}">
+                                                            <fmt:formatDate value="${item.oldWorkDate}" pattern="dd/MM/yyyy" />
+                                                        </c:when>
+                                                        <c:when test="${not empty item.dayOfWeek}">
+                                                            <c:choose>
+                                                                <c:when test="${item.dayOfWeek == 0}">Chủ nhật</c:when>
+                                                                <c:when test="${item.dayOfWeek == 1}">Thứ 2</c:when>
+                                                                <c:when test="${item.dayOfWeek == 2}">Thứ 3</c:when>
+                                                                <c:when test="${item.dayOfWeek == 3}">Thứ 4</c:when>
+                                                                <c:when test="${item.dayOfWeek == 4}">Thứ 5</c:when>
+                                                                <c:when test="${item.dayOfWeek == 5}">Thứ 6</c:when>
+                                                                <c:otherwise>Thứ 7</c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <c:when test="${not empty item.oldDayOfWeek}">
+                                                            <c:choose>
+                                                                <c:when test="${item.oldDayOfWeek == 0}">Chủ nhật</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 1}">Thứ 2</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 2}">Thứ 3</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 3}">Thứ 4</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 4}">Thứ 5</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 5}">Thứ 6</c:when>
+                                                                <c:otherwise>Thứ 7</c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <c:otherwise>-</c:otherwise>
+                                                    </c:choose>
+                                                    -
+                                                    <c:choose>
+                                                        <c:when test="${item.actionType == 'REMOVE'}">
+                                                            <c:choose>
+                                                                <c:when test="${not empty item.oldStartTime and fn:startsWith(item.oldStartTime, '0')}">Sáng</c:when>
+                                                                <c:when test="${not empty item.oldStartTime}">Chiều</c:when>
+                                                                <c:when test="${not empty item.startTime and fn:startsWith(item.startTime, '0')}">Sáng</c:when>
+                                                                <c:when test="${not empty item.startTime}">Chiều</c:when>
+                                                                <c:otherwise>-</c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:choose>
+                                                                <c:when test="${not empty item.startTime and fn:startsWith(item.startTime, '0')}">Sáng</c:when>
+                                                                <c:when test="${not empty item.startTime}">Chiều</c:when>
+                                                                <c:otherwise>-</c:otherwise>
+                                                            </c:choose>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </c:otherwise>
                                             </c:choose>
                                         </td>
-                                        <td><fmt:formatDate value="${item.requestedAt}" pattern="dd/MM/yyyy HH:mm" /></td>
+                                        <td>${empty item.reason ? '-' : item.reason}</td>
                                         <td>
                                             <span class="status ${item.status}">
                                                 <c:choose>
-                                                    <c:when test="${item.status == 'PENDING'}">Cho duyet</c:when>
-                                                    <c:when test="${item.status == 'APPROVED'}">Da duyet</c:when>
-                                                    <c:otherwise>Tu choi</c:otherwise>
+                                                    <c:when test="${item.status == 'PENDING'}">Chờ duyệt</c:when>
+                                                    <c:when test="${item.status == 'APPROVED'}">Đã duyệt</c:when>
+                                                    <c:otherwise>Từ chối</c:otherwise>
                                                 </c:choose>
                                             </span>
                                         </td>
@@ -591,7 +724,7 @@
                                                             <button
                                                                 class="btn-action btn-view"
                                                                 type="button"
-                                                                title="Xem chi tiet"
+                                                                title="Xem chi tiết"
                                                                 data-request-id="${item.requestId}"
                                                                 data-doctor-name="${fn:escapeXml(item.doctorName)}"
                                                                 data-request-type="${item.requestType}"
@@ -606,25 +739,31 @@
                                                                 data-start-time="${item.startTime}"
                                                                 data-end-time="${item.endTime}"
                                                                 data-max-patients="${item.maxPatients}"
+                                                                data-old-doctor-name="${fn:escapeXml(item.oldDoctorName)}"
+                                                                data-old-day-of-week="${item.oldDayOfWeek}"
+                                                                data-old-start-time="${item.oldStartTime}"
+                                                                data-old-end-time="${item.oldEndTime}"
+                                                                data-old-work-date="${item.oldWorkDate}"
+                                                                data-new-doctor-name="${fn:escapeXml(item.newDoctorName)}"
                                                                 data-admin-note="${fn:escapeXml(item.adminNote)}"
                                                                 onclick="viewRequestDetail(this)">
                                                                 <i class="fas fa-eye"></i>
                                                             </button>
-                                                            <button class="btn-action btn-approve" type="submit" name="decision" value="APPROVED" title="Dong y">
+                                                            <button class="btn-action btn-approve" type="submit" name="decision" value="APPROVED" title="Đồng ý">
                                                                 <i class="fas fa-check"></i>
                                                             </button>
-                                                            <button class="btn-action btn-reject" type="submit" name="decision" value="REJECTED" title="Tu choi">
+                                                            <button class="btn-action btn-reject" type="submit" name="decision" value="REJECTED" title="Từ chối">
                                                                 <i class="fas fa-xmark"></i>
                                                             </button>
                                                         </div>
-                                                        <textarea name="adminNote" placeholder="Ghi chu xu ly (tuy chon)"></textarea>
+                                                        <textarea name="adminNote" placeholder="Ghi chú xử lý (tùy chọn)"></textarea>
                                                     </form>
                                                 </c:when>
                                                 <c:otherwise>
                                                     <button
                                                         class="btn-action btn-view"
                                                         type="button"
-                                                        title="Xem chi tiet"
+                                                        title="Xem chi tiết"
                                                         data-request-id="${item.requestId}"
                                                         data-doctor-name="${fn:escapeXml(item.doctorName)}"
                                                         data-request-type="${item.requestType}"
@@ -639,6 +778,12 @@
                                                         data-start-time="${item.startTime}"
                                                         data-end-time="${item.endTime}"
                                                         data-max-patients="${item.maxPatients}"
+                                                        data-old-doctor-name="${fn:escapeXml(item.oldDoctorName)}"
+                                                        data-old-day-of-week="${item.oldDayOfWeek}"
+                                                        data-old-start-time="${item.oldStartTime}"
+                                                        data-old-end-time="${item.oldEndTime}"
+                                                        data-old-work-date="${item.oldWorkDate}"
+                                                        data-new-doctor-name="${fn:escapeXml(item.newDoctorName)}"
                                                         data-admin-note="${fn:escapeXml(item.adminNote)}"
                                                         onclick="viewRequestDetail(this)">
                                                         <i class="fas fa-eye"></i>
@@ -658,28 +803,50 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <i class="fas fa-file-circle-check"></i>
-                        <span>Chi tiet don doi lich</span>
+                        <span>Chi tiết đơn đổi lịch</span>
                         <button class="modal-close" type="button" onclick="closeRequestModal()">×</button>
                     </div>
 
                     <div class="form-info">
-                        <div class="form-info-item"><strong>Ma don:</strong><span id="mRequestId"></span></div>
-                        <div class="form-info-item"><strong>Bac si:</strong><span id="mDoctorName"></span></div>
-                        <div class="form-info-item"><strong>Loai:</strong><span id="mRequestType"></span></div>
-                        <div class="form-info-item"><strong>Yeu cau:</strong><span id="mActionType"></span></div>
-                        <div class="form-info-item"><strong>Ngay ap dung:</strong><span id="mApplyDate"></span></div>
-                        <div class="form-info-item"><strong>Gui luc:</strong><span id="mRequestedAt"></span></div>
-                        <div class="form-info-item"><strong>Trang thai:</strong><span id="mStatus"></span></div>
-                        <div class="form-info-item"><strong>Ly do:</strong><span id="mReason"></span></div>
-                        <div class="form-info-item" id="mTargetShiftRow"><strong>Ca goc:</strong><span id="mTargetShift"></span></div>
-                        <div class="form-info-item" id="mTimeRangeRow"><strong>Khung gio:</strong><span id="mTimeRange"></span></div>
-                        <div class="form-info-item" id="mMaxPatientsRow"><strong>So BN toi da:</strong><span id="mMaxPatients"></span></div>
-                        <div class="form-info-item"><strong>Ghi chu admin:</strong><span id="mAdminNote"></span></div>
+                        <div class="form-info-item"><strong>Bác sĩ gửi yêu cầu:</strong><span id="mDoctorName"></span></div>
+                        <div class="form-info-item"><strong>Loại yêu cầu:</strong><span id="mRequestType"></span></div>
+                        <div class="form-info-item"><strong>Phạm vi:</strong><span id="mScopeType"></span></div>
+
+                        <div id="mAddSection">
+                            <div class="form-info-item"><strong>Ngày áp dụng:</strong><span id="mAddApplyDate"></span></div>
+                            <div class="form-info-item"><strong>Ca làm việc:</strong><span id="mAddShift"></span></div>
+                            <div class="form-info-item"><strong>Số bệnh nhân tối đa:</strong><span id="mAddMaxPatients"></span></div>
+                        </div>
+
+                        <div id="mUpdateSection">
+                            <div class="group-title">Ca làm việc gốc</div>
+                            <div class="group-box">
+                                <div class="form-info-item"><strong>Ngày áp dụng:</strong><span id="mOldApplyDate"></span></div>
+                                <div class="form-info-item"><strong>Ca làm việc:</strong><span id="mOldShift"></span></div>
+                            </div>
+
+                            <div class="group-title">Ca làm việc muốn đổi</div>
+                            <div class="group-box">
+                                <div class="form-info-item"><strong>Bác sĩ:</strong><span id="mNewDoctor"></span></div>
+                                <div class="form-info-item"><strong>Ngày áp dụng:</strong><span id="mNewApplyDate"></span></div>
+                                <div class="form-info-item"><strong>Ca làm việc:</strong><span id="mNewShift"></span></div>
+                            </div>
+                        </div>
+
+                        <div id="mRemoveSection">
+                            <div class="form-info-item"><strong>Ngày áp dụng:</strong><span id="mRemoveApplyDate"></span></div>
+                            <div class="form-info-item"><strong>Ca làm việc:</strong><span id="mRemoveShift"></span></div>
+                        </div>
+
+                        <div class="form-info-item"><strong>Lý do:</strong><span id="mReason"></span></div>
+                        <div class="form-info-item"><strong>Ngày gửi:</strong><span id="mRequestedAt"></span></div>
+                        <div class="form-info-item"><strong>Trạng thái:</strong><span id="mStatus"></span></div>
+                        <div class="form-info-item"><strong>Ghi chú admin:</strong><span id="mAdminNote"></span></div>
                     </div>
 
                     <div class="modal-footer">
                         <button class="btn-cancel" type="button" onclick="closeRequestModal()">
-                            <i class="fas fa-times"></i> Dong
+                            <i class="fas fa-times"></i> Đóng
                         </button>
                     </div>
                 </div>
@@ -688,32 +855,36 @@
 
         <script>
             function mapRequestType(value) {
-                return value === 'TEMPORARY' ? 'Tam thoi' : 'Vinh vien';
+                if (value === 'REMOVE') return 'Xóa ca';
+                if (value === 'UPDATE') return 'Đổi ca';
+                return 'Thêm ca';
             }
 
             function mapActionType(value) {
-                if (value === 'REMOVE') return 'Xoa ca';
-                if (value === 'UPDATE') return 'Cap nhat ca';
-                return 'Them ca';
+                return value === 'TEMPORARY' ? 'Tạm thời' : 'Dài hạn';
+            }
+
+            function mapScopeType(value) {
+                return value === 'TEMPORARY' ? 'Tạm thời' : 'Dài hạn';
             }
 
             function mapDayOfWeek(value) {
                 const map = {
-                    '0': 'Chu nhat',
-                    '1': 'Thu 2',
-                    '2': 'Thu 3',
-                    '3': 'Thu 4',
-                    '4': 'Thu 5',
-                    '5': 'Thu 6',
-                    '6': 'Thu 7'
+                    '0': 'Chủ nhật',
+                    '1': 'Thứ 2',
+                    '2': 'Thứ 3',
+                    '3': 'Thứ 4',
+                    '4': 'Thứ 5',
+                    '5': 'Thứ 6',
+                    '6': 'Thứ 7'
                 };
                 return map[String(value)] || '-';
             }
 
             function mapStatusText(value) {
-                if (value === 'PENDING') return 'Cho duyet';
-                if (value === 'APPROVED') return 'Da duyet';
-                return 'Tu choi';
+                if (value === 'PENDING') return 'Chờ duyệt';
+                if (value === 'APPROVED') return 'Đã duyệt';
+                return 'Từ chối';
             }
 
             function mapApplyDate(workDate, dayOfWeek) {
@@ -730,45 +901,109 @@
                 return '-';
             }
 
+            function parseIsoDate(isoDate) {
+                if (!isoDate || isoDate === 'null') return null;
+                const parts = isoDate.split('-');
+                if (parts.length !== 3) return null;
+                const y = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10) - 1;
+                const d = parseInt(parts[2], 10);
+                const date = new Date(y, m, d);
+                return isNaN(date.getTime()) ? null : date;
+            }
+
+            function formatDateDdMmYyyy(date) {
+                const dd = String(date.getDate()).padStart(2, '0');
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const yyyy = date.getFullYear();
+                return dd + '/' + mm + '/' + yyyy;
+            }
+
+            function deriveOldApplyDate(workDate, newDayOfWeek, oldDayOfWeek) {
+                const base = parseIsoDate(workDate);
+                const newDay = parseInt(newDayOfWeek, 10);
+                const oldDay = parseInt(oldDayOfWeek, 10);
+                if (!base || isNaN(newDay) || isNaN(oldDay)) {
+                    return mapApplyDate('', oldDayOfWeek);
+                }
+                const diff = oldDay - newDay;
+                const oldDate = new Date(base);
+                oldDate.setDate(oldDate.getDate() + diff);
+                return formatDateDdMmYyyy(oldDate);
+            }
+
+            function normalizeTime(timeValue) {
+                if (!timeValue || timeValue === 'null') return '';
+                return String(timeValue).length >= 5 ? String(timeValue).substring(0, 5) : String(timeValue);
+            }
+
+            function buildShiftText(startTime, endTime, targetShiftId) {
+                const start = normalizeTime(startTime);
+                const end = normalizeTime(endTime);
+                if (start && end) {
+                    const hour = parseInt(start.split(':')[0], 10);
+                    if (!isNaN(hour)) {
+                        return hour < 12 ? 'Sáng' : 'Chiều';
+                    }
+                    return start + ' - ' + end;
+                }
+                return '-';
+            }
+
             function viewRequestDetail(btn) {
                 const d = btn.dataset;
-                document.getElementById('mRequestId').textContent = '#' + (d.requestId || '-');
+                const actionType = d.actionType || 'ADD';
+                const applyDate = mapApplyDate(d.workDate, d.dayOfWeek);
+                const newShiftText = buildShiftText(d.startTime, d.endTime, d.targetShiftId);
+                const oldShiftText = buildShiftText(d.oldStartTime, d.oldEndTime, d.targetShiftId);
+                const oldApplyDate = mapApplyDate('', d.oldDayOfWeek);
+
                 document.getElementById('mDoctorName').textContent = d.doctorName || '-';
-                document.getElementById('mRequestType').textContent = mapRequestType(d.requestType);
-                document.getElementById('mActionType').textContent = mapActionType(d.actionType);
-                document.getElementById('mApplyDate').textContent = mapApplyDate(d.workDate, d.dayOfWeek);
+                document.getElementById('mRequestType').textContent = mapRequestType(actionType);
+                document.getElementById('mScopeType').textContent = mapScopeType(d.requestType);
                 document.getElementById('mRequestedAt').textContent = d.requestedAt || '-';
 
                 const statusNode = document.getElementById('mStatus');
-                statusNode.innerHTML = '<span class=\"status ' + (d.status || 'PENDING') + '\">' + mapStatusText(d.status) + '</span>';
+                statusNode.innerHTML = '<span class="status ' + (d.status || 'PENDING') + '">' + mapStatusText(d.status) + '</span>';
 
                 document.getElementById('mReason').textContent = d.reason || '-';
-
-                const targetShiftRow = document.getElementById('mTargetShiftRow');
-                const timeRangeRow = document.getElementById('mTimeRangeRow');
-                const maxPatientsRow = document.getElementById('mMaxPatientsRow');
-
-                if (d.targetShiftId && d.targetShiftId !== 'null') {
-                    targetShiftRow.style.display = 'flex';
-                    document.getElementById('mTargetShift').textContent = '#' + d.targetShiftId;
-                } else {
-                    targetShiftRow.style.display = 'none';
-                }
-
-                if (d.startTime && d.endTime && d.startTime !== 'null' && d.endTime !== 'null') {
-                    timeRangeRow.style.display = 'flex';
-                    document.getElementById('mTimeRange').textContent = d.startTime + ' - ' + d.endTime;
-                } else {
-                    timeRangeRow.style.display = 'none';
-                }
-
-                if (d.maxPatients && d.maxPatients !== 'null') {
-                    maxPatientsRow.style.display = 'flex';
-                    document.getElementById('mMaxPatients').textContent = d.maxPatients;
-                } else {
-                    maxPatientsRow.style.display = 'none';
-                }
                 document.getElementById('mAdminNote').textContent = (d.adminNote && d.adminNote !== 'null') ? d.adminNote : '-';
+
+                const addSection = document.getElementById('mAddSection');
+                const updateSection = document.getElementById('mUpdateSection');
+                const removeSection = document.getElementById('mRemoveSection');
+                addSection.style.display = 'none';
+                updateSection.style.display = 'none';
+                removeSection.style.display = 'none';
+
+                if (actionType === 'ADD') {
+                    addSection.style.display = 'block';
+                    document.getElementById('mAddApplyDate').textContent = applyDate;
+                    document.getElementById('mAddShift').textContent = newShiftText;
+                    document.getElementById('mAddMaxPatients').textContent = (d.maxPatients && d.maxPatients !== 'null') ? d.maxPatients : '-';
+                } else if (actionType === 'UPDATE') {
+                    updateSection.style.display = 'block';
+                    const oldDateView = mapApplyDate(d.oldWorkDate, d.oldDayOfWeek) !== '-'
+                        ? mapApplyDate(d.oldWorkDate, d.oldDayOfWeek)
+                        : deriveOldApplyDate(d.workDate, d.dayOfWeek, d.oldDayOfWeek);
+                    const hasOldShift = oldShiftText && oldShiftText !== '-';
+                    const hasOldDate = oldDateView && oldDateView !== '-';
+
+                    document.getElementById('mOldApplyDate').textContent = hasOldDate ? oldDateView : 'Không rõ ngày cũ';
+                    document.getElementById('mOldShift').textContent = hasOldShift ? oldShiftText : 'Không rõ ca cũ';
+                    document.getElementById('mNewDoctor').textContent = (d.newDoctorName && d.newDoctorName !== 'null') ? d.newDoctorName : (d.doctorName || '-');
+                    document.getElementById('mNewApplyDate').textContent = applyDate;
+                    document.getElementById('mNewShift').textContent = newShiftText;
+                } else {
+                    removeSection.style.display = 'block';
+                    document.getElementById('mRemoveApplyDate').textContent = applyDate;
+                    const removeShiftText = buildShiftText(
+                        d.oldStartTime || d.startTime,
+                        d.oldEndTime || d.endTime,
+                        d.targetShiftId
+                    );
+                    document.getElementById('mRemoveShift').textContent = removeShiftText;
+                }
 
                 document.getElementById('viewRequestModal').style.display = 'block';
             }

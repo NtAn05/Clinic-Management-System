@@ -538,7 +538,7 @@
                             </div>
                             <div class="search-box">
                                 <label><i class="fas fa-dollar-sign"></i> Giá đến</label>
-                                <input type="number" name="maxPrice" value="${maxPriceValue}" min="0" placeholder="Không giới hạn" onchange="this.form.submit()">
+                                <input type="number" name="maxPrice" value="${maxPriceValue}" min="0" placeholder="1000000000" onchange="this.form.submit()">
                             </div>
                             <input type="hidden" name="page" value="1">
                             <div class="toolbar-buttons">
