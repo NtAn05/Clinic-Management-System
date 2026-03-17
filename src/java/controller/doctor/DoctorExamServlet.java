@@ -279,10 +279,11 @@ public class DoctorExamServlet extends HttpServlet {
                 return;
             }
             NotificationDAO notificationDAO = new NotificationDAO();
+            String patientName = examData.getPatientName() == null ? "Bệnh nhân" : examData.getPatientName().trim();
             notificationDAO.createNotificationForAppointment(
                     appointmentId,
                     "Khám bệnh đã hoàn tất",
-                    "Bác sĩ đã hoàn tất buổi khám của bạn. Vui lòng vào hồ sơ để xem kết quả và chỉ định điều trị.",
+                    "Đã hoàn tất buổi khám cho " + patientName + ". Vui lòng vào hồ sơ để xem kết quả và chỉ định điều trị.",
                     "examination_completed",
                     "appointment:" + appointmentId + ":exam_done"
             );

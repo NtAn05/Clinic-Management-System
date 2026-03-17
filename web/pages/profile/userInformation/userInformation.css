@@ -1,227 +1,109 @@
-/* ===== PAGE ===== */
-
-.page{
-    max-width:1100px;
-    margin:auto;
-    padding:25px 20px;
+/* ================= CSS VARIABLES ================= */
+:root {
+    --primary: #0061ff; 
+    --primary-hover: #004ecc;
+    --success: #16a34a; 
+    --success-hover: #15803d;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --bg-body: #f4f7fe;
+    --text-main: #334155;
+    --text-muted: #64748b;
+    --border-color: #cbd5e1;
+    --shadow-card: 0 10px 25px rgba(0, 0, 0, 0.05);
 }
 
-.page h3{
-    font-size:26px;
-    margin-bottom:5px;
+/* ================= STICKY FOOTER SETUP ================= */
+html, body {
+    height: 100%;
+    margin: 0;
 }
 
-.page p{
-    color:#64748b;
-    margin-bottom:20px;
+body {
+    display: flex;
+    flex-direction: column; /* Biến body thành 1 cột dọc */
+    background: var(--bg-body);
+    padding-top: 80px; /* Tránh đè Header cố định */
+    color: var(--text-main);
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* ===== PROFILE HEADER ===== */
-
-.profile-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    background:white;
-    padding:20px;
-    border-radius:16px;
-    border:1px solid #e5edff;
-    box-shadow:0 10px 25px rgba(0,0,0,0.05);
-    margin-bottom:20px;
+/* Phần bao bọc nội dung ở giữa (JSP Main Content) */
+.page {
+    flex: 1 0 auto; /* Ép phần này tự giãn để đẩy Footer xuống đáy */
+    width: 92%;
+    max-width: 1000px;
+    margin: 0 auto 60px;
 }
 
-.profile-left{
-    display:flex;
-    align-items:center;
-    gap:15px;
+/* Footer cố định không bị co lại */
+footer {
+    flex-shrink: 0;
 }
 
-/* avatar */
-
-.avatar img{
-    width:70px;
-    height:70px;
-    border-radius:50%;
-    object-fit:cover;
+/* ================= CARDS CHUNG ================= */
+.profile-top, .info-box, .security { 
+    background: white; padding: 30px; border-radius: 16px; 
+    box-shadow: var(--shadow-card); border: 1px solid #e2e8f0; 
 }
 
-/* name */
+/* ================= PROFILE HEADER ================= */
+.profile-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.profile-left { display: flex; align-items: center; gap: 20px; }
+.avatar { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 4px solid #eff6ff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-name h2 { font-size: 24px; margin-bottom: 8px; color: #0f172a; }
+.profile-role { background: #e0e7ff; color: var(--primary); padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: uppercase; }
+.btn-edit-profile { background: #f1f5f9; color: #334155; padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; }
+.btn-edit-profile:hover { background: #e2e8f0; }
 
-.profile-name h2{
-    margin:0;
+/* ================= INFO BOX & FORMS ================= */
+.info-box h4, .security h4 { margin-bottom: 25px; font-size: 18px; color: var(--primary); }
+.security h4 { color: var(--danger); }
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #475569; }
+
+input[type="text"], input[type="email"], input[type="password"], input[type="file"] { 
+    width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); 
+    transition: 0.3s; outline: none; font-size: 15px; 
 }
+input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 97, 255, 0.15); }
 
-.profile-role{
-    display:inline-block;
-    margin-top:4px;
-    font-size:13px;
-    background:#eef2ff;
-    color:#1e40af;
-    padding:4px 10px;
-    border-radius:20px;
-}
+/* Chế độ xem & sửa */
+.main { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+.profile-view .info-box div { display: grid; grid-template-columns: 140px 1fr; padding: 14px 0; border-bottom: 1px dashed #e2e8f0; }
+.profile-view .info-box div:last-child { border-bottom: none; }
+.profile-view p { margin: 0; color: #1e293b; font-weight: 500; }
 
-/* edit button */
+.profile-edit { display: none; }
+.page.edit-mode .profile-view { display: none; }
+.page.edit-mode .profile-edit { display: block; }
 
-.btn-edit-profile{
-    border:none;
-    background:#2563eb;
-    color:white;
-    padding:8px 16px;
-    border-radius:20px;
-    cursor:pointer;
-}
+/* ================= NÚT BẤM VÀ OTP ================= */
+.btn-save-password { background: var(--danger); color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+.btn-save-password:hover { background: var(--danger-hover); }
 
-.btn-edit-profile:hover{
-    background:#1d4ed8;
-}
+.email-input-group { display: flex; gap: 10px; align-items: center; }
+.btn-send-otp { background: #fff; color: var(--primary); border: 2px solid var(--primary); height: 44px; padding: 0 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; white-space: nowrap; display: flex; align-items: center; justify-content: center; }
+.btn-send-otp:hover { background: #eff6ff; }
+.btn-send-otp:disabled { background: #f1f5f9; border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
 
-/* ===== MAIN GRID ===== */
+.btn-save-profile { width: 100%; background: var(--success); color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; margin-top: 25px; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2); }
+.btn-save-profile:hover { background: var(--success-hover); transform: translateY(-2px); }
 
-.main{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:20px;
-}
+.otp-success-box { background-color: #ecfdf5; color: #16a34a; border: 1px solid #bbf7d0; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-top: 15px; display: none; align-items: center; gap: 10px; font-weight: 500; }
+.otp-success-box.expired { background-color: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
-/* ===== INFO CARD ===== */
+.otp-input-section { margin-top: 15px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; display: none; }
+.otp-input-section input { text-align: center; letter-spacing: 12px; font-size: 22px; font-weight: 800; color: var(--primary); height: 55px; background: white; }
 
-.profile-view{
-    grid-column:span 2;
-    background:white;
-    padding:20px;
-    border-radius:16px;
-    border:1px solid #e5edff;
-    box-shadow:0 10px 25px rgba(0,0,0,0.05);
-}
+/* ================= ALERTS ================= */
+.notice { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; font-weight: 500; }
+.notice.success { background: #ecfdf5; color: #16a34a; border: 1px solid #bbf7d0; }
+.notice.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 
-/* ===== EDIT CARD ===== */
-
-.profile-edit{
-    grid-column:span 2;
-    background:white;
-    padding:20px;
-    border-radius:16px;
-    border:1px solid #e5edff;
-    box-shadow:0 10px 25px rgba(0,0,0,0.05);
-    display:none;
-}
-
-/* ===== CHANGE PASSWORD ===== */
-
-.security{
-    grid-column:span 2;
-    background:white;
-    padding:20px;
-    border-radius:16px;
-    border:1px solid #e5edff;
-    box-shadow:0 10px 25px rgba(0,0,0,0.05);
-}
-
-/* ===== INFO FIELD (VIEW MODE) ===== */
-
-.info-box h4{
-    margin-bottom:18px;
-}
-
-/* hiển thị dạng bảng 2 cột */
-
-.profile-view .info-box div{
-    display:grid;
-    grid-template-columns:160px 1fr;
-    align-items:center;
-    padding:10px 0;
-    border-bottom:1px solid #f1f5f9;
-}
-
-.profile-view label{
-    font-size:14px;
-    color:#64748b;
-}
-
-.profile-view p{
-    margin:0;
-    font-size:15px;
-    font-weight:500;
-    color:#0f172a;
-}
-
-/* ===== EDIT MODE FIELD ===== */
-
-.profile-edit .info-box div{
-    margin-bottom:14px;
-}
-
-.profile-edit label{
-    font-size:13px;
-    color:#64748b;
-    display:block;
-    margin-bottom:4px;
-}
-
-/* ===== INPUT ===== */
-
-input{
-    width:100%;
-    padding:10px;
-    border-radius:8px;
-    border:1px solid #dbe2ef;
-    font-size:14px;
-}
-
-input:focus{
-    outline:none;
-    border-color:#2563eb;
-    box-shadow:0 0 0 2px rgba(37,99,235,0.1);
-}
-
-/* ===== PASSWORD FIELD ===== */
-
-.security div{
-    margin-bottom:14px;
-}
-
-.security label{
-    font-size:13px;
-    color:#64748b;
-    display:block;
-    margin-bottom:4px;
-}
-
-/* ===== BUTTONS ===== */
-
-button{
-    margin-top:10px;
-    padding:10px 18px;
-    border:none;
-    border-radius:20px;
-    cursor:pointer;
-}
-
-.profile-edit button{
-    background:#16a34a;
-    color:white;
-}
-
-.profile-edit button:hover{
-    background:#15803d;
-}
-
-.security button{
-    background:#ef4444;
-    color:white;
-}
-
-.security button:hover{
-    background:#dc2626;
-}
-
-/* ===== EDIT MODE ===== */
-
-.page.edit-mode .profile-view{
-    display:none;
-}
-
-.page.edit-mode .profile-edit{
-    display:block;
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .profile-top { flex-direction: column; align-items: flex-start; gap: 15px; }
 }
