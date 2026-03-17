@@ -292,10 +292,7 @@
                         Theo dõi các hành động quan trọng trên hệ thống: đăng nhập, tạo tài khoản, tạo phiếu xét nghiệm...
                     </div>
                 </div>
-                <a href="${pageContext.request.contextPath}/admin-users" class="back-link">
-                    <i class="fa-solid fa-angle-left"></i>
-                    <span>Quản lý tài khoản</span>
-                </a>
+                
             </div>
 
             <form method="get" class="filter-card">

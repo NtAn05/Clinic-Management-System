@@ -141,10 +141,7 @@
                         Tổng hợp nhanh lịch hẹn, phiếu xét nghiệm, doanh thu và năng suất làm việc của bác sĩ.
                     </div>
                 </div>
-                <a href="${pageContext.request.contextPath}/admin-users" class="back-link">
-                    <i class="fa-solid fa-angle-left"></i>
-                    <span>Quản lý tài khoản</span>
-                </a>
+               
             </div>
 
             <div class="grid">
