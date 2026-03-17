@@ -54,21 +54,6 @@
                 </div>
             </div>
 
-            <div class="kpi-core-strip">
-                <div class="kpi-chip">
-                    <span class="kpi-label">Ca hoàn tất hôm nay</span>
-                    <strong class="kpi-value">${stats.doneToday}</strong>
-                </div>
-                <div class="kpi-chip">
-                    <span class="kpi-label">Ca hoàn tất tuần này</span>
-                    <strong class="kpi-value">${stats.doneThisWeek}</strong>
-                </div>
-                <div class="kpi-chip">
-                    <span class="kpi-label">Ca hoàn tất tháng này</span>
-                    <strong class="kpi-value">${stats.doneThisMonth}</strong>
-                </div>
-            </div>
-
             <div class="content">
                 <div class="queue-section">
                     <div class="section-heading">
