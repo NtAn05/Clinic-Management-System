@@ -60,9 +60,7 @@
                         <span>⭐ ${doctor.getRating()}</span>
                     </div>
                     <br>
-                    <p class="price">
-                        <fmt:formatNumber value="${doctor.price}" type="number"/>đ
-                    </p>
+                   
 
 
                 </div>

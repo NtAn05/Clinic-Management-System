@@ -93,6 +93,10 @@ public class ReportDoctorServlet extends HttpServlet {
     HttpSession session = request.getSession();
     User u = (User) session.getAttribute("account"); // user login
 
+        if (u == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return;
+        }
     int userID = u.getUserId();
 
     RatingDAO dao = new RatingDAO();

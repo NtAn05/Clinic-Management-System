@@ -1,160 +1,222 @@
-/* ================= GLOBAL ================= */
-
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-    font-family:"Segoe UI", Arial, sans-serif;
-}
-
-body{
-    background:#f4f7fe;
-    padding-top:80px;
-    color:#333;
-}
-
-/* ================= PAGE ================= */
+/* ===== PAGE ===== */
 
 .page{
-    width:92%;
-    max-width:1200px;
+    max-width:1100px;
     margin:auto;
-    margin-bottom:60px;
+    padding:25px 20px;
 }
 
 .page h3{
-    font-size:28px;
-    margin-bottom:6px;
+    font-size:26px;
+    margin-bottom:5px;
 }
 
 .page p{
-    color:#777;
-    margin-bottom:25px;
+    color:#64748b;
+    margin-bottom:20px;
 }
 
-/* ================= PROFILE HEADER ================= */
+/* ===== PROFILE HEADER ===== */
 
 .profile-top{
-    background:white;
-    padding:25px 30px;
-    border-radius:14px;
-
     display:flex;
     justify-content:space-between;
     align-items:center;
-
-    box-shadow:0 6px 18px rgba(0,0,0,0.06);
-    margin-bottom:30px;
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    border:1px solid #e5edff;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    margin-bottom:20px;
 }
 
 .profile-left{
     display:flex;
     align-items:center;
-    gap:20px;
+    gap:15px;
 }
 
 /* avatar */
 
-.avatar{
-    width:90px;
-    height:90px;
-    border-radius:50%;
-    overflow:hidden;
-    border:4px solid #4e73df;
-}
-
 .avatar img{
-    width:100%;
-    height:100%;
+    width:70px;
+    height:70px;
+    border-radius:50%;
     object-fit:cover;
 }
 
 /* name */
 
 .profile-name h2{
-    font-size:23px;
-    margin-bottom:6px;
+    margin:0;
 }
 
 .profile-role{
-    background:#4e73df;
-    color:white;
-    padding:4px 12px;
+    display:inline-block;
+    margin-top:4px;
+    font-size:13px;
+    background:#eef2ff;
+    color:#1e40af;
+    padding:4px 10px;
     border-radius:20px;
-    font-size:12px;
 }
 
-/* ================= BUTTON ================= */
+/* edit button */
 
 .btn-edit-profile{
-    background:#4e73df;
-    color:white;
     border:none;
-    padding:10px 20px;
-
-    border-radius:8px;
-    font-weight:600;
-
+    background:#2563eb;
+    color:white;
+    padding:8px 16px;
+    border-radius:20px;
     cursor:pointer;
-    transition:0.25s;
 }
 
 .btn-edit-profile:hover{
-    background:#2e59d9;
+    background:#1d4ed8;
 }
 
-/* ================= MAIN LAYOUT ================= */
+/* ===== MAIN GRID ===== */
 
 .main{
     display:grid;
-    grid-template-columns:2fr 1fr;
-    gap:25px;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
 }
 
-/* ================= INFO BOX ================= */
+/* ===== INFO CARD ===== */
 
-.info-box{
+.profile-view{
+    grid-column:span 2;
     background:white;
-    padding:25px;
-    border-radius:14px;
-
-    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    padding:20px;
+    border-radius:16px;
+    border:1px solid #e5edff;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
 }
+
+/* ===== EDIT CARD ===== */
+
+.profile-edit{
+    grid-column:span 2;
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    border:1px solid #e5edff;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    display:none;
+}
+
+/* ===== CHANGE PASSWORD ===== */
+
+.security{
+    grid-column:span 2;
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    border:1px solid #e5edff;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+}
+
+/* ===== INFO FIELD (VIEW MODE) ===== */
 
 .info-box h4{
-    margin-bottom:20px;
-    font-size:18px;
-    color:#4e73df;
+    margin-bottom:18px;
 }
 
-/* ================= PROFILE VIEW ================= */
+/* hiển thị dạng bảng 2 cột */
 
 .profile-view .info-box div{
     display:grid;
     grid-template-columns:160px 1fr;
-
-    padding:12px 0;
-    border-bottom:1px solid #eee;
-}
-
-.profile-view .info-box div:last-child{
-    border-bottom:none;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid #f1f5f9;
 }
 
 .profile-view label{
-    font-weight:600;
-    color:#555;
+    font-size:14px;
+    color:#64748b;
 }
 
 .profile-view p{
-    color:#333;
+    margin:0;
+    font-size:15px;
+    font-weight:500;
+    color:#0f172a;
 }
 
-/* ================= PROFILE EDIT ================= */
+/* ===== EDIT MODE FIELD ===== */
 
-.profile-edit{
-    display:none;
+.profile-edit .info-box div{
+    margin-bottom:14px;
 }
+
+.profile-edit label{
+    font-size:13px;
+    color:#64748b;
+    display:block;
+    margin-bottom:4px;
+}
+
+/* ===== INPUT ===== */
+
+input{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #dbe2ef;
+    font-size:14px;
+}
+
+input:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 2px rgba(37,99,235,0.1);
+}
+
+/* ===== PASSWORD FIELD ===== */
+
+.security div{
+    margin-bottom:14px;
+}
+
+.security label{
+    font-size:13px;
+    color:#64748b;
+    display:block;
+    margin-bottom:4px;
+}
+
+/* ===== BUTTONS ===== */
+
+button{
+    margin-top:10px;
+    padding:10px 18px;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+}
+
+.profile-edit button{
+    background:#16a34a;
+    color:white;
+}
+
+.profile-edit button:hover{
+    background:#15803d;
+}
+
+.security button{
+    background:#ef4444;
+    color:white;
+}
+
+.security button:hover{
+    background:#dc2626;
+}
+
+/* ===== EDIT MODE ===== */
 
 .page.edit-mode .profile-view{
     display:none;
@@ -162,127 +224,4 @@ body{
 
 .page.edit-mode .profile-edit{
     display:block;
-}
-
-.profile-edit .info-box div{
-    display:flex;
-    flex-direction:column;
-    margin-bottom:15px;
-}
-
-.profile-edit label{
-    margin-bottom:5px;
-    font-weight:600;
-}
-
-.profile-edit input[type="text"],
-.profile-edit input[type="email"],
-.profile-edit input[type="file"]{
-    padding:10px;
-
-    border-radius:6px;
-    border:1px solid #ccc;
-
-    transition:0.25s;
-}
-
-.profile-edit input:focus{
-    border-color:#4e73df;
-    outline:none;
-    box-shadow:0 0 5px rgba(78,115,223,0.3);
-}
-
-/* save button */
-
-.profile-edit button{
-    margin-top:10px;
-
-    padding:10px;
-    border:none;
-
-    border-radius:6px;
-    background:#28a745;
-
-    color:white;
-    font-weight:600;
-
-    cursor:pointer;
-}
-
-.profile-edit button:hover{
-    background:#218838;
-}
-
-/* ================= CHANGE PASSWORD ================= */
-
-.security{
-    background:white;
-    padding:25px;
-
-    border-radius:14px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.06);
-}
-
-.security h4{
-    margin-bottom:18px;
-    font-size:18px;
-    color:#d63031;
-}
-
-.security div{
-    display:flex;
-    flex-direction:column;
-    margin-bottom:15px;
-}
-
-.security label{
-    font-weight:600;
-    margin-bottom:5px;
-}
-
-.security input{
-    padding:10px;
-
-    border-radius:6px;
-    border:1px solid #ccc;
-}
-
-.security input:focus{
-    border-color:#d63031;
-    outline:none;
-    box-shadow:0 0 5px rgba(214,48,49,0.3);
-}
-
-.security button{
-    margin-top:10px;
-
-    padding:10px;
-    border-radius:6px;
-    border:none;
-
-    background:#d63031;
-    color:white;
-
-    font-weight:600;
-    cursor:pointer;
-}
-
-.security button:hover{
-    background:#b71c1c;
-}
-
-/* ================= RESPONSIVE ================= */
-
-@media (max-width:900px){
-
-    .main{
-        grid-template-columns:1fr;
-    }
-
-    .profile-top{
-        flex-direction:column;
-        gap:15px;
-        align-items:flex-start;
-    }
-
 }

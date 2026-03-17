@@ -536,6 +536,20 @@ public class DoctorDAO extends DBContext {
         return false;
     }
 
+    public boolean hasAppointmentsForShiftOnDate(int shiftId, Date workDate) {
+        String sql = "SELECT 1 FROM appointments WHERE shift_id = ? AND appointment_date = ? LIMIT 1";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            st.setDate(2, workDate);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
     public void updateDoctorShift(int shiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
         String sql = """
             UPDATE doctor_shifts
@@ -1059,13 +1073,9 @@ public class DoctorDAO extends DBContext {
             COUNT(*) AS total,
             SUM(CASE WHEN q.status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
             SUM(CASE WHEN q.status = 'examining' THEN 1 ELSE 0 END) AS examining,
-            SUM(CASE WHEN q.status = 'done' THEN 1 ELSE 0 END) AS done,
-            SUM(CASE WHEN q.status = 'done' AND DATE(mr.updated_at) = CURDATE() THEN 1 ELSE 0 END) AS done_today,
-            SUM(CASE WHEN q.status = 'done' AND YEARWEEK(mr.updated_at, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END) AS done_this_week,
-            SUM(CASE WHEN q.status = 'done' AND YEAR(mr.updated_at) = YEAR(CURDATE()) AND MONTH(mr.updated_at) = MONTH(CURDATE()) THEN 1 ELSE 0 END) AS done_this_month
+            SUM(CASE WHEN q.status = 'done' THEN 1 ELSE 0 END) AS done
             FROM exam_queue q
             JOIN appointments a ON q.appointment_id = a.appointment_id
-            LEFT JOIN medical_records mr ON mr.appointment_id = a.appointment_id
             WHERE q.doctor_id = ?
         """;
 
@@ -1080,9 +1090,6 @@ public class DoctorDAO extends DBContext {
                 stats.setExamining(rs.getInt("examining"));
                 stats.setDone(done);
                 stats.setCompletionRate(total == 0 ? 0 : (done * 100.0) / total);
-                stats.setDoneToday(rs.getInt("done_today"));
-                stats.setDoneThisWeek(rs.getInt("done_this_week"));
-                stats.setDoneThisMonth(rs.getInt("done_this_month"));
             }
         } catch (SQLException e) {
             e.printStackTrace();

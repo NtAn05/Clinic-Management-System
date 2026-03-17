@@ -61,10 +61,7 @@ public class UserInformationServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
 //        System.out.println("Test display session : ",session);
-        if (session == null || session.getAttribute("account") == null) {
-            response.sendRedirect("login.jsp");
-            return;
-        }
+        
      
         User userSession = (User) session.getAttribute("account");
         int userId = userSession.getUserId();

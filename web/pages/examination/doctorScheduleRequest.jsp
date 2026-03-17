@@ -116,7 +116,7 @@
                                                 <c:otherwise>-</c:otherwise>
                                             </c:choose>
                                             (${shift.startTime} - ${shift.endTime})</option>
-                                    </c:forEach>
+                                        </c:forEach>
                                 </select>
                             </label>
                         </div>
@@ -264,6 +264,13 @@
                 const shiftPeriodInput = document.getElementById('shiftPeriod');
                 const maxPatientsInput = document.getElementById('maxPatients');
 
+                function toDateInputValue(date) {
+                    const tzOffset = date.getTimezoneOffset() * 60000;
+                    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 10);
+                }
+
+                oneDateInput.min = toDateInputValue(new Date());
+                
                 function toggleGroup(group, input, visible) {
                     group.classList.toggle('hidden', !visible);
                     input.disabled = !visible;

@@ -12,6 +12,7 @@ import java.sql.Date;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +105,8 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         Date workDate = parseDate(request.getParameter("workDate"));
         String shiftPeriod = safeUpper(request.getParameter("shiftPeriod"));
 
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+
         LocalTime startTime = null;
         LocalTime endTime = null;
         if ("ADD".equals(actionType)) {
@@ -116,6 +119,10 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
 
         if (error == null && "ONE_DATE".equals(scopeType) && workDate == null) {
             error = "Vui lòng chọn ngày áp dụng cho yêu cầu tạm thời.";
+        }
+
+        if (error == null && "ONE_DATE".equals(scopeType) && workDate != null && workDate.toLocalDate().isBefore(today)) {
+            error = "Không thể chọn ngày trong quá khứ.";
         }
 
         if (error == null && "WEEKLY_TEMPLATE".equals(scopeType) && "ADD".equals(actionType) && dayOfWeek == null) {
@@ -151,6 +158,11 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             error = "Ca gốc không thuộc lịch làm việc của bạn.";
         }
 
+        if (error == null && "UPDATE".equals(actionType) && targetShiftId != null && workDate != null
+                && doctorDAO.hasAppointmentsForShiftOnDate(targetShiftId, workDate)) {
+            error = "Ca gốc đã có lịch hẹn trong ngày này nên không thể đổi.";
+        }
+
         if (error == null && "REMOVE".equals(actionType) && "WEEKLY_TEMPLATE".equals(scopeType) && targetShiftId != null) {
             DoctorShift currentShift = doctorDAO.getDoctorShiftById(targetShiftId);
             if (currentShift != null) {
@@ -168,6 +180,8 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                     error = "Bạn chỉ có thể chọn ca của bác sĩ khác.";
                 } else if (swapShift.getDayOfWeek() != workDateDay) {
                     error = "Ca được chọn không nằm trong ngày áp dụng.";
+                } else if (doctorDAO.hasAppointmentsForShiftOnDate(swapShiftId, workDate)) {
+                    error = "Ca bác sĩ muốn đổi đã có lịch hẹn trong ngày này nên không thể đổi.";
                 } else {
                     startTime = swapShift.getStartTime();
                     endTime = swapShift.getEndTime();
@@ -226,7 +240,6 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         }
         return null;
     }
-
 
     private String deriveScopeType(String requestType, String actionType) {
         if ("UPDATE".equals(actionType)) {
@@ -304,14 +317,22 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
 
     private String getDayLabel(int dayOfWeek) {
         return switch (dayOfWeek) {
-            case 0 -> "Chủ nhật";
-            case 1 -> "Thứ 2";
-            case 2 -> "Thứ 3";
-            case 3 -> "Thứ 4";
-            case 4 -> "Thứ 5";
-            case 5 -> "Thứ 6";
-            case 6 -> "Thứ 7";
-            default -> "Không xác định";
+            case 0 ->
+                "Chủ nhật";
+            case 1 ->
+                "Thứ 2";
+            case 2 ->
+                "Thứ 3";
+            case 3 ->
+                "Thứ 4";
+            case 4 ->
+                "Thứ 5";
+            case 5 ->
+                "Thứ 6";
+            case 6 ->
+                "Thứ 7";
+            default ->
+                "Không xác định";
         };
     }
 

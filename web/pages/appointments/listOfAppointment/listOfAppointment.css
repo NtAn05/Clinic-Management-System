@@ -1,8 +1,8 @@
 /* ================= PAGE ================= */
 
 body{
-    background:#f4f6fb;
-    font-family:"Segoe UI", Arial, sans-serif;
+    background:#f3f4f6;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
 .container{
@@ -11,10 +11,11 @@ body{
     margin-top:22px;
 
     background:white;
-    padding:28px;
+    padding:20px;
 
     border-radius:14px;
-    box-shadow:0 4px 18px rgba(0,0,0,0.05);
+    border:1px solid rgba(148,163,184,0.18);
+    box-shadow:0 12px 35px rgba(15,23,42,0.05);
 }
 
 /* ================= HEADER ================= */
@@ -23,15 +24,16 @@ body{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:15px;
+    margin-bottom:12px;
 }
 
 .header h2{
-    font-size:20px;
+    font-size:16px;
+    font-weight:600;
 }
 
 .total{
-    font-size:14px;
+    font-size:12px;
     color:#6b7280;
 }
 
@@ -39,16 +41,26 @@ body{
 
 .filter-bar{
     display:flex;
-    gap:15px;
-    margin-bottom:15px;
+    gap:10px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
 }
 
 .filter-bar select,
 .filter-bar input{
-    padding:10px 12px;
+    padding:8px 10px;
     border:1px solid #e5e7eb;
     border-radius:10px;
-    font-size:14px;
+    font-size:13px;
+    background:#f9fafb;
+    outline:none;
+}
+
+.filter-bar select:focus,
+.filter-bar input:focus{
+    border-color:#2563eb;
+    background:#fff;
+    box-shadow:0 0 0 1px rgba(37,99,235,0.12);
 }
 
 .filter-bar input{
@@ -58,9 +70,10 @@ body{
 .btn-clear{
     background:white;
     border:1px solid #e5e7eb;
-    padding:10px 14px;
-    border-radius:10px;
+    padding:8px 14px;
+    border-radius:999px;
     cursor:pointer;
+    font-size:13px;
 }
 
 .btn-clear:hover{
@@ -70,30 +83,31 @@ body{
 /* ================= STATS ================= */
 
 .stats{
-    margin-bottom:15px;
+    margin-bottom:10px;
 }
 
 .badge{
-    padding:6px 12px;
-    border-radius:20px;
-    font-size:13px;
-    margin-right:10px;
-    font-weight:500;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    margin-right:8px;
+    display:inline-flex;
+    align-items:center;
 }
 
 .blue{
-    background:#dbeafe;
+    background:#e0edff;
     color:#2563eb;
 }
 
 .yellow{
     background:#fef3c7;
-    color:#b45309;
+    color:#92400e;
 }
 
 .green{
     background:#dcfce7;
-    color:#15803d;
+    color:#166534;
 }
 
 /* ================= TABLE ================= */
@@ -101,24 +115,32 @@ body{
 table{
     width:100%;
     border-collapse:collapse;
-    font-size:14px;
+    font-size:13px;
+}
+
+thead{
+    background:#eef2ff;
 }
 
 th{
-    background:#eef2f7;
-    padding:12px;
+    padding:10px;
     text-align:left;
-    color:#374151;
     font-weight:600;
+    font-size:12px;
+    color:#4b5563;
 }
 
 td{
-    padding:14px 12px;
-    border-bottom:1px solid #f1f5f9;
+    padding:10px;
+    border-bottom:1px solid #e5e7eb;
 }
 
-tr:hover{
-    background:#f9fafb;
+tbody tr:nth-child(even){
+    background:#fdfdfd;
+}
+
+tbody tr:hover{
+    background:#e0edff;
 }
 
 /* small text */
@@ -131,41 +153,42 @@ tr:hover{
 /* ================= STATUS ================= */
 
 .status{
-    padding:6px 14px;
-    border-radius:20px;
-    font-size:12px;
-    font-weight:500;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:11px;
+    display:inline-flex;
+    align-items:center;
 }
 
 /* chờ thanh toán */
 
 .status.booked{
-    background:#fde68a;
+    background:#fef3c7;
     color:#92400e;
 }
 
 /* đã thanh toán */
 
 .status.completed{
-    background:#bbf7d0;
+    background:#dcfce7;
     color:#166534;
 }
 
 /* ================= BOOKING TYPE ================= */
 
 .booking{
-    padding:5px 12px;
-    border-radius:20px;
-    font-size:12px;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:11px;
 }
 
 .booking.online{
-    background:#dbeafe;
+    background:#e0edff;
     color:#2563eb;
 }
 
 .booking.walkin{
-    background:#fde68a;
+    background:#fef3c7;
     color:#92400e;
 }
 
@@ -175,23 +198,50 @@ tr:hover{
     background:#16a34a;
     color:white;
     border:none;
-
-    padding:8px 14px;
-    border-radius:20px;
-
+    padding:7px 14px;
+    border-radius:999px;
     font-size:13px;
-    font-weight:500;
-
     cursor:pointer;
 }
 
 .btn-update:hover{
-    background:#15803d;
+    filter:brightness(1.05);
 }
 
 /* completed text */
 
 .done{
     color:#6b7280;
-    font-size:13px;
+    font-size:12px;
+}
+/* ===== STATUS SELECT ===== */
+
+.status-select{
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid #e5e7eb;
+    font-size:12px;
+    background:#f9fafb;
+    color:#374151;
+    cursor:pointer;
+    outline:none;
+}
+
+/* hover */
+
+.status-select:hover{
+    background:#f3f4f6;
+}
+
+/* focus */
+
+.status-select:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 1px rgba(37,99,235,0.15);
+}
+
+/* option */
+
+.status-select option{
+    font-size:12px;
 }

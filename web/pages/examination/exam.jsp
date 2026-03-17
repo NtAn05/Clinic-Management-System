@@ -144,14 +144,6 @@
                                 <h3>Tạo yêu cầu xét nghiệm</h3>
                                 <div id="labRequestList" class="rx-list">
                                     <div class="rx-row lab-row">
-                                        <select name="labTestType">
-                                            <option value="">Chọn loại xét nghiệm</option>
-                                            <option value="Công thức máu">Công thức máu</option>
-                                            <option value="Đường huyết">Đường huyết</option>
-                                            <option value="Sinh hóa máu">Sinh hóa máu</option>
-                                            <option value="Nước tiểu">Nước tiểu</option>
-                                            <option value="X-quang">X-quang</option>
-                                        </select>
                                         <select name="labPriority">
                                             <option value="Bình thường">Bình thường</option>
                                             <option value="Khẩn">Khẩn</option>

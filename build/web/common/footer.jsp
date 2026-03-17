@@ -18,6 +18,7 @@
         flex-wrap: wrap;
         justify-content: space-between;
         gap: 30px;
+        box-sizing: border-box;
     }
 
     .footer-brand {
@@ -47,6 +48,7 @@
         font-size: 15px;
         line-height: 1.8;
         color: #dbeafe;
+        word-break: break-word;
     }
 
     .footer-contact strong {
@@ -60,6 +62,11 @@
         font-size: 13px;
         color: #bfdbfe;
         letter-spacing: 0.5px;
+    }
+    @media (max-width: 992px) {
+        .footer-inner {
+            justify-content: flex-start;
+        }
     }
     @media (max-width: 768px) {
         .footer-contact {

@@ -68,33 +68,6 @@ body {
 .summary-icon.yellow { background: #fef3c7; }
 .summary-icon.green { background: #dcfce7; }
 
-.kpi-core-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-}
-
-.kpi-chip {
-    background: #ffffff;
-    border: 1px solid #e6edf8;
-    border-radius: 14px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.06);
-}
-
-.kpi-label {
-    font-size: 13px;
-    color: #64748b;
-}
-
-.kpi-value {
-    font-size: 24px;
-    color: #0f172a;
-}
-
 .content {
     display: grid;
     grid-template-columns: 1fr;
