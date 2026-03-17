@@ -127,16 +127,6 @@
                             </label>
                         </div>
 
-
-                        <div class="form-row" id="swapShiftGroup">
-                            <label>Ca bác sĩ muốn đổi
-                                <select name="swapShiftId" id="swapShiftId">
-                                    <option value="">-- Chọn ngày áp dụng để tải danh sách ca --</option>
-                                </select>
-                            </label>
-                            <p class="field-hint">Chỉ hiển thị ca của bác sĩ khác trong đúng ngày bạn chọn.</p>
-                        </div>
-
                         <div class="form-row" id="weeklyTemplateGroup">
                             <label>Thứ áp dụng
                                 <select name="dayOfWeek" id="dayOfWeek">
@@ -151,6 +141,16 @@
                                 </select>
                             </label>
                         </div>
+                        
+                        <div class="form-row" id="swapShiftGroup">
+                            <label>Ca bác sĩ muốn đổi
+                                <select name="swapShiftId" id="swapShiftId">
+                                    <option value="">-- Chọn ngày áp dụng để tải danh sách ca --</option>
+                                </select>
+                            </label>
+                            <p class="field-hint">Chỉ hiển thị ca của bác sĩ khác theo đúng ngày/thứ bạn chọn.</p>
+                        </div>
+
 
                         <div id="timeAndCapacityGroup">
                             <div class="form-row">
@@ -290,15 +290,31 @@
                 }
 
                 function loadSwapShiftOptions() {
+                    if (swapShiftInput.disabled) {
+                        swapShiftInput.innerHTML = '<option value="">-- Chọn phạm vi áp dụng để tải danh sách ca --</option>';
+                        return;
+                    }
+
+                    const isTemporary = scopeType.value === 'ONE_DATE';
                     const selectedDate = oneDateInput.value;
-                    if (!selectedDate || swapShiftInput.disabled) {
+                    const selectedDay = weeklyInput.value;
+
+                    if (isTemporary && !selectedDate) {
                         swapShiftInput.innerHTML = '<option value="">-- Chọn ngày áp dụng để tải danh sách ca --</option>';
                         return;
                     }
 
-                    const url = scheduleRequestForm.action
-                            + '?mode=SWAP_OPTIONS&workDate='
-                            + encodeURIComponent(selectedDate);
+                    if (!isTemporary && !selectedDay) {
+                        swapShiftInput.innerHTML = '<option value="">-- Chọn thứ áp dụng để tải danh sách ca --</option>';
+                        return;
+                    }
+
+                    let url = scheduleRequestForm.action + '?mode=SWAP_OPTIONS';
+                    if (isTemporary) {
+                        url += '&workDate=' + encodeURIComponent(selectedDate);
+                    } else {
+                        url += '&dayOfWeek=' + encodeURIComponent(selectedDay);
+                    }
                     fetch(url, {headers: {'Accept': 'application/json'}})
                             .then(function (response) {
                                 if (!response.ok) {
@@ -325,27 +341,20 @@
                 }
 
                 function applyTypeScopeRules() {
-                    const permanentOption = requestType.querySelector('option[value="PERMANENT"]');
-
-                    if (actionType.value === 'UPDATE') {
-                        requestType.value = 'TEMPORARY';
-                        permanentOption.disabled = true;
-                        scopeType.value = 'ONE_DATE';
-                        scopeHint.textContent = 'Đổi ca: chọn 1 ngày cụ thể và chọn ca của bác sĩ khác để đổi.';
-                        return;
-                    }
-
-                    permanentOption.disabled = false;
                     if (requestType.value === 'PERMANENT') {
                         scopeType.value = 'WEEKLY_TEMPLATE';
                         scopeHint.textContent = actionType.value === 'REMOVE'
                                 ? 'Hủy ca dài hạn: chọn ca gốc để hủy trong lịch tuần chuẩn.'
-                                : 'Yêu cầu dài hạn sẽ thay đổi lịch tuần chuẩn.';
+                                : (actionType.value === 'UPDATE'
+                                        ? 'Đổi ca dài hạn: chọn thứ áp dụng và ca của bác sĩ khác để đổi theo lịch tuần chuẩn.'
+                                        : 'Yêu cầu dài hạn sẽ thay đổi lịch tuần chuẩn.');
                     } else {
                         scopeType.value = 'ONE_DATE';
                         scopeHint.textContent = actionType.value === 'REMOVE'
                                 ? 'Hủy ca tạm thời: chỉ cần chọn ngày áp dụng, không cần chọn ca gốc.'
-                                : 'Yêu cầu tạm thời chỉ áp dụng cho 1 ngày cụ thể.';
+                                : (actionType.value === 'UPDATE'
+                                        ? 'Đổi ca tạm thời: chọn 1 ngày cụ thể và chọn ca của bác sĩ khác để đổi.'
+                                        : 'Yêu cầu tạm thời chỉ áp dụng cho 1 ngày cụ thể.');
                     }
                 }
 
@@ -355,9 +364,10 @@
                     const scope = scopeType.value;
                     const action = actionType.value;
 
-                    const oneDateVisible = scope === 'ONE_DATE' || action === 'UPDATE';
+                    const oneDateVisible = scope === 'ONE_DATE';
                     toggleGroup(oneDateGroup, oneDateInput, oneDateVisible);
-                    toggleGroup(weeklyTemplateGroup, weeklyInput, scope === 'WEEKLY_TEMPLATE' && action === 'ADD');
+                    toggleGroup(weeklyTemplateGroup, weeklyInput,
+                            scope === 'WEEKLY_TEMPLATE' && (action === 'ADD' || action === 'UPDATE'));
                     const requireTargetShift = action === 'UPDATE' || (action === 'REMOVE' && scope === 'WEEKLY_TEMPLATE');
                     toggleGroup(targetShiftGroup, targetShiftInput, requireTargetShift);
                     toggleGroup(swapShiftGroup, swapShiftInput, action === 'UPDATE');
@@ -369,6 +379,7 @@
                 requestType.addEventListener('change', renderFormBySelection);
                 actionType.addEventListener('change', renderFormBySelection);
                 oneDateInput.addEventListener('change', loadSwapShiftOptions);
+                weeklyInput.addEventListener('change', loadSwapShiftOptions);
                 renderFormBySelection();
             })();
         </script>
