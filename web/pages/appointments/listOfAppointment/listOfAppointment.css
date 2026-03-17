@@ -214,3 +214,34 @@ tbody tr:hover{
     color:#6b7280;
     font-size:12px;
 }
+/* ===== STATUS SELECT ===== */
+
+.status-select{
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid #e5e7eb;
+    font-size:12px;
+    background:#f9fafb;
+    color:#374151;
+    cursor:pointer;
+    outline:none;
+}
+
+/* hover */
+
+.status-select:hover{
+    background:#f3f4f6;
+}
+
+/* focus */
+
+.status-select:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 1px rgba(37,99,235,0.15);
+}
+
+/* option */
+
+.status-select option{
+    font-size:12px;
+}

@@ -48,6 +48,12 @@
 
                 </select>
 
+                <select id="dateFilter">
+                    <option value="all">Tất cả thời gian</option>
+                    <option value="today">Hôm nay</option>
+                    <option value="month">Tháng này</option>
+                    <option value="year">Năm nay</option>
+                </select>
                 <input type="text" id="searchBox"
                        placeholder="Tìm theo tên bệnh nhân / mã hẹn">
 
@@ -120,25 +126,20 @@
                             </td>
 
                             <td>
+                                <c:if test="${a.status eq 'booked'}">
+                                    <form action="listofappointment" method="post">
 
-                                <form action="listofappointment" method="post">
+                                        <input type="hidden" name="id" value="${a.appointmentId}">
 
-                                    <input type="hidden" name="id" value="${a.appointmentId}">
+                                        <select name="status" class="status-select">
 
-                                    <select name="status">
+                                            <option value="checked_in">Checked In</option>
+                                        </select>
 
-                                        <option value="booked">Booked</option>
-                                        <option value="checked_in">Checked In</option>
-                                        <option value="waiting">Waiting</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
+                                        <button class="btn-update">Update</button>
 
-                                    </select>
-
-                                    <button class="btn-update">Update</button>
-
-                                </form>
-
+                                    </form>
+                                </c:if>
                             </td>
 
                         </tr>
@@ -152,6 +153,9 @@
         </div>
 
         <script>
+            const dateFilter = document.getElementById("dateFilter");
+
+            dateFilter.addEventListener("change", filterTable);
             const statusFilter = document.getElementById("statusFilter");
             const searchBox = document.getElementById("searchBox");
 
@@ -162,6 +166,9 @@
 
                 let status = statusFilter.value;
                 let keyword = searchBox.value.toLowerCase();
+                let dateType = dateFilter.value;
+
+                let today = new Date();
 
                 let rows = document.querySelectorAll("#appointmentTable tbody tr");
 
@@ -170,14 +177,39 @@
                     let rowStatus = row.getAttribute("data-status");
                     let text = row.innerText.toLowerCase();
 
+                    let dateCell = row.children[4].innerText;
+                    let rowDate = new Date(dateCell);
+
                     let show = true;
 
+                    // filter status
                     if (status !== "all" && rowStatus !== status) {
                         show = false;
                     }
 
+                    // filter search
                     if (!text.includes(keyword)) {
                         show = false;
+                    }
+
+                    // filter date
+                    if (dateType === "today") {
+                        if (rowDate.toDateString() !== today.toDateString()) {
+                            show = false;
+                        }
+                    }
+
+                    if (dateType === "month") {
+                        if (rowDate.getMonth() !== today.getMonth() ||
+                                rowDate.getFullYear() !== today.getFullYear()) {
+                            show = false;
+                        }
+                    }
+
+                    if (dateType === "year") {
+                        if (rowDate.getFullYear() !== today.getFullYear()) {
+                            show = false;
+                        }
                     }
 
                     row.style.display = show ? "" : "none";

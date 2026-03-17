@@ -111,16 +111,16 @@
 
                                 <div class="time-slots">
 
-                                    <input type="radio" name="time" id="morning" value="08:00" checked>
+                                    <input type="radio" name="time" id="morning" value="07:00" checked>
                                     <label for="morning" class="slot">
                                         <strong>Ca sáng</strong>
-                                        <span>08:00 - 11:30</span>
+                                        <span>07:00 - 11:30</span>
                                     </label>
 
                                     <input type="radio" name="time" id="afternoon" value="13:00">
                                     <label for="afternoon" class="slot">
                                         <strong>Ca chiều</strong>
-                                        <span>13:00 - 17:00</span>
+                                        <span>13:00 - 16:30</span>
                                     </label>
 
                                 </div>
