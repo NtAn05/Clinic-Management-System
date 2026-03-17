@@ -134,4 +134,15 @@ public class NotificationDAO extends DBContext {
 
         return notifications;
     }
+    public int markAllAsRead(int userId) {
+        String sql = "UPDATE in_app_notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            return st.executeUpdate();
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Không thể đánh dấu đã đọc toàn bộ thông báo", ex);
+        }
+        return 0;
+    }
+
 }

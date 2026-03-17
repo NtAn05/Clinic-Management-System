@@ -205,17 +205,20 @@
                 <form action="${pageContext.request.contextPath}/register" method="POST" id="mainRegisterForm">
                     <div class="form-group">
                         <label>Họ và tên *</label>
-                        <input type="text" name="fullname" value="${fullname}" placeholder="Nhập tên người dùng / giám hộ" required>
+                        <input type="text" name="fullname" id="fullNameField" value="${fullname}" placeholder="Nhập tên người dùng / giám hộ" required pattern="^[\p{L}\s'.-]+$" title="Họ tên chỉ được chứa chữ cái">
+                        <span class="js-error-text" id="fullNameError">Họ và tên chỉ được chứa chữ cái, không nhập số.</span>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label>Số điện thoại *</label>
-                            <input type="tel" name="phone" value="${phone}" placeholder="09xxxxxxxx" required pattern="0[0-9]{9}">
+                            <input type="tel" name="phone" id="phoneField" value="${phone}" placeholder="09xxxxxxxx" required pattern="0[0-9]{9}" title="Số điện thoại phải bắt đầu bằng 0 và đủ 10 số">
+                            <span class="js-error-text" id="phoneError">Số điện thoại phải bắt đầu bằng 0 và đủ 10 số.</span>
                         </div>
                         <div class="form-group">
                             <label>Email *</label>
-                            <input type="email" name="email" value="${email}" placeholder="example@gmail.com" required>
+                            <input type="email" name="email" id="emailField" value="${email}" placeholder="example@gmail.com" required>
+                            <span class="js-error-text" id="emailError">Vui lòng nhập email hợp lệ.</span>
                         </div>
                     </div>
 
@@ -223,6 +226,7 @@
                         <div class="form-group">
                             <label>Mật khẩu *</label>
                             <input type="password" name="password" id="passField" placeholder="Từ 6 ký tự trở lên" required minlength="6">
+                            <span class="js-error-text" id="passwordError">Mật khẩu phải có tối thiểu 6 ký tự.</span>
                         </div>
                         <div class="form-group">
                             <label>Xác nhận mật khẩu *</label>
@@ -260,10 +264,41 @@
 
             regForm.addEventListener('submit', function (e) {
                 let isValid = true;
-
-                // Kiểm tra khớp mật khẩu
+                const fullName = document.getElementById('fullNameField').value.trim();
+                const email = document.getElementById('emailField').value.trim();
+                const phone = document.getElementById('phoneField').value.trim();
                 const p1 = document.getElementById('passField').value;
                 const p2 = document.getElementById('confirmPassField').value;
+
+                const fullNameRegex = /^[\p{L}\s'.-]+$/u;
+                const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
+
+                document.getElementById('passMatchError').style.display = 'none';
+                document.getElementById('fullNameError').style.display = 'none';
+                document.getElementById('emailError').style.display = 'none';
+                document.getElementById('phoneError').style.display = 'none';
+                document.getElementById('passwordError').style.display = 'none';
+
+                if (!fullName || !fullNameRegex.test(fullName)) {
+                    isValid = false;
+                    document.getElementById('fullNameError').style.display = 'block';
+                }
+
+                if (!email || !emailRegex.test(email)) {
+                    isValid = false;
+                    document.getElementById('emailError').style.display = 'block';
+                }
+
+                if (!/^0\d{9}$/.test(phone)) {
+                    isValid = false;
+                    document.getElementById('phoneError').style.display = 'block';
+                }
+
+                if (p1.length < 6) {
+                    isValid = false;
+                    document.getElementById('passwordError').style.display = 'block';
+                }
+
                 if (p1 !== p2) {
                     isValid = false;
                     document.getElementById('passMatchError').style.display = 'block';
@@ -272,7 +307,6 @@
                 if (!isValid) {
                     e.preventDefault();
                 } else {
-                    // Nếu pass qua hết thì hiện vòng xoay loading
                     document.getElementById('loadingOverlay').style.display = 'flex';
                 }
             });

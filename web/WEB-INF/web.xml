@@ -88,6 +88,10 @@
         <servlet-name>ReportDoctorServlet</servlet-name>
         <servlet-class>controller.historyOfAppointment.ReportDoctorServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>NotificationReadServlet</servlet-name>
+        <servlet-class>controller.NotificationReadServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <url-pattern>/doctorDashboard</url-pattern>
@@ -207,5 +211,9 @@
     <servlet-mapping>
         <servlet-name>ReportDoctorServlet</servlet-name>
         <url-pattern>/reportdoctorservlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NotificationReadServlet</servlet-name>
+        <url-pattern>/notifications/read-all</url-pattern>
     </servlet-mapping>
 </web-app>
