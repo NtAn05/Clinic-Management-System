@@ -544,4 +544,60 @@ public class AppointmentDAO extends DBContext {
 
         return 0;
     }
+
+    public int getDoctorIdByAppointment(long appointmentId) {
+
+        String sql = "SELECT doctor_id FROM appointments WHERE appointment_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setLong(1, appointmentId);
+            ResultSet rs = st.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("doctor_id");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    public int getNextQueuePosition(int doctorId) {
+
+        String sql = "SELECT COALESCE(MAX(queue_position),0) + 1 AS next_pos "
+                + "FROM exam_queue WHERE doctor_id = ?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+            st.setInt(1, doctorId);
+
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("next_pos");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 1;
+    }
+
+   public void addQueue(long appointmentId, int doctorId, int position) {
+
+    String sql = "INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) "
+               + "VALUES (?, ?, ?, 'waiting')";
+
+    try (PreparedStatement st = connection.prepareStatement(sql)) {
+
+        st.setLong(1, appointmentId);
+        st.setInt(2, doctorId);
+        st.setInt(3, position);
+
+        st.executeUpdate();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 }

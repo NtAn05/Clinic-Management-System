@@ -66,7 +66,7 @@ public class HistoryOfAppointmentServlet extends HttpServlet {
         User user = (User) session.getAttribute("account");
 
         if (user == null) {
-            response.sendRedirect("/pages/auth/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
 
