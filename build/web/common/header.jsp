@@ -198,18 +198,55 @@
         background: #fee2e2;
         color: #b91c1c;
     }
+    .site-header .admin-menu-wrap {
+        position: relative;
+    }
 
+    .site-header .admin-trigger {
+        border: 1px solid #d8e5ff;
+        background: #f8fbff;
+        color: #1e3a8a;
+        border-radius: 999px;
+        padding: 8px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .site-header .admin-trigger:hover {
+        background: #e7efff;
+    }
+
+    .site-header .admin-popup {
+        position: absolute;
+        top: calc(100% + 12px);
+        right: 0;
+        width: 260px;
+        background: #fff;
+        border: 1px solid #e6edff;
+        border-radius: 14px;
+        box-shadow: 0 18px 45px rgba(15, 44, 110, 0.18);
+        padding: 10px;
+        display: none;
+        z-index: 1003;
+    }
+
+    .site-header .admin-popup.open {
+        display: block;
+    }
 
     .site-header .profile-trigger:hover {
         background: #e7efff;
     }
-  
+
     .site-header .profile-trigger:focus {
         outline: none;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
     }
-    
-.site-header .notification-wrap {
+
+    .site-header .notification-wrap {
         position: relative;
         margin-left: 5px;
     }
@@ -281,7 +318,7 @@
         background: #f8fafc;
         border-bottom: 1px solid #e2e8f0;
     }
-    
+
     .site-header .notif-header .title {
         font-weight: 700;
         color: #1e293b;
@@ -293,11 +330,18 @@
         max-height: 350px;
         overflow-y: auto;
     }
-    
+
     /* Custom thanh cuộn */
-    .site-header .notif-body::-webkit-scrollbar { width: 6px; }
-    .site-header .notif-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    .site-header .notif-body::-webkit-scrollbar-track { background: transparent; }
+    .site-header .notif-body::-webkit-scrollbar {
+        width: 6px;
+    }
+    .site-header .notif-body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    .site-header .notif-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
     .site-header .notification-item {
         display: flex;
@@ -320,7 +364,7 @@
 
     /* Nổi bật khi chưa đọc */
     .site-header .notification-item.unread {
-        background: #f0f7ff; 
+        background: #f0f7ff;
     }
     .site-header .notification-item.unread .notification-title {
         color: #0061ff;
@@ -404,9 +448,17 @@
             <c:if test="${sessionScope.account != null}">
 
                 <c:if test="${roleName == 'admin'}">
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
-<!--                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctors">Quản lý bác sĩ</a>-->
+                    <div class="admin-menu-wrap" id="adminMenuWrap">
+                        <button type="button" class="admin-trigger" id="adminTrigger">
+                            <i class="fas fa-sliders-h"></i> Quản lý
+                        </button>
+                        <div class="admin-popup" id="adminPopup">
+                            <a class="profile-item" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/admin-doctors">Quản lý bác sĩ</a>
+                        </div>
+                    </div>
+
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-system-logs">Nhật ký hệ thống</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/admin-reports">Báo cáo phòng khám</a>
@@ -432,15 +484,16 @@
                         <button type="button" class="notification-btn" id="notificationTrigger" aria-label="Thông báo">
                             <i class="fas fa-bell"></i>
                             <c:if test="${unreadNotificationCount > 0}">
-                                <span class="notification-badge">${unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}</span>
+                                <span class="notification-badge" id="notificationBadge">${unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}</span>
                             </c:if>
                         </button>
-                        
+
                         <div class="notification-popup" id="notificationPopup">
                             <div class="notif-header">
                                 <div class="title">Thông báo của bạn</div>
+                                <button type="button" id="markAllReadBtn" style="border:none;background:transparent;color:#2563eb;font-weight:600;cursor:pointer;">Đánh dấu đã đọc</button>
                             </div>
-                            
+
                             <div class="notif-body">
                                 <c:choose>
                                     <c:when test="${empty headerNotifications}">
@@ -470,7 +523,7 @@
                         </div>
                     </div>
                 </c:if>
-                     
+
 
 
                 <div class="profile-menu-wrap" id="profileMenuWrap">
@@ -509,6 +562,11 @@
         var notificationTrigger = document.getElementById('notificationTrigger');
         var notificationPopup = document.getElementById('notificationPopup');
         var notificationWrap = document.getElementById('notificationWrap');
+        var badge = document.getElementById('notificationBadge');
+        var markAllReadBtn = document.getElementById('markAllReadBtn');
+        var adminTrigger = document.getElementById('adminTrigger');
+        var adminPopup = document.getElementById('adminPopup');
+        var adminMenuWrap = document.getElementById('adminMenuWrap');
         if (!trigger || !popup || !wrap) {
             return;
         }
@@ -519,15 +577,63 @@
             if (notificationPopup) {
                 notificationPopup.classList.remove('open');
             }
+            if (adminPopup) {
+                adminPopup.classList.remove('open');
+            }
         });
         if (notificationTrigger && notificationPopup && notificationWrap) {
             notificationTrigger.addEventListener('click', function (event) {
                 event.stopPropagation();
                 notificationPopup.classList.toggle('open');
                 popup.classList.remove('open');
+                if (adminPopup) {
+                    adminPopup.classList.remove('open');
+                }
+            });
+        }
+        if (adminTrigger && adminPopup && adminMenuWrap) {
+            adminTrigger.addEventListener('click', function (event) {
+                event.stopPropagation();
+                adminPopup.classList.toggle('open');
+                popup.classList.remove('open');
+                if (notificationPopup) {
+                    notificationPopup.classList.remove('open');
+                }
             });
         }
 
+        var unreadItems = document.querySelectorAll('.notification-item.unread');
+        unreadItems.forEach(function (item) {
+            item.addEventListener('click', function () {
+                if (markAllReadBtn) {
+                    markAllReadBtn.click();
+                }
+            });
+        });
+
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function (event) {
+                event.stopPropagation();
+                fetch('${pageContext.request.contextPath}/notifications/read-all', {
+                    method: 'POST',
+                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                }).then(function (res) {
+                    if (!res.ok) {
+                        throw new Error('Cannot mark as read');
+                    }
+                    return res.json();
+                }).then(function () {
+                    if (badge) {
+                        badge.remove();
+                    }
+                    document.querySelectorAll('.notification-item.unread').forEach(function (item) {
+                        item.classList.remove('unread');
+                    });
+                }).catch(function () {
+                    // Không làm gián đoạn giao diện nếu mạng lỗi
+                });
+            });
+        }
 
         document.addEventListener('click', function (event) {
             if (!wrap.contains(event.target)) {
@@ -535,6 +641,9 @@
             }
             if (notificationWrap && !notificationWrap.contains(event.target)) {
                 notificationPopup.classList.remove('open');
+            }
+            if (adminMenuWrap && !adminMenuWrap.contains(event.target)) {
+                adminPopup.classList.remove('open');
             }
         });
     })();

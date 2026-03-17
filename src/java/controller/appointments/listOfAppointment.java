@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import jakarta.servlet.http.HttpSession;
 import model.AppointmentDetail;
+import model.User;
 import util.SystemLogService;
 
 /**
@@ -83,16 +84,31 @@ public class listOfAppointment extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         long id = Long.parseLong(request.getParameter("id"));
         String status = request.getParameter("status");
         String up = request.getParameter("up");
+
         AppointmentDAO dao = new AppointmentDAO();
 
+        // lấy status cũ trước khi update
+
+        // update status
         dao.updateStatus(id, status);
 
-        // Ghi log huỷ lịch / check-in / các trạng thái khác
+        if ( "checked_in".equalsIgnoreCase(status)) {
+
+
+            int doctorId = dao.getDoctorIdByAppointment(id);
+            int position = dao.getNextQueuePosition(doctorId);
+
+            dao.addQueue(id, doctorId, position);
+        }
+
+        /* ===== SYSTEM LOG ===== */
         HttpSession session = request.getSession(false);
         String action;
+
         if ("cancelled".equalsIgnoreCase(status)) {
             action = "CANCEL_APPOINTMENT";
         } else if ("checked_in".equalsIgnoreCase(status)) {
@@ -100,13 +116,15 @@ public class listOfAppointment extends HttpServlet {
         } else {
             action = "UPDATE_APPOINTMENT_STATUS";
         }
+
         SystemLogService.logWithSession(session, action,
                 "Cập nhật trạng thái lịch hẹn appointmentId=" + id + " -> " + status);
-        if(up!= null){
-             response.sendRedirect("historyofappointmentservlet");
 
-        }else{
-        response.sendRedirect("listofappointment");
+        /* ===== REDIRECT ===== */
+        if (up != null) {
+            response.sendRedirect("historyofappointmentservlet");
+        } else {
+            response.sendRedirect("listofappointment");
         }
     }
 

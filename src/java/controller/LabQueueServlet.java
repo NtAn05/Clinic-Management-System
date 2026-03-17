@@ -154,17 +154,10 @@ public class LabQueueServlet extends HttpServlet {
             boolean success = labRequestDAO.updateLabRequestStatus(requestId, newStatus);
             
             if (success) {
-                LabRequest requestInfo = labRequestDAO.getLabRequestById(requestId);
-                    if (requestInfo != null) {
-                        NotificationDAO notificationDAO = new NotificationDAO();
-                        notificationDAO.createNotificationForAppointment(
-                                requestInfo.getAppointmentId(),
-                                "Đã có kết quả xét nghiệm",
-                                "Kết quả xét nghiệm của bạn đã sẵn sàng. Vui lòng truy cập hồ sơ khám để xem chi tiết.",
-                                "lab_result_ready",
-                                "lab_request:" + requestId + ":result_ready"
-                        );
-                    }
+                if ("completed".equalsIgnoreCase(newStatus)) {
+                    LabRequest requestInfo = labRequestDAO.getLabRequestById(requestId);
+                    notifyLabResultToPatient(requestInfo, requestId, "Đã có kết quả xét nghiệm", "lab_result_ready", "result_ready");
+                }
                 response.getWriter().write("{\"success\": true}");
             } else {
                 response.getWriter().write("{\"success\": false, \"message\": \"Cập nhật thất bại\"}");
@@ -305,7 +298,9 @@ public class LabQueueServlet extends HttpServlet {
                 
                 boolean success = labRequestDAO.sendLabResult(requestId, technicianId, resultFilePath, notes);
                 
-                if (success) {
+               if (success) {
+                    LabRequest requestInfo = labRequestDAO.getLabRequestById(requestId);
+                    notifyLabResultToPatient(requestInfo, requestId, "Kết quả xét nghiệm đã được gửi", "lab_result_sent", "result_sent");
                     response.getWriter().write("{\"success\": true, \"message\": \"Gửi kết quả thành công\"}");
                 } else {
                     response.getWriter().write("{\"success\": false, \"message\": \"Gửi kết quả thất bại\"}");
@@ -322,5 +317,36 @@ public class LabQueueServlet extends HttpServlet {
             doGet(request, response);
         }
     }
+    private void notifyLabResultToPatient(LabRequest requestInfo, int requestId, String title, String type, String eventSuffix) {
+        if (requestInfo == null) {
+            return;
+        }
+        String patientName = requestInfo.getPatient() != null && requestInfo.getPatient().getFullName() != null
+                ? requestInfo.getPatient().getFullName().trim() : "bệnh nhân";
+        String message = "Kết quả xét nghiệm của " + patientName + " đã sẵn sàng. Vui lòng truy cập hồ sơ khám để xem chi tiết.";
+        if ("lab_result_sent".equals(type)) {
+            message = "Kết quả xét nghiệm cho " + patientName + " đã được gửi. Vui lòng kiểm tra trong hồ sơ khám.";
+        }
+
+        NotificationDAO notificationDAO = new NotificationDAO();
+        boolean sent = notificationDAO.createNotificationForAppointment(
+                requestInfo.getAppointmentId(),
+                title,
+                message,
+                type,
+                "lab_request:" + requestId + ":" + eventSuffix
+        );
+
+        if (!sent && requestInfo.getPatient() != null && requestInfo.getPatient().getUserId() > 0) {
+            notificationDAO.createNotification(
+                    requestInfo.getPatient().getUserId(),
+                    title,
+                    message,
+                    type,
+                    "lab_request:" + requestId + ":" + eventSuffix + ":fallback"
+            );
+        }
+    }
+
 }
 
