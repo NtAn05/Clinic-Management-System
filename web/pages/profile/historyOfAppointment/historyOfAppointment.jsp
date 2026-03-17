@@ -22,6 +22,7 @@
 
             <h3>Lịch sử các cuộc hẹn</h3>
             <p>Chi tiết các cuộc hẹn</p>
+            <div>
             <div class="status-filter">
                 <a href="#" onclick="filterStatus('all')">Tất cả</a>
                 <a href="#" onclick="filterStatus('booked')">Đã đặt</a>
@@ -31,6 +32,20 @@
                 <a href="#" onclick="filterStatus('cancelled')">Đã hủy</a>
             </div>
 
+            <div class="name-filter">
+                <select id="nameSelect" onchange="filterByName()">
+                    <option value="all">Tất cả bệnh nhân</option>
+
+                    <c:forEach var="a" items="${appointmentList}">
+                        <option value="${a.fullName}">
+                            ${a.fullName}
+                        </option>
+                    </c:forEach>
+
+                </select>
+            </div>
+                </div>
+            <br>
             <!-- ================= PROFILE HEADER ================= -->
             <div class="appointment-list">
 
@@ -86,8 +101,8 @@
                                     <input type="hidden" name="id" value="${a.doctorId}">
 
                                     <button class="cancel-btn" >
-                                            
-                                            
+
+
                                         Đánh giá
                                     </button>
 
@@ -173,6 +188,19 @@
                         card.style.display = "none";
                     }
 
+                });
+
+            }
+            function filterByName() {
+                let selectedName = document.getElementById("nameSelect").value;
+                let cards = document.querySelectorAll(".appointment-card");
+                cards.forEach(card => {
+                    let name = card.dataset.name;
+                    if (selectedName === "all" || name === selectedName) {
+                        card.style.display = "block";
+                    } else {
+                        card.style.display = "none";
+                    }
                 });
 
             }

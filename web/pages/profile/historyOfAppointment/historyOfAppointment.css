@@ -266,3 +266,14 @@ body{
     font-weight:700;
     color:#2f6fed;
 }
+.name-filter{
+    margin:10px 0 15px 0;
+}
+
+.name-filter select{
+    padding:8px 12px;
+    border:1px solid #e5e7eb;
+    border-radius:8px;
+    font-size:14px;
+    background:white;
+}
