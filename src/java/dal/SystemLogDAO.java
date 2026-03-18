@@ -4,6 +4,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import model.SystemLog;
@@ -11,7 +13,7 @@ import model.SystemLog;
 public class SystemLogDAO extends DBContext {
 
     public void addLog(Integer userId, String action, String description) {
-        String sql = "INSERT INTO system_logs (user_id, action, description, created_at) VALUES (?, ?, ?, NOW())";
+        String sql = "INSERT INTO system_logs (user_id, action, description, created_at) VALUES (?, ?, ?, ?)";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             if (userId == null) {
                 st.setNull(1, java.sql.Types.INTEGER);
@@ -20,6 +22,10 @@ public class SystemLogDAO extends DBContext {
             }
             st.setString(2, action);
             st.setString(3, description);
+            Timestamp vnNow = Timestamp.valueOf(
+                ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime()
+            );
+            st.setTimestamp(4, vnNow);
             st.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

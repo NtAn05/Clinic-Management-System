@@ -6,6 +6,8 @@ import model.Doctor;
 import model.Appointment;
 
 import java.sql.*;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.Statement;
@@ -325,10 +327,14 @@ public class LabRequestDAO extends DBContext {
      * Xóa bệnh nhân khỏi exam_queue (DELETE) để họ chuyển sang hàng đợi xét nghiệm.
      */
     public int insertLabRequest(long appointmentId, int doctorId) {
-        String insertSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
+        String insertSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', ?)";
         try (PreparedStatement st = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            Timestamp vnNow = Timestamp.valueOf(
+                ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime()
+            );
             st.setLong(1, appointmentId);
             st.setInt(2, doctorId);
+            st.setTimestamp(3, vnNow);
             st.executeUpdate();
             ResultSet keys = st.getGeneratedKeys();
             if (keys.next()) {
@@ -525,21 +531,29 @@ public class LabRequestDAO extends DBContext {
                 checkSt.setInt(1, requestId);
                 ResultSet rs = checkSt.executeQuery();
                 if (rs.next()) {
-                    String updateResult = "UPDATE lab_results SET technician_id = ?, result_file = ?, notes = ?, completed_at = NOW() WHERE request_id = ?";
+                    String updateResult = "UPDATE lab_results SET technician_id = ?, result_file = ?, notes = ?, completed_at = ? WHERE request_id = ?";
                     try (PreparedStatement up = connection.prepareStatement(updateResult)) {
+                        Timestamp vnNow = Timestamp.valueOf(
+                            ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime()
+                        );
                         up.setObject(1, technicianId);
                         up.setString(2, resultFile != null ? resultFile : "");
                         up.setString(3, notes != null ? notes : "");
-                        up.setInt(4, requestId);
+                        up.setTimestamp(4, vnNow);
+                        up.setInt(5, requestId);
                         up.executeUpdate();
                     }
                 } else {
-                    String insertResult = "INSERT INTO lab_results (request_id, technician_id, result_file, notes, completed_at) VALUES (?, ?, ?, ?, NOW())";
+                    String insertResult = "INSERT INTO lab_results (request_id, technician_id, result_file, notes, completed_at) VALUES (?, ?, ?, ?, ?)";
                     try (PreparedStatement ins = connection.prepareStatement(insertResult)) {
+                        Timestamp vnNow = Timestamp.valueOf(
+                            ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime()
+                        );
                         ins.setInt(1, requestId);
                         ins.setObject(2, technicianId);
                         ins.setString(3, resultFile != null ? resultFile : "");
                         ins.setString(4, notes != null ? notes : "");
+                        ins.setTimestamp(5, vnNow);
                         ins.executeUpdate();
                     }
                 }
@@ -601,10 +615,14 @@ public class LabRequestDAO extends DBContext {
                         }
                     }
                     // Insert payment record into existing payments table
-                    String insertPayment = "INSERT INTO payments (appointment_id, amount, method, status, created_at) VALUES (?, ?, 'cash', 'pending', NOW())";
+                    String insertPayment = "INSERT INTO payments (appointment_id, amount, method, status, created_at) VALUES (?, ?, 'cash', 'pending', ?)";
                     try (PreparedStatement ins = connection.prepareStatement(insertPayment)) {
+                        Timestamp vnNow = Timestamp.valueOf(
+                            ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime()
+                        );
                         ins.setLong(1, appointmentId);
                         ins.setBigDecimal(2, labPrice);
+                        ins.setTimestamp(3, vnNow);
                         ins.executeUpdate();
                     }
                 }

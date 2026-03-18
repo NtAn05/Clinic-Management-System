@@ -122,7 +122,7 @@
             <div class="detail-row" style="margin-top: 16px;">
               <div>
                 <div class="detail-label">Thời gian chỉ định</div>
-                <div class="detail-value"><fmt:formatDate value="${labRequest.createdAt}" pattern="HH:mm - dd/MM/yyyy" /></div>
+                <div class="detail-value"><fmt:formatDate value="${labRequest.createdAt}" pattern="HH:mm - dd/MM/yyyy" timeZone="Asia/Ho_Chi_Minh" /></div>
               </div>
             </div>
           </div>
@@ -144,7 +144,7 @@
                 <c:if test="${labResult.completedAt != null}">
                   <div>
                     <div class="detail-label">Thời gian hoàn thành</div>
-                    <div class="detail-value"><fmt:formatDate value="${labResult.completedAt}" pattern="HH:mm - dd/MM/yyyy" /></div>
+                    <div class="detail-value"><fmt:formatDate value="${labResult.completedAt}" pattern="HH:mm - dd/MM/yyyy" timeZone="Asia/Ho_Chi_Minh" /></div>
                   </div>
                 </c:if>
               </div>
