@@ -71,6 +71,8 @@ public class HistoryOfAppointmentServlet extends HttpServlet {
         }
 
         AppointmentDAO dao = new AppointmentDAO();
+        dao.cancelPastBookedAppointments();
+
         List<AppointmentDetail> list
                 = dao.getAppointmentsByPatientUserId(user.getUserId());
 
