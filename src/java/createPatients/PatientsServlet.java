@@ -66,12 +66,12 @@ public class PatientsServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
         User account = (User) session.getAttribute("account");
         if (account == null) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
 
@@ -121,6 +121,14 @@ public class PatientsServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        HttpSession session = request.getSession();
+
+        User user = (User) session.getAttribute("account");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return;
+        }
         String userID = request.getParameter("userID");
         int useId = Integer.parseInt(userID);
 

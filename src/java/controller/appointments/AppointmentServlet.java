@@ -18,6 +18,7 @@ import java.util.List;
 import model.Appointment;
 import model.Doctor;
 import model.Patient;
+import model.User;
 
 public class AppointmentServlet extends HttpServlet {
 
@@ -57,7 +58,14 @@ public class AppointmentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession();
 
+        User user = (User) session.getAttribute("account");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return;
+        }
         String userID = request.getParameter("userID");
         int useId = Integer.parseInt(userID);
 
@@ -75,12 +83,16 @@ public class AppointmentServlet extends HttpServlet {
         java.sql.Time sqlTime = java.sql.Time.valueOf(localTime);
         String submit = request.getParameter("btnSubmit");
 
-        // Tạo đối tượng
         AppointmentDAO dao = new AppointmentDAO();
         PatientPortalDAO daos = new PatientPortalDAO();
         Patient patient = daos.getPatientsByPatientID(patientId);
-        Appointment appointment = new Appointment(patientId, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
+        Appointment appointment;
+        if (user.getRole().equals("receptionist")) {
+             appointment = new Appointment(patientId, doctorId, 1, "walk_in", sqlDate, sqlTime, "booked", note);
 
+        } else {
+             appointment = new Appointment(patientId, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
+        }
         if (submit != null && submit.equalsIgnoreCase("thanhtoan")) {
 
             try {
@@ -94,7 +106,6 @@ public class AppointmentServlet extends HttpServlet {
                     throw new Exception("Giá tiền không đúng định dạng: " + priceStr);
                 }
 
-                HttpSession session = request.getSession();
                 session.setAttribute("pendingPatient", patient);
                 session.setAttribute("pendingAppointment", appointment);
                 long orderCode = (System.currentTimeMillis() % 100000000L) * 1000

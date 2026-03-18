@@ -13,14 +13,16 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import model.Doctor;
+import model.User;
 
 /**
  *
  * @author Admin
  */
-@WebServlet("/listOfDoctor") 
+@WebServlet("/listOfDoctor")
 public class ListOfDoctorServlet extends HttpServlet {
 
     /**
@@ -61,41 +63,50 @@ public class ListOfDoctorServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession();
+
+        User user = (User) session.getAttribute("account");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return;
+        }
         String doctorName = request.getParameter("doctorName");
-    String priceFrom = request.getParameter("priceFrom");
-    String priceTo = request.getParameter("priceTo");
-    String experience = request.getParameter("experience");
-    String sort = request.getParameter("sort");
+        String priceFrom = request.getParameter("priceFrom");
+        String priceTo = request.getParameter("priceTo");
+        String experience = request.getParameter("experience");
+        String sort = request.getParameter("sort");
 
-    AppointmentDAO dao = new AppointmentDAO();
-    List<Doctor> doctors;
-    String error="";
-    boolean hasFilter =
-            (doctorName != null && !doctorName.isEmpty()) ||
-            (priceFrom != null && !priceFrom.isEmpty()) ||
-            (priceTo != null && !priceTo.isEmpty()) ||
-            (experience != null && !experience.isEmpty()) ||
-            (sort != null && !sort.isEmpty());
-   
-      if (hasFilter) {
-         if(priceTo != null && !priceTo.isEmpty() && priceFrom != null && !priceFrom.isEmpty() && checkPrice(priceFrom,priceTo)){
-        error="Giá từ phải nhỏ hơn giá cao";
-        doctors = dao.getAllDoctors();
+        AppointmentDAO dao = new AppointmentDAO();
+        List<Doctor> doctors;
+        String error = "";
+        boolean hasFilter
+                = (doctorName != null && !doctorName.isEmpty())
+                || (priceFrom != null && !priceFrom.isEmpty())
+                || (priceTo != null && !priceTo.isEmpty())
+                || (experience != null && !experience.isEmpty())
+                || (sort != null && !sort.isEmpty());
 
-    }else{
-        doctors = dao.filterDoctors(doctorName, priceFrom, priceTo, experience, sort);}
-      }  
-     else {
-        doctors = dao.getAllDoctors();
-    }
-    request.setAttribute("doctors", doctors);
-    request.setAttribute("error", error);
-    request.setAttribute("doctorName", doctorName);
-    request.setAttribute("priceFrom", priceFrom);
-    request.setAttribute("priceTo", priceTo);
- 
-request.getRequestDispatcher("/pages/appointments/listOfDoctors.jsp")
-       .forward(request, response);
+        if (hasFilter) {
+            if (priceTo != null && !priceTo.isEmpty() && priceFrom != null && !priceFrom.isEmpty() && checkPrice(priceFrom, priceTo)) {
+                error = "Giá từ phải nhỏ hơn giá cao";
+                doctors = dao.getAllDoctors();
+
+            } else {
+                doctors = dao.filterDoctors(doctorName, priceFrom, priceTo, experience, sort);
+            }
+        } else {
+            doctors = dao.getAllDoctors();
+        }
+        request.setAttribute("doctors", doctors);
+        request.setAttribute("error", error);
+        request.setAttribute("doctorName", doctorName);
+        request.setAttribute("priceFrom", priceFrom);
+        request.setAttribute("priceTo", priceTo);
+        request.setAttribute("user", user);
+
+        request.getRequestDispatcher("/pages/appointments/listOfDoctors.jsp")
+                .forward(request, response);
     }
 
     /**
@@ -122,11 +133,11 @@ request.getRequestDispatcher("/pages/appointments/listOfDoctors.jsp")
         return "Short description";
     }
 
-private boolean checkPrice(String priceFrom, String priceTo) {
-    double from = Double.parseDouble(priceFrom.trim());
-    double to = Double.parseDouble(priceTo.trim());
+    private boolean checkPrice(String priceFrom, String priceTo) {
+        double from = Double.parseDouble(priceFrom.trim());
+        double to = Double.parseDouble(priceTo.trim());
 
-    return from > to;
-}
+        return from > to;
+    }
 
 }
