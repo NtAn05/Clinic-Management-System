@@ -592,7 +592,7 @@
                                             <td><fmt:formatNumber value="${service.price}" type="number" maxFractionDigits="0"/> đ</td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <button class="btn-action btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;${service.price}&quot;)" title="Chỉnh sửa">
+                                                    <button class="btn-action btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;<fmt:formatNumber value='${service.price}' type='number' groupingUsed='false' maxFractionDigits='0'/>&quot;)" title="Chỉnh sửa">
                                                         <i class="fas fa-pen-to-square"></i>
                                                     </button>
                                                     <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
@@ -827,7 +827,7 @@
                 document.getElementById('editServiceId').value = serviceId;
                 document.getElementById('editServiceName').value = name;
                 document.getElementById('editServiceType').value = serviceType;
-                document.getElementById('editServicePrice').value = price;
+                document.getElementById('editServicePrice').value = String(price).replace(/\.0+$/, '');
                 document.getElementById('editModal').style.display = 'block';
             }
 
