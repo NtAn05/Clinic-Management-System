@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Appointment;
 import model.Patient;
+import util.SystemLogService;
 
 /**
  *
@@ -66,11 +67,18 @@ public class AppointmentPaymentServlet extends HttpServlet {
         if ("00".equals(code) && "PAID".equals(status)) {
             HttpSession session = request.getSession();
             Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
-            if ( appointment != null) {
+            if (appointment != null) {
                 AppointmentDAO dao = new AppointmentDAO();
- Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
+                Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
                 dao.addAppointment(appointment);
-                 if (pendingPatient != null && pendingPatient.getUserId() != null) {
+                Integer logUserId = (pendingPatient != null && pendingPatient.getUserId() != null) ? pendingPatient.getUserId() : null;
+                String patientName = (pendingPatient != null) ? pendingPatient.getFullName() : "unknown";
+                SystemLogService.log(logUserId, "APPOINTMENT_BOOKED",
+                        "Đặt lịch và thanh toán thành công: patientName=" + patientName
+                        + ", doctorId=" + appointment.getDoctorId()
+                        + ", date=" + appointment.getAppointmentDate()
+                        + ", time=" + appointment.getAppointmentTime());
+                if (pendingPatient != null && pendingPatient.getUserId() != null) {
                     NotificationDAO notificationDAO = new NotificationDAO();
                     notificationDAO.createNotification(
                             pendingPatient.getUserId(),

@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import model.AppointmentDetail;
 import model.User;
+import util.SystemLogService;
 
 /**
  *
@@ -102,8 +103,13 @@ public class HistoryOfAppointmentServlet extends HttpServlet {
             String status = request.getParameter("status");
 
             AppointmentDAO dao = new AppointmentDAO();
-
             dao.updateStatus(appointmentId, status);
+
+            HttpSession sessionLog = request.getSession(false);
+            User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
+            Integer logUserId = userLog != null ? userLog.getUserId() : null;
+            SystemLogService.log(logUserId, "APPOINTMENT_STATUS_UPDATED",
+                    "Cập nhật trạng thái lịch hẹn: appointmentId=" + appointmentId + ", status=" + status);
 
         } catch (Exception e) {
             e.printStackTrace();

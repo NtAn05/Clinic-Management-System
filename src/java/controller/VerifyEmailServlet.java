@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import util.SystemLogService;
 
 @WebServlet(name = "VerifyEmailServlet", urlPatterns = {"/verify-email"})
 public class VerifyEmailServlet extends HttpServlet {
@@ -81,8 +82,10 @@ public class VerifyEmailServlet extends HttpServlet {
                     pendingData.get("phone"),
                     pendingData.get("email"),
                     pendingData.get("password")
-                    
+
             );
+            SystemLogService.log(null, "REGISTER_SUCCESS",
+                    "Đăng ký tài khoản thành công: email=" + pendingData.get("email") + ", fullName=" + pendingData.get("fullName"));
             session.setAttribute("prefillLoginEmail", pendingData.get("email"));
             session.setAttribute("prefillLoginRole", "patient");
             RegisterServlet.clearPendingRegister(session);

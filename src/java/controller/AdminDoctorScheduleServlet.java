@@ -27,6 +27,7 @@ import model.DoctorShift;
 import model.Role;
 import model.ScheduleChangeRequest;
 import model.User;
+import util.SystemLogService;
 
 public class AdminDoctorScheduleServlet extends HttpServlet {
 
@@ -211,6 +212,10 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
 
         doctorDAO.addDoctorShift(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
+        HttpSession sessionAdd = req.getSession(false);
+        User userAdd = sessionAdd != null ? (User) sessionAdd.getAttribute("account") : null;
+        SystemLogService.log(userAdd != null ? userAdd.getUserId() : null, "SHIFT_ADDED",
+                "Thêm ca làm việc: doctorId=" + doctorId + ", dayOfWeek=" + dayOfWeek + ", shift=" + shiftTime.startTime + "-" + shiftTime.endTime);
         req.setAttribute("success", "Đã thêm ca làm việc thành công");
     }
 
@@ -242,6 +247,10 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
 
         doctorDAO.updateDoctorShift(shiftId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
+        HttpSession sessionUpd = req.getSession(false);
+        User userUpd = sessionUpd != null ? (User) sessionUpd.getAttribute("account") : null;
+        SystemLogService.log(userUpd != null ? userUpd.getUserId() : null, "SHIFT_UPDATED",
+                "Cập nhật ca làm việc: shiftId=" + shiftId + ", doctorId=" + doctorId + ", dayOfWeek=" + dayOfWeek);
         req.setAttribute("success", "Đã cập nhật ca làm việc thành công");
     }
 
@@ -255,6 +264,10 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
 
         doctorDAO.deleteDoctorShift(shiftId);
+        HttpSession sessionDel = req.getSession(false);
+        User userDel = sessionDel != null ? (User) sessionDel.getAttribute("account") : null;
+        SystemLogService.log(userDel != null ? userDel.getUserId() : null, "SHIFT_DELETED",
+                "Xóa ca làm việc: shiftId=" + shiftId);
         req.setAttribute("success", "Đã xóa ca làm việc thành công");
     }
 

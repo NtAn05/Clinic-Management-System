@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import model.Role;
 import model.ServicePrice;
 import model.User;
+import util.SystemLogService;
 
 public class AdminServiceServlet extends HttpServlet {
 
@@ -188,6 +189,10 @@ public class AdminServiceServlet extends HttpServlet {
 
         int affectedRows = serviceDAO.addService(s);
         if (affectedRows > 0) {
+            HttpSession sessionLog = req.getSession(false);
+            User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
+            SystemLogService.log(userLog != null ? userLog.getUserId() : null, "SERVICE_ADDED",
+                    "Thêm dịch vụ: name=" + name + ", type=" + serviceType + ", price=" + price);
             req.setAttribute("success", "Thêm dịch vụ thành công");
             return;
         }
@@ -298,6 +303,10 @@ public class AdminServiceServlet extends HttpServlet {
 
         int affectedRows = serviceDAO.updateService(s);
         if (affectedRows > 0) {
+            HttpSession sessionLog = req.getSession(false);
+            User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
+            SystemLogService.log(userLog != null ? userLog.getUserId() : null, "SERVICE_UPDATED",
+                    "Cập nhật dịch vụ: serviceId=" + serviceId + ", name=" + name + ", price=" + price);
             req.setAttribute("success", "Cập nhật dịch vụ thành công");
             return;
         }
@@ -330,6 +339,10 @@ public class AdminServiceServlet extends HttpServlet {
 
         int affectedRows = serviceDAO.deleteService(id);
         if (affectedRows > 0) {
+            HttpSession sessionLog = req.getSession(false);
+            User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
+            SystemLogService.log(userLog != null ? userLog.getUserId() : null, "SERVICE_DELETED",
+                    "Xóa dịch vụ: serviceId=" + id + ", name=" + existingService.getName());
             req.setAttribute("success", "Xóa dịch vụ thành công");
             return;
         }

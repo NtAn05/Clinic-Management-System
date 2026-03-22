@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -49,8 +50,10 @@
         <div class="profile-left">
             <div class="avatar">
                 <c:choose>
-                    <c:when test="${not empty user.imageUrl}">
-                        <img src="${pageContext.request.contextPath}${user.imageUrl}" alt="Avatar">
+                   <c:when test="${not empty user.imageUrl}">
+                        <img src="${fn:startsWith(user.imageUrl, 'http') ? user.imageUrl : pageContext.request.contextPath.concat(user.imageUrl)}"
+                             alt="Avatar"
+                             onerror="this.src='https://i.pinimg.com/1200x/8f/1c/a2/8f1ca2029e2efceebd22fa05cca423d7.jpg'">
                     </c:when>
                     <c:otherwise>
                         <img src="${pageContext.request.contextPath}/assets/default-avatar.svg" alt="Avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3774/3774299.png'">

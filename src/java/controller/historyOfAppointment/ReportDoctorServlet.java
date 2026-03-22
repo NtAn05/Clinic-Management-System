@@ -19,6 +19,7 @@ import model.AppointmentDetail;
 import model.Doctor;
 import model.Rating_review;
 import model.User;
+import util.SystemLogService;
 
 /**
  * 0
@@ -124,9 +125,11 @@ public class ReportDoctorServlet extends HttpServlet {
     }
         Double avg = dao.getAverageRating(doctorID);
 
-if (avg != null) {
-    dao.updateDoctorRating(doctorID, avg);
-}
+        if (avg != null) {
+            dao.updateDoctorRating(doctorID, avg);
+        }
+        SystemLogService.log(userID, "DOCTOR_REVIEWED",
+                "Đánh giá bác sĩ: doctorId=" + doctorID + ", userId=" + userID);
         response.sendRedirect(request.getContextPath() + "/historyofappointmentservlet");
 
     }

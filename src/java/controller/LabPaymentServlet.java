@@ -3,6 +3,7 @@ package controller;
 import dal.LabPaymentDAO;
 import model.LabPayment;
 import model.User;
+import util.SystemLogService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -109,6 +110,8 @@ public class LabPaymentServlet extends HttpServlet {
                 boolean success = labPaymentDAO.confirmPayment(paymentId);
 
                 if (success) {
+                    SystemLogService.log(account.getUserId(), "LAB_PAYMENT_CONFIRMED",
+                            "Xác nhận thanh toán xét nghiệm: paymentId=" + paymentId);
                     response.getWriter().write("{\"success\": true, \"message\": \"Payment confirmed successfully\"}");
                 } else {
                     response.getWriter().write("{\"success\": false, \"message\": \"Failed to confirm payment\"}");

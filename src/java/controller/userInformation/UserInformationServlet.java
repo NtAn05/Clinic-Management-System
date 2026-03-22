@@ -25,6 +25,7 @@ import jakarta.servlet.http.Part;
 import model.Doctor;
 import model.EmailOtpService;
 import model.User;
+import util.SystemLogService;
 
 @MultipartConfig(
         fileSizeThreshold = 1024 * 1024,
@@ -162,7 +163,8 @@ public class UserInformationServlet extends HttpServlet {
 
             users.updateUser(userId, name, phone, email, avatarUrl);
             clearProfileOtp(session);
-            
+            SystemLogService.log(userId, "PROFILE_UPDATED",
+                    "Cập nhật thông tin cá nhân: name=" + name + ", phone=" + phone + ", email=" + email);
             User updatedUser = users.getUserById1(userId);
             session.setAttribute("account", updatedUser);
             response.sendRedirect(request.getContextPath() + "/userinformationservlet?success=profileUpdated");
@@ -189,6 +191,7 @@ public class UserInformationServlet extends HttpServlet {
             }
 
             users.updatePassword(userId, newPass);
+            SystemLogService.log(userId, "PASSWORD_CHANGED", "Đổi mật khẩu thành công: userId=" + userId);
             response.sendRedirect(request.getContextPath() + "/userinformationservlet?success=passwordChanged");
             return;
         }
