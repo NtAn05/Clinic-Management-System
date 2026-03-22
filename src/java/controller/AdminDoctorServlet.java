@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -20,11 +19,17 @@ import model.User;
 public class AdminDoctorServlet extends HttpServlet {
 
     private static final String VIEW_PATH = "/pages/admin/doctors.jsp";
-    private static final int MAX_SPECIALIZATION_LENGTH = 100;
+    private static final String SUCCESS_FLASH_KEY = "adminDoctorSuccess";
     private static final int MIN_EXPERIENCE = 0;
     private static final int MAX_EXPERIENCE = 50;
     private static final int MIN_PRICE = 0;
     private static final int MAX_PRICE = 10_000_000;
+    private static final List<String> SPECIALIZATION_OPTIONS = Arrays.asList(
+            "Da liễu dị ứng",
+            "Da liễu nhiễm trùng",
+            "Da liễu tổng quát",
+            "Điều trị mụn"
+    );
     private static final List<String> QUALIFICATION_OPTIONS = Arrays.asList(
             "Giáo sư / Phó Giáo sư",
             "Tiến sĩ / Bác sĩ CK II",
@@ -33,6 +38,10 @@ public class AdminDoctorServlet extends HttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        req.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        resp.setContentType("text/html; charset=UTF-8");
+
         HttpSession session = req.getSession(false);
 
         if (session == null || session.getAttribute("account") == null) {
@@ -78,16 +87,26 @@ public class AdminDoctorServlet extends HttpServlet {
 
     private void loadPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         DoctorDAO doctorDAO = new DoctorDAO();
-        String keyword = trim(req.getParameter("keyword"));
-        String specialization = trim(req.getParameter("specialization"));
-        String qualification = trim(req.getParameter("qualification"));
-        String success = trim(req.getParameter("success"));
+        String keyword = resolveListValue(req, "keyword", "listKeyword");
+        String specialization = resolveListValue(req, "specialization", "listSpecialization");
+        String qualification = resolveListValue(req, "qualification", "listQualification");
+        String success = "";
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            Object flashMessage = session.getAttribute(SUCCESS_FLASH_KEY);
+            if (flashMessage != null) {
+                success = trim(String.valueOf(flashMessage));
+                session.removeAttribute(SUCCESS_FLASH_KEY);
+            }
+        }
+        if (success.isEmpty()) {
+            success = trim(req.getParameter("success"));
+        }
 
         List<Doctor> doctors = doctorDAO.getDoctorsForAdmin(keyword, specialization, qualification);
-        List<String> specializationOptions = doctorDAO.getDistinctDoctorSpecializations();
 
         req.setAttribute("doctors", doctors);
-        req.setAttribute("specializationOptions", specializationOptions);
+        req.setAttribute("specializationOptions", SPECIALIZATION_OPTIONS);
         req.setAttribute("qualificationOptions", QUALIFICATION_OPTIONS);
         req.setAttribute("keyword", keyword);
         req.setAttribute("selectedSpecialization", specialization);
@@ -115,13 +134,22 @@ public class AdminDoctorServlet extends HttpServlet {
         if (fullName.isEmpty()) {
             req.setAttribute("addFullNameError", "Họ tên không được để trống");
             valid = false;
+        } else if (fullName.length() < 2 || fullName.length() > 100) {
+            req.setAttribute("addFullNameError", "Họ tên phải từ 2 đến 100 ký tự");
+            valid = false;
         }
         if (phone.isEmpty()) {
             req.setAttribute("addPhoneError", "Số điện thoại không được để trống");
             valid = false;
+        } else if (!isValidPhone(phone)) {
+            req.setAttribute("addPhoneError", "Số điện thoại phải gồm 10 số và bắt đầu bằng 0");
+            valid = false;
         }
         if (email.isEmpty()) {
             req.setAttribute("addEmailError", "Email không được để trống");
+            valid = false;
+        } else if (!isValidEmail(email)) {
+            req.setAttribute("addEmailError", "Email không đúng định dạng");
             valid = false;
         }
         if (password.isEmpty()) {
@@ -159,7 +187,6 @@ public class AdminDoctorServlet extends HttpServlet {
         req.setAttribute("addModalOpen", true);
         return false;
     }
-
     private boolean handleEdit(HttpServletRequest req) throws SQLException {
         String doctorIdRaw = trim(req.getParameter("doctorId"));
         String fullName = trim(req.getParameter("fullName"));
@@ -180,26 +207,41 @@ public class AdminDoctorServlet extends HttpServlet {
             req.setAttribute("editModalOpen", true);
             return false;
         }
+        if (doctorId <= 0) {
+            req.setAttribute("error", "Bác sĩ không hợp lệ");
+            req.setAttribute("editModalOpen", true);
+            return false;
+        }
 
         DoctorDAO doctorDAO = new DoctorDAO();
         Doctor existing = doctorDAO.getDoctorByIdForAdmin(doctorId);
+        keepEditReadonlyFields(req, existing);
+        keepEditOriginalFields(req, existing);
         if (existing == null) {
             req.setAttribute("error", "Bác sĩ không tồn tại");
             req.setAttribute("editModalOpen", true);
             return false;
         }
-
         boolean valid = true;
         if (fullName.isEmpty()) {
             req.setAttribute("editFullNameError", "Họ tên không được để trống");
+            valid = false;
+        } else if (fullName.length() < 2 || fullName.length() > 100) {
+            req.setAttribute("editFullNameError", "Họ tên phải từ 2 đến 100 ký tự");
             valid = false;
         }
         if (phone.isEmpty()) {
             req.setAttribute("editPhoneError", "Số điện thoại không được để trống");
             valid = false;
+        } else if (!isValidPhone(phone)) {
+            req.setAttribute("editPhoneError", "Số điện thoại phải gồm 10 số và bắt đầu bằng 0");
+            valid = false;
         }
         if (email.isEmpty()) {
             req.setAttribute("editEmailError", "Email không được để trống");
+            valid = false;
+        } else if (!isValidEmail(email)) {
+            req.setAttribute("editEmailError", "Email không đúng định dạng");
             valid = false;
         }
         valid = validateDoctorFields(req, specialization, qualification, experienceRaw, priceRaw, false) && valid;
@@ -236,7 +278,6 @@ public class AdminDoctorServlet extends HttpServlet {
         req.setAttribute("editModalOpen", true);
         return false;
     }
-
     private boolean validateDoctorFields(HttpServletRequest req, String specialization, String qualification,
             String experienceRaw, String priceRaw, boolean isAdd) {
         boolean valid = true;
@@ -245,8 +286,8 @@ public class AdminDoctorServlet extends HttpServlet {
         if (specialization.isEmpty()) {
             req.setAttribute(prefix + "SpecializationError", "Chuyên môn là bắt buộc");
             valid = false;
-        } else if (specialization.length() > MAX_SPECIALIZATION_LENGTH) {
-            req.setAttribute(prefix + "SpecializationError", "Chuyên môn tối đa " + MAX_SPECIALIZATION_LENGTH + " ký tự");
+        } else if (!SPECIALIZATION_OPTIONS.contains(specialization)) {
+            req.setAttribute(prefix + "SpecializationError", "Chuyên môn không hợp lệ");
             valid = false;
         }
 
@@ -288,7 +329,6 @@ public class AdminDoctorServlet extends HttpServlet {
 
         return valid;
     }
-
     private void keepAddForm(HttpServletRequest req, String fullName, String phone, String email,
             String specialization, String qualification, String experienceRaw, String priceRaw) {
         req.setAttribute("addModalOpen", true);
@@ -313,13 +353,46 @@ public class AdminDoctorServlet extends HttpServlet {
         req.setAttribute("editExperience", experienceRaw);
         req.setAttribute("editPrice", priceRaw);
     }
+    private void keepEditReadonlyFields(HttpServletRequest req, Doctor doctor) {
+        if (doctor == null) {
+            return;
+        }
+        req.setAttribute("editStatus", doctor.getStatus());
+        req.setAttribute("editRating", doctor.getRating());
+    }
+    private void keepEditOriginalFields(HttpServletRequest req, Doctor doctor) {
+        if (doctor == null) {
+            return;
+        }
+        req.setAttribute("editOriginalFullName", doctor.getFullName());
+        req.setAttribute("editOriginalPhone", doctor.getPhone());
+        req.setAttribute("editOriginalEmail", doctor.getEmail());
+        req.setAttribute("editOriginalSpecialization", doctor.getSpecialization());
+        req.setAttribute("editOriginalQualification", doctor.getQualification());
+        req.setAttribute("editOriginalExperience", doctor.getExperience_years());
+        req.setAttribute("editOriginalPrice", doctor.getPrice());
+    }
+    private boolean isValidPhone(String phone) {
+        return phone != null && phone.matches("^0\\d{9}$");
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    }
+    private String resolveListValue(HttpServletRequest req, String getParamName, String postParamName) {
+        if ("POST".equalsIgnoreCase(req.getMethod())) {
+            return trim(req.getParameter(postParamName));
+        }
+        return trim(req.getParameter(getParamName));
+    }
 
     private void redirectSuccess(HttpServletResponse resp, HttpServletRequest req, String message) throws IOException {
-        resp.sendRedirect(req.getContextPath() + "/admin-doctors?success="
-                + URLEncoder.encode(message, StandardCharsets.UTF_8));
+        req.getSession().setAttribute(SUCCESS_FLASH_KEY, message);
+        resp.sendRedirect(req.getContextPath() + "/admin-doctors");
     }
 
     private String trim(String value) {
         return value == null ? "" : value.trim();
     }
 }
+

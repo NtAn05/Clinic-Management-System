@@ -147,6 +147,12 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
 
         applyApprovedOverrides(doctorDAO, scheduleItems, filteredDoctors, weekStart, weekEnd);
+        for (java.util.Iterator<ScheduleViewItem> iterator = scheduleItems.iterator(); iterator.hasNext();) {
+            ScheduleViewItem item = iterator.next();
+            if (!matchesSelectedFilters(item, selectedDay, selectedShiftType)) {
+                iterator.remove();
+            }
+        }
 
         scheduleItems.sort(Comparator
                 .comparing(ScheduleViewItem::getWorkDate)
@@ -323,7 +329,6 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     }
 
     private Integer normalizeDayOfWeek(int day) {
-        // Legacy data may store Sunday as 7 (java.time), while current UI uses 0.
         if (day == 7) {
             return 0;
         }
@@ -353,6 +358,18 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             return false;
         }
         return source.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
+    }
+
+    private boolean matchesSelectedFilters(ScheduleViewItem item, Integer selectedDay, String selectedShiftType) {
+        if (item == null) {
+            return false;
+        }
+        if (selectedDay != null && item.getDayOfWeek() != selectedDay.intValue()) {
+            return false;
+        }
+        return selectedShiftType == null
+                || selectedShiftType.isBlank()
+                || selectedShiftType.equals(item.getShiftCode());
     }
 
     private LocalDate getDateForDay(LocalDate weekStart, int dayOfWeek) {

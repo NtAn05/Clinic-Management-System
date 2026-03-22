@@ -130,24 +130,24 @@ public class UserDAO extends DBContext {
     }
 
     public void updateUser(User user) throws SQLException {
-        String sql = "UPDATE users SET full_name = ?, email = ?, status = ? WHERE phone = ?";
+        String sql = "UPDATE users SET full_name = ?, phone = ?, email = ? WHERE user_id = ?";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, user.getFullName());
-            st.setString(2, user.getEmail());
-            st.setString(3, user.getStatus().toString());
-            st.setString(4, user.getPhone());
+            st.setString(2, user.getPhone());
+            st.setString(3, user.getEmail());
+            st.setInt(4, user.getUserId());
             st.executeUpdate();
         } catch (SQLException e) {
             throw e;
         }
     }
 
-    public void toggleUserStatus(String phone) throws SQLException {
-        String sql = "UPDATE users SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE phone = ?";
+    public void toggleUserStatusById(int userId) throws SQLException {
+        String sql = "UPDATE users SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE user_id = ?";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, phone);
+            st.setInt(1, userId);
             st.executeUpdate();
         } catch (SQLException e) {
             throw e;

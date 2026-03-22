@@ -118,12 +118,8 @@
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             }
 
-            .toolbar-staff {
+            .toolbar-users {
                 grid-template-columns: minmax(340px, 1.9fr) minmax(170px, 0.85fr) minmax(170px, 0.85fr) auto;
-            }
-
-            .toolbar-patient {
-                grid-template-columns: minmax(360px, 2fr) minmax(220px, 1fr) auto;
             }
 
             .search-box {
@@ -196,7 +192,7 @@
                 font-weight: 600;
                 font-size: 14px;
                 transition: all 0.3s ease;
-                display: flex;
+                display: inline-flex;
                 align-items: center;
                 gap: 6px;
             }
@@ -230,6 +226,12 @@
                 background: #45a049;
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            }
+
+            .locked-readonly {
+                background: #f3f4f6 !important;
+                color: #6b7280 !important;
+                cursor: not-allowed;
             }
 
             /* TABLE */
@@ -644,269 +646,133 @@
                 </div>
             </c:if>
 
-            <!-- TAB NAVIGATION -->
-            <div class="tab-navigation">
-                <button class="tab-button ${empty currentTab or currentTab == 'staff' ? 'active' : ''}" onclick="switchTab(event, 'staff')">
-                    <i class="fas fa-users"></i> Tài khoản Nhân viên
-                </button>
-                <button class="tab-button ${currentTab == 'patient' ? 'active' : ''}" onclick="switchTab(event, 'patient')">
-                    <i class="fas fa-user-md"></i> Tài khoản Bệnh nhân
-                </button>
+            <div class="toolbar toolbar-users">
+                <div class="search-box">
+                    <label><i class="fas fa-search"></i> Tìm kiếm</label>
+                    <input type="text" id="userSearch" placeholder="Nhập tên, số điện thoại hoặc email..." value="${searchKeyword}">
+                </div>
+                <div class="filter-box">
+                    <label><i class="fas fa-filter"></i> Vai trò</label>
+                    <select id="userRoleFilter">
+                        <option value="all" ${filterRole == 'all' ? 'selected' : ''}>-- Tất cả --</option>
+                        <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Admin</option>
+                        <option value="doctor" ${filterRole == 'doctor' ? 'selected' : ''}>Bác sĩ</option>
+                        <option value="receptionist" ${filterRole == 'receptionist' ? 'selected' : ''}>Tiếp tân</option>
+                        <option value="technician" ${filterRole == 'technician' ? 'selected' : ''}>Kỹ thuật viên</option>
+                        <option value="patient" ${filterRole == 'patient' ? 'selected' : ''}>Bệnh nhân</option>
+                    </select>
+                </div>
+                <div class="filter-box">
+                    <label><i class="fas fa-filter"></i> Trạng thái</label>
+                    <select id="userStatusFilter">
+                        <option value="all" ${filterStatus == 'all' ? 'selected' : ''}>-- Tất cả --</option>
+                        <option value="active" ${filterStatus == 'active' ? 'selected' : ''}>Hoạt động</option>
+                        <option value="inactive" ${filterStatus == 'inactive' ? 'selected' : ''}>Khóa</option>
+                    </select>
+                </div>
+                <div class="toolbar-buttons">
+                    <button class="btn-search" onclick="searchUsers()">
+                        <i class="fas fa-search"></i> Tìm
+                    </button>
+                    <button class="btn-reset" onclick="resetUserFilter()">
+                        <i class="fas fa-redo"></i> Đặt lại
+                    </button>
+                    <button class="btn-add" onclick="openAddModal()">
+                        <i class="fas fa-user-plus"></i> Thêm tài khoản
+                    </button>
+                </div>
             </div>
 
-            <!-- TAB 1: NHÂN VIÊN -->
-            <div id="staff" class="tab-content ${empty currentTab or currentTab == 'staff' ? 'active' : ''}">
-                <!-- TOOLBAR -->
-                <div class="toolbar toolbar-staff">
-                    <div class="search-box">
-                        <label><i class="fas fa-search"></i> Tìm kiếm</label>
-                        <input type="text" id="staffSearch" placeholder="Nhập tên, số điện thoại hoặc email..." value="${searchKeyword}">
-                    </div>
-                    <div class="filter-box">
-                        <label><i class="fas fa-filter"></i> Lọc theo vai trò</label>
-                        <select id="staffRoleFilter">
-                            <option value="all" ${filterRole == 'all' ? 'selected' : ''}>-- Tất cả --</option>
-                            <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Admin</option>
-                            <option value="doctor" ${filterRole == 'doctor' ? 'selected' : ''}>Bác sĩ</option>
-                            <option value="receptionist" ${filterRole == 'receptionist' ? 'selected' : ''}>Tiếp tân</option>
-                            <option value="technician" ${filterRole == 'technician' ? 'selected' : ''}>Kỹ thuật viên</option>
-                        </select>
-                    </div>
-                    <div class="filter-box">
-                        <label><i class="fas fa-filter"></i> Lọc theo trạng thái</label>
-                        <select id="staffStatusFilter">
-                            <option value="all" ${filterStatus == 'all' ? 'selected' : ''}>-- Tất cả --</option>
-                            <option value="active" ${filterStatus == 'active' ? 'selected' : ''}>Hoạt động</option>
-                            <option value="inactive" ${filterStatus == 'inactive' ? 'selected' : ''}>Khóa</option>
-                        </select>
-                    </div>
-                    <div class="toolbar-buttons">
-                        <button class="btn-search" onclick="searchStaff()">
-                            <i class="fas fa-search"></i> Tìm
-                        </button>
-                        <button class="btn-reset" onclick="resetStaffFilter()">
-                            <i class="fas fa-redo"></i> Đặt lại
-                        </button>
-                        <button class="btn-add" onclick="openAddModal('staff')">
-                            <i class="fas fa-plus"></i> Thêm tài khoản
-                        </button>
-                    </div>
-                </div>
-
-                <!-- TABLE NHÂN VIÊN -->
-                <div class="table-container">
-                    <c:choose>
-                        <c:when test="${not empty allStaff}">
-                            <table>
-                                <thead>
+            <div class="table-container">
+                <c:choose>
+                    <c:when test="${not empty users}">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tên</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Email</th>
+                                    <th>Vai trò</th>
+                                    <th>Trạng thái</th>
+                                    <th style="width: 150px; text-align: center;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach items="${users}" var="user">
                                     <tr>
-                                        <th>Tên</th>
-                                        <th>Số điện thoại</th>
-                                        <th>Email</th>
-                                        <th>Vai trò</th>
-                                        <th>Trạng thái</th>
-                                        <th style="width: 150px; text-align: center;">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach items="${allStaff}" var="staff">
-                                        <tr>
-                                            <td><strong>${staff.fullName}</strong></td>
-                                            <td>${staff.phone}</td>
-                                            <td>${not empty staff.email ? staff.email : '<em>Chưa cập nhật</em>'}</td>
-                                            <td>
-                                                <span class="badge ${staff.role.toString() == 'admin' ? 'badge-admin' : staff.role.toString() == 'doctor' ? 'badge-doctor' : staff.role.toString() == 'receptionist' ? 'badge-receptionist' : 'badge-technician'}">
-                                                    ${staff.role.toString() == 'admin' ? 'Admin' : staff.role.toString() == 'doctor' ? 'Bác sĩ' : staff.role.toString() == 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="badge ${staff.status.toString() == 'active' ? 'badge-active' : 'badge-inactive'}">
-                                                    ${staff.status.toString() == 'active' ? 'Hoạt động' : 'Khóa'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="action-buttons" style="justify-content: center;">
-                                                    <button class="btn-action btn-view" onclick="viewAccount(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}')" title="Xem chi tiết">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <c:if test="${staff.role.toString() != 'admin'}">
-                                                        <button class="btn-action btn-edit" onclick="openEditModal(${staff.userId}, '${staff.fullName}', '${staff.phone}', '${staff.email}', '${staff.role}', '${staff.status}', 'staff')" title="Sửa">
-                                                            <i class="fas fa-pen-to-square"></i>
-                                                        </button>
-                                                        <button class="btn-action btn-toggle" onclick="toggleStatus('${staff.phone}', '${staff.fullName}')" title="Kích hoạt/Vô hiệu hóa">
-                                                            <i class="fas fa-toggle-on"></i>
-                                                        </button>
-                                                    </c:if>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </c:when>
-                        <c:otherwise>
-                            <div class="no-data">
-                                <i class="fas fa-inbox"></i>
-                                <p>Chưa có tài khoản nhân viên nào</p>
-                            </div>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-
-                <!-- PAGINATION -->
-                 <c:if test="${staffTotalPages > 1}">
-                    <div class="pagination-wrapper">
-                        <c:choose>
-                            <c:when test="${staffCurrentPage > 1}">
-                                <a class="page-link"
-                                href="admin-users?tab=staff&action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&staffPage=${staffCurrentPage - 1}&patientPage=${patientCurrentPage}">
-                                    ‹ Trước
-                                </a>
-                            </c:when>
-                            <c:otherwise>
-                                <span class="page-link disabled">‹ Trước</span>
-                            </c:otherwise>
-                        </c:choose>
-
-                        <c:forEach var="i" begin="1" end="${staffTotalPages}">
-                            <a class="page-link ${i == staffCurrentPage ? 'active' : ''}"
-                            href="admin-users?tab=staff&action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&staffPage=${i}&patientPage=${patientCurrentPage}">
-                                ${i}
-                            </a>
-                        </c:forEach>
-
-                        <c:choose>
-                            <c:when test="${staffCurrentPage < staffTotalPages}">
-                                <a class="page-link"
-                                href="admin-users?tab=staff&action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&staffPage=${staffCurrentPage + 1}&patientPage=${patientCurrentPage}">
-                                    Sau ›
-                                </a>
-                            </c:when>
-                            <c:otherwise>
-                                <span class="page-link disabled">Sau ›</span>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </c:if>
-            </div>
-
-            <!-- TAB 2: BỆNH NHÂN -->
-            <div id="patient" class="tab-content ${currentTab == 'patient' ? 'active' : ''}">
-                <!-- TOOLBAR -->
-                <div class="toolbar toolbar-patient">
-                    <div class="search-box">
-                        <label><i class="fas fa-search"></i> Tìm kiếm</label>
-                        <input type="text" id="patientSearch" placeholder="Nhập tên, số điện thoại hoặc email..." value="${searchKeyword}">
-                    </div>
-                    <div class="filter-box">
-                        <label><i class="fas fa-filter"></i> Lọc theo trạng thái</label>
-                        <select id="patientFilter">
-                            <option value="all" ${filterPatientStatus == 'all' ? 'selected' : ''}>-- Tất cả --</option>
-                            <option value="active" ${filterPatientStatus == 'active' ? 'selected' : ''}>Hoạt động</option>
-                            <option value="inactive" ${filterPatientStatus == 'inactive' ? 'selected' : ''}>Khóa</option>
-                        </select>
-                    </div>
-                    <div class="toolbar-buttons">
-                        <button class="btn-search" onclick="searchPatient()">
-                            <i class="fas fa-search"></i> Tìm
-                        </button>
-                        <button class="btn-reset" onclick="resetPatientFilter()">
-                            <i class="fas fa-redo"></i> Đặt lại
-                        </button>
-                        <button class="btn-add" onclick="openAddModal('patient')">
-                            <i class="fas fa-plus"></i> Thêm tài khoản
-                        </button>
-                    </div>
-                </div>
-
-                <!-- TABLE BỆNH NHÂN -->
-                <div class="table-container">
-                    <c:choose>
-                        <c:when test="${not empty patients}">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Tên</th>
-                                        <th>Số điện thoại</th>
-                                        <th>Email</th>
-                                        <th>Trạng thái</th>
-                                        <th style="width: 150px; text-align: center;">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach items="${patients}" var="patient">
-                                        <tr>
-                                            <td><strong>${patient.fullName}</strong></td>
-                                            <td>${patient.phone}</td>
-                                            <td>${not empty patient.email ? patient.email : '<em>Chưa cập nhật</em>'}</td>
-                                            <td>
-                                                <span class="badge ${patient.status.toString() == 'active' ? 'badge-active' : 'badge-inactive'}">
-                                                    ${patient.status.toString() == 'active' ? 'Hoạt động' : 'Khóa'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="action-buttons" style="justify-content: center;">
-                                                    <button class="btn-action btn-view" onclick="viewAccount(${patient.userId}, '${patient.fullName}', '${patient.phone}', '${patient.email}', '${patient.role}', '${patient.status}')" title="Xem chi tiết">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <button class="btn-action btn-edit" onclick="openEditModal(${patient.userId}, '${patient.fullName}', '${patient.phone}', '${patient.email}', '${patient.role}', '${patient.status}', 'patient')" title="Sửa">
-                                                        <i class="fas fa-pen-to-square"></i>
-                                                    </button>
-                                                    <button class="btn-action btn-toggle" onclick="toggleStatus('${patient.phone}', '${patient.fullName}')" title="Kích hoạt/Vô hiệu hóa">
+                                        <td><strong>${user.fullName}</strong></td>
+                                        <td>${user.phone}</td>
+                                        <td>${not empty user.email ? user.email : '<em>Chưa cập nhật</em>'}</td>
+                                        <td>
+                                            <span class="badge ${user.role.toString() == 'admin' ? 'badge-admin' : user.role.toString() == 'doctor' ? 'badge-doctor' : user.role.toString() == 'receptionist' ? 'badge-receptionist' : user.role.toString() == 'technician' ? 'badge-technician' : 'badge-patient'}">
+                                                ${user.role.toString() == 'admin' ? 'Admin' : user.role.toString() == 'doctor' ? 'Bác sĩ' : user.role.toString() == 'receptionist' ? 'Tiếp tân' : user.role.toString() == 'technician' ? 'Kỹ thuật viên' : 'Bệnh nhân'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge ${user.status.toString() == 'active' ? 'badge-active' : 'badge-inactive'}">
+                                                ${user.status.toString() == 'active' ? 'Hoạt động' : 'Khóa'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons" style="justify-content: center;">
+                                                <button class="btn-action btn-view" onclick="viewAccount(${user.userId}, '${user.fullName}', '${user.phone}', '${user.email}', '${user.role}', '${user.status}')" title="Xem chi tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <c:if test="${user.role.toString() != 'admin'}">
+                                                    <button class="btn-action btn-toggle" onclick="toggleStatus(${user.userId}, '${user.fullName}')" title="Kích hoạt/Vô hiệu hóa">
                                                         <i class="fas fa-toggle-on"></i>
                                                     </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
+                                                </c:if>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="no-data">
+                            <i class="fas fa-inbox"></i>
+                            <p>Chưa có tài khoản nào</p>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+
+            <c:if test="${totalPages > 1}">
+                <div class="pagination-wrapper">
+                    <c:choose>
+                        <c:when test="${currentPage > 1}">
+                            <a class="page-link"
+                               href="admin-users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${currentPage - 1}">
+                                ‹ Trước
+                            </a>
                         </c:when>
                         <c:otherwise>
-                            <div class="no-data">
-                                <i class="fas fa-inbox"></i>
-                                <p>Chưa có tài khoản bệnh nhân nào</p>
-                            </div>
+                            <span class="page-link disabled">‹ Trước</span>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <c:forEach var="i" begin="1" end="${totalPages}">
+                        <a class="page-link ${i == currentPage ? 'active' : ''}"
+                           href="admin-users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${i}">
+                            ${i}
+                        </a>
+                    </c:forEach>
+
+                    <c:choose>
+                        <c:when test="${currentPage < totalPages}">
+                            <a class="page-link"
+                               href="admin-users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${currentPage + 1}">
+                                Sau ›
+                            </a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="page-link disabled">Sau ›</span>
                         </c:otherwise>
                     </c:choose>
                 </div>
-
-                <!-- PAGINATION -->
-                <c:if test="${patientTotalPages > 1}">
-                    <div class="pagination-wrapper">
-                        <c:choose>
-                            <c:when test="${patientCurrentPage > 1}">
-                                <a class="page-link"
-                                href="admin-users?tab=patient&action=${currentAction}&keyword=${searchKeyword}&status=${filterPatientStatus}&staffPage=${staffCurrentPage}&patientPage=${patientCurrentPage - 1}">
-                                    ‹ Trước
-                                </a>
-                            </c:when>
-                            <c:otherwise>
-                                <span class="page-link disabled">‹ Trước</span>
-                            </c:otherwise>
-                        </c:choose>
-
-                        <c:forEach var="i" begin="1" end="${patientTotalPages}">
-                            <a class="page-link ${i == patientCurrentPage ? 'active' : ''}"
-                            href="admin-users?tab=patient&action=${currentAction}&keyword=${searchKeyword}&status=${filterPatientStatus}&staffPage=${staffCurrentPage}&patientPage=${i}">
-                                ${i}
-                            </a>
-                        </c:forEach>
-
-                        <c:choose>
-                            <c:when test="${patientCurrentPage < patientTotalPages}">
-                                <a class="page-link"
-                                href="admin-users?tab=patient&action=${currentAction}&keyword=${searchKeyword}&status=${filterPatientStatus}&staffPage=${staffCurrentPage}&patientPage=${patientCurrentPage + 1}">
-                                    Sau ›
-                                </a>
-                            </c:when>
-                            <c:otherwise>
-                                <span class="page-link disabled">Sau ›</span>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </c:if>
-            </div>
+            </c:if>
         </div>
 
         <!-- MODAL XEM CHI TIẾT TÀI KHOẢN -->
@@ -918,34 +784,114 @@
                     <button class="modal-close" onclick="closeModal('viewAccountModal')">×</button>
                 </div>
 
-                <div class="form-info">
-                    <div class="form-info-item">
-                        <strong>Họ và tên:</strong>
-                        <span id="viewFullName"></span>
-                    </div>
-                    <div class="form-info-item">
-                        <strong>Số điện thoại:</strong>
-                        <span id="viewPhone"></span>
-                    </div>
-                    <div class="form-info-item">
-                        <strong>Email:</strong>
-                        <span id="viewEmail"></span>
-                    </div>
-                    <div class="form-info-item" id="viewRoleItem" style="display: none;">
-                        <strong>Vai trò:</strong>
-                        <span id="viewRole"></span>
-                    </div>
-                    <div class="form-info-item">
-                        <strong>Trạng thái:</strong>
-                        <span id="viewStatus"></span>
-                    </div>
-                </div>
+                <form action="admin-users" method="POST" id="viewAccountForm" onsubmit="return handleViewUserFormSubmit()">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="userId" id="viewUserIdInput" value="${editUserId}">
+                    <input type="hidden" name="editType" id="viewEditTypeInput" value="${editModalType}">
 
-                <div class="modal-footer">
-                    <button class="btn-cancel" onclick="closeModal('viewAccountModal')">
-                        <i class="fas fa-times"></i> Đóng
-                    </button>
-                </div>
+                    <c:if test="${not empty error and editModalOpen}">
+                        <div class="alert error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${error}
+                        </div>
+                    </c:if>
+
+                    <div class="form-group">
+                        <label>Họ và tên <span style="color: red;">*</span></label>
+                        <input type="text" name="fullname" id="viewFullNameInput" required maxlength="100" value="${editFullName}">
+                        <c:if test="${not empty editFullNameError}">
+                            <div class="field-error">${editFullNameError}</div>
+                        </c:if>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Số điện thoại <span style="color: red;">*</span></label>
+                        <input type="tel" name="phone" id="viewPhoneInput" required maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" value="${editPhone}">
+                        <c:if test="${not empty editPhoneError}">
+                            <div class="field-error">${editPhoneError}</div>
+                        </c:if>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email <span style="color: red;">*</span></label>
+                        <input type="email" name="email" id="viewEmailInput" required maxlength="100" pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" title="Email không đúng định dạng" value="${editEmail}">
+                        <c:if test="${not empty editEmailError}">
+                            <div class="field-error">${editEmailError}</div>
+                        </c:if>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vai trò</label>
+                        <input type="text" id="viewRoleInput" readonly>
+                        <select name="role" id="viewRoleSelect" style="display: none;">
+                            <option value="">--Chọn vai trò--</option>
+                            <option value="patient">Bệnh nhân</option>
+                            <option value="doctor">Bác sĩ</option>
+                            <option value="receptionist">Tiếp tân</option>
+                            <option value="technician">Kỹ thuật viên</option>
+                        </select>
+                        <c:if test="${not empty editRoleError}">
+                            <div class="field-error">${editRoleError}</div>
+                        </c:if>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <input type="text" id="viewStatusText" readonly>
+                        <input type="hidden" id="viewStatusValue" value="active">
+                    </div>
+
+                    <div id="viewDoctorFieldsGroup" style="display: none;">
+                        <div class="form-group">
+                            <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
+                            <select name="doctorSpecialization" id="viewDoctorSpecialization">
+                                <option value="">--Chọn chuyên môn--</option>
+                                <option value="Da liễu dị ứng">Da liễu dị ứng</option>
+                                <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
+                                <option value="Da liễu tổng quát">Da liễu tổng quát</option>
+                                <option value="Điều trị mụn">Điều trị mụn</option>
+                            </select>
+                            <c:if test="${not empty editDoctorSpecializationError}">
+                                <div class="field-error">${editDoctorSpecializationError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Bằng cấp <span style="color: red;">*</span></label>
+                            <select name="doctorQualification" id="viewDoctorQualification">
+                                <option value="">--Chọn bằng cấp--</option>
+                                <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
+                                <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
+                                <option value="Thạc sĩ / Bác sĩ CK I / BS nội trú">Thạc sĩ / Bác sĩ CK I / BS nội trú</option>
+                            </select>
+                            <c:if test="${not empty editDoctorQualificationError}">
+                                <div class="field-error">${editDoctorQualificationError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
+                            <input type="number" name="doctorExperienceYears" id="viewDoctorExperienceYears" min="0" max="50">
+                            <c:if test="${not empty editDoctorExperienceError}">
+                                <div class="field-error">${editDoctorExperienceError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Giá khám <span style="color: red;">*</span></label>
+                            <input type="number" name="doctorPriceBooking" id="viewDoctorPriceBooking" min="0" max="10000000">
+                            <c:if test="${not empty editDoctorPriceError}">
+                                <div class="field-error">${editDoctorPriceError}</div>
+                            </c:if>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" id="viewCloseBtn" onclick="onViewUserCloseOrCancel()">
+                            <i id="viewCloseBtnIcon" class="fas fa-times"></i> <span id="viewCloseBtnText">Đóng</span>
+                        </button>
+                        <button type="button" class="btn-submit" id="viewEditBtn" onclick="onViewUserEditToggle()">
+                            <i id="viewEditBtnIcon" class="fas fa-pen-to-square"></i> <span id="viewEditBtnText">Sửa</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -954,7 +900,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <i class="fas fa-user-plus"></i>
-                    <span id="addModalTitle">Thêm tài khoản Nhân viên</span>
+                    <span id="addModalTitle">Thêm tài khoản</span>
                     <button class="modal-close" onclick="closeModal('addAccountModal')">×</button>
                 </div>
 
@@ -971,12 +917,15 @@
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="addFullName" required placeholder="Nhập họ và tên" value="${addFullName}">
+                        <input type="text" name="fullname" id="addFullName" required maxlength="100" placeholder="Nhập họ và tên" value="${addFullName}">
+                        <c:if test="${not empty addFullNameError}">
+                            <div class="field-error">${addFullNameError}</div>
+                        </c:if>
                     </div>
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="addPhone" required pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" placeholder="Nhập số điện thoại" value="${addPhone}">
+                        <input type="tel" name="phone" id="addPhone" required maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" placeholder="Nhập số điện thoại" value="${addPhone}">
                         <c:if test="${not empty addPhoneError}">
                             <div class="field-error">${addPhoneError}</div>
                         </c:if>
@@ -984,19 +933,66 @@
 
                     <div class="form-group">
                         <label>Email <span style="color: red;">*</span></label>
-                        <input type="email" name="email" id="addEmail" required pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không đúng định dạng" placeholder="Nhập email" value="${addEmail}">
+                        <input type="email" name="email" id="addEmail" required maxlength="100" pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" title="Email không đúng định dạng" placeholder="Nhập email" value="${addEmail}">
                         <c:if test="${not empty addEmailError}">
                             <div class="field-error">${addEmailError}</div>
                         </c:if>
                     </div>
 
-                    <div id="addRoleGroup" class="form-group" style="display: none;">
+                                        <div id="addRoleGroup" class="form-group">
                         <label>Vai trò <span style="color: red;">*</span></label>
                         <select name="staffRole" id="addStaffRole">
+                            <option value="">--Chọn vai trò--</option>
+                            <option value="patient">Bệnh nhân</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
                             <option value="technician">Kỹ thuật viên</option>
                         </select>
+                        <c:if test="${not empty addRoleError}">
+                            <div class="field-error">${addRoleError}</div>
+                        </c:if>
+                    </div>
+
+                    <div id="addDoctorFieldsGroup" style="display: none;">
+                        <div class="form-group">
+                            <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
+                            <select name="doctorSpecialization" id="addDoctorSpecialization">
+                                <option value="">--Chọn chuyên môn--</option>
+                                <option value="Da liễu dị ứng">Da liễu dị ứng</option>
+                                <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
+                                <option value="Da liễu tổng quát">Da liễu tổng quát</option>
+                                <option value="Điều trị mụn">Điều trị mụn</option>
+                            </select>
+                            <c:if test="${not empty addDoctorSpecializationError}">
+                                <div class="field-error">${addDoctorSpecializationError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Bằng cấp <span style="color: red;">*</span></label>
+                            <select name="doctorQualification" id="addDoctorQualification">
+                                <option value="">--Chọn bằng cấp--</option>
+                                <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
+                                <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
+                                <option value="Thạc sĩ / Bác sĩ CK I / BS nội trú">Thạc sĩ / Bác sĩ CK I / BS nội trú</option>
+                            </select>
+                            <c:if test="${not empty addDoctorQualificationError}">
+                                <div class="field-error">${addDoctorQualificationError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
+                            <input type="number" name="doctorExperienceYears" id="addDoctorExperienceYears" min="0" max="50" value="${addDoctorExperienceYears}">
+                            <c:if test="${not empty addDoctorExperienceError}">
+                                <div class="field-error">${addDoctorExperienceError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Giá khám <span style="color: red;">*</span></label>
+                            <input type="number" name="doctorPriceBooking" id="addDoctorPriceBooking" min="0" max="10000000" value="${addDoctorPriceBooking}">
+                            <c:if test="${not empty addDoctorPriceError}">
+                                <div class="field-error">${addDoctorPriceError}</div>
+                            </c:if>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1061,18 +1057,14 @@
                     <div id="editRoleGroup" class="form-group" style="display: none;">
                         <label>Vai trò <span style="color: red;">*</span></label>
                         <select name="role" id="editRole">
+                            <option value="">--Chọn vai trò--</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
                             <option value="technician">Kỹ thuật viên</option>
                         </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Trạng thái <span style="color: red;">*</span></label>
-                        <select name="status" id="editStatus">
-                            <option value="active" ${editStatusValue == 'active' ? 'selected' : ''}>Hoạt động</option>
-                            <option value="inactive" ${editStatusValue == 'inactive' ? 'selected' : ''}>Khóa</option>
-                        </select>
+                        <c:if test="${not empty editRoleError}">
+                            <div class="field-error">${editRoleError}</div>
+                        </c:if>
                     </div>
 
                     <div class="modal-footer">
@@ -1090,36 +1082,198 @@
         <jsp:include page="../../common/footer.jsp" />
                         
         <script>
-            let currentTab = '${currentTab}' || 'staff';
+            let isViewUserEditMode = false;
+            let viewUserSnapshot = null;
+            let isViewUserRoleLocked = false;
+            let viewOriginalRole = 'patient';
 
-            // Chuyển tab
-            function switchTab(event, tab) {
-                currentTab = tab;
-                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
-
-                document.getElementById(tab).classList.add('active');
-                event.target.classList.add('active');
+            function defaultPriceByQualificationIndex(selectEl) {
+                if (!selectEl) return '';
+                switch (selectEl.selectedIndex) {
+                    case 1:
+                        return '400000';
+                    case 2:
+                        return '300000';
+                    case 3:
+                        return '200000';
+                    default:
+                        return '';
+                }
             }
 
-            // Xem chi tiết tài khoản
-            function viewAccount(userId, fullName, phone, email, role, status) {
-                document.getElementById('viewFullName').innerText = fullName;
-                document.getElementById('viewPhone').innerText = phone;
-                document.getElementById('viewEmail').innerText = email || 'Chưa cập nhật';
-
-                const roleItem = document.getElementById('viewRoleItem');
-                if (role !== 'patient') {
-                    roleItem.style.display = 'flex';
-                    const roleText = role === 'admin' ? 'Admin' : role === 'doctor' ? 'Bác sĩ' : role === 'receptionist' ? 'Tiếp tân' : 'Kỹ thuật viên';
-                    document.getElementById('viewRole').innerText = roleText;
-                } else {
-                    roleItem.style.display = 'none';
+            function applyDefaultDoctorPrice(selectId, priceInputId, force) {
+                const selectEl = document.getElementById(selectId);
+                const priceEl = document.getElementById(priceInputId);
+                if (!selectEl || !priceEl) {
+                    return;
                 }
+                const defaultPrice = defaultPriceByQualificationIndex(selectEl);
+                if (!defaultPrice) {
+                    return;
+                }
+                const currentPrice = (priceEl.value || '').trim();
+                if (force || currentPrice === '') {
+                    priceEl.value = defaultPrice;
+                }
+            }
 
-                const statusBadge = status === 'active' ? '<span class="badge badge-active">Hoạt động</span>' : '<span class="badge badge-inactive">Khóa</span>';
-                document.getElementById('viewStatus').innerHTML = statusBadge;
+            function roleTextFromValue(role) {
+                return role === 'admin'
+                        ? 'Admin'
+                        : role === 'doctor'
+                        ? 'Bác sĩ'
+                        : role === 'receptionist'
+                        ? 'Tiếp tân'
+                        : role === 'technician'
+                        ? 'Kỹ thuật viên'
+                        : 'Bệnh nhân';
+            }
 
+            function statusTextFromValue(status) {
+                return status === 'active' ? 'Hoạt động' : 'Khóa';
+            }
+
+            function applyViewUserEditPermission(role) {
+                isViewUserRoleLocked = role === 'admin';
+                const editBtn = document.getElementById('viewEditBtn');
+                if (editBtn) {
+                    editBtn.style.display = isViewUserRoleLocked ? 'none' : '';
+                }
+            }
+
+            function setViewUserEditMode(enabled) {
+                if (enabled && isViewUserRoleLocked) {
+                    enabled = false;
+                }
+                isViewUserEditMode = enabled;
+                document.getElementById('viewFullNameInput').readOnly = !enabled;
+                document.getElementById('viewPhoneInput').readOnly = !enabled;
+                document.getElementById('viewEmailInput').readOnly = !enabled;
+
+                const roleInput = document.getElementById('viewRoleInput');
+                const roleSelect = document.getElementById('viewRoleSelect');
+                if (enabled) {
+                    roleInput.style.display = 'none';
+                    roleSelect.style.display = '';
+                    roleSelect.disabled = false;
+                } else {
+                    roleSelect.disabled = true;
+                    roleSelect.style.display = 'none';
+                    roleInput.style.display = '';
+                    roleInput.value = roleTextFromValue(roleSelect.value);
+                }
+                toggleDoctorFieldsVisibility();
+
+                document.getElementById('viewEditBtnIcon').className = enabled ? 'fas fa-save' : 'fas fa-pen-to-square';
+                document.getElementById('viewEditBtnText').innerText = enabled ? 'Lưu' : 'Sửa';
+                document.getElementById('viewCloseBtnIcon').className = enabled ? 'fas fa-rotate-left' : 'fas fa-times';
+                document.getElementById('viewCloseBtnText').innerText = enabled ? 'Hủy' : 'Đóng';
+            }
+
+            function captureViewUserSnapshot() {
+                viewUserSnapshot = {
+                    fullName: document.getElementById('viewFullNameInput').value || '',
+                    phone: document.getElementById('viewPhoneInput').value || '',
+                    email: document.getElementById('viewEmailInput').value || '',
+                    role: document.getElementById('viewRoleSelect').value || 'patient',
+                    status: document.getElementById('viewStatusValue').value || 'active',
+                    doctorSpecialization: document.getElementById('viewDoctorSpecialization').value || '',
+                    doctorQualification: document.getElementById('viewDoctorQualification').value || '',
+                    doctorExperienceYears: document.getElementById('viewDoctorExperienceYears').value || '',
+                    doctorPriceBooking: document.getElementById('viewDoctorPriceBooking').value || ''
+                };
+            }
+
+            function restoreViewUserSnapshot() {
+                if (!viewUserSnapshot) return;
+                document.getElementById('viewFullNameInput').value = viewUserSnapshot.fullName;
+                document.getElementById('viewPhoneInput').value = viewUserSnapshot.phone;
+                document.getElementById('viewEmailInput').value = viewUserSnapshot.email;
+                document.getElementById('viewRoleSelect').value = viewUserSnapshot.role;
+                document.getElementById('viewRoleInput').value = roleTextFromValue(viewUserSnapshot.role);
+                document.getElementById('viewStatusValue').value = viewUserSnapshot.status;
+                document.getElementById('viewStatusText').value = statusTextFromValue(viewUserSnapshot.status);
+                document.getElementById('viewDoctorSpecialization').value = viewUserSnapshot.doctorSpecialization;
+                document.getElementById('viewDoctorQualification').value = viewUserSnapshot.doctorQualification;
+                document.getElementById('viewDoctorExperienceYears').value = viewUserSnapshot.doctorExperienceYears;
+                document.getElementById('viewDoctorPriceBooking').value = viewUserSnapshot.doctorPriceBooking;
+                toggleDoctorFieldsVisibility();
+            }
+
+            function onViewUserEditToggle() {
+                if (isViewUserRoleLocked) {
+                    return;
+                }
+                if (!isViewUserEditMode) {
+                    setViewUserEditMode(true);
+                    return;
+                }
+                const form = document.getElementById('viewAccountForm');
+                if (form) {
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else if (form.reportValidity()) {
+                        form.submit();
+                    }
+                }
+            }
+
+            function onViewUserCloseOrCancel() {
+                if (isViewUserEditMode) {
+                    restoreViewUserSnapshot();
+                    setViewUserEditMode(false);
+                    return;
+                }
+                closeModal('viewAccountModal');
+            }
+
+            function handleViewUserFormSubmit() {
+                trimUserFormInputs();
+                return isViewUserEditMode && !isViewUserRoleLocked;
+            }
+
+            function trimUserFormInputs() {
+                ['viewFullNameInput', 'viewPhoneInput', 'viewEmailInput', 'viewDoctorExperienceYears', 'viewDoctorPriceBooking'].forEach(id => {
+                    const node = document.getElementById(id);
+                    if (node && typeof node.value === 'string') {
+                        node.value = node.value.trim();
+                    }
+                });
+            }
+
+            function toggleDoctorFieldsVisibility() {
+                const group = document.getElementById('viewDoctorFieldsGroup');
+                const targetRole = document.getElementById('viewRoleSelect').value;
+                const shouldShow = isViewUserEditMode
+                        && targetRole === 'doctor'
+                        && viewOriginalRole !== 'doctor';
+                group.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) {
+                    applyDefaultDoctorPrice('viewDoctorQualification', 'viewDoctorPriceBooking', false);
+                }
+            }
+
+                        // Xem chi tiết tài khoản (gộp sửa trong modal xem)
+            function viewAccount(userId, fullName, phone, email, role, status) {
+                const editType = role === 'patient' ? 'patient' : 'staff';
+                document.getElementById('viewUserIdInput').value = userId;
+                document.getElementById('viewEditTypeInput').value = editType;
+                document.getElementById('viewFullNameInput').value = fullName || '';
+                document.getElementById('viewPhoneInput').value = phone || '';
+                document.getElementById('viewEmailInput').value = email || '';
+                document.getElementById('viewRoleSelect').value = role || 'patient';
+                document.getElementById('viewRoleInput').value = roleTextFromValue(role || 'patient');
+                viewOriginalRole = role || 'patient';
+                document.getElementById('viewStatusValue').value = status || 'active';
+                document.getElementById('viewStatusText').value = statusTextFromValue(status || 'active');
+                document.getElementById('viewDoctorSpecialization').value = '';
+                document.getElementById('viewDoctorQualification').value = '';
+                document.getElementById('viewDoctorExperienceYears').value = '';
+                document.getElementById('viewDoctorPriceBooking').value = '';
+
+                applyViewUserEditPermission(role || 'patient');
+                setViewUserEditMode(false);
+                captureViewUserSnapshot();
                 openModal('viewAccountModal');
             }
 
@@ -1130,7 +1284,7 @@
             }
 
             // Mở modal thêm tài khoản
-            function openAddModal(type, preserveData = false) {
+            function openAddModal(preserveData = false) {
                 const form = document.getElementById('addAccountForm');
                 if (!preserveData) {
                     form.reset();
@@ -1138,42 +1292,42 @@
                     document.getElementById('addPhone').value = '';
                     document.getElementById('addEmail').value = '';
                     document.getElementById('addPassword').value = '123456';
+                    document.getElementById('addDoctorSpecialization').value = '';
+                    document.getElementById('addDoctorQualification').value = '';
+                    document.getElementById('addDoctorExperienceYears').value = '';
+                    document.getElementById('addDoctorPriceBooking').value = '';
                     clearFieldErrors('addAccountModal');
                 }
 
                 const roleGroup = document.getElementById('addRoleGroup');
-                if (type === 'staff') {
-                    document.getElementById('addModalTitle').innerText = 'Thêm tài khoản Nhân viên';
-                    document.getElementById('addRoleInput').value = '3'; // receptionist
-                    roleGroup.style.display = 'block';
-                } else {
-                    document.getElementById('addModalTitle').innerText = 'Thêm tài khoản Bệnh nhân';
-                    document.getElementById('addRoleInput').value = 'patient';
-                    roleGroup.style.display = 'none';
+                const staffRole = document.getElementById('addStaffRole');
+                document.getElementById('addModalTitle').innerText = 'Thêm tài khoản';
+                if (!preserveData) {
+                    staffRole.value = '';
                 }
+                document.getElementById('addRoleInput').value = staffRole.value;
+                roleGroup.style.display = 'block';
+                toggleAddDoctorFieldsVisibility();
 
                 openModal('addAccountModal');
             }
 
-            // Mở modal chỉnh sửa
-            function openEditModal(userId, fullName, phone, email, role, status, type) {
-                clearFieldErrors('editAccountModal');
-                document.getElementById('editUserId').value = userId;
-                document.getElementById('editType').value = type;
-                document.getElementById('editFullName').value = fullName;
-                document.getElementById('editPhone').value = phone;
-                document.getElementById('editEmail').value = email;
-                document.getElementById('editStatus').value = status;
-
-                const roleGroup = document.getElementById('editRoleGroup');
-                if (type === 'staff') {
-                    roleGroup.style.display = 'block';
-                    document.getElementById('editRole').value = role;
-                } else {
-                    roleGroup.style.display = 'none';
+            function toggleAddDoctorFieldsVisibility() {
+                const role = document.getElementById('addStaffRole').value;
+                const group = document.getElementById('addDoctorFieldsGroup');
+                group.style.display = role === 'doctor' ? 'block' : 'none';
+                if (role === 'doctor') {
+                    applyDefaultDoctorPrice('addDoctorQualification', 'addDoctorPriceBooking', false);
                 }
+            }
 
-                openModal('editAccountModal');
+            function trimAddFormInputs() {
+                ['addFullName', 'addPhone', 'addEmail', 'addDoctorExperienceYears', 'addDoctorPriceBooking'].forEach(id => {
+                    const node = document.getElementById(id);
+                    if (node && typeof node.value === 'string') {
+                        node.value = node.value.trim();
+                    }
+                });
             }
 
             // Mở modal
@@ -1197,7 +1351,7 @@
             }
 
             // Kích hoạt/Vô hiệu hóa
-            function toggleStatus(phone, name) {
+            function toggleStatus(userId, name) {
                 if (confirm(`Thay đổi trạng thái của ${name}?`)) {
                     const form = document.createElement('form');
                     form.method = 'POST';
@@ -1208,67 +1362,61 @@
                     actionInput.name = 'action';
                     actionInput.value = 'toggleStatus';
 
-                    const phoneInput = document.createElement('input');
-                    phoneInput.type = 'hidden';
-                    phoneInput.name = 'phone';
-                    phoneInput.value = phone;
+                    const userIdInput = document.createElement('input');
+                    userIdInput.type = 'hidden';
+                    userIdInput.name = 'userId';
+                    userIdInput.value = userId;
 
                     form.appendChild(actionInput);
-                    form.appendChild(phoneInput);
+                    form.appendChild(userIdInput);
                     document.body.appendChild(form);
                     form.submit();
                 }
             }
 
-            // Search nhân viên
-            function searchStaff() {
-                const keyword = document.getElementById('staffSearch').value.trim();
-                const role = document.getElementById('staffRoleFilter').value;
-                const status = document.getElementById('staffStatusFilter').value;
-                
-                let url = 'admin-users?action=search&tab=staff&staffPage=1';
-                if (keyword) {
-                    url += '&keyword=' + encodeURIComponent(keyword);
-                }
+            function filterUsers() {
+                const role = document.getElementById('userRoleFilter').value;
+                const status = document.getElementById('userStatusFilter').value;
+                const keyword = document.getElementById('userSearch').value.trim();
+
+                let url = 'admin-users?action=filter&page=1';
                 if (role !== 'all') {
                     url += '&role=' + role;
                 }
                 if (status !== 'all') {
                     url += '&status=' + status;
                 }
-                
+                if (keyword) {
+                    url += '&keyword=' + encodeURIComponent(keyword);
+                }
                 window.location.href = url;
             }
 
-            // Search bệnh nhân
-            function searchPatient() {
-                const keyword = document.getElementById('patientSearch').value.trim();
-                const status = document.getElementById('patientFilter').value;
-                
-                let url = 'admin-users?action=search&tab=patient&patientPage=1';
-                if (keyword) {
-                    url += '&keyword=' + encodeURIComponent(keyword);
+            function searchUsers() {
+                const keyword = document.getElementById('userSearch').value.trim();
+                const role = document.getElementById('userRoleFilter').value;
+                const status = document.getElementById('userStatusFilter').value;
+
+                if (!keyword) {
+                    filterUsers();
+                    return;
+                }
+
+                let url = 'admin-users?action=search&page=1&keyword=' + encodeURIComponent(keyword);
+                if (role !== 'all') {
+                    url += '&role=' + role;
                 }
                 if (status !== 'all') {
                     url += '&status=' + status;
                 }
-                
                 window.location.href = url;
             }
 
-            // Đặt lại bộ lọc nhân viên
-            function resetStaffFilter() {
-                document.getElementById('staffSearch').value = '';
-                document.getElementById('staffRoleFilter').value = 'all';
-                document.getElementById('staffStatusFilter').value = 'all';
-                window.location.href = 'admin-users?tab=staff';
-            }
-
-            // Đặt lại bộ lọc bệnh nhân
-            function resetPatientFilter() {
-                document.getElementById('patientSearch').value = '';
-                document.getElementById('patientFilter').value = 'all';
-                window.location.href = 'admin-users?tab=patient';
+            function resetUserFilter() {
+                document.getElementById('userSearch').value = '';
+                document.getElementById('userRoleFilter').value = 'all';
+                document.getElementById('userStatusFilter').value = 'all';
+                window.location.href = 'admin-users';
             }
 
             // Tự động đóng thông báo sau 5 giây và thêm event listeners cho filter
@@ -1281,36 +1429,74 @@
                     }, 5000);
                 });
 
-                // Thêm event listeners cho search inputs
-                document.getElementById('staffSearch').addEventListener('keypress', function(e) {
+                document.getElementById('userSearch').addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
-                        searchStaff();
+                        searchUsers();
                     }
                 });
-                document.getElementById('patientSearch').addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        searchPatient();
-                    }
+                document.getElementById('userRoleFilter').addEventListener('change', filterUsers);
+                document.getElementById('userStatusFilter').addEventListener('change', filterUsers);
+                document.getElementById('addStaffRole').addEventListener('change', function() {
+                    document.getElementById('addRoleInput').value = this.value;
+                    toggleAddDoctorFieldsVisibility();
+                });
+                document.getElementById('addDoctorQualification').addEventListener('change', function() {
+                    applyDefaultDoctorPrice('addDoctorQualification', 'addDoctorPriceBooking', true);
+                });
+                document.getElementById('addAccountForm').addEventListener('submit', trimAddFormInputs);
+                document.getElementById('viewRoleSelect').addEventListener('change', toggleDoctorFieldsVisibility);
+                document.getElementById('viewDoctorQualification').addEventListener('change', function() {
+                    applyDefaultDoctorPrice('viewDoctorQualification', 'viewDoctorPriceBooking', true);
                 });
 
                 const shouldOpenAddModal = '${addModalOpen}' === 'true';
                 const shouldOpenEditModal = '${editModalOpen}' === 'true';
 
                 if (shouldOpenAddModal) {
-                    const addType = '${not empty addModalType ? addModalType : "staff"}';
-                    openAddModal(addType, true);
+                    openAddModal(true);
+                    const addRoleValue = '${not empty addRoleValue ? addRoleValue : ""}';
+                    document.getElementById('addStaffRole').value = addRoleValue;
+                    document.getElementById('addRoleInput').value = addRoleValue;
+                    document.getElementById('addDoctorSpecialization').value = '${not empty addDoctorSpecialization ? addDoctorSpecialization : ""}';
+                    document.getElementById('addDoctorQualification').value = '${not empty addDoctorQualification ? addDoctorQualification : ""}';
+                    document.getElementById('addDoctorExperienceYears').value = '${not empty addDoctorExperienceYears ? addDoctorExperienceYears : ""}';
+                    document.getElementById('addDoctorPriceBooking').value = '${not empty addDoctorPriceBooking ? addDoctorPriceBooking : ""}';
+                    toggleAddDoctorFieldsVisibility();
+                    applyDefaultDoctorPrice('addDoctorQualification', 'addDoctorPriceBooking', false);
                 }
 
                 if (shouldOpenEditModal) {
-                    const roleGroup = document.getElementById('editRoleGroup');
-                    if ('${editModalType}' === 'staff') {
-                        roleGroup.style.display = 'block';
-                    } else {
-                        roleGroup.style.display = 'none';
-                    }
-                    openModal('editAccountModal');
+                    document.getElementById('viewUserIdInput').value = '${editUserId}';
+                    document.getElementById('viewEditTypeInput').value = '${editModalType}';
+                    document.getElementById('viewFullNameInput').value = '${editFullName}';
+                    document.getElementById('viewPhoneInput').value = '${editPhone}';
+                    document.getElementById('viewEmailInput').value = '${editEmail}';
+                    const fallbackRole = ('${editRoleValue}' && '${editRoleValue}' !== 'null') ? '${editRoleValue}' : ('${editModalType}' === 'patient' ? 'patient' : 'receptionist');
+                    document.getElementById('viewRoleSelect').value = fallbackRole;
+                    document.getElementById('viewRoleInput').value = roleTextFromValue(fallbackRole);
+                    viewOriginalRole = fallbackRole;
+                    const statusValue = '${not empty editStatusValue ? editStatusValue : "active"}';
+                    document.getElementById('viewStatusValue').value = statusValue;
+                    document.getElementById('viewStatusText').value = statusTextFromValue(statusValue);
+                    document.getElementById('viewDoctorSpecialization').value = '${not empty editDoctorSpecialization ? editDoctorSpecialization : ""}';
+                    document.getElementById('viewDoctorQualification').value = '${not empty editDoctorQualification ? editDoctorQualification : ""}';
+                    document.getElementById('viewDoctorExperienceYears').value = '${not empty editDoctorExperienceYears ? editDoctorExperienceYears : ""}';
+                    document.getElementById('viewDoctorPriceBooking').value = '${not empty editDoctorPriceBooking ? editDoctorPriceBooking : ""}';
+                    applyViewUserEditPermission(fallbackRole);
+                    setViewUserEditMode(!isViewUserRoleLocked);
+                    applyDefaultDoctorPrice('viewDoctorQualification', 'viewDoctorPriceBooking', false);
+                    captureViewUserSnapshot();
+                    openModal('viewAccountModal');
                 }
             });
         </script>
     </body>
 </html>
+
+
+
+
+
+
+
+
