@@ -823,10 +823,30 @@
         return;
       }
 
+      const trimmedNotes = newNotes.trim();
+
+      // Không cho phép chỉ nhập toàn khoảng trắng
+      if (newNotes.length > 0 && trimmedNotes.length === 0) {
+        showAlert('Ghi chú không được chỉ chứa khoảng trắng.', 'error');
+        return;
+      }
+
+      // Giới hạn độ dài tối đa 500 ký tự
+      if (trimmedNotes.length > 500) {
+        showAlert('Ghi chú không được vượt quá 500 ký tự (hiện tại: ' + trimmedNotes.length + ' ký tự).', 'error');
+        return;
+      }
+
+      // Không cho phép ký tự đặc biệt nguy hiểm (< > để tránh XSS)
+      if (/<|>/.test(trimmedNotes)) {
+        showAlert('Ghi chú không được chứa ký tự < hoặc >.', 'error');
+        return;
+      }
+
       const params = new URLSearchParams();
       params.append('action', 'updateNotes');
       params.append('requestId', requestId);
-      params.append('notes', newNotes);
+      params.append('notes', trimmedNotes);
 
       fetch('${pageContext.request.contextPath}/lab-queue', {
         method: 'POST',
@@ -837,7 +857,7 @@
       .then(data => {
         if (data.success) {
           if (row) {
-            row.setAttribute('data-notes', newNotes);
+            row.setAttribute('data-notes', trimmedNotes);
           }
           showAlert('Đã cập nhật ghi chú phiếu xét nghiệm.', 'success');
         } else {

@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.EmailOtpService;
 import model.User;
+import util.SystemLogService;
 
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = {"/forgot-password"})
 public class ForgotPasswordServlet extends HttpServlet {
@@ -135,11 +136,11 @@ public class ForgotPasswordServlet extends HttpServlet {
         
         try {
             dao.updatePassword(user.getUserId(), newPassword);
-            
-            
+            SystemLogService.log(user.getUserId(), "PASSWORD_RESET",
+                    "Đặt lại mật khẩu thành công: email=" + storedEmail);
+
             session.invalidate();
 
-            
             String encodedEmail = java.net.URLEncoder.encode(storedEmail, "UTF-8");
             response.sendRedirect(request.getContextPath() + "/login?reset=true&email=" + encodedEmail);
             

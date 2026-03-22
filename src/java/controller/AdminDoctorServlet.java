@@ -16,6 +16,7 @@ import java.util.List;
 import model.Doctor;
 import model.Role;
 import model.User;
+import util.SystemLogService;
 
 public class AdminDoctorServlet extends HttpServlet {
 
@@ -152,6 +153,10 @@ public class AdminDoctorServlet extends HttpServlet {
         DoctorDAO doctorDAO = new DoctorDAO();
         int userId = doctorDAO.createDoctorWithUser(fullName, phone, email, password, specialization, qualification, experienceYears, priceBooking);
         if (userId > 0) {
+            HttpSession sessionLog = req.getSession(false);
+            User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
+            SystemLogService.log(userLog != null ? userLog.getUserId() : null, "DOCTOR_ADDED",
+                    "Thêm bác sĩ: fullName=" + fullName + ", email=" + email + ", specialization=" + specialization);
             return true;
         }
 
@@ -229,6 +234,10 @@ public class AdminDoctorServlet extends HttpServlet {
         );
 
         if (updated) {
+            HttpSession sessionLog = req.getSession(false);
+            User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
+            SystemLogService.log(userLog != null ? userLog.getUserId() : null, "DOCTOR_UPDATED",
+                    "Cập nhật bác sĩ: doctorId=" + doctorId + ", fullName=" + fullName + ", email=" + email);
             return true;
         }
 

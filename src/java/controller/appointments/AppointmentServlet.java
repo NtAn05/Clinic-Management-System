@@ -19,6 +19,7 @@ import model.Appointment;
 import model.Doctor;
 import model.Patient;
 import model.User;
+import util.SystemLogService;
 
 public class AppointmentServlet extends HttpServlet {
 
@@ -108,6 +109,8 @@ public class AppointmentServlet extends HttpServlet {
 
                 session.setAttribute("pendingPatient", patient);
                 session.setAttribute("pendingAppointment", appointment);
+                SystemLogService.log(user.getUserId(), "APPOINTMENT_PAYMENT_INIT",
+                        "Khởi tạo thanh toán đặt lịch: patientId=" + patientId + ", doctorId=" + doctorId + ", date=" + dateStr + ", time=" + timeStr);
                 long orderCode = (System.currentTimeMillis() % 100000000L) * 1000
                         + (long) (Math.random() * 1000);
 

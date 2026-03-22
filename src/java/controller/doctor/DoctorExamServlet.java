@@ -23,6 +23,7 @@ import model.User;
 import model.MedicalRecord;
 import model.Medicine;
 import model.PrescriptionItem;
+import util.SystemLogService;
 
 /**
  *
@@ -268,6 +269,10 @@ public class DoctorExamServlet extends HttpServlet {
                 return;
             }
 
+            HttpSession sessionForLog = request.getSession(false);
+            Integer logUserId = sessionForLog != null ? ((User) sessionForLog.getAttribute("account") != null ? ((User) sessionForLog.getAttribute("account")).getUserId() : null) : null;
+            SystemLogService.log(logUserId, "PRESCRIPTION_SAVED",
+                    "Lưu đơn thuốc: appointmentId=" + appointmentId + ", doctorId=" + doctor.getDoctorId());
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=prescription&success=prescriptionSaved");
             return;
         }
@@ -278,6 +283,8 @@ public class DoctorExamServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
                 return;
             }
+            SystemLogService.log(doctor.getUserId(), "EXAM_FINISHED",
+                    "Hoàn tất khám bệnh: appointmentId=" + appointmentId + ", diagnosis=" + diagnosis);
             NotificationDAO notificationDAO = new NotificationDAO();
             String patientName = examData.getPatientName() == null ? "Bệnh nhân" : examData.getPatientName().trim();
             notificationDAO.createNotificationForAppointment(
@@ -300,6 +307,8 @@ public class DoctorExamServlet extends HttpServlet {
             LabRequestDAO labRequestDAO = new LabRequestDAO();
             int requestId = doctorDAO.saveMedicalRecordAndCreateLabRequest(appointmentId, doctor.getDoctorId(), symptoms, diagnosis, notes);
             if (requestId > 0) {
+                SystemLogService.log(doctor.getUserId(), "LAB_REQUEST_CREATED",
+                        "Tạo yêu cầu xét nghiệm: appointmentId=" + appointmentId + ", labRequestId=" + requestId);
                 response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&success=labRequested");
                 return;
             }
@@ -313,6 +322,8 @@ public class DoctorExamServlet extends HttpServlet {
             return;
         }
 
+        SystemLogService.log(doctor.getUserId(), "MEDICAL_RECORD_SAVED",
+                "Lưu hồ sơ bệnh án: appointmentId=" + appointmentId);
         response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&success=saved");
     }
 

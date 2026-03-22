@@ -301,6 +301,9 @@ public class LabQueueServlet extends HttpServlet {
                if (success) {
                     LabRequest requestInfo = labRequestDAO.getLabRequestById(requestId);
                     notifyLabResultToPatient(requestInfo, requestId, "Kết quả xét nghiệm đã được gửi", "lab_result_sent", "result_sent");
+                    util.SystemLogService.log(account.getUserId(), "UPLOAD_LAB_RESULT",
+                            "Gửi kết quả xét nghiệm: requestId=" + requestId
+                            + (resultFilePath != null ? ", file=" + resultFilePath : ", noFile"));
                     response.getWriter().write("{\"success\": true, \"message\": \"Gửi kết quả thành công\"}");
                 } else {
                     response.getWriter().write("{\"success\": false, \"message\": \"Gửi kết quả thất bại\"}");
