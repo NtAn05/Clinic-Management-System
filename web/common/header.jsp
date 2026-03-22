@@ -21,12 +21,21 @@
     pageContext.setAttribute("unreadNotificationCount", unreadNotificationCount);
 %>
 <style>
+    :root {
+        --site-header-offset: 92px;
+    }
+
     body {
         font-family: 'Segoe UI', sans-serif;
         margin: 0;
         padding: 0;
-        padding-top: 78px;
         background: #f4f7fe;
+    }
+
+    .header-spacer {
+        height: var(--site-header-offset);
+        min-height: 78px;
+        pointer-events: none;
     }
     .site-header {
         position: fixed;
@@ -425,6 +434,7 @@
             justify-content: flex-end;
         }
     }
+    
 </style>
 
 <header class="site-header">
@@ -552,9 +562,23 @@
         </nav>
     </div>
 </header>
+            <div class="header-spacer" aria-hidden="true"></div>
 
 <script>
     (function () {
+         var siteHeader = document.querySelector('.site-header');
+        var body = document.body;
+        var HEADER_GAP = 12;
+        function syncHeaderOffset() {
+            if (!siteHeader || !body) {
+                return;
+            }
+            var offset = siteHeader.offsetHeight + HEADER_GAP;
+            body.style.setProperty('--site-header-offset', offset + 'px');
+        }
+        syncHeaderOffset();
+        window.addEventListener('resize', syncHeaderOffset);
+        window.addEventListener('load', syncHeaderOffset);
         var trigger = document.getElementById('profileTrigger');
         var popup = document.getElementById('profilePopup');
         var wrap = document.getElementById('profileMenuWrap');
