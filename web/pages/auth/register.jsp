@@ -53,6 +53,7 @@
                 position: relative;
             }
 
+            /* Thông báo lỗi từ Server (nếu có) */
             .alert-error {
                 background: #fee2e2;
                 color: #b91c1c;
@@ -94,12 +95,18 @@
                 border-color: var(--primary);
                 box-shadow: 0 0 0 4px rgba(0, 97, 255, 0.1);
             }
+            
+            /* Class báo lỗi đồng nhất */
+            .form-group input.input-error {
+                border-color: var(--error);
+                background-color: #fff1f2;
+            }
 
             .js-error-text {
                 color: var(--error);
                 font-size: 12px;
                 margin-top: 6px;
-                display: none;
+                display: none; /* Ẩn mặc định */
                 font-weight: 500;
             }
 
@@ -171,12 +178,8 @@
                 animation: spin 1s linear infinite;
             }
             @keyframes spin {
-                0% {
-                    transform: rotate(0deg);
-                }
-                100% {
-                    transform: rotate(360deg);
-                }
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
         </style>
     </head>
@@ -202,22 +205,22 @@
                     <div class="alert-error" id="serverErrorBox"><i class="fas fa-exclamation-circle"></i> ${error}</div>
                 </c:if>
 
-                <form action="${pageContext.request.contextPath}/register" method="POST" id="mainRegisterForm">
+                <form action="${pageContext.request.contextPath}/register" method="POST" id="mainRegisterForm" novalidate>
                     <div class="form-group">
                         <label>Họ và tên *</label>
-                        <input type="text" name="fullname" id="fullNameField" value="${fullname}" placeholder="Nhập tên người dùng / giám hộ" required pattern="^[\p{L}\s'.-]+$" title="Họ tên chỉ được chứa chữ cái">
-                        <span class="js-error-text" id="fullNameError">Họ và tên chỉ được chứa chữ cái, không nhập số.</span>
+                        <input type="text" name="fullname" id="fullNameField" value="${fullname}" placeholder="Nhập tên người dùng / giám hộ">
+                        <span class="js-error-text" id="fullNameError">Họ và tên không được để trống và chỉ được chứa chữ cái.</span>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label>Số điện thoại *</label>
-                            <input type="tel" name="phone" id="phoneField" value="${phone}" placeholder="09xxxxxxxx" required pattern="0[0-9]{9}" title="Số điện thoại phải bắt đầu bằng 0 và đủ 10 số">
+                            <input type="tel" name="phone" id="phoneField" value="${phone}" placeholder="09xxxxxxxx">
                             <span class="js-error-text" id="phoneError">Số điện thoại phải bắt đầu bằng 0 và đủ 10 số.</span>
                         </div>
                         <div class="form-group">
                             <label>Email *</label>
-                            <input type="email" name="email" id="emailField" value="${email}" placeholder="example@gmail.com" required>
+                            <input type="email" name="email" id="emailField" value="${email}" placeholder="example@gmail.com">
                             <span class="js-error-text" id="emailError">Vui lòng nhập email hợp lệ.</span>
                         </div>
                     </div>
@@ -225,19 +228,20 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Mật khẩu *</label>
-                            <input type="password" name="password" id="passField" placeholder="Từ 6 ký tự trở lên" required minlength="6">
+                            <input type="password" name="password" id="passField" placeholder="Từ 6 ký tự trở lên">
                             <span class="js-error-text" id="passwordError">Mật khẩu phải có tối thiểu 6 ký tự.</span>
                         </div>
                         <div class="form-group">
                             <label>Xác nhận mật khẩu *</label>
-                            <input type="password" name="confirmPassword" id="confirmPassField" placeholder="Nhập lại mật khẩu" required>
+                            <input type="password" name="confirmPassword" id="confirmPassField" placeholder="Nhập lại mật khẩu">
                             <span class="js-error-text" id="passMatchError">Mật khẩu xác nhận không khớp!</span>
                         </div>
                     </div>
 
                     <div style="font-size: 14px; margin-bottom: 20px; color: #64748b;">
-                        <input type="checkbox" id="agreeCheck" required>
+                        <input type="checkbox" id="agreeCheck">
                         <label for="agreeCheck" style="cursor:pointer">Tôi đồng ý với Điều khoản sử dụng.</label>
+                        <div class="js-error-text" id="agreeError">Bạn phải đồng ý với điều khoản sử dụng.</div>
                     </div>
 
                     <button type="submit" class="btn-submit">Tiếp tục xác thực Email</button>
@@ -264,48 +268,72 @@
 
             regForm.addEventListener('submit', function (e) {
                 let isValid = true;
-                const fullName = document.getElementById('fullNameField').value.trim();
-                const email = document.getElementById('emailField').value.trim();
-                const phone = document.getElementById('phoneField').value.trim();
-                const p1 = document.getElementById('passField').value;
-                const p2 = document.getElementById('confirmPassField').value;
+                
+                // Lấy các phần tử
+                const fName = document.getElementById('fullNameField');
+                const fEmail = document.getElementById('emailField');
+                const fPhone = document.getElementById('phoneField');
+                const fPass = document.getElementById('passField');
+                const fConfirm = document.getElementById('confirmPassField');
+                const fAgree = document.getElementById('agreeCheck');
 
+                // Regex
                 const fullNameRegex = /^[\p{L}\s'.-]+$/u;
                 const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
+                const phoneRegex = /^0\d{9}$/;
 
-                document.getElementById('passMatchError').style.display = 'none';
-                document.getElementById('fullNameError').style.display = 'none';
-                document.getElementById('emailError').style.display = 'none';
-                document.getElementById('phoneError').style.display = 'none';
-                document.getElementById('passwordError').style.display = 'none';
+                // Reset lỗi cũ
+                document.querySelectorAll('.js-error-text').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('input').forEach(el => el.classList.remove('input-error'));
 
-                if (!fullName || !fullNameRegex.test(fullName)) {
-                    isValid = false;
+                // Kiểm tra thứ tự từ trên xuống dưới
+                
+                // 1. Kiểm tra Họ tên (trim bỏ dấu cách thừa)
+                if (fName.value.trim() === "" || !fullNameRegex.test(fName.value.trim())) {
                     document.getElementById('fullNameError').style.display = 'block';
+                    fName.classList.add('input-error');
+                    isValid = false;
                 }
 
-                if (!email || !emailRegex.test(email)) {
-                    isValid = false;
-                    document.getElementById('emailError').style.display = 'block';
-                }
-
-                if (!/^0\d{9}$/.test(phone)) {
-                    isValid = false;
+                // 2. Kiểm tra Số điện thoại
+                if (!phoneRegex.test(fPhone.value.trim())) {
                     document.getElementById('phoneError').style.display = 'block';
+                    fPhone.classList.add('input-error');
+                    isValid = false;
                 }
 
-                if (p1.length < 6) {
+                // 3. Kiểm tra Email
+                if (!emailRegex.test(fEmail.value.trim())) {
+                    document.getElementById('emailError').style.display = 'block';
+                    fEmail.classList.add('input-error');
                     isValid = false;
+                }
+
+                // 4. Kiểm tra Mật khẩu
+                if (fPass.value.length < 6) {
                     document.getElementById('passwordError').style.display = 'block';
+                    fPass.classList.add('input-error');
+                    isValid = false;
                 }
 
-                if (p1 !== p2) {
-                    isValid = false;
+                // 5. Kiểm tra Xác nhận mật khẩu
+                if (fPass.value !== fConfirm.value || fConfirm.value === "") {
                     document.getElementById('passMatchError').style.display = 'block';
+                    fConfirm.classList.add('input-error');
+                    isValid = false;
+                }
+                
+                // 6. Kiểm tra Checkbox
+                if (!fAgree.checked) {
+                    document.getElementById('agreeError').style.display = 'block';
+                    isValid = false;
                 }
 
                 if (!isValid) {
-                    e.preventDefault();
+                    e.preventDefault(); // Dừng gửi form
+                    // Cuộn lên phần tử lỗi đầu tiên
+                    const firstError = document.querySelector('.input-error');
+                    if (firstError) firstError.focus();
                 } else {
                     document.getElementById('loadingOverlay').style.display = 'flex';
                 }
