@@ -1,6 +1,7 @@
 ﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -588,7 +589,7 @@
                                         <tr>
                                             <td><strong>${service.name}</strong></td>
                                             <td>${displayType}</td>
-                                            <td>${service.price}</td>
+                                            <td><fmt:formatNumber value="${service.price}" type="number" maxFractionDigits="0"/> đ</td>
                                             <td>
                                                 <div class="action-buttons">
                                                     <button class="btn-action btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;${service.price}&quot;)" title="Chỉnh sửa">

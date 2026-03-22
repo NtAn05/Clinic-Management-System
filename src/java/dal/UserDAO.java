@@ -11,6 +11,8 @@ import model.Status;
 
 public class UserDAO extends DBContext {
 
+     private static final String DEFAULT_AVATAR_URL = "https://i.pinimg.com/1200x/8f/1c/a2/8f1ca2029e2efceebd22fa05cca423d7.jpg";
+
     public User checkLogin(String email, String password) {
         String sql = "SELECT user_id, full_name, phone, email, role, status "
                 + "FROM users "
@@ -39,8 +41,8 @@ public class UserDAO extends DBContext {
 
     public void registerUser(String fullName, String phone, String email, String password) throws SQLException {
         String sqlUser = """
-            INSERT INTO users (full_name, phone, email, password_hash, role, status)
-            VALUES (?, ?, ?, ?, 'patient', 'active')
+            INSERT INTO users (full_name, phone, email, password_hash, role, status, image_url)
+            VALUES (?, ?, ?, ?, 'patient', 'active', ?)
         """;
 
         try (PreparedStatement stUser = connection.prepareStatement(sqlUser)) {
@@ -48,6 +50,7 @@ public class UserDAO extends DBContext {
             stUser.setString(2, phone);
             stUser.setString(3, email);
             stUser.setString(4, password);
+            stUser.setString(5, DEFAULT_AVATAR_URL);
             stUser.executeUpdate();
         } catch (SQLException e) {
             throw e;
@@ -113,8 +116,8 @@ public class UserDAO extends DBContext {
         return users;
     }
 
-    public void createUser(User user) throws SQLException {
-        String sql = "INSERT INTO users (full_name, phone, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?, ?)";
+     public void createUser(User user) throws SQLException {
+        String sql = "INSERT INTO users (full_name, phone, email, password_hash, role, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, user.getFullName());
@@ -123,31 +126,34 @@ public class UserDAO extends DBContext {
             st.setString(4, user.getPasswordHash());
             st.setString(5, user.getRole().toString());
             st.setString(6, user.getStatus().toString());
+            String imageUrl = user.getImageUrl();
+            st.setString(7, (imageUrl == null || imageUrl.isBlank()) ? DEFAULT_AVATAR_URL : imageUrl);
             st.executeUpdate();
         } catch (SQLException e) {
             throw e;
         }
     }
 
+
     public void updateUser(User user) throws SQLException {
-        String sql = "UPDATE users SET full_name = ?, email = ?, status = ? WHERE phone = ?";
+        String sql = "UPDATE users SET full_name = ?, phone = ?, email = ? WHERE user_id = ?";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, user.getFullName());
-            st.setString(2, user.getEmail());
-            st.setString(3, user.getStatus().toString());
-            st.setString(4, user.getPhone());
+            st.setString(2, user.getPhone());
+            st.setString(3, user.getEmail());
+            st.setInt(4, user.getUserId());
             st.executeUpdate();
         } catch (SQLException e) {
             throw e;
         }
     }
 
-    public void toggleUserStatus(String phone) throws SQLException {
-        String sql = "UPDATE users SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE phone = ?";
+    public void toggleUserStatusById(int userId) throws SQLException {
+        String sql = "UPDATE users SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE user_id = ?";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setString(1, phone);
+            st.setInt(1, userId);
             st.executeUpdate();
         } catch (SQLException e) {
             throw e;

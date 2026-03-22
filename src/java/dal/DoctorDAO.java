@@ -151,12 +151,69 @@ public class DoctorDAO extends DBContext {
         }
     }
 
+    public boolean hasFutureUnfinishedAppointmentsByUserId(int userId) {
+        String sql = """
+            SELECT 1
+            FROM doctors d
+            JOIN appointments a ON a.doctor_id = d.doctor_id
+            WHERE d.user_id = ?
+              AND a.status NOT IN ('completed', 'cancelled')
+              AND (
+                  a.appointment_date > CURRENT_DATE
+                  OR (a.appointment_date = CURRENT_DATE AND a.appointment_time >= CURRENT_TIME)
+              )
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void upsertDoctorProfileByUserId(int userId, String specialization, String qualification,
+            int experienceYears, int priceBooking) throws SQLException {
+        String updateSql = """
+            UPDATE doctors
+            SET specialization = ?, qualification = ?, experience_years = ?, price_booking = ?
+            WHERE user_id = ?
+        """;
+        try (PreparedStatement update = connection.prepareStatement(updateSql)) {
+            update.setString(1, specialization);
+            update.setString(2, qualification);
+            update.setInt(3, experienceYears);
+            update.setInt(4, priceBooking);
+            update.setInt(5, userId);
+            int affected = update.executeUpdate();
+            if (affected > 0) {
+                return;
+            }
+        }
+
+        String insertSql = """
+            INSERT INTO doctors (user_id, specialization, qualification, experience_years, price_booking)
+            VALUES (?, ?, ?, ?, ?)
+        """;
+        try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
+            insert.setInt(1, userId);
+            insert.setString(2, specialization);
+            insert.setString(3, qualification);
+            insert.setInt(4, experienceYears);
+            insert.setInt(5, priceBooking);
+            insert.executeUpdate();
+        }
+    }
+
     public List<Doctor> getDoctorsForAdmin(String keyword, String specializationFilter, String qualificationFilter) {
         syncDoctorProfilesForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("""
             SELECT d.doctor_id, d.user_id, d.specialization, d.qualification, d.experience_years, d.price_booking, d.rating,
-                   u.full_name, u.phone, u.email
+                   u.full_name, u.phone, u.email, u.status AS user_status
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
             WHERE u.role = 'doctor'
@@ -198,6 +255,7 @@ public class DoctorDAO extends DBContext {
                     d.setFullName(rs.getString("full_name"));
                     d.setPhone(rs.getString("phone"));
                     d.setEmail(rs.getString("email"));
+                    d.setStatus(rs.getString("user_status"));
                     list.add(d);
                 }
             }
@@ -246,7 +304,7 @@ public class DoctorDAO extends DBContext {
     public Doctor getDoctorByIdForAdmin(int doctorId) {
         String sql = """
             SELECT d.doctor_id, d.user_id, d.specialization, d.qualification, d.experience_years, d.price_booking, d.rating,
-                   u.full_name, u.phone, u.email
+                   u.full_name, u.phone, u.email, u.status AS user_status
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
             WHERE d.doctor_id = ? AND u.role = 'doctor'
@@ -267,6 +325,7 @@ public class DoctorDAO extends DBContext {
                     d.setFullName(rs.getString("full_name"));
                     d.setPhone(rs.getString("phone"));
                     d.setEmail(rs.getString("email"));
+                    d.setStatus(rs.getString("user_status"));
                     return d;
                 }
             }
