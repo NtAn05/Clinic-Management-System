@@ -21,80 +21,91 @@
         <div class="page">
             <div class="content">
 
-                
 
-                    <!-- FORM thông tin -->
-                    <form method="post" action="${pageContext.request.contextPath}/createpatientsservlet">
-                        <input type="hidden" name="userID" value="${sessionScope.account.userId}">
-                        <input type="hidden" name="patientID" value="${patient.getPatientId()}">
-                        <input type="hidden" name="DoctorID" value="${DoctorID}">
-                        <div class="card-box">
-                            <h3>Thông tin của bạn</h3>
 
-                            <div class="form-grid">
-                                <div>
-                                    <label>Họ và tên *</label>
-                                    <input type="text" name="name" value="${patient.fullName}" required>
-                                    <span style="color:red">${errorName}</span>
-                                </div>
-                               
-                                <div>
-                                    <label>Số điện thoại ( Không bắt buộc )</label>
-                                    <input type="text" name="sdt" value="${patient.phone}" >
-                                    <span style="color:red">${errorPhone}</span>
-                                </div>
+                <!-- FORM thông tin -->
 
-                                <div>
-                                    <label>Email ( Không bắt buộc )</label>
-                                    <input type="email" name="email" value="${patient.email}" >
-                                    <span style="color:red">${errorEmail}</span>
-                                </div>
+                <form method="post" action="${pageContext.request.contextPath}/createpatientsservlet">
+                    <input type="hidden" name="userID" value="${sessionScope.account.userId}">
+                    <input type="hidden" name="patientID" value="${patient.getPatientId()}">
+                    <input type="hidden" name="DoctorID" value="${DoctorID}">
+                    <div class="card-box">
+                        <h3>Thông tin của bạn</h3>
 
-                                <div>
-                                    <label>Ngày sinh *</label>
-                                    <input type="date" name="dateofbirth" value="${patient.dob}" >
-                                    <span style="color:red">${errorDOB}</span>
-                                </div>
-
-                                <div>
-                                    <label>Giới tính *</label>
-                                    <select name="gender" required>
-                                        <option value="MALE">Nam</option>
-                                        <option value="FEMALE">Nữ</option>
-                                    </select>
-                                </div>
-
+                        <div class="form-grid">
+                            <div>
+                                <label>Họ và tên *</label>
+                                <input type="text" name="name" value="${patient.fullName}" required>
+                                <span style="color:red">${errorName}</span>
                             </div>
 
-                           
+                            <div>
+                                <label>Số điện thoại ( Không bắt buộc )</label>
+                                <input type="text" name="sdt" value="${patient.phone}" >
+                                <span style="color:red">${errorPhone}</span>
+                            </div>
+
+                            <div>
+                                <label>Email ( Không bắt buộc )</label>
+                                <input type="email" name="email" value="${patient.email}" >
+                                <span style="color:red">${errorEmail}</span>
+                            </div>
+
+                            <div>
+                                <label>Ngày sinh *</label>
+                                <input type="date" name="dateofbirth" value="${patient.dob}" >
+                                <span style="color:red">${errorDOB}</span>
+                            </div>
+
+                            <div>
+                                <label>Giới tính *</label>
+                                <select name="gender" required>
+                                    <option value="MALE">Nam</option>
+                                    <option value="FEMALE">Nữ</option>
+                                </select>
+                            </div>
+
                         </div>
 
-                       
-                        <div class="actions">
-                            <button type="button" class="btn-outline"
-                                    onclick="location.href = '${pageContext.request.contextPath}/createpatientsservlet'">
-                                Hủy
-                            </button>
-                                    <c:if test="${patient.getPatientId() != null}">
-                                        <button type="submit" name="btnSubmit" value="edit" class="btn-primary">
-                                Lưu hồ sơ
-                            </button>
-                                    </c:if>
-                                <c:if test="${patient.getPatientId() == null}">
+
+                    </div>
+
+
+                    <div class="actions">
+                        <button type="button" class="btn-outline"
+                                onclick="location.href = '${pageContext.request.contextPath}/createpatientsservlet'">
+                            Hủy
+                        </button>
+                        <c:if test="${user.getRole() eq 'receptionist'}">
                             <button type="submit" name="btnSubmit" value="create" class="btn-primary">
-                                Tạo hồ sơ
+                                Chọn ca
                             </button>
+                        </c:if>
+
+                        <c:if test="${user.getRole() != 'receptionist'}">
+
+
+                            <c:if test="${patient.getPatientId() != null}">
+                                <button type="submit" name="btnSubmit" value="edit" class="btn-primary">
+                                    Lưu hồ sơ
+                                </button>
                             </c:if>
-                        </div>
+                            <c:if test="${patient.getPatientId() == null}">
+                                <button type="submit" name="btnSubmit" value="create" class="btn-primary">
+                                    Tạo hồ sơ
+                                </button>
+                            </c:if>
+                        </c:if>
+                    </div>
 
-                    </form>
+                </form>
 
 
-                
+
             </div>
         </div>
 
-       
+
 
         <jsp:include page="/common/footer.jsp" />
     </body>

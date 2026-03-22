@@ -25,12 +25,12 @@
                             <p>Xác nhận và chọn ca</p>
                         </div>
                         <div class="step-line"></div>
-                        <div class="step-circle">
+                        <div class="step-circle active">
                             <span>✓</span>
                             <p>Thanh toán</p>
                         </div>
                         <div class="step-line"></div>
-                        <div class="step-circle">
+                        <div class="step-circle active">
                             <span>✓</span>
                             <p>Hoàn tất</p>
                         </div>                        

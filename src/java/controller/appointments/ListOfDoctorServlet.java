@@ -120,7 +120,22 @@ public class ListOfDoctorServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+
+        HttpSession session = request.getSession();
+
+        User user = (User) session.getAttribute("account");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return;
+        }
+        String doctorID = request.getParameter("doctorID");
+        request.setAttribute("DoctorID", doctorID);
+        request.setAttribute("user", user);
+
+        request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
+                .forward(request, response);
+
     }
 
     /**

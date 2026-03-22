@@ -484,7 +484,10 @@ public class AppointmentDAO extends DBContext {
 
         List<LocalDate> list = new ArrayList<>();
 
-        String sql = "SELECT shift_id, day_of_week, max_patients FROM doctor_shifts WHERE doctor_id = ? AND status = 'active'";
+
+
+        String sql = "SELECT day_of_week, max_patients FROM doctor_shifts WHERE doctor_id = ?";
+
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
 
@@ -496,13 +499,13 @@ public class AppointmentDAO extends DBContext {
 
             while (rs.next()) {
                 days.add(rs.getInt("day_of_week"));
-                maxPatients = rs.getInt("max_patients");
+                maxPatients = rs.getInt("max_patients"); // tạm giữ
             }
 
             LocalDate today = LocalDate.now();
+            int i = 0;
 
-            for (int i = 0; i < 14; i++) {
-
+            while (list.size() < 7 && i < 30) { // ✅ lấy đủ 7 ngày
                 LocalDate date = today.plusDays(i);
                 int dayOfWeek = date.getDayOfWeek().getValue();
 
@@ -514,6 +517,8 @@ public class AppointmentDAO extends DBContext {
                         list.add(date);
                     }
                 }
+
+                i++;
             }
 
         } catch (Exception e) {
@@ -583,21 +588,21 @@ public class AppointmentDAO extends DBContext {
         return 1;
     }
 
-   public void addQueue(long appointmentId, int doctorId, int position) {
+    public void addQueue(long appointmentId, int doctorId, int position) {
 
-    String sql = "INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) "
-               + "VALUES (?, ?, ?, 'waiting')";
+        String sql = "INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) "
+                + "VALUES (?, ?, ?, 'waiting')";
 
-    try (PreparedStatement st = connection.prepareStatement(sql)) {
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
 
-        st.setLong(1, appointmentId);
-        st.setInt(2, doctorId);
-        st.setInt(3, position);
+            st.setLong(1, appointmentId);
+            st.setInt(2, doctorId);
+            st.setInt(3, position);
 
-        st.executeUpdate();
+            st.executeUpdate();
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-}
 }

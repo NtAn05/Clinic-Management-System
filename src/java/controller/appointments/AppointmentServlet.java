@@ -35,7 +35,15 @@ public class AppointmentServlet extends HttpServlet {
 
         String doctorID = request.getParameter("doctor");
         String patientID = request.getParameter("patientid");
+        if (doctorID == null || doctorID.isEmpty()) {
+            doctorID = (String) request.getAttribute("doctor");
+        }
+        if (patientID == null || patientID.isEmpty()) {
+            Object pid = request.getAttribute("patientid");
+            patientID = pid != null ? pid.toString() : null;
+        }
 
+        
         int patientId = Integer.parseInt(patientID);
         int doctorId = Integer.parseInt(doctorID);
 
@@ -88,11 +96,11 @@ public class AppointmentServlet extends HttpServlet {
         PatientPortalDAO daos = new PatientPortalDAO();
         Patient patient = daos.getPatientsByPatientID(patientId);
         Appointment appointment;
-        if (user.getRole().equals("receptionist")) {
-             appointment = new Appointment(patientId, doctorId, 1, "walk_in", sqlDate, sqlTime, "booked", note);
+        if (user.getRole().toString().equals("receptionist")) {
+            appointment = new Appointment(patientId, doctorId, 1, "walk_in", sqlDate, sqlTime, "booked", note);
 
         } else {
-             appointment = new Appointment(patientId, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
+            appointment = new Appointment(patientId, doctorId, 1, bookingStyle, sqlDate, sqlTime, "booked", note);
         }
         if (submit != null && submit.equalsIgnoreCase("thanhtoan")) {
 

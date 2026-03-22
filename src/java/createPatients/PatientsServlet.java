@@ -180,28 +180,32 @@ public class PatientsServlet extends HttpServlet {
         PatientPortalDAO dao = new PatientPortalDAO();
 
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-        request.setAttribute("errorPhone", errorPhone);
+        
+        int newPatientId;
+        if (valid) {
+
+            if ("edit".equals(submit)) {
+                dao.editPatient(patientID, patient);
+            } else {
+                 newPatientId = dao.addPatient(patient);
+            
+            if (user.getRole().toString() == "receptionist") {
+                System.out.println(">>>>>> DoctorID trước redirect: " + DoctorID);
+
+                response.sendRedirect(request.getContextPath()
+                        + "/appointmentservlet?doctor=" + DoctorID
+                        + "&patientid=" + newPatientId);
+                return;
+            }
+            }
+            response.sendRedirect(request.getContextPath() + "/createpatientsservlet");
+
+        } else {
+            request.setAttribute("errorPhone", errorPhone);
         request.setAttribute("errorEmail", errorEmail);
         request.setAttribute("errorName", errorName);
         request.setAttribute("errorDOB", errorDOB);
         request.setAttribute("DoctorID", DoctorID);
-        if (valid) {
-
-            if ("edit".equals(submit)) {
-
-                dao.editPatient(patientID, patient);
-
-            } else {
-
-                dao.addPatient(patient);
-
-            }
-
-            response.sendRedirect("createpatientsservlet?DoctorID=" + DoctorID);
-            return;
-
-        } else {
-
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
         }

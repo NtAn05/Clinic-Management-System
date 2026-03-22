@@ -39,9 +39,17 @@
                          
                          
                             <c:if test="${sessionScope.account != null }">
-                                <form method="get" action="${pageContext.request.contextPath}/createpatientsservlet">
+                                <c:if test="${user.getRole() eq 'receptionist'}">
+                                     <form method="post" action="${pageContext.request.contextPath}/listofdoctorservlet">
+                                    <button name="doctorID" value="${d.doctorId}">Đặt dịch vụ</button>
+                                </form>
+                                </c:if>
+                                <c:if test="${user.getRole() != 'receptionist'}">
+                                    <form method="get" action="${pageContext.request.contextPath}/createpatientsservlet">
                                     <button name="btnDoctorID" value="${d.doctorId}">Đặt dịch vụ</button>
                                 </form>
+                                </c:if>
+                                
                             </c:if>
 
 
