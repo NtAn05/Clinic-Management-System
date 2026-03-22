@@ -19,17 +19,17 @@ public class AdminScheduleRequestServlet extends HttpServlet {
 
     private static final String VIEW_PATH = "/pages/admin/schedule-requests.jsp";
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!isAdmin(req, resp)) {
+    protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+
+        if (session == null || session.getAttribute("account") == null) {
+            resp.sendRedirect(req.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
-        loadPage(req, resp);
-    }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!isAdmin(req, resp)) {
+        User user = (User) session.getAttribute("account");
+        if (user.getRole() != Role.admin) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ admin mới được truy cập");
             return;
         }
 
@@ -39,12 +39,29 @@ public class AdminScheduleRequestServlet extends HttpServlet {
         String actionTypeFilter = normalizeActionTypeFilter(req.getParameter("actionType"));
         String keyword = trimOrEmpty(req.getParameter("keyword"));
 
-        if ("review".equalsIgnoreCase(action)) {
-            handleReview(req);
-        }
+        try {
+            if ("review".equalsIgnoreCase(action)) {
+                handleReview(req);
+                resp.sendRedirect(req.getContextPath() + "/admin-schedule-requests"
+                        + buildFilterQuery(statusFilter, requestTypeFilter, actionTypeFilter, keyword));
+                return;
+            }
 
-        resp.sendRedirect(req.getContextPath() + "/admin-schedule-requests"
-                + buildFilterQuery(statusFilter, requestTypeFilter, actionTypeFilter, keyword));
+            loadPage(req, resp);
+        } catch (Exception e) {
+            req.setAttribute("error", "Lỗi xử lý yêu cầu đổi lịch: " + e.getMessage());
+            loadPage(req, resp);
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp);
     }
 
     private void loadPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -97,21 +114,6 @@ public class AdminScheduleRequestServlet extends HttpServlet {
                 ? "Đã duyệt đơn thành công."
                 : "Đã từ chối đơn thành công.";
         session.setAttribute("scheduleReviewSuccess", successMessage);
-    }
-
-    private boolean isAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("account") == null) {
-            resp.sendRedirect(req.getContextPath() + "/pages/auth/login.jsp");
-            return false;
-        }
-
-        User user = (User) session.getAttribute("account");
-        if (user.getRole() != Role.admin) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ admin mới được truy cập");
-            return false;
-        }
-        return true;
     }
 
     private int parseInt(String raw, int fallback) {

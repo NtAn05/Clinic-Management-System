@@ -253,9 +253,6 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         if (doctorDAO.hasUpcomingAppointmentsForShift(shiftId)) {
             throw new IllegalArgumentException("Không thể xóa ca làm việc vì vẫn còn lịch hẹn hiện tại/tương lai");
         }
-        if (doctorDAO.hasAnyAppointmentsForShift(shiftId)) {
-            throw new IllegalArgumentException("Không thể xóa ca làm việc đã từng có lịch hẹn (ràng buộc dữ liệu lịch sử)");
-        }
 
         doctorDAO.deleteDoctorShift(shiftId);
         req.setAttribute("success", "Đã xóa ca làm việc thành công");

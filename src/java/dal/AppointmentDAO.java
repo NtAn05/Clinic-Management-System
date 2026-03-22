@@ -484,7 +484,7 @@ public class AppointmentDAO extends DBContext {
 
         List<LocalDate> list = new ArrayList<>();
 
-        String sql = "SELECT shift_id, day_of_week, max_patients FROM doctor_shifts WHERE doctor_id = ?";
+        String sql = "SELECT shift_id, day_of_week, max_patients FROM doctor_shifts WHERE doctor_id = ? AND status = 'active'";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
 

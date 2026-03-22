@@ -57,6 +57,7 @@ public class DoctorDAO extends DBContext {
                    start_time, end_time, max_patients
             FROM doctor_shifts
             WHERE doctor_id = ?
+              AND status = 'active'
             ORDER BY day_of_week, start_time
         """;
 
@@ -454,9 +455,15 @@ public class DoctorDAO extends DBContext {
     }
 
     public void addDoctorShift(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
+        Integer inactiveShiftId = findInactiveExactShiftId(doctorId, dayOfWeek, startTime, endTime);
+        if (inactiveShiftId != null) {
+            reactivateDoctorShift(inactiveShiftId, maxPatients);
+            return;
+        }
+
         String sql = """
-            INSERT INTO doctor_shifts (doctor_id, day_of_week, start_time, end_time, max_patients)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO doctor_shifts (doctor_id, day_of_week, start_time, end_time, max_patients, status)
+            VALUES (?, ?, ?, ?, ?, 'active')
         """;
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -627,7 +634,7 @@ public class DoctorDAO extends DBContext {
     }
 
     public void deleteDoctorShift(int shiftId) throws SQLException {
-        String sql = "DELETE FROM doctor_shifts WHERE shift_id = ?";
+        String sql = "UPDATE doctor_shifts SET status = 'inactive' WHERE shift_id = ?";
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, shiftId);
             st.executeUpdate();
@@ -640,6 +647,7 @@ public class DoctorDAO extends DBContext {
             FROM doctor_shifts
             WHERE doctor_id = ?
               AND day_of_week = ?
+              AND status = 'active'
               AND start_time < ?
               AND end_time > ?
         """);
@@ -761,6 +769,7 @@ public class DoctorDAO extends DBContext {
         SELECT shift_id, start_time, end_time, max_patients
         FROM doctor_shifts
         WHERE doctor_id = ? AND day_of_week = ?
+          AND status = 'active'
     """;
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -793,6 +802,7 @@ public class DoctorDAO extends DBContext {
             JOIN users u ON u.user_id = d.user_id
             WHERE s.day_of_week = ?
               AND s.doctor_id <> ?
+              AND s.status = 'active'
               AND u.role = 'doctor'
               AND u.status = 'active'
             ORDER BY u.full_name, s.start_time
@@ -1172,18 +1182,8 @@ public class DoctorDAO extends DBContext {
             return false;
         }
 
-        String sql = """
-            INSERT INTO doctor_shifts (doctor_id, day_of_week, start_time, end_time, max_patients)
-            VALUES (?, ?, ?, ?, ?)
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, request.doctorId);
-            st.setInt(2, request.dayOfWeek);
-            st.setTime(3, Time.valueOf(request.startTime));
-            st.setTime(4, Time.valueOf(request.endTime));
-            st.setInt(5, request.maxPatients);
-            return st.executeUpdate() > 0;
-        }
+        addDoctorShift(request.doctorId, request.dayOfWeek, request.startTime, request.endTime, request.maxPatients);
+        return true;
     }
 
     private boolean applyApprovedRemoveRequest(PendingScheduleReview request) throws SQLException {
@@ -1197,7 +1197,7 @@ public class DoctorDAO extends DBContext {
             return false;
         }
 
-        String deleteSql = "DELETE FROM doctor_shifts WHERE shift_id = ?";
+        String deleteSql = "UPDATE doctor_shifts SET status = 'inactive' WHERE shift_id = ?";
         try (PreparedStatement st = connection.prepareStatement(deleteSql)) {
             st.setInt(1, request.targetShiftId);
             return st.executeUpdate() > 0;
@@ -1246,6 +1246,7 @@ public class DoctorDAO extends DBContext {
             SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
             FROM doctor_shifts
             WHERE shift_id = ?
+              AND status = 'active'
             LIMIT 1
             FOR UPDATE
         """;
@@ -1274,6 +1275,7 @@ public class DoctorDAO extends DBContext {
             WHERE day_of_week = ?
               AND start_time = ?
               AND end_time = ?
+              AND status = 'active'
               AND doctor_id <> ?
               AND shift_id <> ?
             ORDER BY shift_id
@@ -1316,6 +1318,46 @@ public class DoctorDAO extends DBContext {
             st.setInt(4, maxPatients);
             st.setInt(5, shiftId);
             return st.executeUpdate() > 0;
+        }
+    }
+
+    private Integer findInactiveExactShiftId(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime) throws SQLException {
+        String sql = """
+            SELECT shift_id
+            FROM doctor_shifts
+            WHERE doctor_id = ?
+              AND day_of_week = ?
+              AND start_time = ?
+              AND end_time = ?
+              AND status = 'inactive'
+            ORDER BY shift_id
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            st.setInt(2, dayOfWeek);
+            st.setTime(3, Time.valueOf(startTime));
+            st.setTime(4, Time.valueOf(endTime));
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("shift_id");
+                }
+            }
+        }
+        return null;
+    }
+
+    private void reactivateDoctorShift(int shiftId, int maxPatients) throws SQLException {
+        String sql = """
+            UPDATE doctor_shifts
+            SET status = 'active',
+                max_patients = ?
+            WHERE shift_id = ?
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, maxPatients);
+            st.setInt(2, shiftId);
+            st.executeUpdate();
         }
     }
 
