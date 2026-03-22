@@ -21,12 +21,21 @@
     pageContext.setAttribute("unreadNotificationCount", unreadNotificationCount);
 %>
 <style>
+    :root {
+        --site-header-offset: 92px;
+    }
+
     body {
         font-family: 'Segoe UI', sans-serif;
         margin: 0;
         padding: 0;
-        padding-top: 78px;
         background: #f4f7fe;
+    }
+
+    .header-spacer {
+        height: var(--site-header-offset);
+        min-height: 78px;
+        pointer-events: none;
     }
     .site-header {
         position: fixed;
@@ -198,39 +207,38 @@
         background: #fee2e2;
         color: #b91c1c;
     }
-    .site-header .admin-menu-wrap {
-        position: relative;
-    }
-
     .site-header .admin-trigger {
-        border: 1px solid #d8e5ff;
-        background: #f8fbff;
-        color: #1e3a8a;
+        background: transparent;
+        border: none;
+        color: #334155;
+        font-weight: 600; /* Font 600 để giống các header-link khác */
+        font-size: 14px;
+        padding: 9px 14px;
         border-radius: 999px;
-        padding: 8px 14px;
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-weight: 600;
+        gap: 5px;
         cursor: pointer;
-    }
-
-    .site-header .admin-trigger:hover {
-        background: #e7efff;
+        font-family: inherit;
+        transition: 0.25s ease;
     }
 
     .site-header .admin-popup {
         position: absolute;
         top: calc(100% + 12px);
-        right: 0;
-        width: 260px;
+        left: 0; /* ĐỔI TỪ right: 0 SANG left: 0 */
+        width: 200px;
         background: #fff;
         border: 1px solid #e6edff;
-        border-radius: 14px;
-        box-shadow: 0 18px 45px rgba(15, 44, 110, 0.18);
-        padding: 10px;
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(15, 44, 110, 0.12);
+        padding: 8px;
         display: none;
         z-index: 1003;
+    }
+    .site-header .admin-menu-wrap {
+        position: relative; 
+        display: inline-block;
     }
 
     .site-header .admin-popup.open {
@@ -426,6 +434,7 @@
             justify-content: flex-end;
         }
     }
+    
 </style>
 
 <header class="site-header">
@@ -447,10 +456,14 @@
 
             <c:if test="${sessionScope.account != null}">
 
-                <c:if test="${roleName == 'admin'}">
+               <c:if test="${roleName == 'admin'}">
+                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/admin-system-logs">Nhật ký hệ thống</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/admin-reports">Báo cáo phòng khám</a>
+
                     <div class="admin-menu-wrap" id="adminMenuWrap">
                         <button type="button" class="admin-trigger" id="adminTrigger">
-                            <i class="fas fa-sliders-h"></i> Quản lý
+                            Quản lý <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
                         </button>
                         <div class="admin-popup" id="adminPopup">
                             <a class="profile-item" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
@@ -458,10 +471,6 @@
                             <a class="profile-item" href="${pageContext.request.contextPath}/admin-doctors">Quản lý bác sĩ</a>
                         </div>
                     </div>
-
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-doctor-schedules">Lịch làm việc bác sĩ</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-system-logs">Nhật ký hệ thống</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-reports">Báo cáo phòng khám</a>
                 </c:if>
 
                 <c:if test="${roleName == 'doctor'}">
@@ -553,9 +562,23 @@
         </nav>
     </div>
 </header>
+            <div class="header-spacer" aria-hidden="true"></div>
 
 <script>
     (function () {
+         var siteHeader = document.querySelector('.site-header');
+        var body = document.body;
+        var HEADER_GAP = 12;
+        function syncHeaderOffset() {
+            if (!siteHeader || !body) {
+                return;
+            }
+            var offset = siteHeader.offsetHeight + HEADER_GAP;
+            body.style.setProperty('--site-header-offset', offset + 'px');
+        }
+        syncHeaderOffset();
+        window.addEventListener('resize', syncHeaderOffset);
+        window.addEventListener('load', syncHeaderOffset);
         var trigger = document.getElementById('profileTrigger');
         var popup = document.getElementById('profilePopup');
         var wrap = document.getElementById('profileMenuWrap');
