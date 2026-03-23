@@ -14,30 +14,42 @@ public class EmailOtpService {
 
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final int SMTP_PORT_SSL = 465;
+    private static final String SENDER = "duongdamde2005@gmail.com";
+    private static final String APP_PASSWORD = "xjqbdrsriadyiopm";
 
     private EmailOtpService() {
     }
 
     public static void sendOtp(String toEmail, String fullName, String otpCode, long ttlSeconds) throws IOException {
-        
-        // ĐÃ SỬA: Điền trực tiếp Email của bạn vào đây
-        String sender = "duongdamde2005@gmail.com"; 
-        
-        // ĐÃ SỬA: Bạn dán cái mật khẩu 16 chữ cái viết liền vào giữa 2 dấu ngoặc kép bên dưới nhé!
-        String appPassword = "xjqbdrsriadyiopm"; 
-
-        if (isBlank(sender) || isBlank(appPassword)) {
-            throw new IllegalStateException("Missing Gmail sender credentials");
-        }
-
-        String displayName = (fullName == null || fullName.isBlank()) ? "bạn" : fullName;
+        String displayName = (fullName == null || fullName.isBlank()) ? "ban" : fullName;
         String subject = "[Phong kham ABC] Ma OTP xac thuc dang ky";
         String body = "Xin chao " + displayName + ",\r\n\r\n"
                 + "Ma OTP cua ban la: " + otpCode + "\r\n"
                 + "Ma co hieu luc trong " + ttlSeconds + " giay.\r\n\r\n"
                 + "Neu ban khong yeu cau, vui long bo qua email nay.";
+        sendPlainTextEmail(toEmail, subject, body);
+    }
 
-        try (SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(SMTP_HOST, SMTP_PORT_SSL); BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8)); BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
+    public static void sendNewAccountPassword(String toEmail, String fullName, String tempPassword) throws IOException {
+        String displayName = (fullName == null || fullName.isBlank()) ? "ban" : fullName;
+        String subject = "[Phong kham ABC] Tai khoan moi da duoc tao";
+        String body = "Xin chao " + displayName + ",\r\n\r\n"
+                + "Tai khoan cua ban da duoc admin tao.\r\n"
+                + "Email dang nhap: " + toEmail + "\r\n"
+                + "Mat khau tam thoi: " + tempPassword + "\r\n\r\n"
+                + "Vui long dang nhap va doi mat khau ngay.\r\n"
+                + "Neu khong phai ban, vui long lien he phong kham.";
+        sendPlainTextEmail(toEmail, subject, body);
+    }
+
+    private static void sendPlainTextEmail(String toEmail, String subject, String body) throws IOException {
+        if (isBlank(SENDER) || isBlank(APP_PASSWORD)) {
+            throw new IllegalStateException("Missing Gmail sender credentials");
+        }
+
+        try (SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(SMTP_HOST, SMTP_PORT_SSL);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8))) {
 
             expectOk(reader, "220");
             send(writer, "EHLO localhost");
@@ -45,12 +57,12 @@ public class EmailOtpService {
 
             send(writer, "AUTH LOGIN");
             expectOk(reader, "334");
-            send(writer, base64(sender));
+            send(writer, base64(SENDER));
             expectOk(reader, "334");
-            send(writer, base64(appPassword));
+            send(writer, base64(APP_PASSWORD));
             expectOk(reader, "235");
 
-            send(writer, "MAIL FROM:<" + sender + ">");
+            send(writer, "MAIL FROM:<" + SENDER + ">");
             expectOk(reader, "250");
             send(writer, "RCPT TO:<" + toEmail + ">");
             expectOk(reader, "250");
@@ -58,7 +70,7 @@ public class EmailOtpService {
             expectOk(reader, "354");
 
             sendRaw(writer,
-                    "From: " + sender + "\r\n"
+                    "From: " + SENDER + "\r\n"
                     + "To: " + toEmail + "\r\n"
                     + "Subject: " + subject + "\r\n"
                     + "MIME-Version: 1.0\r\n"

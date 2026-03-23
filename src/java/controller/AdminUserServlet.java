@@ -1,57 +1,43 @@
 package controller;
 
-import dal.UserDAO;
 import dal.DoctorDAO;
-import util.SystemLogService;
-import model.Role;
-import model.Status;
-import model.User;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Arrays;
-import java.util.regex.Pattern;
+import dal.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import model.EmailOtpService;
+import model.Role;
+import model.Status;
+import model.User;
+import util.AdminUserValidator;
+import util.AdminUserValidator.DoctorTransitionData;
+import util.AdminUserValidator.ValidationResult;
+import util.SystemLogService;
 
 public class AdminUserServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 10;
-    private static final int MIN_NAME_LENGTH = 2;
-    private static final int MAX_NAME_LENGTH = 100;
-    private static final int MAX_EMAIL_LENGTH = 100;
-    private static final int MIN_EXPERIENCE = 0;
-    private static final int MAX_EXPERIENCE = 50;
-    private static final int MIN_PRICE = 0;
-    private static final int MAX_PRICE = 10_000_000;
+    private static final String TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final String SESSION_PENDING_RESEND_KEY = "adminUserPendingResendPasswordIds";
 
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-    private static final Pattern HAS_LETTER_PATTERN = Pattern.compile(".*\\p{L}+.*");
-    private static final Pattern ONLY_NUMBER_OR_SYMBOL_PATTERN = Pattern.compile("^[\\d\\p{Punct}\\s]+$");
-
-    private static final List<String> SPECIALIZATION_OPTIONS = Arrays.asList(
-            "Da liễu dị ứng",
-            "Da liễu nhiễm trùng",
-            "Da liễu tổng quát",
-            "Điều trị mụn"
-    );
-    private static final List<String> QUALIFICATION_OPTIONS = Arrays.asList(
-            "Giáo sư / Phó Giáo sư",
-            "Tiến sĩ / Bác sĩ CK II",
-            "Thạc sĩ / Bác sĩ CK I / BS nội trú"
-    );
+    private final AdminUserValidator adminUserValidator = new AdminUserValidator();
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
 
-        // Kiểm tra quyền admin
         if (session == null || session.getAttribute("account") == null) {
             response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
             return;
@@ -70,10 +56,10 @@ public class AdminUserServlet extends HttpServlet {
                 handleAddUser(request, response);
             } else if ("edit".equals(action)) {
                 handleEditUser(request, response);
+            } else if ("resendPassword".equals(action)) {
+                handleResendPassword(request, response);
             } else if ("toggleStatus".equals(action)) {
                 handleToggleStatus(request, response);
-            } else if ("updateRole".equals(action)) {
-                handleUpdateRole(request, response);
             } else if ("search".equals(action)) {
                 handleSearch(request, response);
             } else if ("filter".equals(action)) {
@@ -89,88 +75,94 @@ public class AdminUserServlet extends HttpServlet {
 
     private void handleAddUser(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
+
         String fullName = trim(request.getParameter("fullname"));
         String phone = trim(request.getParameter("phone"));
         String email = trim(request.getParameter("email"));
-        String password = trim(request.getParameter("password"));
         String roleStr = trim(request.getParameter("role"));
         String specialization = trim(request.getParameter("doctorSpecialization"));
         String qualification = trim(request.getParameter("doctorQualification"));
         String experienceRaw = trim(request.getParameter("doctorExperienceYears"));
         String priceRaw = trim(request.getParameter("doctorPriceBooking"));
 
-        Role targetRole = parseRole(roleStr);
-        if (targetRole == null || targetRole == Role.admin) {
-            keepAddForm(request, fullName, phone, email, roleStr,
-                    specialization, qualification, experienceRaw, priceRaw);
-            request.setAttribute("error", "Vai trò không hợp lệ");
-            request.setAttribute("addRoleError", "Vai trò không hợp lệ");
-            loadUsers(request, response);
-            return;
-        }
-
-        boolean valid = validateUserCommonFields(request, "add", fullName, phone, email);
-        if (password.isEmpty()) {
-            request.setAttribute("addPasswordError", "Mật khẩu không được để trống");
-            valid = false;
-        }
-
-        DoctorTransitionData doctorData = null;
-        if (targetRole == Role.doctor) {
-            doctorData = validateDoctorTransitionFields(request, "add",
-                    specialization, qualification, experienceRaw, priceRaw);
-            if (!doctorData.valid) {
-                valid = false;
-            }
-        }
-
         UserDAO userDAO = new UserDAO();
-        if (valid && userDAO.isPhoneExist(phone)) {
-            request.setAttribute("addPhoneError", "Số điện thoại này đã tồn tại");
-            valid = false;
-        }
-        if (valid && userDAO.isEmailExist(email)) {
-            request.setAttribute("addEmailError", "Email này đã tồn tại");
-            valid = false;
-        }
 
-        if (!valid) {
+        ValidationResult validationResult = adminUserValidator.validateAddUser(
+                fullName, phone, email, roleStr,
+                specialization, qualification, experienceRaw, priceRaw,
+                userDAO
+        );
+
+        if (!validationResult.isValid()) {
             keepAddForm(request, fullName, phone, email, roleStr,
                     specialization, qualification, experienceRaw, priceRaw);
-            request.setAttribute("error", "Dữ liệu tạo tài khoản không hợp lệ");
+            applyValidationResult(request, validationResult);
             loadUsers(request, response);
             return;
         }
 
         try {
+            String generatedPassword = generateRandomPassword(10);
+            Role targetRole = validationResult.getTargetRole();
+            DoctorTransitionData doctorData = validationResult.getDoctorData();
+
             User newUser = new User();
             newUser.setFullName(fullName);
             newUser.setPhone(phone);
             newUser.setEmail(email);
-            newUser.setPasswordHash(password);
+            newUser.setPasswordHash(generatedPassword);
             newUser.setRole(targetRole);
             newUser.setStatus(Status.active);
 
             userDAO.createUser(newUser);
-            if (targetRole == Role.doctor && doctorData != null && doctorData.valid) {
-                User createdUser = userDAO.getUserByEmail(email);
+
+            User createdUser = userDAO.getUserByEmail(email);
+
+            if (targetRole == Role.doctor && doctorData != null && doctorData.isValid()) {
                 if (createdUser == null || createdUser.getUserId() <= 0) {
                     throw new SQLException("Không tìm thấy tài khoản vừa tạo để cập nhật hồ sơ bác sĩ");
                 }
+
                 new DoctorDAO().upsertDoctorProfileByUserId(
                         createdUser.getUserId(),
-                        doctorData.specialization,
-                        doctorData.qualification,
-                        doctorData.experienceYears,
-                        doctorData.priceBooking
+                        doctorData.getSpecialization(),
+                        doctorData.getQualification(),
+                        doctorData.getExperienceYears(),
+                        doctorData.getPriceBooking()
                 );
             }
-            request.setAttribute("success", "Tạo tài khoản thành công");
 
-            // Ghi system log
+            boolean mailFailed = false;
+            try {
+                EmailOtpService.sendNewAccountPassword(email, fullName, generatedPassword);
+            } catch (Exception mailEx) {
+                mailFailed = true;
+                mailEx.printStackTrace();
+            }
+
+            if (mailFailed) {
+                request.setAttribute("success", "Tạo tài khoản thành công nhưng gửi email thất bại. Vui lòng gửi lại mật khẩu tạm cho người dùng.");
+                if (createdUser != null && createdUser.getUserId() > 0) {
+                    markPendingResend(request, createdUser.getUserId());
+                    request.setAttribute("resendModalOpen", true);
+                    request.setAttribute("resendModalUserId", createdUser.getUserId());
+                    request.setAttribute("resendModalFullName", createdUser.getFullName());
+                    request.setAttribute("resendModalPhone", createdUser.getPhone());
+                    request.setAttribute("resendModalEmail", createdUser.getEmail());
+                    request.setAttribute("resendModalRole", createdUser.getRole().toString());
+                    request.setAttribute("resendModalStatus", createdUser.getStatus().toString());
+                }
+            } else {
+                if (createdUser != null && createdUser.getUserId() > 0) {
+                    clearPendingResend(request, createdUser.getUserId());
+                }
+                request.setAttribute("success", "Tạo tài khoản thành công. Mật khẩu tạm đã được gửi qua email.");
+            }
+
             HttpSession session = request.getSession(false);
             SystemLogService.logWithSession(session, "CREATE_USER",
                     "Tạo tài khoản: " + fullName + " (" + email + "), role=" + targetRole.name());
+
         } catch (Exception e) {
             keepAddForm(request, fullName, phone, email, roleStr,
                     specialization, qualification, experienceRaw, priceRaw);
@@ -183,13 +175,13 @@ public class AdminUserServlet extends HttpServlet {
 
     private void handleEditUser(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
+
         String userIdStr = trim(request.getParameter("userId"));
-        String editType = trim(request.getParameter("editType"));
+        String originalRole = trim(request.getParameter("originalRole"));
         String fullName = trim(request.getParameter("fullname"));
         String phone = trim(request.getParameter("phone"));
         String email = trim(request.getParameter("email"));
         String roleStr = trim(request.getParameter("role"));
-
         String specialization = trim(request.getParameter("doctorSpecialization"));
         String qualification = trim(request.getParameter("doctorQualification"));
         String experienceRaw = trim(request.getParameter("doctorExperienceYears"));
@@ -204,83 +196,62 @@ public class AdminUserServlet extends HttpServlet {
 
         UserDAO userDAO = new UserDAO();
         DoctorDAO doctorDAO = new DoctorDAO();
+
         User existingUser = userDAO.getUserById(userId);
         if (existingUser == null) {
-            request.setAttribute("error", "Không tìm thấy người dùng");
+            request.setAttribute("error", "Người dùng không hợp lệ");
             loadUsers(request, response);
             return;
         }
+
         if (existingUser.getRole() == Role.admin) {
             request.setAttribute("error", "Không được chỉnh sửa tài khoản admin");
             loadUsers(request, response);
             return;
         }
 
-        Role targetRole = parseRole(roleStr);
-        if (targetRole == null || targetRole == Role.admin) {
-            keepEditForm(request, userIdStr, editType, fullName, phone, email, roleStr,
+        ValidationResult validationResult = adminUserValidator.validateEditUser(
+                existingUser, userId, fullName, phone, email, roleStr,
+                specialization, qualification, experienceRaw, priceRaw,
+                userDAO, doctorDAO
+        );
+
+        if (!validationResult.isValid()) {
+            String editRoleValue = validationResult.getTargetRole() != null
+                    ? validationResult.getTargetRole().name()
+                    : existingUser.getRole().name();
+
+            keepEditForm(request, userIdStr, originalRole, fullName, phone, email, editRoleValue,
                     specialization, qualification, experienceRaw, priceRaw);
-            request.setAttribute("error", "Vai trò không hợp lệ");
-            request.setAttribute("editRoleError", "Vai trò không hợp lệ");
-            loadUsers(request, response);
-            return;
-        }
-
-        boolean valid = validateUserCommonFields(request, "edit", fullName, phone, email);
-
-        User phoneOwner = userDAO.getUserByPhone(phone);
-        if (valid && phoneOwner != null && phoneOwner.getUserId() != userId) {
-            request.setAttribute("editPhoneError", "Số điện thoại này đã tồn tại");
-            valid = false;
-        }
-
-        User emailOwner = userDAO.getUserByEmail(email);
-        if (valid && emailOwner != null && emailOwner.getUserId() != userId) {
-            request.setAttribute("editEmailError", "Email này đã tồn tại");
-            valid = false;
-        }
-
-        if (existingUser.getRole() == Role.doctor && targetRole != Role.doctor
-                && doctorDAO.hasFutureUnfinishedAppointmentsByUserId(userId)) {
-            request.setAttribute("error", "Không thể đổi vai trò bác sĩ khi vẫn còn lịch khám tương lai chưa hoàn tất");
-            valid = false;
-        }
-
-        DoctorTransitionData doctorData = null;
-        if (existingUser.getRole() != Role.doctor && targetRole == Role.doctor) {
-            doctorData = validateDoctorTransitionFields(request, "edit", specialization, qualification, experienceRaw, priceRaw);
-            if (!doctorData.valid) {
-                valid = false;
-            }
-        }
-
-        if (!valid) {
-            keepEditForm(request, userIdStr, editType, fullName, phone, email, roleStr,
-                    specialization, qualification, experienceRaw, priceRaw);
-            request.setAttribute("error", "Dữ liệu cập nhật không hợp lệ");
+            applyValidationResult(request, validationResult);
             loadUsers(request, response);
             return;
         }
 
         try {
+            Role targetRole = validationResult.getTargetRole();
+            DoctorTransitionData doctorData = validationResult.getDoctorData();
+
             User user = new User();
             user.setUserId(userId);
             user.setFullName(fullName);
             user.setPhone(phone);
             user.setEmail(email);
+
             userDAO.updateUser(user);
 
             if (targetRole != existingUser.getRole()) {
                 userDAO.updateUserRole(userId, targetRole);
             }
 
-            if (existingUser.getRole() != Role.doctor && targetRole == Role.doctor && doctorData != null && doctorData.valid) {
+            if (existingUser.getRole() != Role.doctor && targetRole == Role.doctor
+                    && doctorData != null && doctorData.isValid()) {
                 doctorDAO.upsertDoctorProfileByUserId(
                         userId,
-                        doctorData.specialization,
-                        doctorData.qualification,
-                        doctorData.experienceYears,
-                        doctorData.priceBooking
+                        doctorData.getSpecialization(),
+                        doctorData.getQualification(),
+                        doctorData.getExperienceYears(),
+                        doctorData.getPriceBooking()
                 );
             }
 
@@ -290,17 +261,17 @@ public class AdminUserServlet extends HttpServlet {
 
             request.setAttribute("success", "Cập nhật tài khoản thành công");
 
-            // Ghi system log
             HttpSession session = request.getSession(false);
             SystemLogService.logWithSession(session, "UPDATE_USER",
                     "Cập nhật tài khoản userId=" + userId + ", fullName=" + fullName + ", role=" + targetRole.name());
+
         } catch (SQLException e) {
-            keepEditForm(request, userIdStr, editType, fullName, phone, email, roleStr,
+            keepEditForm(request, userIdStr, originalRole, fullName, phone, email, roleStr,
                     specialization, qualification, experienceRaw, priceRaw);
             request.setAttribute("error", "Lỗi khi cập nhật thông tin: " + e.getMessage());
             request.setAttribute("editModalOpen", true);
         } catch (Exception e) {
-            keepEditForm(request, userIdStr, editType, fullName, phone, email, roleStr,
+            keepEditForm(request, userIdStr, originalRole, fullName, phone, email, roleStr,
                     specialization, qualification, experienceRaw, priceRaw);
             request.setAttribute("error", "Lỗi khi cập nhật: " + e.getMessage());
             request.setAttribute("editModalOpen", true);
@@ -311,8 +282,10 @@ public class AdminUserServlet extends HttpServlet {
 
     private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
+
         String userIdStr = trim(request.getParameter("userId"));
         int userId = parsePositiveId(userIdStr);
+
         if (userId <= 0) {
             request.setAttribute("error", "Người dùng không hợp lệ");
             loadUsers(request, response);
@@ -320,8 +293,10 @@ public class AdminUserServlet extends HttpServlet {
         }
 
         UserDAO userDAO = new UserDAO();
+
         try {
             User user = userDAO.getUserById(userId);
+
             if (user == null) {
                 request.setAttribute("error", "Không tìm thấy người dùng");
                 loadUsers(request, response);
@@ -335,12 +310,13 @@ public class AdminUserServlet extends HttpServlet {
             }
 
             userDAO.toggleUserStatusById(userId);
-            request.setAttribute("success", "Cập nhật trạng thái của " + user.getFullName() + " thanh cong");
 
-            // Ghi system log
+            request.setAttribute("success", "Cập nhật trạng thái của " + user.getFullName() + " thành công");
+
             HttpSession session = request.getSession(false);
             SystemLogService.logWithSession(session, "TOGGLE_USER_STATUS",
                     "Thay đổi trạng thái tài khoản: " + user.getFullName() + " (" + user.getEmail() + ")");
+
         } catch (Exception e) {
             request.setAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
         }
@@ -348,97 +324,91 @@ public class AdminUserServlet extends HttpServlet {
         loadUsers(request, response);
     }
 
-    private void loadUsers(HttpServletRequest request, HttpServletResponse response)
+    private void handleResendPassword(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        UserDAO userDAO = new UserDAO();
-        List<User> users = getUsersByRoleAndKeyword(userDAO, "all", "");
 
-        applyPaging(request, users);
-        request.setAttribute("currentAction", "list");
-        request.setAttribute("filterRole", "all");
-        request.setAttribute("filterStatus", "all");
-        request.setAttribute("searchKeyword", "");
-
-        request.getRequestDispatcher("pages/admin/users.jsp").forward(request, response);
-    }
-
-    private void handleUpdateRole(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, ServletException, IOException {
         String userIdStr = trim(request.getParameter("userId"));
-        String roleStr = trim(request.getParameter("role"));
-        String specialization = trim(request.getParameter("doctorSpecialization"));
-        String qualification = trim(request.getParameter("doctorQualification"));
-        String experienceRaw = trim(request.getParameter("doctorExperienceYears"));
-        String priceRaw = trim(request.getParameter("doctorPriceBooking"));
-
         int userId = parsePositiveId(userIdStr);
+
         if (userId <= 0) {
             request.setAttribute("error", "Người dùng không hợp lệ");
             loadUsers(request, response);
             return;
         }
 
-        Role role = parseRole(roleStr);
-        if (role == null || role == Role.admin) {
-            request.setAttribute("error", "Vai trò không hợp lệ");
-            loadUsers(request, response);
-            return;
-        }
-
         UserDAO userDAO = new UserDAO();
-        DoctorDAO doctorDAO = new DoctorDAO();
-        User existingUser = userDAO.getUserById(userId);
-        if (existingUser == null) {
-            request.setAttribute("error", "Không tìm thấy người dùng");
-            loadUsers(request, response);
-            return;
-        }
-        if (existingUser.getRole() == Role.admin) {
-            request.setAttribute("error", "Không được đổi vai trò của admin");
-            loadUsers(request, response);
-            return;
-        }
-        if (existingUser.getRole() == Role.doctor && role != Role.doctor
-                && doctorDAO.hasFutureUnfinishedAppointmentsByUserId(userId)) {
-            request.setAttribute("error", "Không thể đổi vai trò bác sĩ khi vẫn còn lịch khám tương lai chưa hoàn tất");
+        User targetUser = userDAO.getUserById(userId);
+
+        if (targetUser == null) {
+            request.setAttribute("error", "Người dùng không hợp lệ");
             loadUsers(request, response);
             return;
         }
 
-        DoctorTransitionData doctorData = null;
-        if (existingUser.getRole() != Role.doctor && role == Role.doctor) {
-            doctorData = validateDoctorTransitionFields(request, "edit", specialization, qualification, experienceRaw, priceRaw);
-            if (!doctorData.valid) {
-                request.setAttribute("error", "Cần hoàn thiện thông tin bác sĩ trước khi đổi vai trò");
-                loadUsers(request, response);
-                return;
-            }
+        if (targetUser.getRole() == Role.admin) {
+            request.setAttribute("error", "Không hỗ trợ gửi lại mật khẩu cho tài khoản admin");
+            loadUsers(request, response);
+            return;
         }
 
+        String generatedPassword = generateRandomPassword(10);
+        boolean updated = userDAO.updatePasswordByEmail(targetUser.getEmail(), generatedPassword);
+
+        if (!updated) {
+            request.setAttribute("error", "Người dùng không hợp lệ");
+            loadUsers(request, response);
+            return;
+        }
+
+        boolean mailFailed = false;
         try {
-            userDAO.updateUserRole(userId, role);
-            if (existingUser.getRole() != Role.doctor && role == Role.doctor && doctorData != null && doctorData.valid) {
-                doctorDAO.upsertDoctorProfileByUserId(
-                        userId,
-                        doctorData.specialization,
-                        doctorData.qualification,
-                        doctorData.experienceYears,
-                        doctorData.priceBooking
-                );
-            }
-            if (role == Role.doctor || existingUser.getRole() == Role.doctor) {
-                doctorDAO.syncDoctorProfilesForAllDoctorUsers();
-            }
-            request.setAttribute("success", "Cập nhật vai trò thành công");
-        } catch (Exception e) {
-            request.setAttribute("error", "Lỗi khi cập nhật vai trò: " + e.getMessage());
+            EmailOtpService.sendNewAccountPassword(targetUser.getEmail(), targetUser.getFullName(), generatedPassword);
+        } catch (Exception mailEx) {
+            mailFailed = true;
+            mailEx.printStackTrace();
         }
+
+        if (mailFailed) {
+            markPendingResend(request, userId);
+            request.setAttribute("success", "Đã đặt mật khẩu tạm mới nhưng gửi email thất bại. Vui lòng thử gửi lại.");
+            request.setAttribute("resendModalOpen", true);
+            request.setAttribute("resendModalUserId", targetUser.getUserId());
+            request.setAttribute("resendModalFullName", targetUser.getFullName());
+            request.setAttribute("resendModalPhone", targetUser.getPhone());
+            request.setAttribute("resendModalEmail", targetUser.getEmail());
+            request.setAttribute("resendModalRole", targetUser.getRole().toString());
+            request.setAttribute("resendModalStatus", targetUser.getStatus().toString());
+        } else {
+            clearPendingResend(request, userId);
+            request.setAttribute("success", "Đã gửi lại mật khẩu tạm qua email cho " + targetUser.getFullName() + ".");
+        }
+
+        HttpSession session = request.getSession(false);
+        SystemLogService.logWithSession(session, "RESEND_USER_PASSWORD",
+                "Gửi lại mật khẩu tạm cho userId=" + userId + ", email=" + targetUser.getEmail()
+                + ", mailStatus=" + (mailFailed ? "failed" : "success"));
 
         loadUsers(request, response);
     }
 
+    private void loadUsers(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, ServletException, IOException {
+
+        UserDAO userDAO = new UserDAO();
+        List<User> users = getUsersByRoleAndKeyword(userDAO, "all", "");
+
+        applyPaging(request, users);
+
+        request.setAttribute("currentAction", "list");
+        request.setAttribute("filterRole", "all");
+        request.setAttribute("filterStatus", "all");
+        request.setAttribute("searchKeyword", "");
+        request.getRequestDispatcher("pages/admin/users.jsp").forward(request, response);
+    }
+
     private void handleSearch(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
+
         String keyword = request.getParameter("keyword");
         String roleStr = request.getParameter("role");
         String statusStr = request.getParameter("status");
@@ -458,6 +428,7 @@ public class AdminUserServlet extends HttpServlet {
         users = filterByStatus(users, statusStr);
 
         applyPaging(request, users);
+
         request.setAttribute("currentAction", "search");
         request.setAttribute("searchKeyword", keyword);
         request.setAttribute("filterRole", roleStr);
@@ -467,6 +438,7 @@ public class AdminUserServlet extends HttpServlet {
 
     private void handleFilter(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
+
         String statusStr = request.getParameter("status");
         String roleStr = request.getParameter("role");
         String keyword = request.getParameter("keyword");
@@ -486,6 +458,7 @@ public class AdminUserServlet extends HttpServlet {
         users = filterByStatus(users, statusStr);
 
         applyPaging(request, users);
+
         request.setAttribute("currentAction", "filter");
         request.setAttribute("filterRole", roleStr);
         request.setAttribute("filterStatus", statusStr);
@@ -535,6 +508,7 @@ public class AdminUserServlet extends HttpServlet {
         if (from < 0 || from >= data.size()) {
             return new ArrayList<>();
         }
+
         int to = Math.min(from + pageSize, data.size());
         return data.subList(from, to);
     }
@@ -557,6 +531,7 @@ public class AdminUserServlet extends HttpServlet {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalRecords", totalRecords);
         request.setAttribute("pageSize", PAGE_SIZE);
+        request.setAttribute("pendingResendMap", buildPendingResendMap(request, safeUsers));
     }
 
     private List<User> getUsersByRoleAndKeyword(UserDAO userDAO, String roleStr, String keyword) {
@@ -580,6 +555,7 @@ public class AdminUserServlet extends HttpServlet {
         } catch (Exception e) {
             users.addAll(getUsersByRoleAndKeyword(userDAO, "all", safeKeyword));
         }
+
         return users;
     }
 
@@ -595,11 +571,13 @@ public class AdminUserServlet extends HttpServlet {
 
     private List<User> filterByStatus(List<User> users, String statusStr) {
         List<User> safeUsers = users != null ? users : new ArrayList<>();
+
         if (statusStr == null || "all".equals(statusStr)) {
             return safeUsers;
         }
 
         List<User> filteredUsers = new ArrayList<>();
+
         try {
             Status status = Status.valueOf(statusStr);
             for (User user : safeUsers) {
@@ -610,6 +588,7 @@ public class AdminUserServlet extends HttpServlet {
         } catch (Exception e) {
             return safeUsers;
         }
+
         return filteredUsers;
     }
 
@@ -626,132 +605,6 @@ public class AdminUserServlet extends HttpServlet {
         }
     }
 
-    private Role parseRole(String roleStr) {
-        String safeRole = trim(roleStr).toLowerCase();
-        if ("doctor".equals(safeRole)) {
-            return Role.doctor;
-        }
-        if ("receptionist".equals(safeRole)) {
-            return Role.receptionist;
-        }
-        if ("technician".equals(safeRole)) {
-            return Role.technician;
-        }
-        if ("patient".equals(safeRole)) {
-            return Role.patient;
-        }
-        return null;
-    }
-
-    private boolean validateUserCommonFields(HttpServletRequest request, String prefix,
-            String fullName, String phone, String email) {
-        boolean valid = true;
-
-        if (fullName.isEmpty()) {
-            request.setAttribute(prefix + "FullNameError", "Họ tên không được để trống");
-            valid = false;
-        } else if (fullName.length() < MIN_NAME_LENGTH || fullName.length() > MAX_NAME_LENGTH) {
-            request.setAttribute(prefix + "FullNameError", "Họ tên phải từ 2 đến 100 ký tự");
-            valid = false;
-        } else if (!isMeaningfulFullName(fullName)) {
-            request.setAttribute(prefix + "FullNameError", "Họ tên không hợp lệ");
-            valid = false;
-        }
-
-        if (phone.isEmpty()) {
-            request.setAttribute(prefix + "PhoneError", "Số điện thoại không được để trống");
-            valid = false;
-        } else if (!isValidPhone(phone)) {
-            request.setAttribute(prefix + "PhoneError", "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0");
-            valid = false;
-        }
-
-        if (email.isEmpty()) {
-            request.setAttribute(prefix + "EmailError", "Email không được để trống");
-            valid = false;
-        } else if (email.length() > MAX_EMAIL_LENGTH) {
-            request.setAttribute(prefix + "EmailError", "Email tối đa 100 ký tự");
-            valid = false;
-        } else if (!isValidEmail(email)) {
-            request.setAttribute(prefix + "EmailError", "Email không đúng định dạng");
-            valid = false;
-        }
-        return valid;
-    }
-
-    private boolean isValidPhone(String phone) {
-        return PHONE_PATTERN.matcher(phone).matches();
-    }
-
-    private boolean isValidEmail(String email) {
-        return EMAIL_PATTERN.matcher(email).matches();
-    }
-
-    private boolean isMeaningfulFullName(String fullName) {
-        if (!HAS_LETTER_PATTERN.matcher(fullName).matches()) {
-            return false;
-        }
-        return !ONLY_NUMBER_OR_SYMBOL_PATTERN.matcher(fullName).matches();
-    }
-
-    private DoctorTransitionData validateDoctorTransitionFields(HttpServletRequest request, String prefix,
-            String specialization, String qualification, String experienceRaw, String priceRaw) {
-        DoctorTransitionData data = new DoctorTransitionData();
-        data.specialization = specialization;
-        data.qualification = qualification;
-        data.valid = true;
-
-        if (specialization.isEmpty()) {
-            request.setAttribute(prefix + "DoctorSpecializationError", "Chuyên môn là bắt buộc");
-            data.valid = false;
-        } else if (!SPECIALIZATION_OPTIONS.contains(specialization)) {
-            request.setAttribute(prefix + "DoctorSpecializationError", "Chuyên môn không hợp lệ");
-            data.valid = false;
-        }
-
-        if (qualification.isEmpty()) {
-            request.setAttribute(prefix + "DoctorQualificationError", "Bằng cấp là bắt buộc");
-            data.valid = false;
-        } else if (!QUALIFICATION_OPTIONS.contains(qualification)) {
-            request.setAttribute(prefix + "DoctorQualificationError", "Bằng cấp không hợp lệ");
-            data.valid = false;
-        }
-
-        if (experienceRaw.isEmpty()) {
-            request.setAttribute(prefix + "DoctorExperienceError", "Kinh nghiệm là bắt buộc");
-            data.valid = false;
-        } else if (!experienceRaw.matches("\\d+")) {
-            request.setAttribute(prefix + "DoctorExperienceError", "Kinh nghiệm phải là số nguyên");
-            data.valid = false;
-        } else {
-            int exp = Integer.parseInt(experienceRaw);
-            if (exp < MIN_EXPERIENCE || exp > MAX_EXPERIENCE) {
-                request.setAttribute(prefix + "DoctorExperienceError", "Kinh nghiệm phải từ 0 đến 50");
-                data.valid = false;
-            } else {
-                data.experienceYears = exp;
-            }
-        }
-
-        if (priceRaw.isEmpty()) {
-            request.setAttribute(prefix + "DoctorPriceError", "Giá khám là bắt buộc");
-            data.valid = false;
-        } else if (!priceRaw.matches("\\d+")) {
-            request.setAttribute(prefix + "DoctorPriceError", "Giá khám phải là số nguyên không âm");
-            data.valid = false;
-        } else {
-            int price = Integer.parseInt(priceRaw);
-            if (price < MIN_PRICE || price > MAX_PRICE) {
-                request.setAttribute(prefix + "DoctorPriceError", "Giá khám phải từ 0 đến 10000000");
-                data.valid = false;
-            } else {
-                data.priceBooking = price;
-            }
-        }
-
-        return data;
-    }
-
     private void keepAddForm(HttpServletRequest request, String fullName, String phone, String email, String role,
             String specialization, String qualification, String experienceRaw, String priceRaw) {
         request.setAttribute("addModalOpen", true);
@@ -765,11 +618,11 @@ public class AdminUserServlet extends HttpServlet {
         request.setAttribute("addDoctorPriceBooking", priceRaw);
     }
 
-    private void keepEditForm(HttpServletRequest request, String userId, String editType, String fullName,
+    private void keepEditForm(HttpServletRequest request, String userId, String originalRole, String fullName,
             String phone, String email, String role, String specialization, String qualification,
             String experienceRaw, String priceRaw) {
         request.setAttribute("editModalOpen", true);
-        request.setAttribute("editModalType", "patient".equals(editType) ? "patient" : "staff");
+        request.setAttribute("editOriginalRole", originalRole);
         request.setAttribute("editUserId", userId);
         request.setAttribute("editFullName", fullName);
         request.setAttribute("editPhone", phone);
@@ -781,12 +634,78 @@ public class AdminUserServlet extends HttpServlet {
         request.setAttribute("editDoctorPriceBooking", priceRaw);
     }
 
-    private static class DoctorTransitionData {
+    private Map<Integer, Boolean> buildPendingResendMap(HttpServletRequest request, List<User> users) {
+        Map<Integer, Boolean> map = new HashMap<>();
+        Set<Integer> pendingIds = getPendingResendSet(request, false);
 
-        private boolean valid;
-        private String specialization;
-        private String qualification;
-        private int experienceYears;
-        private int priceBooking;
+        if (users == null || users.isEmpty() || pendingIds == null || pendingIds.isEmpty()) {
+            return map;
+        }
+
+        for (User user : users) {
+            if (user != null) {
+                map.put(user.getUserId(), pendingIds.contains(user.getUserId()));
+            }
+        }
+
+        return map;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<Integer> getPendingResendSet(HttpServletRequest request, boolean create) {
+        HttpSession session = request.getSession(create);
+        if (session == null) {
+            return null;
+        }
+
+        Object value = session.getAttribute(SESSION_PENDING_RESEND_KEY);
+        if (value instanceof Set) {
+            return (Set<Integer>) value;
+        }
+
+        if (!create) {
+            return null;
+        }
+
+        Set<Integer> set = new HashSet<>();
+        session.setAttribute(SESSION_PENDING_RESEND_KEY, set);
+        return set;
+    }
+
+    private void markPendingResend(HttpServletRequest request, int userId) {
+        Set<Integer> set = getPendingResendSet(request, true);
+        if (set != null && userId > 0) {
+            set.add(userId);
+        }
+    }
+
+    private void clearPendingResend(HttpServletRequest request, int userId) {
+        Set<Integer> set = getPendingResendSet(request, false);
+        if (set != null) {
+            set.remove(userId);
+        }
+    }
+
+    private void applyValidationResult(HttpServletRequest request, ValidationResult validationResult) {
+        if (validationResult == null) {
+            return;
+        }
+
+        if (validationResult.getFormError() != null) {
+            request.setAttribute("error", validationResult.getFormError());
+        }
+
+        for (Map.Entry<String, String> entry : validationResult.getFieldErrors().entrySet()) {
+            request.setAttribute(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private String generateRandomPassword(int length) {
+        StringBuilder password = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = SECURE_RANDOM.nextInt(TEMP_PASSWORD_CHARS.length());
+            password.append(TEMP_PASSWORD_CHARS.charAt(index));
+        }
+        return password.toString();
     }
 }

@@ -1,4 +1,4 @@
-﻿<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
@@ -149,7 +149,6 @@
                 <div class="form-group form-full"><label>Họ tên <span style="color:red;">*</span></label><input type="text" name="fullName" value="${addFullName}" required><c:if test="${not empty addFullNameError}"><div class="field-error">${addFullNameError}</div></c:if></div>
                 <div class="form-group"><label>Số điện thoại <span style="color:red;">*</span></label><input type="tel" name="phone" value="${addPhone}" required><c:if test="${not empty addPhoneError}"><div class="field-error">${addPhoneError}</div></c:if></div>
                 <div class="form-group"><label>Email <span style="color:red;">*</span></label><input type="email" name="email" value="${addEmail}" required><c:if test="${not empty addEmailError}"><div class="field-error">${addEmailError}</div></c:if></div>
-                <div class="form-group form-full"><label>Mật khẩu <span style="color:red;">*</span></label><input type="text" name="password" required><c:if test="${not empty addPasswordError}"><div class="field-error">${addPasswordError}</div></c:if></div>
                 <div class="form-group form-full"><label>Chuyên môn <span style="color:red;">*</span></label><select name="specialization" required><option value="">-- Chọn chuyên môn --</option><c:forEach var="sp" items="${specializationOptions}"><option value="${sp}" ${addSpecialization == sp ? 'selected' : ''}>${sp}</option></c:forEach></select><c:if test="${not empty addSpecializationError}"><div class="field-error">${addSpecializationError}</div></c:if></div>
                 <div class="form-group"><label>Bằng cấp <span style="color:red;">*</span></label><select id="addQualification" name="qualification" required onchange="applyDefaultPrice('addQualification','addPriceBooking')"><option value="">-- Chọn bằng cấp --</option><c:forEach var="q" items="${qualificationOptions}"><option value="${q}" ${addQualification == q ? 'selected' : ''}>${q}</option></c:forEach></select><c:if test="${not empty addQualificationError}"><div class="field-error">${addQualificationError}</div></c:if></div>
                 <div class="form-group"><label>Kinh nghiệm (năm) <span style="color:red;">*</span></label><input type="number" name="experienceYears" min="0" max="50" value="${addExperience}" required><c:if test="${not empty addExperienceError}"><div class="field-error">${addExperienceError}</div></c:if></div>

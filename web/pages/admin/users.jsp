@@ -234,6 +234,14 @@
                 cursor: not-allowed;
             }
 
+            .role-select-disabled {
+                background: #f3f4f6 !important;
+                color: #6b7280 !important;
+                border-color: #d1d5db !important;
+                cursor: not-allowed !important;
+                opacity: 1;
+            }
+
             /* TABLE */
             .table-container {
                 background: white;
@@ -354,6 +362,7 @@
             .btn-toggle:hover {
                 background: #f3e5f5;
             }
+
 
             .no-data {
                 text-align: center;
@@ -715,7 +724,7 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons" style="justify-content: center;">
-                                                <button class="btn-action btn-view" onclick="viewAccount(${user.userId}, '${user.fullName}', '${user.phone}', '${user.email}', '${user.role}', '${user.status}')" title="Xem chi tiết">
+                                                <button class="btn-action btn-view" onclick="viewAccount(${user.userId}, '${user.fullName}', '${user.phone}', '${user.email}', '${user.role}', '${user.status}', '${pendingResendMap[user.userId] ? 'true' : 'false'}')" title="Xem chi tiết">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                                 <c:if test="${user.role.toString() != 'admin'}">
@@ -787,7 +796,7 @@
                 <form action="admin-users" method="POST" id="viewAccountForm" onsubmit="return handleViewUserFormSubmit()">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="userId" id="viewUserIdInput" value="${editUserId}">
-                    <input type="hidden" name="editType" id="viewEditTypeInput" value="${editModalType}">
+                    <input type="hidden" name="originalRole" id="viewOriginalRoleInput" value="${editOriginalRole}">
 
                     <c:if test="${not empty error and editModalOpen}">
                         <div class="alert error">
@@ -881,6 +890,12 @@
                                 <div class="field-error">${editDoctorPriceError}</div>
                             </c:if>
                         </div>
+                    </div>
+
+                    <div id="viewResendPasswordSection" class="form-group" style="display: none;">
+                        <button type="button" class="btn-submit" onclick="resendPasswordFromViewModal()">
+                            <i class="fas fa-key"></i> Gửi lại mật khẩu tạm
+                        </button>
                     </div>
 
                     <div class="modal-footer">
@@ -995,11 +1010,6 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Mật khẩu <span style="color: red;">*</span></label>
-                        <input type="password" name="password" id="addPassword" value="123456" placeholder="Mật khẩu">
-                    </div>
-
                     <div class="modal-footer">
                         <button type="button" class="btn-cancel" onclick="closeModal('addAccountModal')">
                             <i class="fas fa-times"></i> Hủy
@@ -1024,7 +1034,7 @@
                 <form action="admin-users" method="POST" id="editAccountForm">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="userId" id="editUserId" value="${editUserId}">
-                    <input type="hidden" name="editType" id="editType" value="${editModalType}">
+                    <input type="hidden" name="originalRole" id="editOriginalRoleInput" value="${editOriginalRole}">
 
                     <c:if test="${not empty error and editModalOpen}">
                         <div class="alert error">
@@ -1084,8 +1094,10 @@
         <script>
             let isViewUserEditMode = false;
             let viewUserSnapshot = null;
+            let isViewUserEditLocked = false;
             let isViewUserRoleLocked = false;
             let viewOriginalRole = 'patient';
+            let allowResendPasswordInView = false;
 
             function defaultPriceByQualificationIndex(selectEl) {
                 if (!selectEl) return '';
@@ -1133,16 +1145,36 @@
                 return status === 'active' ? 'Hoạt động' : 'Khóa';
             }
 
+            function updateViewRoleSelectState() {
+                const roleSelect = document.getElementById('viewRoleSelect');
+                if (!roleSelect) {
+                    return;
+                }
+
+                Array.from(roleSelect.options).forEach(option => {
+                    if (!option.value) {
+                        option.disabled = false;
+                        return;
+                    }
+                    option.disabled = option.value === 'patient' && viewOriginalRole !== 'patient';
+                });
+
+                const shouldLockRole = !isViewUserEditMode || isViewUserRoleLocked;
+                roleSelect.disabled = shouldLockRole;
+                roleSelect.classList.toggle('role-select-disabled', shouldLockRole);
+            }
+
             function applyViewUserEditPermission(role) {
-                isViewUserRoleLocked = role === 'admin';
+                isViewUserEditLocked = role === 'admin';
+                isViewUserRoleLocked = role === 'admin' || role === 'patient';
                 const editBtn = document.getElementById('viewEditBtn');
                 if (editBtn) {
-                    editBtn.style.display = isViewUserRoleLocked ? 'none' : '';
+                    editBtn.style.display = isViewUserEditLocked ? 'none' : '';
                 }
             }
 
             function setViewUserEditMode(enabled) {
-                if (enabled && isViewUserRoleLocked) {
+                if (enabled && isViewUserEditLocked) {
                     enabled = false;
                 }
                 isViewUserEditMode = enabled;
@@ -1155,19 +1187,25 @@
                 if (enabled) {
                     roleInput.style.display = 'none';
                     roleSelect.style.display = '';
-                    roleSelect.disabled = false;
                 } else {
-                    roleSelect.disabled = true;
                     roleSelect.style.display = 'none';
                     roleInput.style.display = '';
                     roleInput.value = roleTextFromValue(roleSelect.value);
                 }
+                updateViewRoleSelectState();
                 toggleDoctorFieldsVisibility();
 
                 document.getElementById('viewEditBtnIcon').className = enabled ? 'fas fa-save' : 'fas fa-pen-to-square';
                 document.getElementById('viewEditBtnText').innerText = enabled ? 'Lưu' : 'Sửa';
                 document.getElementById('viewCloseBtnIcon').className = enabled ? 'fas fa-rotate-left' : 'fas fa-times';
-                document.getElementById('viewCloseBtnText').innerText = enabled ? 'Hủy' : 'Đóng';
+                document.getElementById('viewCloseBtnText').innerText = enabled ? '\u0048\u1ee7y' : '\u0110\u00f3ng';
+                setResendPasswordSectionVisible(allowResendPasswordInView && !enabled);
+            }
+
+            function setResendPasswordSectionVisible(show) {
+                const section = document.getElementById('viewResendPasswordSection');
+                if (!section) return;
+                section.style.display = show ? 'block' : 'none';
             }
 
             function captureViewUserSnapshot() {
@@ -1201,7 +1239,7 @@
             }
 
             function onViewUserEditToggle() {
-                if (isViewUserRoleLocked) {
+                if (isViewUserEditLocked) {
                     return;
                 }
                 if (!isViewUserEditMode) {
@@ -1229,7 +1267,7 @@
 
             function handleViewUserFormSubmit() {
                 trimUserFormInputs();
-                return isViewUserEditMode && !isViewUserRoleLocked;
+                return isViewUserEditMode && !isViewUserEditLocked;
             }
 
             function trimUserFormInputs() {
@@ -1254,16 +1292,17 @@
             }
 
                         // Xem chi tiết tài khoản (gộp sửa trong modal xem)
-            function viewAccount(userId, fullName, phone, email, role, status) {
-                const editType = role === 'patient' ? 'patient' : 'staff';
+            function viewAccount(userId, fullName, phone, email, role, status, pendingResend) {
+                const originalRole = role || 'patient';
+                allowResendPasswordInView = pendingResend === true || pendingResend === 'true';
                 document.getElementById('viewUserIdInput').value = userId;
-                document.getElementById('viewEditTypeInput').value = editType;
+                document.getElementById('viewOriginalRoleInput').value = originalRole;
                 document.getElementById('viewFullNameInput').value = fullName || '';
                 document.getElementById('viewPhoneInput').value = phone || '';
                 document.getElementById('viewEmailInput').value = email || '';
-                document.getElementById('viewRoleSelect').value = role || 'patient';
-                document.getElementById('viewRoleInput').value = roleTextFromValue(role || 'patient');
-                viewOriginalRole = role || 'patient';
+                document.getElementById('viewRoleSelect').value = originalRole;
+                document.getElementById('viewRoleInput').value = roleTextFromValue(originalRole);
+                viewOriginalRole = originalRole;
                 document.getElementById('viewStatusValue').value = status || 'active';
                 document.getElementById('viewStatusText').value = statusTextFromValue(status || 'active');
                 document.getElementById('viewDoctorSpecialization').value = '';
@@ -1271,10 +1310,39 @@
                 document.getElementById('viewDoctorExperienceYears').value = '';
                 document.getElementById('viewDoctorPriceBooking').value = '';
 
-                applyViewUserEditPermission(role || 'patient');
+                applyViewUserEditPermission(originalRole);
                 setViewUserEditMode(false);
                 captureViewUserSnapshot();
                 openModal('viewAccountModal');
+            }
+
+            function resendPasswordFromViewModal() {
+                const userId = document.getElementById('viewUserIdInput').value;
+                if (!userId) {
+                    return;
+                }
+                if (!confirm('Gửi lại mật khẩu tạm cho tài khoản này?')) {
+                    return;
+                }
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'admin-users';
+
+                const actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                actionInput.value = 'resendPassword';
+
+                const userIdInput = document.createElement('input');
+                userIdInput.type = 'hidden';
+                userIdInput.name = 'userId';
+                userIdInput.value = userId;
+
+                form.appendChild(actionInput);
+                form.appendChild(userIdInput);
+                document.body.appendChild(form);
+                form.submit();
             }
 
             function clearFieldErrors(modalId) {
@@ -1291,7 +1359,6 @@
                     document.getElementById('addFullName').value = '';
                     document.getElementById('addPhone').value = '';
                     document.getElementById('addEmail').value = '';
-                    document.getElementById('addPassword').value = '123456';
                     document.getElementById('addDoctorSpecialization').value = '';
                     document.getElementById('addDoctorQualification').value = '';
                     document.getElementById('addDoctorExperienceYears').value = '';
@@ -1451,6 +1518,7 @@
 
                 const shouldOpenAddModal = '${addModalOpen}' === 'true';
                 const shouldOpenEditModal = '${editModalOpen}' === 'true';
+                const shouldOpenResendModal = '${resendModalOpen}' === 'true';
 
                 if (shouldOpenAddModal) {
                     openAddModal(true);
@@ -1467,11 +1535,11 @@
 
                 if (shouldOpenEditModal) {
                     document.getElementById('viewUserIdInput').value = '${editUserId}';
-                    document.getElementById('viewEditTypeInput').value = '${editModalType}';
+                    document.getElementById('viewOriginalRoleInput').value = '${editOriginalRole}';
                     document.getElementById('viewFullNameInput').value = '${editFullName}';
                     document.getElementById('viewPhoneInput').value = '${editPhone}';
                     document.getElementById('viewEmailInput').value = '${editEmail}';
-                    const fallbackRole = ('${editRoleValue}' && '${editRoleValue}' !== 'null') ? '${editRoleValue}' : ('${editModalType}' === 'patient' ? 'patient' : 'receptionist');
+                    const fallbackRole = ('${editRoleValue}' && '${editRoleValue}' !== 'null') ? '${editRoleValue}' : (('${editOriginalRole}' && '${editOriginalRole}' !== 'null') ? '${editOriginalRole}' : 'patient');
                     document.getElementById('viewRoleSelect').value = fallbackRole;
                     document.getElementById('viewRoleInput').value = roleTextFromValue(fallbackRole);
                     viewOriginalRole = fallbackRole;
@@ -1483,16 +1551,29 @@
                     document.getElementById('viewDoctorExperienceYears').value = '${not empty editDoctorExperienceYears ? editDoctorExperienceYears : ""}';
                     document.getElementById('viewDoctorPriceBooking').value = '${not empty editDoctorPriceBooking ? editDoctorPriceBooking : ""}';
                     applyViewUserEditPermission(fallbackRole);
-                    setViewUserEditMode(!isViewUserRoleLocked);
+                    setViewUserEditMode(!isViewUserEditLocked);
                     applyDefaultDoctorPrice('viewDoctorQualification', 'viewDoctorPriceBooking', false);
                     captureViewUserSnapshot();
                     openModal('viewAccountModal');
+                }
+
+                if (shouldOpenResendModal) {
+                    viewAccount(
+                            '${resendModalUserId}',
+                            '${resendModalFullName}',
+                            '${resendModalPhone}',
+                            '${resendModalEmail}',
+                            '${resendModalRole}',
+                            '${resendModalStatus}',
+                            'true'
+                    );
+                    setViewUserEditMode(false);
+                    setResendPasswordSectionVisible(true);
                 }
             });
         </script>
     </body>
 </html>
-
 
 
 

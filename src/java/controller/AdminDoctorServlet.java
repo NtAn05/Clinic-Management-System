@@ -9,10 +9,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import model.Doctor;
+import model.EmailOtpService;
 import model.Role;
 import model.User;
 import util.SystemLogService;
@@ -25,6 +27,8 @@ public class AdminDoctorServlet extends HttpServlet {
     private static final int MAX_EXPERIENCE = 50;
     private static final int MIN_PRICE = 0;
     private static final int MAX_PRICE = 10_000_000;
+    private static final String TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final List<String> SPECIALIZATION_OPTIONS = Arrays.asList(
             "Da liễu dị ứng",
             "Da liễu nhiễm trùng",
@@ -60,7 +64,11 @@ public class AdminDoctorServlet extends HttpServlet {
         try {
             if ("add".equals(action) && "POST".equalsIgnoreCase(req.getMethod())) {
                 if (handleAdd(req)) {
-                    redirectSuccess(resp, req, "Thêm bác sĩ thành công");
+                    String successMessage = "Thêm bác sĩ thành công. Mật khẩu tạm đã được gửi qua email.";
+                    if (Boolean.TRUE.equals(req.getAttribute("addDoctorMailFailed"))) {
+                        successMessage = "Thêm bác sĩ thành công nhưng gửi email thất bại. Vui lòng gửi lại mật khẩu tạm.";
+                    }
+                    redirectSuccess(resp, req, successMessage);
                     return;
                 }
             } else if ("edit".equals(action) && "POST".equalsIgnoreCase(req.getMethod())) {
@@ -123,7 +131,6 @@ public class AdminDoctorServlet extends HttpServlet {
         String fullName = trim(req.getParameter("fullName"));
         String phone = trim(req.getParameter("phone"));
         String email = trim(req.getParameter("email"));
-        String password = trim(req.getParameter("password"));
         String specialization = trim(req.getParameter("specialization"));
         String qualification = trim(req.getParameter("qualification"));
         String experienceRaw = trim(req.getParameter("experienceYears"));
@@ -153,10 +160,6 @@ public class AdminDoctorServlet extends HttpServlet {
             req.setAttribute("addEmailError", "Email không đúng định dạng");
             valid = false;
         }
-        if (password.isEmpty()) {
-            req.setAttribute("addPasswordError", "Mật khẩu không được để trống");
-            valid = false;
-        }
         valid = validateDoctorFields(req, specialization, qualification, experienceRaw, priceRaw, true) && valid;
 
         UserDAO userDAO = new UserDAO();
@@ -177,14 +180,21 @@ public class AdminDoctorServlet extends HttpServlet {
 
         int experienceYears = Integer.parseInt(experienceRaw);
         int priceBooking = Integer.parseInt(priceRaw);
+        String generatedPassword = generateRandomPassword(10);
 
         DoctorDAO doctorDAO = new DoctorDAO();
-        int userId = doctorDAO.createDoctorWithUser(fullName, phone, email, password, specialization, qualification, experienceYears, priceBooking);
+        int userId = doctorDAO.createDoctorWithUser(fullName, phone, email, generatedPassword, specialization, qualification, experienceYears, priceBooking);
         if (userId > 0) {
             HttpSession sessionLog = req.getSession(false);
             User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
             SystemLogService.log(userLog != null ? userLog.getUserId() : null, "DOCTOR_ADDED",
                     "Thêm bác sĩ: fullName=" + fullName + ", email=" + email + ", specialization=" + specialization);
+            try {
+                EmailOtpService.sendNewAccountPassword(email, fullName, generatedPassword);
+            } catch (Exception mailEx) {
+                req.setAttribute("addDoctorMailFailed", true);
+                mailEx.printStackTrace();
+            }
             return true;
         }
 
@@ -398,6 +408,15 @@ public class AdminDoctorServlet extends HttpServlet {
     private void redirectSuccess(HttpServletResponse resp, HttpServletRequest req, String message) throws IOException {
         req.getSession().setAttribute(SUCCESS_FLASH_KEY, message);
         resp.sendRedirect(req.getContextPath() + "/admin-doctors");
+    }
+
+    private String generateRandomPassword(int length) {
+        StringBuilder password = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = SECURE_RANDOM.nextInt(TEMP_PASSWORD_CHARS.length());
+            password.append(TEMP_PASSWORD_CHARS.charAt(index));
+        }
+        return password.toString();
     }
 
     private String trim(String value) {
