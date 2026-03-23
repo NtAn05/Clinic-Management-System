@@ -396,12 +396,12 @@ public class PatientPortalDAO extends DBContext {
         }
     }
 
-    public void addPatient(Patient patient) {
+    public int addPatient(Patient patient) {
 
         String sql = "INSERT INTO patients (user_id, full_name, phone, dob, email, gender) VALUES (?, ?, ?, ?, ?, ?)";
 
         try {
-            PreparedStatement ps = connection.prepareStatement(sql);
+            PreparedStatement ps = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
 
             ps.setInt(1, patient.getUserId());
             ps.setString(2, patient.getFullName());
@@ -424,9 +424,15 @@ public class PatientPortalDAO extends DBContext {
 
             ps.executeUpdate();
 
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return -1;
     }
 
     public Patient getPatientsByPatientID(long patientID) {

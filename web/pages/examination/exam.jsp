@@ -144,6 +144,14 @@
                                 <h3>Tạo yêu cầu xét nghiệm</h3>
                                 <div id="labRequestList" class="rx-list">
                                     <div class="rx-row lab-row">
+                                        <select name="labTestType">
+                                            <option value="">Chọn loại xét nghiệm</option>
+                                            <option value="Công thức máu">Công thức máu</option>
+                                            <option value="Đường huyết">Đường huyết</option>
+                                            <option value="Sinh hóa máu">Sinh hóa máu</option>
+                                            <option value="Nước tiểu">Nước tiểu</option>
+                                            <option value="X-quang">X-quang</option>
+                                        </select>
                                         <select name="labPriority">
                                             <option value="Bình thường">Bình thường</option>
                                             <option value="Khẩn">Khẩn</option>
@@ -280,9 +288,25 @@
                                                 <td><div class="history-cell-text">${empty h.symptom ? '---' : h.symptom}</div></td>
                                                 <td><div class="history-cell-text">${empty h.diagnosis ? '---' : h.diagnosis}</div></td>
                                                 <td>
-                                                    <div class="history-note" title="${empty h.notes ? '' : h.notes}">
-                                                        ${empty h.notes ? 'Không có ghi chú.' : h.notes}
-                                                    </div>
+                                                    <c:choose>
+                                                        <c:when test="${empty h.notes}">
+                                                            <div class="history-note history-note-empty">Không có ghi chú.</div>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="history-note-wrapper">
+                                                                <button
+                                                                    class="history-note-toggle"
+                                                                    type="button"
+                                                                    aria-expanded="false"
+                                                                    onclick="toggleHistoryNote(this)">
+                                                                    <span class="history-note-toggle-label">Xem đầy đủ</span>
+                                                                </button>
+                                                                <div class="history-note" title="${h.notes}">
+                                                                    ${h.notes}
+                                                                </div>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </td>
                                                 <td>
                                                     <span class="status-pill history-status ${h.appointmentStatus}">
@@ -326,6 +350,21 @@
                 document.querySelectorAll('.tab-content').forEach(c => {
                     c.classList.toggle('active', c.id === id);
                 });
+            }
+            
+            function toggleHistoryNote(button) {
+                const noteWrapper = button.closest('.history-note-wrapper');
+                if (!noteWrapper) {
+                    return;
+                }
+
+                const expanded = noteWrapper.classList.toggle('expanded');
+                button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+
+                const label = button.querySelector('.history-note-toggle-label');
+                if (label) {
+                    label.textContent = expanded ? 'Thu gọn' : 'Xem đầy đủ';
+                }
             }
 
             function syncMedicineName(selectElement) {

@@ -301,7 +301,7 @@
                                     <a href="${pageContext.request.contextPath}/login" class="btn-book">Hẹn gặp bác sĩ</a>
                                 </c:when>
                                 <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/createpatientsservlet?btnDoctorID=${doctor.doctorId}" class="btn-book">Hẹn gặp bác sĩ</a>
+                                    <a href="${pageContext.request.contextPath}/${empty sessionScope.account ? 'login' : 'listofdoctorservlet'}" class="btn-book">Hẹn gặp bác sĩ</a>
                                 </c:otherwise>
                             </c:choose>
                         </div>
@@ -310,9 +310,7 @@
             </div>
         </section>
 
-        <div id="loginToast" class="toast">
-            <i class="fas fa-info-circle"></i> Vui lòng đăng nhập để sử dụng tính năng này!
-        </div>
+        
 
         <script>
             function showToast(event) {

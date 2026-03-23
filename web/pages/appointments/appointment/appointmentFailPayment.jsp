@@ -21,12 +21,6 @@
                     <div class="steps-wrapper">
                         <div class="step-circle done">
                             <span>✓</span>
-                            <p>Thông tin bệnh nhân</p>
-                        </div>
-                        <div class="step-line"></div>
-
-                        <div class="step-circle done">
-                            <span>✓</span>
                             <p>Xác nhận</p>
                         </div>
                         <div class="step-line"></div>
@@ -37,10 +31,13 @@
                         </div>
                         <div class="step-line"></div>
 
-                        <div class="step-circle active">
-                            <span>4</span>
-                            <p>Hoàn tất</p>
+                        <div class="step-circle done">
+                            <span>✓</span>
+                            <p>Hủy</p>
                         </div>
+                        <div class="step-line"></div>
+
+                        
                     </div>
 
                     <div class="card-box">
