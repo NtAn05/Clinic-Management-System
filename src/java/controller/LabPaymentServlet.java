@@ -3,6 +3,7 @@ package controller;
 import dal.LabPaymentDAO;
 import model.LabPayment;
 import model.User;
+import util.PagingHelper;
 import util.SystemLogService;
 
 import jakarta.servlet.ServletException;
@@ -44,28 +45,14 @@ public class LabPaymentServlet extends HttpServlet {
         String paymentStatus = request.getParameter("status");
         String search = request.getParameter("search");
 
-        // Get page parameter
-        int currentPage = 1;
-        try {
-            String pageParam = request.getParameter("page");
-            if (pageParam != null && !pageParam.isEmpty()) {
-                currentPage = Integer.parseInt(pageParam);
-                if (currentPage < 1) currentPage = 1;
-            }
-        } catch (NumberFormatException e) {
-            currentPage = 1;
-        }
-
         // Count total records for pagination
         int totalRecords = labPaymentDAO.countPaymentsWithFilter(paymentStatus, search);
-        int totalPages = (int) Math.ceil((double) totalRecords / PAGE_SIZE);
-        if (currentPage > totalPages && totalPages > 0) {
-            currentPage = totalPages;
-        }
+        int requestedPage = PagingHelper.parsePage(request, "page", 1);
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, totalRecords, PAGE_SIZE, true);
 
         // Get payment waiting list with filters and pagination
         List<LabPayment> payments = labPaymentDAO.getPaymentWaitingListWithFilter(
-                paymentStatus, search, currentPage, PAGE_SIZE
+                paymentStatus, search, paging.getCurrentPage(), PAGE_SIZE
         );
 
         // Get statistics
@@ -76,10 +63,7 @@ public class LabPaymentServlet extends HttpServlet {
         request.setAttribute("stats", stats);
         request.setAttribute("filterStatus", paymentStatus != null ? paymentStatus : "");
         request.setAttribute("searchTerm", search != null ? search : "");
-        request.setAttribute("currentPage", currentPage);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-        request.setAttribute("pageSize", PAGE_SIZE);
+        PagingHelper.expose(request, paging);
 
         // Forward to JSP
         request.getRequestDispatcher("/pages/lab/lab-payment.jsp").forward(request, response);

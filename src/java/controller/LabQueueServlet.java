@@ -4,6 +4,7 @@ import dal.DoctorDAO;
 import dal.LabRequestDAO;
 import dal.NotificationDAO;
 import model.LabRequest;
+import util.PagingHelper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -92,37 +93,23 @@ public class LabQueueServlet extends HttpServlet {
         String status = request.getParameter("status");
         String department = request.getParameter("department");
         String search = request.getParameter("search");
-        
-        // Get page parameter
-        int currentPage = 1;
-        try {
-            String pageParam = request.getParameter("page");
-            if (pageParam != null && !pageParam.isEmpty()) {
-                currentPage = Integer.parseInt(pageParam);
-                if (currentPage < 1) currentPage = 1;
-            }
-        } catch (NumberFormatException e) {
-            currentPage = 1;
-        }
-        
+
         // Count total records for pagination
         int totalRecords = labRequestDAO.countLabRequestsWithFilter(status, department, null, search);
-        int totalPages = (int) Math.ceil((double) totalRecords / PAGE_SIZE);
-        if (currentPage > totalPages && totalPages > 0) {
-            currentPage = totalPages;
-        }
-        
+        int requestedPage = PagingHelper.parsePage(request, "page", 1);
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, totalRecords, PAGE_SIZE, true);
+
         // Get lab requests with filters and pagination
         List<LabRequest> labRequests = labRequestDAO.getLabRequestsWithFilterAndPagination(
-            status, department, null, search, currentPage, PAGE_SIZE
+            status, department, null, search, paging.getCurrentPage(), PAGE_SIZE
         );
-        
+
         // Get statistics
         int[] stats = labRequestDAO.getLabRequestStatisticsWithFilter(status, department, search);
-        
+
         // Get all specializations for filter dropdown
         List<String> specializations = labRequestDAO.getAllSpecializations();
-        
+
         // Set attributes for JSP
         request.setAttribute("labRequests", labRequests);
         request.setAttribute("stats", stats);
@@ -130,10 +117,7 @@ public class LabQueueServlet extends HttpServlet {
         request.setAttribute("filterStatus", status != null ? status : "");
         request.setAttribute("filterDepartment", department != null ? department : "");
         request.setAttribute("searchTerm", search != null ? search : "");
-        request.setAttribute("currentPage", currentPage);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-        request.setAttribute("pageSize", PAGE_SIZE);
+        PagingHelper.expose(request, paging);
         
         // Forward to JSP
         request.getRequestDispatcher("/pages/lab/lab-queue.jsp").forward(request, response);
