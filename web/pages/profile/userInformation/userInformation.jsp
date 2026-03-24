@@ -108,9 +108,6 @@
                                 <input type="file" name="avatarFile" accept=".jpg,.jpeg,.png,.webp">
                             </div>
                         </c:when>
-                        <c:otherwise>
-                            <div class="form-group"><label>Avatar</label><input type="text" value="Avatar mặc định theo hệ thống" disabled></div>
-                        </c:otherwise>
                     </c:choose>
 
                     <div style="margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc;">
