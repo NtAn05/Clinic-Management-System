@@ -102,10 +102,12 @@
                                 <span class="queue-col queue-position">#${q.queuePosition}</span>
                                 <span class="queue-col queue-name">${q.patientName}</span>
                                 <span class="queue-col queue-info">${q.gender}</span>
+                                
                                 <span class="queue-col queue-dob">${q.dob}</span>
                                 <span class="queue-col queue-symptom">${q.symptom}</span>
                                 <span class="queue-col queue-state"><span class="queue-status ${q.status}">${q.status}</span></span>
                                 <span class="queue-col queue-action"><span class="queue-cta">Mở điều khiển →</span></span>
+
 
                             </div>
                         </c:forEach>
@@ -180,6 +182,10 @@
                 <button id="btnLab" class="btn btn-lab" type="button">🧪 Chỉ định xét nghiệm</button>
             </div>
         </div>
+        
+        <!--                                <span class="queue-col queue-info">
+                                    ${q.gender == 'male' ? 'Nam' : (q.gender == 'female' ? 'Nữ' : (q.gender == 'other' ? 'Khác' : q.gender))}
+                                </span>-->
 
         <jsp:include page="/common/modal-alert.jsp" />
         <script>
@@ -238,6 +244,15 @@
                     closeControlPanel();
                 }
             });
+            
+//            function getGenderText(gender) {
+//                const genderMap = {
+//                    male: 'Nam',
+//                    female: 'Nữ',
+//                    other: 'Khác'
+//                };
+//                return genderMap[gender] || gender || '-';
+//            }
         </script>
 
         <jsp:include page="/common/footer.jsp" />

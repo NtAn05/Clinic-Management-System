@@ -269,7 +269,9 @@
                     return new Date(date.getTime() - tzOffset).toISOString().slice(0, 10);
                 }
 
-                oneDateInput.min = toDateInputValue(new Date());
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                oneDateInput.min = toDateInputValue(tomorrow);
                 
                 function toggleGroup(group, input, visible) {
                     group.classList.toggle('hidden', !visible);
@@ -281,12 +283,21 @@
 
                 function toggleTimeCapacity(visible) {
                     timeAndCapacityGroup.classList.toggle('hidden', !visible);
-                    [shiftPeriodInput, maxPatientsInput].forEach(function (input) {
-                        input.disabled = !visible;
-                        if (!visible) {
-                            input.value = '';
-                        }
-                    });
+                    shiftPeriodInput.disabled = !visible;
+                    if (!visible) {
+                        shiftPeriodInput.value = '';
+                    }
+                }
+
+                function toggleMaxPatients(visible) {
+                    const maxPatientsRow = maxPatientsInput.closest('.form-row');
+                    if (maxPatientsRow) {
+                        maxPatientsRow.classList.toggle('hidden', !visible);
+                    }
+                    maxPatientsInput.disabled = !visible;
+                    if (!visible) {
+                        maxPatientsInput.value = '';
+                    }
                 }
 
                 function loadSwapShiftOptions() {
@@ -351,7 +362,7 @@
                     } else {
                         scopeType.value = 'ONE_DATE';
                         scopeHint.textContent = actionType.value === 'REMOVE'
-                                ? 'Hủy ca tạm thời: chỉ cần chọn ngày áp dụng, không cần chọn ca gốc.'
+                                ? 'Hủy ca tạm thời: chọn ngày áp dụng và ca sáng/chiều cần hủy.'
                                 : (actionType.value === 'UPDATE'
                                         ? 'Đổi ca tạm thời: chọn 1 ngày cụ thể và chọn ca của bác sĩ khác để đổi.'
                                         : 'Yêu cầu tạm thời chỉ áp dụng cho 1 ngày cụ thể.');
@@ -371,7 +382,9 @@
                     const requireTargetShift = action === 'UPDATE' || (action === 'REMOVE' && scope === 'WEEKLY_TEMPLATE');
                     toggleGroup(targetShiftGroup, targetShiftInput, requireTargetShift);
                     toggleGroup(swapShiftGroup, swapShiftInput, action === 'UPDATE');
-                    toggleTimeCapacity(action === 'ADD');
+                    const showShiftPeriod = action === 'ADD' || (action === 'REMOVE' && scope === 'ONE_DATE');
+                    toggleTimeCapacity(showShiftPeriod);
+                    toggleMaxPatients(action === 'ADD');
 
                     loadSwapShiftOptions();
                 }

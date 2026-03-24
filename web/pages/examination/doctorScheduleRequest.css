@@ -6,7 +6,7 @@ body {
 }
 
 .schedule-request-container {
-    max-width: 1180px;
+    max-width: 1500px;
     margin: 26px auto;
     padding: 0 20px 24px;
     display: flex;
@@ -61,7 +61,7 @@ body {
 
 .content-grid {
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
+    grid-template-columns: 1fr 1.35fr;
     gap: 18px;
 }
 
@@ -143,6 +143,10 @@ tbody tr:nth-child(even) {
 
 .form-row.two-col {
     grid-template-columns: repeat(2, 1fr);
+}
+
+.form-row.two-col > :only-child {
+    grid-column: 1 / -1;
 }
 
 .form-row.three-col {
