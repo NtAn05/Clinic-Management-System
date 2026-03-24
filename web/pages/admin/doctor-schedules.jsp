@@ -18,9 +18,10 @@
                 min-height: 100vh;
             }
             .container {
-                padding: 30px 50px;
+                padding: 24px;
                 max-width: 1400px;
                 margin: 0 auto;
+                width: 100%;
             }
             .panel {
                 background: #fff;
@@ -59,6 +60,12 @@
                 gap: 12px;
                 align-items: end;
             }
+            .field,
+            .actions,
+            .week-head,
+            .week-nav {
+                min-width: 0;
+            }
             .field label {
                 display: block;
                 font-weight: 600;
@@ -76,6 +83,7 @@
             .actions {
                 display: flex;
                 gap: 8px;
+                flex-wrap: wrap;
             }
             .btn {
                 border: none;
@@ -118,14 +126,17 @@
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 16px;
+                gap: 12px;
+                flex-wrap: wrap;
             }
             .week-nav {
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                flex-wrap: wrap;
             }
             .week-label {
-                min-width: 240px;
+                min-width: 0;
                 text-align: center;
                 font-weight: 600;
                 color: #555;
@@ -143,11 +154,15 @@
                 text-decoration: none;
             }
 
+            .week-grid-wrap {
+                width: 100%;
+                overflow-x: auto;
+            }
             .week-grid {
                 display: grid;
-                grid-template-columns: repeat(7, minmax(160px, 1fr));
+                grid-template-columns: repeat(7, minmax(140px, 1fr));
                 gap: 10px;
-                overflow-x: auto;
+                min-width: 1040px;
             }
             .day-col {
                 border: 1px solid #e2e8f0;
@@ -383,6 +398,9 @@
             }
 
             @media (max-width: 1024px) {
+                .container {
+                    padding: 20px;
+                }
                 .toolbar {
                     grid-template-columns: 1fr 1fr;
                 }
@@ -392,10 +410,14 @@
             }
             @media (max-width: 768px) {
                 .container {
-                    padding: 18px;
+                    padding: 16px;
                 }
                 .toolbar, .modal-grid {
                     grid-template-columns: 1fr;
+                }
+                .week-grid {
+                    grid-template-columns: repeat(7, minmax(120px, 1fr));
+                    min-width: 900px;
                 }
             }
         </style>
@@ -475,7 +497,8 @@
                     </div>
                 </div>
 
-                <div class="week-grid">
+                <div class="week-grid-wrap">
+                    <div class="week-grid">
                     <c:set var="dayKeys" value="${'1,2,3,4,5,6,0'}" />
                     <c:forTokens var="dayKey" items="${dayKeys}" delims=",">
                         <div class="day-col">
@@ -499,7 +522,7 @@
                                         <c:if test="${item.shiftCode == 'morning'}">
                                             <c:set var="hasMorning" value="true" />
                                             <div class="shift-card ${item.temporary ? 'temporary' : ''}">
-                                                <div class="shift-name">Bác sĩ ${item.doctorName}</div>
+                                                <div class="shift-name">${item.doctorName}</div>
                                                 <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
                                             </div>
                                         </c:if>
@@ -517,7 +540,7 @@
                                         <c:if test="${item.shiftCode == 'afternoon'}">
                                             <c:set var="hasAfternoon" value="true" />
                                             <div class="shift-card ${item.temporary ? 'temporary' : ''}">
-                                                <div class="shift-name">Bác sĩ ${item.doctorName}</div>
+                                                <div class="shift-name">${item.doctorName}</div>
                                                 <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
                                             </div>
                                         </c:if>
@@ -529,6 +552,7 @@
                             </div>
                         </div>
                     </c:forTokens>
+                    </div>
                 </div>
             </div>
 

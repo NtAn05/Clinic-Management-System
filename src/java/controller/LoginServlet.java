@@ -79,13 +79,15 @@ public class LoginServlet extends HttpServlet {
                             "Đăng nhập thành công với role=" + dbRole + ", email=" + email);
 
                     if (dbRole.equals("admin")) {
-                        response.sendRedirect(request.getContextPath() + "/admin-users");
+                        response.sendRedirect(request.getContextPath() + "/users");
                     } else if (dbRole.equals("doctor")) {
                         response.sendRedirect(request.getContextPath() + "/doctorDashboard");
                     } else if (dbRole.equals("technician")) {
                         response.sendRedirect(request.getContextPath() + "/lab-queue");
                     } else if (dbRole.equals("receptionist")) {
                         response.sendRedirect(request.getContextPath() + "/lab-payment");
+                    } else if (dbRole.equals("patient_manager")) {
+                        response.sendRedirect(request.getContextPath() + "/patient-accounts");
                     } else {
 
                         response.sendRedirect(request.getContextPath() + "/index.jsp");

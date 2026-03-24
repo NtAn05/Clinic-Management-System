@@ -93,7 +93,7 @@
             }
 
             .toolbar-service {
-                grid-template-columns: repeat(4, minmax(180px, 1fr)) auto;
+                grid-template-columns: minmax(320px, 2.2fr) minmax(240px, 1.6fr) minmax(260px, 1.2fr);
             }
 
             .search-box {
@@ -156,6 +156,7 @@
                 display: flex;
                 gap: 10px;
                 align-self: end;
+                width: 100%;
             }
 
             .btn-search, .btn-reset, .btn-add {
@@ -168,8 +169,14 @@
                 transition: all 0.3s ease;
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: 6px;
                 text-decoration: none;
+            }
+
+            .toolbar-buttons .btn-search,
+            .toolbar-buttons .btn-reset {
+                flex: 1 1 0;
             }
 
             .btn-search {
@@ -533,14 +540,6 @@
                                     <option value="lab" ${filterCategory == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
                                 </select>
                             </div>
-                            <div class="search-box">
-                                <label><i class="fas fa-dollar-sign"></i> Giá từ</label>
-                                <input type="number" name="minPrice" value="${minPriceValue}" min="0" placeholder="0" onchange="this.form.submit()">
-                            </div>
-                            <div class="search-box">
-                                <label><i class="fas fa-dollar-sign"></i> Giá đến</label>
-                                <input type="number" name="maxPrice" value="${maxPriceValue}" min="0" placeholder="1000000000" onchange="this.form.submit()">
-                            </div>
                             <input type="hidden" name="page" value="1">
                             <div class="toolbar-buttons">
                                     <button type="submit" class="btn-search">
@@ -600,8 +599,6 @@
                                                         <input type="hidden" name="serviceId" value="${service.serviceId}">
                                                         <input type="hidden" name="filterSearch" value="${not empty searchKeyword ? searchKeyword : param.search}">
                                                         <input type="hidden" name="filterCategory" value="${not empty filterCategory ? filterCategory : param.category}">
-                                                        <input type="hidden" name="filterMinPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}">
-                                                        <input type="hidden" name="filterMaxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}">
                                                         <input type="hidden" name="filterPage" value="${currentPage}">
                                                         <button type="submit" class="btn-action btn-delete" title="Xóa">
                                                             <i class="fas fa-trash"></i>
@@ -620,15 +617,11 @@
                                 <c:url var="prevUrl" value="/admin-services">
                                     <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
                                     <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
-                                    <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
-                                    <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
                                     <c:param name="page" value="${currentPage - 1}" />
                                 </c:url>
                                 <c:url var="nextUrl" value="/admin-services">
                                     <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
                                     <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
-                                    <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
-                                    <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
                                     <c:param name="page" value="${currentPage + 1}" />
                                 </c:url>
 
@@ -645,8 +638,6 @@
                                     <c:url var="pageUrl" value="/admin-services">
                                         <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
                                         <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
-                                        <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
-                                        <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
                                         <c:param name="page" value="${i}" />
                                     </c:url>
                                     <c:choose>
@@ -693,8 +684,6 @@
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="filterSearch" value="${searchKeyword}">
                     <input type="hidden" name="filterCategory" value="${filterCategory}">
-                    <input type="hidden" name="filterMinPrice" value="${minPriceValue}">
-                    <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
 
                     <c:if test="${not empty error and addModalOpen}">
@@ -758,8 +747,6 @@
                     <input type="hidden" name="serviceId" id="editServiceId" value="${editServiceId}">
                     <input type="hidden" name="filterSearch" value="${searchKeyword}">
                     <input type="hidden" name="filterCategory" value="${filterCategory}">
-                    <input type="hidden" name="filterMinPrice" value="${minPriceValue}">
-                    <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
 
                     <c:if test="${not empty error and editModalOpen}">

@@ -78,6 +78,7 @@ public class AdminUserValidator {
         return result;
     }
 
+
     public ValidationResult validateEditUser(User existingUser, int userId, String fullName, String phone,
             String email, String roleStr, String specialization, String qualification,
             String experienceRaw, String priceRaw, UserDAO userDAO, DoctorDAO doctorDAO) throws SQLException {
@@ -87,7 +88,7 @@ public class AdminUserValidator {
         Role targetRole = parseRole(roleStr);
         result.targetRole = targetRole;
 
-        if (targetRole == null || targetRole == Role.admin) {
+        if (targetRole == null) {
             result.addFieldError("editRoleError", "Vai trò không hợp lệ");
             result.formError = "Vai trò không hợp lệ";
             return result;
@@ -133,6 +134,7 @@ public class AdminUserValidator {
 
         return result;
     }
+
 
     private void validateUserCommonFields(ValidationResult result, String prefix,
             String fullName, String phone, String email) {
@@ -220,8 +222,14 @@ public class AdminUserValidator {
         if ("technician".equals(safeRole)) {
             return Role.technician;
         }
+        if ("patient_manager".equals(safeRole)) {
+            return Role.patient_manager;
+        }
         if ("patient".equals(safeRole)) {
             return Role.patient;
+        }
+        if ("admin".equals(safeRole)) {
+            return Role.admin;
         }
 
         return null;
@@ -234,11 +242,17 @@ public class AdminUserValidator {
         if (currentRole == targetRole) {
             return true;
         }
+        if (targetRole == Role.admin) {
+            return currentRole != Role.admin;
+        }
         return isStaffRole(currentRole) && isStaffRole(targetRole);
     }
 
     private boolean isStaffRole(Role role) {
-        return role == Role.doctor || role == Role.receptionist || role == Role.technician;
+        return role == Role.doctor
+                || role == Role.receptionist
+                || role == Role.technician
+                || role == Role.patient_manager;
     }
 
     private boolean isValidPhone(String phone) {

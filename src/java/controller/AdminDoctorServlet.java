@@ -8,21 +8,27 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import model.Doctor;
 import model.EmailOtpService;
 import model.Role;
 import model.User;
+import util.AccountProvisionService;
+import util.AccountProvisionService.ProvisionResult;
 import util.SystemLogService;
 
 public class AdminDoctorServlet extends HttpServlet {
 
     private static final String VIEW_PATH = "/pages/admin/doctors.jsp";
     private static final String SUCCESS_FLASH_KEY = "adminDoctorSuccess";
+    private static final String SESSION_PENDING_RESEND_KEY = "adminDoctorPendingResendPasswordIds";
     private static final int MIN_EXPERIENCE = 0;
     private static final int MAX_EXPERIENCE = 50;
     private static final int MIN_PRICE = 0;
@@ -41,14 +47,15 @@ public class AdminDoctorServlet extends HttpServlet {
             "Thạc sĩ / Bác sĩ CK I / BS nội trú"
     );
 
+    private final AccountProvisionService accountProvisionService = new AccountProvisionService();
+
     protected void processRequest(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        req.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
         resp.setContentType("text/html; charset=UTF-8");
 
         HttpSession session = req.getSession(false);
-
         if (session == null || session.getAttribute("account") == null) {
             resp.sendRedirect(req.getContextPath() + "/pages/auth/login.jsp");
             return;
@@ -71,12 +78,18 @@ public class AdminDoctorServlet extends HttpServlet {
                     redirectSuccess(resp, req, successMessage);
                     return;
                 }
+            } else if ("resendPassword".equals(action) && "POST".equalsIgnoreCase(req.getMethod())) {
+                if (handleResendPassword(req)) {
+                    redirectSuccess(resp, req, "Đã gửi lại mật khẩu tạm qua email.");
+                    return;
+                }
             } else if ("edit".equals(action) && "POST".equalsIgnoreCase(req.getMethod())) {
                 if (handleEdit(req)) {
                     redirectSuccess(resp, req, "Cập nhật bác sĩ thành công");
                     return;
                 }
             }
+
             loadPage(req, resp);
         } catch (Exception e) {
             req.setAttribute("error", "Lỗi xử lý quản lý bác sĩ: " + e.getMessage());
@@ -100,6 +113,7 @@ public class AdminDoctorServlet extends HttpServlet {
         String specialization = resolveListValue(req, "specialization", "listSpecialization");
         String qualification = resolveListValue(req, "qualification", "listQualification");
         String success = "";
+
         HttpSession session = req.getSession(false);
         if (session != null) {
             Object flashMessage = session.getAttribute(SUCCESS_FLASH_KEY);
@@ -113,8 +127,8 @@ public class AdminDoctorServlet extends HttpServlet {
         }
 
         List<Doctor> doctors = doctorDAO.getDoctorsForAdmin(keyword, specialization, qualification);
-
         req.setAttribute("doctors", doctors);
+        req.setAttribute("pendingResendMap", buildPendingResendMap(req, doctors));
         req.setAttribute("specializationOptions", SPECIALIZATION_OPTIONS);
         req.setAttribute("qualificationOptions", QUALIFICATION_OPTIONS);
         req.setAttribute("keyword", keyword);
@@ -183,7 +197,9 @@ public class AdminDoctorServlet extends HttpServlet {
         String generatedPassword = generateRandomPassword(10);
 
         DoctorDAO doctorDAO = new DoctorDAO();
-        int userId = doctorDAO.createDoctorWithUser(fullName, phone, email, generatedPassword, specialization, qualification, experienceYears, priceBooking);
+        int userId = doctorDAO.createDoctorWithUser(
+                fullName, phone, email, generatedPassword, specialization, qualification, experienceYears, priceBooking
+        );
         if (userId > 0) {
             HttpSession sessionLog = req.getSession(false);
             User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
@@ -191,8 +207,10 @@ public class AdminDoctorServlet extends HttpServlet {
                     "Thêm bác sĩ: fullName=" + fullName + ", email=" + email + ", specialization=" + specialization);
             try {
                 EmailOtpService.sendNewAccountPassword(email, fullName, generatedPassword);
+                clearPendingResend(req, userId);
             } catch (Exception mailEx) {
                 req.setAttribute("addDoctorMailFailed", true);
+                markPendingResend(req, userId);
                 mailEx.printStackTrace();
             }
             return true;
@@ -202,6 +220,7 @@ public class AdminDoctorServlet extends HttpServlet {
         req.setAttribute("addModalOpen", true);
         return false;
     }
+
     private boolean handleEdit(HttpServletRequest req) throws SQLException {
         String doctorIdRaw = trim(req.getParameter("doctorId"));
         String fullName = trim(req.getParameter("fullName"));
@@ -214,14 +233,7 @@ public class AdminDoctorServlet extends HttpServlet {
 
         keepEditForm(req, doctorIdRaw, fullName, phone, email, specialization, qualification, experienceRaw, priceRaw);
 
-        int doctorId;
-        try {
-            doctorId = Integer.parseInt(doctorIdRaw);
-        } catch (Exception e) {
-            req.setAttribute("error", "Bác sĩ không hợp lệ");
-            req.setAttribute("editModalOpen", true);
-            return false;
-        }
+        int doctorId = parsePositiveInt(doctorIdRaw);
         if (doctorId <= 0) {
             req.setAttribute("error", "Bác sĩ không hợp lệ");
             req.setAttribute("editModalOpen", true);
@@ -237,6 +249,7 @@ public class AdminDoctorServlet extends HttpServlet {
             req.setAttribute("editModalOpen", true);
             return false;
         }
+
         boolean valid = true;
         if (fullName.isEmpty()) {
             req.setAttribute("editFullNameError", "Họ tên không được để trống");
@@ -297,6 +310,59 @@ public class AdminDoctorServlet extends HttpServlet {
         req.setAttribute("editModalOpen", true);
         return false;
     }
+
+    private boolean handleResendPassword(HttpServletRequest req) throws SQLException {
+        int doctorId = parsePositiveInt(req.getParameter("doctorId"));
+        if (doctorId <= 0) {
+            req.setAttribute("error", "Bác sĩ không hợp lệ");
+            req.setAttribute("editModalOpen", true);
+            return false;
+        }
+
+        DoctorDAO doctorDAO = new DoctorDAO();
+        Doctor doctor = doctorDAO.getDoctorByIdForAdmin(doctorId);
+        if (doctor == null) {
+            req.setAttribute("error", "Bác sĩ không tồn tại");
+            req.setAttribute("editModalOpen", true);
+            return false;
+        }
+
+        keepEditForm(req, String.valueOf(doctorId), doctor.getFullName(), doctor.getPhone(), doctor.getEmail(),
+                doctor.getSpecialization(), doctor.getQualification(), String.valueOf(doctor.getExperience_years()),
+                String.valueOf(doctor.getPrice()));
+        keepEditReadonlyFields(req, doctor);
+
+        UserDAO userDAO = new UserDAO();
+        User targetUser = userDAO.getUserByEmail(doctor.getEmail());
+        if (targetUser == null) {
+            req.setAttribute("error", "Không tìm thấy tài khoản người dùng của bác sĩ");
+            req.setAttribute("editModalOpen", true);
+            return false;
+        }
+
+        ProvisionResult provisionResult = accountProvisionService.resetTemporaryPassword(targetUser, userDAO);
+        if (!provisionResult.isPasswordUpdated()) {
+            req.setAttribute("error", "Không thể cập nhật mật khẩu tạm cho bác sĩ");
+            req.setAttribute("editModalOpen", true);
+            return false;
+        }
+
+        if (!provisionResult.isMailSent()) {
+            markPendingResend(req, targetUser.getUserId());
+            req.setAttribute("success", "Đã tạo mật khẩu tạm mới nhưng gửi email thất bại. Vui lòng thử gửi lại.");
+            req.setAttribute("editModalOpen", true);
+            req.setAttribute("editResendAvailable", true);
+            return false;
+        }
+
+        clearPendingResend(req, targetUser.getUserId());
+        HttpSession sessionLog = req.getSession(false);
+        User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
+        SystemLogService.log(userLog != null ? userLog.getUserId() : null, "DOCTOR_RESEND_PASSWORD",
+                "Gửi lại mật khẩu tạm cho bác sĩ: doctorId=" + doctorId + ", email=" + doctor.getEmail());
+        return true;
+    }
+
     private boolean validateDoctorFields(HttpServletRequest req, String specialization, String qualification,
             String experienceRaw, String priceRaw, boolean isAdd) {
         boolean valid = true;
@@ -348,6 +414,7 @@ public class AdminDoctorServlet extends HttpServlet {
 
         return valid;
     }
+
     private void keepAddForm(HttpServletRequest req, String fullName, String phone, String email,
             String specialization, String qualification, String experienceRaw, String priceRaw) {
         req.setAttribute("addModalOpen", true);
@@ -371,14 +438,18 @@ public class AdminDoctorServlet extends HttpServlet {
         req.setAttribute("editQualification", qualification);
         req.setAttribute("editExperience", experienceRaw);
         req.setAttribute("editPrice", priceRaw);
+        req.setAttribute("editResendAvailable", false);
     }
+
     private void keepEditReadonlyFields(HttpServletRequest req, Doctor doctor) {
         if (doctor == null) {
             return;
         }
         req.setAttribute("editStatus", doctor.getStatus());
         req.setAttribute("editRating", doctor.getRating());
+        req.setAttribute("editResendAvailable", isPendingResend(req, doctor.getUserId()));
     }
+
     private void keepEditOriginalFields(HttpServletRequest req, Doctor doctor) {
         if (doctor == null) {
             return;
@@ -391,6 +462,7 @@ public class AdminDoctorServlet extends HttpServlet {
         req.setAttribute("editOriginalExperience", doctor.getExperience_years());
         req.setAttribute("editOriginalPrice", doctor.getPrice());
     }
+
     private boolean isValidPhone(String phone) {
         return phone != null && phone.matches("^0\\d{9}$");
     }
@@ -398,6 +470,7 @@ public class AdminDoctorServlet extends HttpServlet {
     private boolean isValidEmail(String email) {
         return email != null && email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     }
+
     private String resolveListValue(HttpServletRequest req, String getParamName, String postParamName) {
         if ("POST".equalsIgnoreCase(req.getMethod())) {
             return trim(req.getParameter(postParamName));
@@ -419,8 +492,70 @@ public class AdminDoctorServlet extends HttpServlet {
         return password.toString();
     }
 
+    private int parsePositiveInt(String value) {
+        try {
+            int id = Integer.parseInt(trim(value));
+            return id > 0 ? id : -1;
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    private Map<Integer, Boolean> buildPendingResendMap(HttpServletRequest req, List<Doctor> doctors) {
+        Map<Integer, Boolean> map = new HashMap<>();
+        Set<Integer> pendingIds = getPendingResendSet(req, false);
+        if (doctors == null || doctors.isEmpty() || pendingIds == null || pendingIds.isEmpty()) {
+            return map;
+        }
+        for (Doctor doctor : doctors) {
+            if (doctor != null) {
+                map.put(doctor.getUserId(), pendingIds.contains(doctor.getUserId()));
+            }
+        }
+        return map;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<Integer> getPendingResendSet(HttpServletRequest req, boolean create) {
+        HttpSession session = req.getSession(create);
+        if (session == null) {
+            return null;
+        }
+        Object value = session.getAttribute(SESSION_PENDING_RESEND_KEY);
+        if (value instanceof Set) {
+            return (Set<Integer>) value;
+        }
+        if (!create) {
+            return null;
+        }
+        Set<Integer> set = new HashSet<>();
+        session.setAttribute(SESSION_PENDING_RESEND_KEY, set);
+        return set;
+    }
+
+    private void markPendingResend(HttpServletRequest req, int doctorId) {
+        Set<Integer> set = getPendingResendSet(req, true);
+        if (set != null && doctorId > 0) {
+            set.add(doctorId);
+        }
+    }
+
+    private void clearPendingResend(HttpServletRequest req, int doctorId) {
+        Set<Integer> set = getPendingResendSet(req, false);
+        if (set != null) {
+            set.remove(doctorId);
+        }
+    }
+
+    private boolean isPendingResend(HttpServletRequest req, int doctorId) {
+        if (doctorId <= 0) {
+            return false;
+        }
+        Set<Integer> set = getPendingResendSet(req, false);
+        return set != null && set.contains(doctorId);
+    }
+
     private String trim(String value) {
         return value == null ? "" : value.trim();
     }
 }
-

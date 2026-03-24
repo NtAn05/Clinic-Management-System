@@ -92,6 +92,10 @@
         <servlet-name>NotificationReadServlet</servlet-name>
         <servlet-class>controller.NotificationReadServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>PatientAccountServlet</servlet-name>
+        <servlet-class>controller.PatientAccountServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <url-pattern>/doctorDashboard</url-pattern>
@@ -118,7 +122,7 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>AdminUserServlet</servlet-name>
-        <url-pattern>/admin-users</url-pattern>
+        <url-pattern>/users</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>AdminServiceServlet</servlet-name>
@@ -215,5 +219,9 @@
     <servlet-mapping>
         <servlet-name>NotificationReadServlet</servlet-name>
         <url-pattern>/notifications/read-all</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientAccountServlet</servlet-name>
+        <url-pattern>/patient-accounts</url-pattern>
     </servlet-mapping>
 </web-app>

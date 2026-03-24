@@ -305,13 +305,14 @@ public class UserDAO extends DBContext {
         String sql = """
         SELECT user_id, full_name, phone, email, role, status 
         FROM users 
-        WHERE role IN ('admin', 'doctor', 'receptionist', 'technician') 
+        WHERE role IN ('admin', 'doctor', 'receptionist', 'technician', 'patient_manager') 
         ORDER BY 
             CASE 
                 WHEN role = 'admin' THEN 1
                 WHEN role = 'doctor' THEN 2
                 WHEN role = 'receptionist' THEN 3
                 WHEN role = 'technician' THEN 4
+                WHEN role = 'patient_manager' THEN 5
             END, full_name
     """;
         List<User> users = new ArrayList<>();

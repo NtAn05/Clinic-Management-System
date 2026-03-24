@@ -61,8 +61,6 @@ public class AdminServiceServlet extends HttpServlet {
             throws ServletException, IOException {
         String search = trim(firstNonBlank(req.getParameter("filterSearch"), req.getParameter("search")));
         String category = trim(firstNonBlank(req.getParameter("filterCategory"), req.getParameter("category")));
-        String minPriceStr = trim(firstNonBlank(req.getParameter("filterMinPrice"), req.getParameter("minPrice")));
-        String maxPriceStr = trim(firstNonBlank(req.getParameter("filterMaxPrice"), req.getParameter("maxPrice")));
         int page = parsePage(firstNonBlank(req.getParameter("filterPage"), req.getParameter("page")), 1);
 
         List<ServicePrice> services = serviceDAO.getAllServices();
@@ -80,33 +78,11 @@ public class AdminServiceServlet extends HttpServlet {
                     .collect(Collectors.toList());
         }
 
-        if (!minPriceStr.isEmpty()) {
-            try {
-                BigDecimal min = new BigDecimal(minPriceStr);
-                services = services.stream()
-                        .filter(s -> s.getPrice() != null && s.getPrice().compareTo(min) >= 0)
-                        .collect(Collectors.toList());
-            } catch (Exception ignored) {
-            }
-        }
-
-        if (!maxPriceStr.isEmpty()) {
-            try {
-                BigDecimal max = new BigDecimal(maxPriceStr);
-                services = services.stream()
-                        .filter(s -> s.getPrice() != null && s.getPrice().compareTo(max) <= 0)
-                        .collect(Collectors.toList());
-            } catch (Exception ignored) {
-            }
-        }
-
         req.setAttribute("services", services);
         applyPaging(req, services, page);
 
         req.setAttribute("searchKeyword", search);
         req.setAttribute("filterCategory", category.isEmpty() ? "all" : category);
-        req.setAttribute("minPriceValue", minPriceStr);
-        req.setAttribute("maxPriceValue", maxPriceStr);
 
         req.getRequestDispatcher("/pages/admin/services.jsp").forward(req, resp);
     }

@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -228,20 +228,6 @@
                 box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
             }
 
-            .locked-readonly {
-                background: #f3f4f6 !important;
-                color: #6b7280 !important;
-                cursor: not-allowed;
-            }
-
-            .role-select-disabled {
-                background: #f3f4f6 !important;
-                color: #6b7280 !important;
-                border-color: #d1d5db !important;
-                cursor: not-allowed !important;
-                opacity: 1;
-            }
-
             /* TABLE */
             .table-container {
                 background: white;
@@ -249,6 +235,22 @@
                 border-radius: 10px;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
                 overflow-x: auto;
+            }
+
+            .table-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                gap: 12px;
+            }
+
+            .table-header h3 {
+                font-size: 18px;
+                color: #333;
+                display: flex;
+                align-items: center;
+                gap: 8px;
             }
 
             table {
@@ -306,6 +308,11 @@
                 color: #7b1fa2;
             }
 
+            .badge-patient-manager {
+                background: #ecfccb;
+                color: #4d7c0f;
+            }
+
             .badge-patient {
                 background: #e1f5fe;
                 color: #0277bd;
@@ -337,14 +344,6 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
-            }
-
-            .btn-view {
-                color: #FB923C;
-            }
-
-            .btn-view:hover {
-                background: #FFEDD5;
             }
 
             .btn-edit {
@@ -485,6 +484,32 @@
                 min-height: 80px;
             }
 
+            .input-action-row {
+                display: flex;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .input-action-row input {
+                flex: 1;
+            }
+
+            .btn-inline {
+                border: none;
+                border-radius: 6px;
+                padding: 0 14px;
+                font-size: 13px;
+                font-weight: 600;
+                background: #f59e0b;
+                color: white;
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            .btn-inline:hover {
+                background: #d97706;
+            }
+
             .field-error {
                 color: #d32f2f;
                 font-size: 12px;
@@ -588,7 +613,8 @@
 
                 .toolbar-buttons .btn-search,
                 .toolbar-buttons .btn-reset,
-                .toolbar-buttons .btn-add {
+                .toolbar-buttons .btn-add,
+                .table-header .btn-add {
                     flex: 1;
                     justify-content: center;
                 }
@@ -664,11 +690,11 @@
                     <label><i class="fas fa-filter"></i> Vai trò</label>
                     <select id="userRoleFilter">
                         <option value="all" ${filterRole == 'all' ? 'selected' : ''}>-- Tất cả --</option>
-                        <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Admin</option>
+                        <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Quản trị viên</option>
                         <option value="doctor" ${filterRole == 'doctor' ? 'selected' : ''}>Bác sĩ</option>
                         <option value="receptionist" ${filterRole == 'receptionist' ? 'selected' : ''}>Tiếp tân</option>
                         <option value="technician" ${filterRole == 'technician' ? 'selected' : ''}>Kỹ thuật viên</option>
-                        <option value="patient" ${filterRole == 'patient' ? 'selected' : ''}>Bệnh nhân</option>
+                        <option value="patient_manager" ${filterRole == 'patient_manager' ? 'selected' : ''}>Quản lý bệnh nhân</option>
                     </select>
                 </div>
                 <div class="filter-box">
@@ -686,13 +712,19 @@
                     <button class="btn-reset" onclick="resetUserFilter()">
                         <i class="fas fa-redo"></i> Đặt lại
                     </button>
-                    <button class="btn-add" onclick="openAddModal()">
-                        <i class="fas fa-user-plus"></i> Thêm tài khoản
+                    <button class="btn-reset" onclick="window.location.href='patient-accounts'">
+                        <i class="fas fa-users"></i> Tài khoản bệnh nhân
                     </button>
                 </div>
             </div>
 
             <div class="table-container">
+                <div class="table-header">
+                    <h3><i class="fas fa-users-cog"></i> Danh sách tài khoản</h3>
+                    <button class="btn-add" type="button" onclick="openAddModal()">
+                        <i class="fas fa-user-plus"></i> Thêm tài khoản
+                    </button>
+                </div>
                 <c:choose>
                     <c:when test="${not empty users}">
                         <table>
@@ -713,8 +745,8 @@
                                         <td>${user.phone}</td>
                                         <td>${not empty user.email ? user.email : '<em>Chưa cập nhật</em>'}</td>
                                         <td>
-                                            <span class="badge ${user.role.toString() == 'admin' ? 'badge-admin' : user.role.toString() == 'doctor' ? 'badge-doctor' : user.role.toString() == 'receptionist' ? 'badge-receptionist' : user.role.toString() == 'technician' ? 'badge-technician' : 'badge-patient'}">
-                                                ${user.role.toString() == 'admin' ? 'Admin' : user.role.toString() == 'doctor' ? 'Bác sĩ' : user.role.toString() == 'receptionist' ? 'Tiếp tân' : user.role.toString() == 'technician' ? 'Kỹ thuật viên' : 'Bệnh nhân'}
+                                            <span class="badge ${user.role.toString() == 'admin' ? 'badge-admin' : user.role.toString() == 'doctor' ? 'badge-doctor' : user.role.toString() == 'receptionist' ? 'badge-receptionist' : user.role.toString() == 'technician' ? 'badge-technician' : user.role.toString() == 'patient_manager' ? 'badge-patient-manager' : 'badge-patient'}">
+                                                ${user.role.toString() == 'admin' ? 'Quản trị viên' : user.role.toString() == 'doctor' ? 'Bác sĩ' : user.role.toString() == 'receptionist' ? 'Tiếp tân' : user.role.toString() == 'technician' ? 'Kỹ thuật viên' : user.role.toString() == 'patient_manager' ? 'Quản lý bệnh nhân' : 'Bệnh nhân'}
                                             </span>
                                         </td>
                                         <td>
@@ -724,14 +756,15 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons" style="justify-content: center;">
-                                                <button class="btn-action btn-view" onclick="viewAccount(${user.userId}, '${user.fullName}', '${user.phone}', '${user.email}', '${user.role}', '${user.status}', '${pendingResendMap[user.userId] ? 'true' : 'false'}')" title="Xem chi tiết">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
                                                 <c:if test="${user.role.toString() != 'admin'}">
+                                                    <button class="btn-action btn-edit" onclick="openEditModal('${user.userId}', '${user.role}', '${user.fullName}', '${user.phone}', '${user.email}', '${pendingResendMap[user.userId] ? 'true' : 'false'}')" title="Chỉnh sửa">
+                                                        <i class="fas fa-pen-to-square"></i>
+                                                    </button>
                                                     <button class="btn-action btn-toggle" onclick="toggleStatus(${user.userId}, '${user.fullName}')" title="Kích hoạt/Vô hiệu hóa">
                                                         <i class="fas fa-toggle-on"></i>
                                                     </button>
                                                 </c:if>
+                                                <c:if test="${user.role.toString() == 'admin'}">-</c:if>                                                
                                             </div>
                                         </td>
                                     </tr>
@@ -753,7 +786,7 @@
                     <c:choose>
                         <c:when test="${currentPage > 1}">
                             <a class="page-link"
-                               href="admin-users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${currentPage - 1}">
+                               href="users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${currentPage - 1}">
                                 ‹ Trước
                             </a>
                         </c:when>
@@ -764,7 +797,7 @@
 
                     <c:forEach var="i" begin="1" end="${totalPages}">
                         <a class="page-link ${i == currentPage ? 'active' : ''}"
-                           href="admin-users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${i}">
+                           href="users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${i}">
                             ${i}
                         </a>
                     </c:forEach>
@@ -772,7 +805,7 @@
                     <c:choose>
                         <c:when test="${currentPage < totalPages}">
                             <a class="page-link"
-                               href="admin-users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${currentPage + 1}">
+                               href="users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${currentPage + 1}">
                                 Sau ›
                             </a>
                         </c:when>
@@ -784,131 +817,6 @@
             </c:if>
         </div>
 
-        <!-- MODAL XEM CHI TIẾT TÀI KHOẢN -->
-        <div id="viewAccountModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Chi tiết tài khoản</span>
-                    <button class="modal-close" onclick="closeModal('viewAccountModal')">×</button>
-                </div>
-
-                <form action="admin-users" method="POST" id="viewAccountForm" onsubmit="return handleViewUserFormSubmit()">
-                    <input type="hidden" name="action" value="edit">
-                    <input type="hidden" name="userId" id="viewUserIdInput" value="${editUserId}">
-                    <input type="hidden" name="originalRole" id="viewOriginalRoleInput" value="${editOriginalRole}">
-
-                    <c:if test="${not empty error and editModalOpen}">
-                        <div class="alert error">
-                            <i class="fas fa-exclamation-circle"></i>
-                            ${error}
-                        </div>
-                    </c:if>
-
-                    <div class="form-group">
-                        <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="viewFullNameInput" required maxlength="100" value="${editFullName}">
-                        <c:if test="${not empty editFullNameError}">
-                            <div class="field-error">${editFullNameError}</div>
-                        </c:if>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="viewPhoneInput" required maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" value="${editPhone}">
-                        <c:if test="${not empty editPhoneError}">
-                            <div class="field-error">${editPhoneError}</div>
-                        </c:if>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Email <span style="color: red;">*</span></label>
-                        <input type="email" name="email" id="viewEmailInput" required maxlength="100" pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" title="Email không đúng định dạng" value="${editEmail}">
-                        <c:if test="${not empty editEmailError}">
-                            <div class="field-error">${editEmailError}</div>
-                        </c:if>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Vai trò</label>
-                        <input type="text" id="viewRoleInput" readonly>
-                        <select name="role" id="viewRoleSelect" style="display: none;">
-                            <option value="">--Chọn vai trò--</option>
-                            <option value="patient">Bệnh nhân</option>
-                            <option value="doctor">Bác sĩ</option>
-                            <option value="receptionist">Tiếp tân</option>
-                            <option value="technician">Kỹ thuật viên</option>
-                        </select>
-                        <c:if test="${not empty editRoleError}">
-                            <div class="field-error">${editRoleError}</div>
-                        </c:if>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Trạng thái</label>
-                        <input type="text" id="viewStatusText" readonly>
-                        <input type="hidden" id="viewStatusValue" value="active">
-                    </div>
-
-                    <div id="viewDoctorFieldsGroup" style="display: none;">
-                        <div class="form-group">
-                            <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
-                            <select name="doctorSpecialization" id="viewDoctorSpecialization">
-                                <option value="">--Chọn chuyên môn--</option>
-                                <option value="Da liễu dị ứng">Da liễu dị ứng</option>
-                                <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
-                                <option value="Da liễu tổng quát">Da liễu tổng quát</option>
-                                <option value="Điều trị mụn">Điều trị mụn</option>
-                            </select>
-                            <c:if test="${not empty editDoctorSpecializationError}">
-                                <div class="field-error">${editDoctorSpecializationError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Bằng cấp <span style="color: red;">*</span></label>
-                            <select name="doctorQualification" id="viewDoctorQualification">
-                                <option value="">--Chọn bằng cấp--</option>
-                                <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
-                                <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
-                                <option value="Thạc sĩ / Bác sĩ CK I / BS nội trú">Thạc sĩ / Bác sĩ CK I / BS nội trú</option>
-                            </select>
-                            <c:if test="${not empty editDoctorQualificationError}">
-                                <div class="field-error">${editDoctorQualificationError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorExperienceYears" id="viewDoctorExperienceYears" min="0" max="50">
-                            <c:if test="${not empty editDoctorExperienceError}">
-                                <div class="field-error">${editDoctorExperienceError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Giá khám <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorPriceBooking" id="viewDoctorPriceBooking" min="0" max="10000000">
-                            <c:if test="${not empty editDoctorPriceError}">
-                                <div class="field-error">${editDoctorPriceError}</div>
-                            </c:if>
-                        </div>
-                    </div>
-
-                    <div id="viewResendPasswordSection" class="form-group" style="display: none;">
-                        <button type="button" class="btn-submit" onclick="resendPasswordFromViewModal()">
-                            <i class="fas fa-key"></i> Gửi lại mật khẩu tạm
-                        </button>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn-cancel" id="viewCloseBtn" onclick="onViewUserCloseOrCancel()">
-                            <i id="viewCloseBtnIcon" class="fas fa-times"></i> <span id="viewCloseBtnText">Đóng</span>
-                        </button>
-                        <button type="button" class="btn-submit" id="viewEditBtn" onclick="onViewUserEditToggle()">
-                            <i id="viewEditBtnIcon" class="fas fa-pen-to-square"></i> <span id="viewEditBtnText">Sửa</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
         <!-- MODAL THÊM TÀI KHOẢN -->
         <div id="addAccountModal" class="modal">
@@ -919,7 +827,7 @@
                     <button class="modal-close" onclick="closeModal('addAccountModal')">×</button>
                 </div>
 
-                <form action="admin-users" method="POST" id="addAccountForm">
+                <form action="users" method="POST" id="addAccountForm">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="role" id="addRoleInput">
 
@@ -957,11 +865,11 @@
                                         <div id="addRoleGroup" class="form-group">
                         <label>Vai trò <span style="color: red;">*</span></label>
                         <select name="staffRole" id="addStaffRole">
-                            <option value="">--Chọn vai trò--</option>
-                            <option value="patient">Bệnh nhân</option>
+                            <option value="">-- Chọn vai trò --</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
                             <option value="technician">Kỹ thuật viên</option>
+                            <option value="patient_manager">Quản lý bệnh nhân</option>
                         </select>
                         <c:if test="${not empty addRoleError}">
                             <div class="field-error">${addRoleError}</div>
@@ -972,7 +880,7 @@
                         <div class="form-group">
                             <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
                             <select name="doctorSpecialization" id="addDoctorSpecialization">
-                                <option value="">--Chọn chuyên môn--</option>
+                                <option value="">-- Chọn chuyên môn --</option>
                                 <option value="Da liễu dị ứng">Da liễu dị ứng</option>
                                 <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
                                 <option value="Da liễu tổng quát">Da liễu tổng quát</option>
@@ -985,7 +893,7 @@
                         <div class="form-group">
                             <label>Bằng cấp <span style="color: red;">*</span></label>
                             <select name="doctorQualification" id="addDoctorQualification">
-                                <option value="">--Chọn bằng cấp--</option>
+                                <option value="">-- Chọn bằng cấp --</option>
                                 <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
                                 <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
                                 <option value="Thạc sĩ / Bác sĩ CK I / BS nội trú">Thạc sĩ / Bác sĩ CK I / BS nội trú</option>
@@ -1010,6 +918,7 @@
                         </div>
                     </div>
 
+
                     <div class="modal-footer">
                         <button type="button" class="btn-cancel" onclick="closeModal('addAccountModal')">
                             <i class="fas fa-times"></i> Hủy
@@ -1031,7 +940,7 @@
                     <button class="modal-close" onclick="closeModal('editAccountModal')">×</button>
                 </div>
 
-                <form action="admin-users" method="POST" id="editAccountForm">
+                <form action="users" method="POST" id="editAccountForm">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="userId" id="editUserId" value="${editUserId}">
                     <input type="hidden" name="originalRole" id="editOriginalRoleInput" value="${editOriginalRole}">
@@ -1058,23 +967,68 @@
 
                     <div class="form-group">
                         <label>Email <span style="color: red;">*</span></label>
-                        <input type="email" name="email" id="editEmail" required pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không đúng định dạng" value="${editEmail}">
+                        <div class="input-action-row">
+                            <input type="email" name="email" id="editEmail" required pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không đúng định dạng" value="${editEmail}">
+                            <button type="button" class="btn-inline" id="editResendButton" onclick="resendPasswordFromEditModal()" style="display: none;">Gửi lại email</button>
+                        </div>
                         <c:if test="${not empty editEmailError}">
                             <div class="field-error">${editEmailError}</div>
                         </c:if>
                     </div>
 
-                    <div id="editRoleGroup" class="form-group" style="display: none;">
+                    <div id="editRoleGroup" class="form-group">
                         <label>Vai trò <span style="color: red;">*</span></label>
                         <select name="role" id="editRole">
-                            <option value="">--Chọn vai trò--</option>
+                            <option value="">-- Chọn vai trò --</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
                             <option value="technician">Kỹ thuật viên</option>
+                            <option value="patient_manager">Quản lý bệnh nhân</option>
                         </select>
                         <c:if test="${not empty editRoleError}">
                             <div class="field-error">${editRoleError}</div>
                         </c:if>
+                    </div>
+                    <div id="editDoctorFieldsGroup" style="display: none;">
+                        <div class="form-group">
+                            <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
+                            <select name="doctorSpecialization" id="editDoctorSpecialization">
+                                <option value="">-- Chọn chuyên môn --</option>
+                                <option value="Da liễu dị ứng">Da liễu dị ứng</option>
+                                <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
+                                <option value="Da liễu tổng quát">Da liễu tổng quát</option>
+                                <option value="Điều trị mụn">Điều trị mụn</option>
+                            </select>
+                            <c:if test="${not empty editDoctorSpecializationError}">
+                                <div class="field-error">${editDoctorSpecializationError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Bằng cấp <span style="color: red;">*</span></label>
+                            <select name="doctorQualification" id="editDoctorQualification">
+                                <option value="">-- Chọn bằng cấp --</option>
+                                <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
+                                <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
+                                <option value="Thạc sĩ / Bác sĩ CK I / BS nội trú">Thạc sĩ / Bác sĩ CK I / BS nội trú</option>
+                            </select>
+                            <c:if test="${not empty editDoctorQualificationError}">
+                                <div class="field-error">${editDoctorQualificationError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
+                            <input type="number" name="doctorExperienceYears" id="editDoctorExperienceYears" min="0" max="50" value="${editDoctorExperienceYears}">
+                            <c:if test="${not empty editDoctorExperienceError}">
+                                <div class="field-error">${editDoctorExperienceError}</div>
+                            </c:if>
+                        </div>
+                        <div class="form-group">
+                            <label>Giá khám <span style="color: red;">*</span></label>
+                            <input type="number" name="doctorPriceBooking" id="editDoctorPriceBooking" min="0" max="10000000" value="${editDoctorPriceBooking}">
+                            <c:if test="${not empty editDoctorPriceError}">
+                                <div class="field-error">${editDoctorPriceError}</div>
+                            </c:if>
+                        </div>
                     </div>
 
                     <div class="modal-footer">
@@ -1092,13 +1046,6 @@
         <jsp:include page="../../common/footer.jsp" />
                         
         <script>
-            let isViewUserEditMode = false;
-            let viewUserSnapshot = null;
-            let isViewUserEditLocked = false;
-            let isViewUserRoleLocked = false;
-            let viewOriginalRole = 'patient';
-            let allowResendPasswordInView = false;
-
             function defaultPriceByQualificationIndex(selectEl) {
                 if (!selectEl) return '';
                 switch (selectEl.selectedIndex) {
@@ -1129,149 +1076,41 @@
                 }
             }
 
-            function roleTextFromValue(role) {
-                return role === 'admin'
-                        ? 'Admin'
-                        : role === 'doctor'
-                        ? 'Bác sĩ'
-                        : role === 'receptionist'
-                        ? 'Tiếp tân'
-                        : role === 'technician'
-                        ? 'Kỹ thuật viên'
-                        : 'Bệnh nhân';
+            function normalizeRoleValue(role) {
+                return (role || '').toString().trim().toLowerCase();
             }
 
-            function statusTextFromValue(status) {
-                return status === 'active' ? 'Hoạt động' : 'Khóa';
+            function clearFieldErrors(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.querySelectorAll('.field-error').forEach(el => el.remove());
             }
 
-            function updateViewRoleSelectState() {
-                const roleSelect = document.getElementById('viewRoleSelect');
-                if (!roleSelect) {
-                    return;
-                }
-
-                Array.from(roleSelect.options).forEach(option => {
-                    if (!option.value) {
-                        option.disabled = false;
-                        return;
-                    }
-                    option.disabled = option.value === 'patient' && viewOriginalRole !== 'patient';
-                });
-
-                const shouldLockRole = !isViewUserEditMode || isViewUserRoleLocked;
-                roleSelect.disabled = shouldLockRole;
-                roleSelect.classList.toggle('role-select-disabled', shouldLockRole);
-            }
-
-            function applyViewUserEditPermission(role) {
-                isViewUserEditLocked = role === 'admin';
-                isViewUserRoleLocked = role === 'admin' || role === 'patient';
-                const editBtn = document.getElementById('viewEditBtn');
-                if (editBtn) {
-                    editBtn.style.display = isViewUserEditLocked ? 'none' : '';
+            function toggleEditResendButton(show) {
+                const button = document.getElementById('editResendButton');
+                if (button) {
+                    button.style.display = show ? 'inline-flex' : 'none';
                 }
             }
 
-            function setViewUserEditMode(enabled) {
-                if (enabled && isViewUserEditLocked) {
-                    enabled = false;
-                }
-                isViewUserEditMode = enabled;
-                document.getElementById('viewFullNameInput').readOnly = !enabled;
-                document.getElementById('viewPhoneInput').readOnly = !enabled;
-                document.getElementById('viewEmailInput').readOnly = !enabled;
-
-                const roleInput = document.getElementById('viewRoleInput');
-                const roleSelect = document.getElementById('viewRoleSelect');
-                if (enabled) {
-                    roleInput.style.display = 'none';
-                    roleSelect.style.display = '';
-                } else {
-                    roleSelect.style.display = 'none';
-                    roleInput.style.display = '';
-                    roleInput.value = roleTextFromValue(roleSelect.value);
-                }
-                updateViewRoleSelectState();
-                toggleDoctorFieldsVisibility();
-
-                document.getElementById('viewEditBtnIcon').className = enabled ? 'fas fa-save' : 'fas fa-pen-to-square';
-                document.getElementById('viewEditBtnText').innerText = enabled ? 'Lưu' : 'Sửa';
-                document.getElementById('viewCloseBtnIcon').className = enabled ? 'fas fa-rotate-left' : 'fas fa-times';
-                document.getElementById('viewCloseBtnText').innerText = enabled ? '\u0048\u1ee7y' : '\u0110\u00f3ng';
-                setResendPasswordSectionVisible(allowResendPasswordInView && !enabled);
+            function openEditModal(userId, originalRole, fullName, phone, email, pendingResend) {
+                document.getElementById('editUserId').value = userId || '';
+                document.getElementById('editOriginalRoleInput').value = originalRole || '';
+                document.getElementById('editFullName').value = fullName || '';
+                document.getElementById('editPhone').value = phone || '';
+                document.getElementById('editEmail').value = email || '';
+                document.getElementById('editRole').value = normalizeRoleValue(originalRole);
+                document.getElementById('editDoctorSpecialization').value = '';
+                document.getElementById('editDoctorQualification').value = '';
+                document.getElementById('editDoctorExperienceYears').value = '';
+                document.getElementById('editDoctorPriceBooking').value = '';
+                toggleEditResendButton(pendingResend === true || pendingResend === 'true');
+                toggleEditDoctorFieldsVisibility();
+                openModal('editAccountModal');
             }
 
-            function setResendPasswordSectionVisible(show) {
-                const section = document.getElementById('viewResendPasswordSection');
-                if (!section) return;
-                section.style.display = show ? 'block' : 'none';
-            }
-
-            function captureViewUserSnapshot() {
-                viewUserSnapshot = {
-                    fullName: document.getElementById('viewFullNameInput').value || '',
-                    phone: document.getElementById('viewPhoneInput').value || '',
-                    email: document.getElementById('viewEmailInput').value || '',
-                    role: document.getElementById('viewRoleSelect').value || 'patient',
-                    status: document.getElementById('viewStatusValue').value || 'active',
-                    doctorSpecialization: document.getElementById('viewDoctorSpecialization').value || '',
-                    doctorQualification: document.getElementById('viewDoctorQualification').value || '',
-                    doctorExperienceYears: document.getElementById('viewDoctorExperienceYears').value || '',
-                    doctorPriceBooking: document.getElementById('viewDoctorPriceBooking').value || ''
-                };
-            }
-
-            function restoreViewUserSnapshot() {
-                if (!viewUserSnapshot) return;
-                document.getElementById('viewFullNameInput').value = viewUserSnapshot.fullName;
-                document.getElementById('viewPhoneInput').value = viewUserSnapshot.phone;
-                document.getElementById('viewEmailInput').value = viewUserSnapshot.email;
-                document.getElementById('viewRoleSelect').value = viewUserSnapshot.role;
-                document.getElementById('viewRoleInput').value = roleTextFromValue(viewUserSnapshot.role);
-                document.getElementById('viewStatusValue').value = viewUserSnapshot.status;
-                document.getElementById('viewStatusText').value = statusTextFromValue(viewUserSnapshot.status);
-                document.getElementById('viewDoctorSpecialization').value = viewUserSnapshot.doctorSpecialization;
-                document.getElementById('viewDoctorQualification').value = viewUserSnapshot.doctorQualification;
-                document.getElementById('viewDoctorExperienceYears').value = viewUserSnapshot.doctorExperienceYears;
-                document.getElementById('viewDoctorPriceBooking').value = viewUserSnapshot.doctorPriceBooking;
-                toggleDoctorFieldsVisibility();
-            }
-
-            function onViewUserEditToggle() {
-                if (isViewUserEditLocked) {
-                    return;
-                }
-                if (!isViewUserEditMode) {
-                    setViewUserEditMode(true);
-                    return;
-                }
-                const form = document.getElementById('viewAccountForm');
-                if (form) {
-                    if (typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                    } else if (form.reportValidity()) {
-                        form.submit();
-                    }
-                }
-            }
-
-            function onViewUserCloseOrCancel() {
-                if (isViewUserEditMode) {
-                    restoreViewUserSnapshot();
-                    setViewUserEditMode(false);
-                    return;
-                }
-                closeModal('viewAccountModal');
-            }
-
-            function handleViewUserFormSubmit() {
-                trimUserFormInputs();
-                return isViewUserEditMode && !isViewUserEditLocked;
-            }
-
-            function trimUserFormInputs() {
-                ['viewFullNameInput', 'viewPhoneInput', 'viewEmailInput', 'viewDoctorExperienceYears', 'viewDoctorPriceBooking'].forEach(id => {
+            function trimEditFormInputs() {
+                ['editFullName', 'editPhone', 'editEmail', 'editDoctorExperienceYears', 'editDoctorPriceBooking'].forEach(id => {
                     const node = document.getElementById(id);
                     if (node && typeof node.value === 'string') {
                         node.value = node.value.trim();
@@ -1279,45 +1118,19 @@
                 });
             }
 
-            function toggleDoctorFieldsVisibility() {
-                const group = document.getElementById('viewDoctorFieldsGroup');
-                const targetRole = document.getElementById('viewRoleSelect').value;
-                const shouldShow = isViewUserEditMode
-                        && targetRole === 'doctor'
-                        && viewOriginalRole !== 'doctor';
+            function toggleEditDoctorFieldsVisibility() {
+                const currentRole = normalizeRoleValue(document.getElementById('editRole').value);
+                const originalRole = normalizeRoleValue(document.getElementById('editOriginalRoleInput').value);
+                const group = document.getElementById('editDoctorFieldsGroup');
+                const shouldShow = currentRole === 'doctor' && originalRole !== 'doctor';
                 group.style.display = shouldShow ? 'block' : 'none';
                 if (shouldShow) {
-                    applyDefaultDoctorPrice('viewDoctorQualification', 'viewDoctorPriceBooking', false);
+                    applyDefaultDoctorPrice('editDoctorQualification', 'editDoctorPriceBooking', false);
                 }
             }
 
-                        // Xem chi tiết tài khoản (gộp sửa trong modal xem)
-            function viewAccount(userId, fullName, phone, email, role, status, pendingResend) {
-                const originalRole = role || 'patient';
-                allowResendPasswordInView = pendingResend === true || pendingResend === 'true';
-                document.getElementById('viewUserIdInput').value = userId;
-                document.getElementById('viewOriginalRoleInput').value = originalRole;
-                document.getElementById('viewFullNameInput').value = fullName || '';
-                document.getElementById('viewPhoneInput').value = phone || '';
-                document.getElementById('viewEmailInput').value = email || '';
-                document.getElementById('viewRoleSelect').value = originalRole;
-                document.getElementById('viewRoleInput').value = roleTextFromValue(originalRole);
-                viewOriginalRole = originalRole;
-                document.getElementById('viewStatusValue').value = status || 'active';
-                document.getElementById('viewStatusText').value = statusTextFromValue(status || 'active');
-                document.getElementById('viewDoctorSpecialization').value = '';
-                document.getElementById('viewDoctorQualification').value = '';
-                document.getElementById('viewDoctorExperienceYears').value = '';
-                document.getElementById('viewDoctorPriceBooking').value = '';
-
-                applyViewUserEditPermission(originalRole);
-                setViewUserEditMode(false);
-                captureViewUserSnapshot();
-                openModal('viewAccountModal');
-            }
-
-            function resendPasswordFromViewModal() {
-                const userId = document.getElementById('viewUserIdInput').value;
+            function resendPasswordFromEditModal() {
+                const userId = document.getElementById('editUserId').value;
                 if (!userId) {
                     return;
                 }
@@ -1327,7 +1140,7 @@
 
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = 'admin-users';
+                form.action = 'users';
 
                 const actionInput = document.createElement('input');
                 actionInput.type = 'hidden';
@@ -1345,13 +1158,6 @@
                 form.submit();
             }
 
-            function clearFieldErrors(modalId) {
-                const modal = document.getElementById(modalId);
-                if (!modal) return;
-                modal.querySelectorAll('.field-error').forEach(el => el.remove());
-            }
-
-            // Mở modal thêm tài khoản
             function openAddModal(preserveData = false) {
                 const form = document.getElementById('addAccountForm');
                 if (!preserveData) {
@@ -1397,17 +1203,14 @@
                 });
             }
 
-            // Mở modal
             function openModal(modalId) {
                 document.getElementById(modalId).style.display = 'block';
             }
 
-            // Đóng modal
             function closeModal(modalId) {
                 document.getElementById(modalId).style.display = 'none';
             }
 
-            // Đóng modal khi click bên ngoài
             window.onclick = function(event) {
                 const modals = document.querySelectorAll('.modal');
                 modals.forEach(modal => {
@@ -1417,12 +1220,11 @@
                 });
             }
 
-            // Kích hoạt/Vô hiệu hóa
             function toggleStatus(userId, name) {
-                if (confirm(`Thay đổi trạng thái của ${name}?`)) {
+                if (confirm('Thay đổi trạng thái của ' + name + '?')) {
                     const form = document.createElement('form');
                     form.method = 'POST';
-                    form.action = 'admin-users';
+                    form.action = 'users';
 
                     const actionInput = document.createElement('input');
                     actionInput.type = 'hidden';
@@ -1446,7 +1248,7 @@
                 const status = document.getElementById('userStatusFilter').value;
                 const keyword = document.getElementById('userSearch').value.trim();
 
-                let url = 'admin-users?action=filter&page=1';
+                let url = 'users?action=filter&page=1';
                 if (role !== 'all') {
                     url += '&role=' + role;
                 }
@@ -1469,7 +1271,7 @@
                     return;
                 }
 
-                let url = 'admin-users?action=search&page=1&keyword=' + encodeURIComponent(keyword);
+                let url = 'users?action=search&page=1&keyword=' + encodeURIComponent(keyword);
                 if (role !== 'all') {
                     url += '&role=' + role;
                 }
@@ -1483,10 +1285,9 @@
                 document.getElementById('userSearch').value = '';
                 document.getElementById('userRoleFilter').value = 'all';
                 document.getElementById('userStatusFilter').value = 'all';
-                window.location.href = 'admin-users';
+                window.location.href = 'users';
             }
 
-            // Tự động đóng thông báo sau 5 giây và thêm event listeners cho filter
             document.addEventListener('DOMContentLoaded', function() {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(alert => {
@@ -1511,14 +1312,14 @@
                     applyDefaultDoctorPrice('addDoctorQualification', 'addDoctorPriceBooking', true);
                 });
                 document.getElementById('addAccountForm').addEventListener('submit', trimAddFormInputs);
-                document.getElementById('viewRoleSelect').addEventListener('change', toggleDoctorFieldsVisibility);
-                document.getElementById('viewDoctorQualification').addEventListener('change', function() {
-                    applyDefaultDoctorPrice('viewDoctorQualification', 'viewDoctorPriceBooking', true);
+                document.getElementById('editAccountForm').addEventListener('submit', trimEditFormInputs);
+                document.getElementById('editRole').addEventListener('change', toggleEditDoctorFieldsVisibility);
+                document.getElementById('editDoctorQualification').addEventListener('change', function() {
+                    applyDefaultDoctorPrice('editDoctorQualification', 'editDoctorPriceBooking', true);
                 });
 
                 const shouldOpenAddModal = '${addModalOpen}' === 'true';
                 const shouldOpenEditModal = '${editModalOpen}' === 'true';
-                const shouldOpenResendModal = '${resendModalOpen}' === 'true';
 
                 if (shouldOpenAddModal) {
                     openAddModal(true);
@@ -1534,49 +1335,24 @@
                 }
 
                 if (shouldOpenEditModal) {
-                    document.getElementById('viewUserIdInput').value = '${editUserId}';
-                    document.getElementById('viewOriginalRoleInput').value = '${editOriginalRole}';
-                    document.getElementById('viewFullNameInput').value = '${editFullName}';
-                    document.getElementById('viewPhoneInput').value = '${editPhone}';
-                    document.getElementById('viewEmailInput').value = '${editEmail}';
-                    const fallbackRole = ('${editRoleValue}' && '${editRoleValue}' !== 'null') ? '${editRoleValue}' : (('${editOriginalRole}' && '${editOriginalRole}' !== 'null') ? '${editOriginalRole}' : 'patient');
-                    document.getElementById('viewRoleSelect').value = fallbackRole;
-                    document.getElementById('viewRoleInput').value = roleTextFromValue(fallbackRole);
-                    viewOriginalRole = fallbackRole;
-                    const statusValue = '${not empty editStatusValue ? editStatusValue : "active"}';
-                    document.getElementById('viewStatusValue').value = statusValue;
-                    document.getElementById('viewStatusText').value = statusTextFromValue(statusValue);
-                    document.getElementById('viewDoctorSpecialization').value = '${not empty editDoctorSpecialization ? editDoctorSpecialization : ""}';
-                    document.getElementById('viewDoctorQualification').value = '${not empty editDoctorQualification ? editDoctorQualification : ""}';
-                    document.getElementById('viewDoctorExperienceYears').value = '${not empty editDoctorExperienceYears ? editDoctorExperienceYears : ""}';
-                    document.getElementById('viewDoctorPriceBooking').value = '${not empty editDoctorPriceBooking ? editDoctorPriceBooking : ""}';
-                    applyViewUserEditPermission(fallbackRole);
-                    setViewUserEditMode(!isViewUserEditLocked);
-                    applyDefaultDoctorPrice('viewDoctorQualification', 'viewDoctorPriceBooking', false);
-                    captureViewUserSnapshot();
-                    openModal('viewAccountModal');
-                }
-
-                if (shouldOpenResendModal) {
-                    viewAccount(
-                            '${resendModalUserId}',
-                            '${resendModalFullName}',
-                            '${resendModalPhone}',
-                            '${resendModalEmail}',
-                            '${resendModalRole}',
-                            '${resendModalStatus}',
-                            'true'
+                    const fallbackRole = normalizeRoleValue(('${editRoleValue}' && '${editRoleValue}' !== 'null') ? '${editRoleValue}' : (('${editOriginalRole}' && '${editOriginalRole}' !== 'null') ? '${editOriginalRole}' : ''));
+                    openEditModal(
+                            '${editUserId}',
+                            fallbackRole,
+                            '${editFullName}',
+                            '${editPhone}',
+                            '${editEmail}',
+                            '${editResendAvailable}'
                     );
-                    setViewUserEditMode(false);
-                    setResendPasswordSectionVisible(true);
+                    document.getElementById('editDoctorSpecialization').value = '${not empty editDoctorSpecialization ? editDoctorSpecialization : ""}';
+                    document.getElementById('editDoctorQualification').value = '${not empty editDoctorQualification ? editDoctorQualification : ""}';
+                    document.getElementById('editDoctorExperienceYears').value = '${not empty editDoctorExperienceYears ? editDoctorExperienceYears : ""}';
+                    document.getElementById('editDoctorPriceBooking').value = '${not empty editDoctorPriceBooking ? editDoctorPriceBooking : ""}';
+                    toggleEditDoctorFieldsVisibility();
+                    applyDefaultDoctorPrice('editDoctorQualification', 'editDoctorPriceBooking', false);
                 }
             });
         </script>
-    </body>
-</html>
-
-
-
 
 
 
