@@ -489,7 +489,7 @@
                 </c:if>
 
                 <c:if test="${roleName == 'patient_manager'}">
-                    <a class="header-link" href="${pageContext.request.contextPath}/admin-patient-accounts">Tài khoản bệnh nhân</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/patient-accounts">Tài khoản bệnh nhân</a>
                 </c:if>
 
                 <c:if test="${roleName == 'patient'}">
