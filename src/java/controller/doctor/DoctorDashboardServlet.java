@@ -18,6 +18,7 @@ import model.DoctorDashboardStats;
 import model.DoctorQueueItem;
 import model.DoctorShift;
 import model.User;
+import util.PagingHelper;
 import util.SystemLogService;
 
 /**
@@ -85,32 +86,15 @@ public class DoctorDashboardServlet extends HttpServlet {
             status = "all";
         }
 
-        int currentPage = 1;
-        try {
-            String pageParam = request.getParameter("page");
-            if (pageParam != null && !pageParam.isBlank()) {
-                currentPage = Integer.parseInt(pageParam);
-                if (currentPage < 1) {
-                    currentPage = 1;
-                }
-            }
-        } catch (NumberFormatException ex) {
-            currentPage = 1;
-        }
+        int requestedPage = PagingHelper.parsePage(request, "page", 1);
 
         int totalRecords = doctorDAO.countQueueByDoctorWithFilter(doctorId, status, keyword);
-        int totalPages = (int) Math.ceil((double) totalRecords / PAGE_SIZE);
-        if (totalPages == 0) {
-            totalPages = 1;
-        }
-        if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-        //1️⃣ Danh sách bệnh nhân đang chờ khám
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, totalRecords, PAGE_SIZE, true);
+        //Danh sách chờ khám
         List<DoctorQueueItem> queueList
-                = doctorDAO.getQueueByDoctorWithFilterPaging(doctorId, status, keyword, currentPage, PAGE_SIZE);
+                = doctorDAO.getQueueByDoctorWithFilterPaging(doctorId, status, keyword, paging.getCurrentPage(), paging.getPageSize());
 
-        // Thống kê số liệu
+        // số liệu dashboard
         DoctorDashboardStats stats
                 = doctorDAO.getDashboardStats(doctorId);
 
@@ -129,10 +113,7 @@ public class DoctorDashboardServlet extends HttpServlet {
         request.setAttribute("queueList", queueList);
         request.setAttribute("stats", stats);
         request.setAttribute("shifts", shifts);
-        request.setAttribute("currentPage", currentPage);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-        request.setAttribute("pageSize", PAGE_SIZE);
+        PagingHelper.expose(request, paging);
         request.setAttribute("selectedStatus", status);
         request.setAttribute("keyword", keyword == null ? "" : keyword.trim());
 

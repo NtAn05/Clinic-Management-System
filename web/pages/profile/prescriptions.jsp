@@ -65,8 +65,8 @@
                                         <th>Liều dùng</th>
                                         <th>Số lần/ngày</th>
                                         <th>Số ngày</th>
-                                        <th>Số lượng</th>
-                                        <th>Hướng dẫn</th>
+<!--                                        <th>Số lượng</th>
+                                        <th>Hướng dẫn</th>-->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -76,8 +76,8 @@
                                             <td>${empty item.dosage ? '---' : item.dosage}</td>
                                             <td>${empty item.frequency ? '---' : item.frequency}</td>
                                             <td>${empty item.durationDays ? '---' : item.durationDays}</td>
-                                            <td>${empty item.quantity ? '---' : item.quantity}</td>
-                                            <td>${empty item.instruction ? '---' : item.instruction}</td>
+<!--                                            <td>${empty item.quantity ? '---' : item.quantity}</td>
+                                            <td>${empty item.instruction ? '---' : item.instruction}</td>-->
                                         </tr>
                                     </c:forEach>
                                 </tbody>

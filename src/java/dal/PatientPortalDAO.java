@@ -466,4 +466,6 @@ public class PatientPortalDAO extends DBContext {
 
         return null;
     }
+
+    
 }

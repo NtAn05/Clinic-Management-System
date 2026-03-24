@@ -16,6 +16,7 @@ import java.util.List;
 import model.Role;
 import model.SystemLog;
 import model.User;
+import util.PagingHelper;
 
 @WebServlet(name = "AdminSystemLogServlet", urlPatterns = {"/admin-system-logs"})
 public class AdminSystemLogServlet extends HttpServlet {
@@ -53,19 +54,6 @@ public class AdminSystemLogServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
         String fromDateStr = request.getParameter("fromDate");
         String toDateStr = request.getParameter("toDate");
-        String pageStr = request.getParameter("page");
-
-        int page = 1;
-        try {
-            if (pageStr != null) {
-                page = Integer.parseInt(pageStr);
-                if (page <= 0) {
-                    page = 1;
-                }
-            }
-        } catch (NumberFormatException e) {
-            page = 1;
-        }
 
         Timestamp from = null;
         Timestamp to = null;
@@ -87,20 +75,14 @@ public class AdminSystemLogServlet extends HttpServlet {
         SystemLogDAO dao = new SystemLogDAO();
 
         int totalLogs = dao.countLogs(actionFilter, keyword, from, to);
-        int totalPages = (int) Math.ceil(totalLogs / (double) PAGE_SIZE);
-        if (totalPages == 0) {
-            totalPages = 1;
-        }
-        if (page > totalPages) {
-            page = totalPages;
-        }
+        int requestedPage = PagingHelper.parsePage(request, "page", 1);
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, totalLogs, PAGE_SIZE, true);
 
-        List<SystemLog> logs = dao.getLogs(actionFilter, keyword, from, to, page, PAGE_SIZE);
+        List<SystemLog> logs = dao.getLogs(actionFilter, keyword, from, to, paging.getCurrentPage(), PAGE_SIZE);
 
         request.setAttribute("logs", logs);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalLogs", totalLogs);
+        PagingHelper.expose(request, paging);
 
         request.setAttribute("actionFilter", actionFilter);
         request.setAttribute("keyword", keyword);

@@ -23,28 +23,28 @@
             <h3>Lịch sử các cuộc hẹn</h3>
             <p>Chi tiết các cuộc hẹn</p>
             <div>
-            <div class="status-filter">
-                <a href="#" onclick="filterStatus('all')">Tất cả</a>
-                <a href="#" onclick="filterStatus('booked')">Đã đặt</a>
-                <a href="#" onclick="filterStatus('checked_in')">Đã check-in</a>
-                <a href="#" onclick="filterStatus('waiting')">Đang chờ</a>
-                <a href="#" onclick="filterStatus('completed')">Hoàn thành</a>
-                <a href="#" onclick="filterStatus('cancelled')">Đã hủy</a>
-            </div>
-
-            <div class="name-filter">
-                <select id="nameSelect" onchange="filterByName()">
-                    <option value="all">Tất cả bệnh nhân</option>
-
-                    <c:forEach var="a" items="${appointmentList}">
-                        <option value="${a.fullName}">
-                            ${a.fullName}
-                        </option>
-                    </c:forEach>
-
-                </select>
-            </div>
+                <div class="status-filter">
+                    <a href="#" onclick="filterStatus('all')">Tất cả</a>
+                    <a href="#" onclick="filterStatus('booked')">Đã đặt</a>
+                    <a href="#" onclick="filterStatus('checked_in')">Đã check-in</a>
+                    <a href="#" onclick="filterStatus('waiting')">Đang chờ</a>
+                    <a href="#" onclick="filterStatus('completed')">Hoàn thành</a>
+                    <a href="#" onclick="filterStatus('cancelled')">Đã hủy</a>
                 </div>
+
+                <div class="name-filter">
+                    <select id="nameSelect" onchange="filterByName()">
+                        <option value="all">Tất cả bệnh nhân</option>
+
+                        <c:forEach var="a" items="${appointmentList}">
+                            <option value="${a.fullName}">
+                                ${a.fullName}
+                            </option>
+                        </c:forEach>
+
+                    </select>
+                </div>
+            </div>
             <br>
             <!-- ================= PROFILE HEADER ================= -->
             <div class="appointment-list">
@@ -97,11 +97,11 @@
                                 </form>
                             </c:if>
                             <c:if test="${a.status == 'completed'}">
-                                <form action="reportdoctorservlet" >
+                                <form action="ratingdoctorservlet" >
                                     <input type="hidden" name="id" value="${a.doctorId}">
+                                    <input type="hidden" name="appointmentId" value="${a.appointmentId}">
 
                                     <button class="cancel-btn" >
-
 
                                         Đánh giá
                                     </button>

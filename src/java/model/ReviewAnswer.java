@@ -15,7 +15,8 @@ public class ReviewAnswer {
     private int rating;
     private int userid;
     private int doctorid;
-
+    private String note;
+    private int appointmentid;
     public ReviewAnswer() {
     }
 
@@ -26,6 +27,32 @@ public class ReviewAnswer {
         this.rating = rating;
         this.userid = userid;
         this.doctorid = doctorid;
+    }
+
+    public ReviewAnswer(int id, int questionid, int rating, int userid, int doctorid, String note, int appointmentid) {
+        this.id = id;
+        this.questionid = questionid;
+        this.rating = rating;
+        this.userid = userid;
+        this.doctorid = doctorid;
+        this.note = note;
+        this.appointmentid = appointmentid;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public int getAppointmentid() {
+        return appointmentid;
+    }
+
+    public void setAppointmentid(int appointmentid) {
+        this.appointmentid = appointmentid;
     }
 
     public int getId() {

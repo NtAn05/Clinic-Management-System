@@ -33,15 +33,25 @@ public class AdminReportServlet extends HttpServlet {
 
         ReportDAO dao = new ReportDAO();
 
-        int[] apptStats = dao.getAppointmentStatusStats();
-        int[] labStats = dao.getLabRequestStatusStats();
-        BigDecimal[] paymentSummary = dao.getPaymentSummary();
-        java.util.List<model.DoctorProductivity> doctorProductivity = dao.getDoctorProductivity();
+        // filter by doctor
+        int doctorId = 0;
+        String doctorIdParam = request.getParameter("doctorId");
+        if (doctorIdParam != null && !doctorIdParam.isEmpty()) {
+            try { doctorId = Integer.parseInt(doctorIdParam); } catch (NumberFormatException ignored) {}
+        }
+
+        int[] apptStats = dao.getAppointmentStatusStats(doctorId);
+        int[] labStats = dao.getLabRequestStatusStats(doctorId);
+        BigDecimal[] paymentSummary = dao.getPaymentSummary(doctorId);
+        java.util.List<model.DoctorProductivity> doctorProductivity = dao.getDoctorProductivity(doctorId);
+        java.util.List<model.DoctorProductivity> allDoctors = dao.getAllDoctors();
 
         request.setAttribute("apptStats", apptStats);
         request.setAttribute("labStats", labStats);
         request.setAttribute("paymentSummary", paymentSummary);
         request.setAttribute("doctorProductivity", doctorProductivity);
+        request.setAttribute("allDoctors", allDoctors);
+        request.setAttribute("selectedDoctorId", doctorId);
 
         // scalar values tiện dùng trong EL/JS
         request.setAttribute("apptTotal", apptStats[0]);

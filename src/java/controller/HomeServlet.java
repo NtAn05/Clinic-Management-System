@@ -1,6 +1,7 @@
 package controller;
 
 import dal.AppointmentDAO;
+import dal.DoctorDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +20,11 @@ public class HomeServlet extends HttpServlet {
         List<Doctor> homeDoctors = new ArrayList<>();
 
         try {
-            AppointmentDAO appointmentDAO = new AppointmentDAO();
+            DoctorDAO dao =new DoctorDAO();
             if (doctorKeyword != null && !doctorKeyword.trim().isEmpty()) {
-                homeDoctors = appointmentDAO.filterDoctors(doctorKeyword.trim(), null, null, null, "rating");
+                homeDoctors = dao.filterDoctors(doctorKeyword.trim(), null, null, null, "rating");
             } else {
-                homeDoctors = appointmentDAO.getAllDoctors();
+                homeDoctors = dao.getAllDoctors();
             }
         } catch (Exception ex) {
             request.setAttribute("homeDoctorError", "Không thể tải danh sách bác sĩ lúc này.");

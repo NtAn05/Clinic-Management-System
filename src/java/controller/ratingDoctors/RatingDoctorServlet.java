@@ -1,8 +1,8 @@
 /*
- ..Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
-package controller.historyOfAppointment;
+package controller.ratingDoctors;
 
 import dal.AppointmentDAO;
 import dal.DoctorDAO;
@@ -15,18 +15,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import model.AppointmentDetail;
 import model.Doctor;
 import model.Rating_review;
 import model.User;
 import util.SystemLogService;
 
 /**
- * 0
  *
  * @author Admin
  */
-public class ReportDoctorServlet extends HttpServlet {
+public class RatingDoctorServlet extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -45,10 +43,10 @@ public class ReportDoctorServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet ReportDoctorServlet</title>");
+            out.println("<title>Servlet RatingDoctorServlet</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet ReportDoctorServlet at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet RatingDoctorServlet at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -67,13 +65,15 @@ public class ReportDoctorServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String doctorId = request.getParameter("id");
-        AppointmentDAO dao = new AppointmentDAO();
-        Doctor doctor = dao.getDoctorById(doctorId);
+        String appointmentID = request.getParameter("appointmentId");
+        DoctorDAO doctordao = new DoctorDAO();
+        Doctor doctor = doctordao.getDoctorById(doctorId);
         RatingDAO daos = new RatingDAO();
         List<Rating_review> list = daos.getQuestions();
         request.setAttribute("doctor", doctor);
+        request.setAttribute("appointmentID", appointmentID);
         request.setAttribute("list", list);
-        request.getRequestDispatcher("/pages/profile/historyOfAppointment/reportDoctor.jsp")
+        request.getRequestDispatcher("/pages/rating/ratingDoctor/reportDoctor.jsp")
                 .forward(request, response);
     }
 
@@ -88,41 +88,57 @@ public class ReportDoctorServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-       
-         int doctorID = Integer.parseInt(request.getParameter("doctorID"));
 
-    HttpSession session = request.getSession();
-    User u = (User) session.getAttribute("account"); // user login
+        int doctorID = Integer.parseInt(request.getParameter("doctorID"));
+        String appointmentId = request.getParameter("appointmentId");
+        int appointmentID = Integer.parseInt(appointmentId);
+        HttpSession session = request.getSession();
+        User u = (User) session.getAttribute("account");
 
         if (u == null) {
             response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
-    int userID = u.getUserId();
+        int userID = u.getUserId();
 
-    RatingDAO dao = new RatingDAO();
+        RatingDAO dao = new RatingDAO();
 
-    List<Rating_review> questions = dao.getQuestions();
+        List<Rating_review> questions = dao.getQuestions();
 
+        for (Rating_review q : questions) {
 
-    for (Rating_review q : questions) {
+            if (q.getId() == 5) {
+                String noteValue = request.getParameter("note_" + q.getId());
 
-        String paramName = "rating_" + q.getId();
+                if (noteValue != null && !noteValue.trim().isEmpty()) {
+                    dao.insertReviewAnswer(
+                            q.getId(),
+                            null,
+                            userID,
+                            doctorID,
+                            appointmentID,
+                            noteValue
+                    );
+                }
 
-        String ratingValue = request.getParameter(paramName);
+            } else {
+                String ratingValue = request.getParameter("rating_" + q.getId());
 
-        if (ratingValue != null && !ratingValue.isEmpty()) {
+                if (ratingValue != null && !ratingValue.isEmpty()) {
+                    int stars = Integer.parseInt(ratingValue);
 
-            int stars = Integer.parseInt(ratingValue);
-
-            dao.insertReviewAnswer(
-                    q.getId(),
-                    stars,
-                    userID,
-                    doctorID
-            );
+                    dao.insertReviewAnswer(
+                            q.getId(),
+                            stars,
+                            userID,
+                            doctorID,
+                            appointmentID,
+                            null
+                    );
+                }
+            }
         }
-    }
+
         Double avg = dao.getAverageRating(doctorID);
 
         if (avg != null) {

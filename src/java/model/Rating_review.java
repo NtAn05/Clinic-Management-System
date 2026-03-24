@@ -11,13 +11,31 @@ package model;
 public class Rating_review {
     private int id;
     private String question_text;
-
+    private double avgRating;
+    private int  totalReviews;
+    
     public Rating_review() {
     }
 
     public Rating_review(int id, String question_text) {
         this.id = id;
         this.question_text = question_text;
+    }
+
+    public double getAvgRating() {
+        return avgRating;
+    }
+
+    public void setAvgRating(double avgRating) {
+        this.avgRating = avgRating;
+    }
+
+    public int getTotalReviews() {
+        return totalReviews;
+    }
+
+    public void setTotalReviews(int totalReviews) {
+        this.totalReviews = totalReviews;
     }
 
     public int getId() {

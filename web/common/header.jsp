@@ -475,7 +475,7 @@
 
                 <c:if test="${roleName == 'doctor'}">
                     <a class="header-link" href="${pageContext.request.contextPath}/doctorDashboard">Quản lý khám bệnh</a>
-                    <a class="header-link" href="${pageContext.request.contextPath}/doctor/schedule-request">Lịch làm việc & đổi lịch</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/doctor/schedule-request">Lịch làm việc</a>
                 </c:if>
 
                 <c:if test="${roleName == 'technician'}">
@@ -483,7 +483,7 @@
                 </c:if>
 
                 <c:if test="${roleName == 'receptionist'}">
-                    <a class="header-link" href="${pageContext.request.contextPath}/lab-payment">Quản lý tiếp nhận</a>
+                    <a class="header-link" href="${pageContext.request.contextPath}/lab-payment">Xác nhận thanh toán</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/listofappointment">Quản lý cuộc hẹn</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/listofdoctorservlet">Đăng kí cuộc hẹn</a>
                 </c:if>

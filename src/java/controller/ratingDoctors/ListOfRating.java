@@ -2,9 +2,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
-package controller.appointments;
+package controller.ratingDoctors;
 
-import dal.AppointmentDAO;
+import dal.DoctorDAO;
+import dal.RatingDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -12,16 +13,15 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import jakarta.servlet.http.HttpSession;
-import model.AppointmentDetail;
-import model.User;
-import util.SystemLogService;
+import model.Doctor;
+import model.Rating_note;
+import model.Rating_review;
 
 /**
  *
  * @author Admin
  */
-public class listOfAppointment extends HttpServlet {
+public class ListOfRating extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -40,10 +40,10 @@ public class listOfAppointment extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet listOfAppointment</title>");
+            out.println("<title>Servlet ListOfRating</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("<h1>Servlet listOfAppointment at " + request.getContextPath() + "</h1>");
+            out.println("<h1>Servlet ListOfRating at " + request.getContextPath() + "</h1>");
             out.println("</body>");
             out.println("</html>");
         }
@@ -61,16 +61,31 @@ public class listOfAppointment extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+      String doc= request.getParameter("btnDoctorID");
+        int doctorId = Integer.parseInt(doc);
+        DoctorDAO doctorDAO = new DoctorDAO();
+        RatingDAO ratingDAO = new RatingDAO();
+        Doctor doctor = doctorDAO.getDoctorById(doc);
+        System.out.println("===================" +doctor.getFullName());
+        List<Rating_review> questions = ratingDAO.getQuestions();
+        for (Rating_review q : questions) {
+            if (q.getId() != 5) {
+                double avg = ratingDAO.getAverageRating(q.getId(), doctorId);
+                int total = ratingDAO.getTotalReview(q.getId(), doctorId);
 
-        AppointmentDAO dao = new AppointmentDAO();
-        dao.cancelPastBookedAppointments();
-        List<AppointmentDetail> list = dao.getAllAppointments();
+                q.setAvgRating(avg);
+                q.setTotalReviews(total);
+            }
+        }
+        List<Rating_note> notes = ratingDAO.getNotesByDoctor(doctorId);
 
-        request.setAttribute("list", list);
+        request.setAttribute("doctor", doctor);
+        request.setAttribute("questions", questions);
+        request.setAttribute("notes", notes);
 
-        request.getRequestDispatcher("/pages/appointments/listOfAppointment/listOfAppointment.jsp")
+        
+request.getRequestDispatcher("/pages/rating/ListRatingOfDoctor/ListOfRating.jsp")
                 .forward(request, response);
-
     }
 
     /**
@@ -84,41 +99,7 @@ public class listOfAppointment extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        long id = Long.parseLong(request.getParameter("id"));
-        String status = request.getParameter("status");
-        String up = request.getParameter("up");
-
-        AppointmentDAO dao = new AppointmentDAO();
-
-
-        dao.updateStatus(id, status);
-
-        if ( "checked_in".equalsIgnoreCase(status)) {
-            int doctorId = dao.getDoctorIdByAppointment(id);
-            int position = dao.getNextQueuePosition(doctorId);
-            dao.addQueue(id, doctorId, position);
-        }
-
-        HttpSession session = request.getSession(false);
-        String action;
-
-        if ("cancelled".equalsIgnoreCase(status)) {
-            action = "CANCEL_APPOINTMENT";
-        } else if ("checked_in".equalsIgnoreCase(status)) {
-            action = "CHECKIN_APPOINTMENT";
-        } else {
-            action = "UPDATE_APPOINTMENT_STATUS";
-        }
-
-        SystemLogService.logWithSession(session, action,
-                "Cập nhật trạng thái lịch hẹn appointmentId=" + id + " -> " + status);
-
-        if (up != null) {
-            response.sendRedirect("historyofappointmentservlet");
-        } else {
-            response.sendRedirect("listofappointment");
-        }
+        processRequest(request, response);
     }
 
     /**
