@@ -100,6 +100,61 @@
                 gap: 18px;
                 margin-bottom: 24px;
             }
+            .filter-bar {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 20px;
+                background: white;
+                border-radius: 12px;
+                padding: 14px 18px;
+                box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+            }
+            .filter-bar label {
+                font-size: 13px;
+                font-weight: 600;
+                color: #374151;
+                white-space: nowrap;
+            }
+            .filter-bar select {
+                font-size: 13px;
+                padding: 7px 10px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                background: #f9fafb;
+                color: #111827;
+                outline: none;
+                min-width: 220px;
+            }
+            .filter-bar select:focus {
+                border-color: #2563eb;
+                background: white;
+            }
+            .filter-bar button {
+                font-size: 13px;
+                padding: 7px 16px;
+                background: #2563eb;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+            }
+            .filter-bar button:hover {
+                background: #1d4ed8;
+            }
+            .filter-bar a.reset-btn {
+                font-size: 13px;
+                padding: 7px 12px;
+                color: #6b7280;
+                text-decoration: none;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                background: white;
+            }
+            .filter-bar a.reset-btn:hover {
+                background: #f3f4f6;
+            }
             .table-wrapper {
                 max-height: 360px;
                 overflow: auto;
@@ -203,6 +258,20 @@
                 </div>
             </div>
 
+            <form method="get" action="${pageContext.request.contextPath}/admin-reports" class="filter-bar">
+                <label for="doctorFilter"><i class="fa-solid fa-user-md"></i> Lọc theo bác sĩ:</label>
+                <select id="doctorFilter" name="doctorId">
+                    <option value="">-- Tất cả bác sĩ --</option>
+                    <c:forEach var="doc" items="${allDoctors}">
+                        <option value="${doc.doctorId}" ${selectedDoctorId == doc.doctorId ? 'selected' : ''}>${doc.doctorName}</option>
+                    </c:forEach>
+                </select>
+                <button type="submit"><i class="fa-solid fa-filter"></i> Lọc</button>
+                <c:if test="${selectedDoctorId > 0}">
+                    <a href="${pageContext.request.contextPath}/admin-reports" class="reset-btn"><i class="fa-solid fa-xmark"></i> Bỏ lọc</a>
+                </c:if>
+            </form>
+
             <div class="layout-2">
                 <div class="card">
                     <div class="card-title">
@@ -215,7 +284,10 @@
                 <div class="card">
                     <div class="card-title">
                         <i class="fa-solid fa-user-md"></i>
-                        Năng suất làm việc của bác sĩ
+                        <c:choose>
+                            <c:when test="${selectedDoctorId > 0}">Năng suất của bác sĩ được chọn</c:when>
+                            <c:otherwise>Năng suất làm việc của bác sĩ</c:otherwise>
+                        </c:choose>
                     </div>
                     <div class="table-wrapper">
                         <table>
