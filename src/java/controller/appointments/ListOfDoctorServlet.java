@@ -5,6 +5,7 @@
 package controller.appointments;
 
 import dal.AppointmentDAO;
+import dal.DoctorDAO;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -77,7 +78,7 @@ public class ListOfDoctorServlet extends HttpServlet {
         String experience = request.getParameter("experience");
         String sort = request.getParameter("sort");
 
-        AppointmentDAO dao = new AppointmentDAO();
+        DoctorDAO dao = new DoctorDAO();
         List<Doctor> doctors;
         String error = "";
         boolean hasFilter

@@ -23,12 +23,11 @@
         <div class="patient-header">
 
             <h2 class="patient-title">
-                Hồ sơ bệnh nhân
+                Danh sách đăng kí bệnh nhân
             </h2>
 
-            <!-- nút tạo patient -->
             <a href="${pageContext.request.contextPath}/pages/profile/createPatients/createPatients.jsp"
-               class="btn-add-patient">
+               class="btn-add-patiaent">
                 +
             </a>
 

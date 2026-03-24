@@ -85,12 +85,16 @@
         <servlet-class>controller.ForgotPasswordServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>ReportDoctorServlet</servlet-name>
-        <servlet-class>controller.historyOfAppointment.ReportDoctorServlet</servlet-class>
-    </servlet>
-    <servlet>
         <servlet-name>NotificationReadServlet</servlet-name>
         <servlet-class>controller.NotificationReadServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RatingDoctorServlet</servlet-name>
+        <servlet-class>controller.ratingDoctors.RatingDoctorServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ListOfRating</servlet-name>
+        <servlet-class>controller.ratingDoctors.ListOfRating</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
@@ -209,11 +213,15 @@
         <url-pattern>/forgot-password</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>ReportDoctorServlet</servlet-name>
-        <url-pattern>/reportdoctorservlet</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
         <servlet-name>NotificationReadServlet</servlet-name>
         <url-pattern>/notifications/read-all</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RatingDoctorServlet</servlet-name>
+        <url-pattern>/ratingdoctorservlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ListOfRating</servlet-name>
+        <url-pattern>/listofrating</url-pattern>
     </servlet-mapping>
 </web-app>

@@ -2239,48 +2239,190 @@ public class DoctorDAO extends DBContext {
 
         return list;
     }
-    public Doctor getDoctorById(int doctorID) {
     
-    String sql = """
-        SELECT d.*, 
-               u.full_name,
-               u.phone,
-               u.email
+    public Doctor getDoctorById(String doctorID) {
+
+        String sql = """
+        SELECT 
+            d.doctor_id,
+            u.full_name,
+            d.specialization,
+            d.qualification,
+            d.experience_years,
+            d.rating,
+            d.price_booking,
+            d.clinic_address,
+            u.image_url
         FROM doctors d
-        JOIN users u ON d.user_id = u.id
+        JOIN users u ON d.user_id = u.user_id
         WHERE d.doctor_id = ?
-        """;
+    """;
 
-    try (PreparedStatement st = connection.prepareStatement(sql)) {
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
 
-        st.setInt(1, doctorID);
+            st.setInt(1, Integer.parseInt(doctorID));
+            ResultSet rs = st.executeQuery();
 
-        ResultSet rs = st.executeQuery();
+            if (rs.next()) {
 
-        if (rs.next()) {
+                Doctor d = new Doctor();
+                d.setDoctorId(rs.getInt("doctor_id"));
+                d.setFullName(rs.getString("full_name"));
+                d.setSpecialization(rs.getString("specialization"));
+                d.setQualification(rs.getString("qualification"));
+                d.setExperience_years(rs.getInt("experience_years"));
+                d.setRating(rs.getDouble("rating"));
+                d.setPrice(rs.getDouble("price_booking"));
+                d.setClinic_address(rs.getString("clinic_address"));
+                d.setImage(rs.getString("image_url"));
 
-            Doctor d = new Doctor();
+                return d;
+            }
 
-            d.setDoctorId(rs.getInt("doctor_id"));
-            d.setUserId(rs.getInt("user_id"));
-            d.setSpecialization(rs.getString("specialization"));
-            d.setImage(rs.getString("image"));
-            d.setQualification(rs.getString("qualification"));
-            d.setClinic_address(rs.getString("clinic_address"));
-            d.setExperience_years(rs.getInt("experience_years"));
-            d.setRating(rs.getDouble("rating"));
-            d.setPrice(rs.getDouble("price"));
-
-            d.setFullName(rs.getString("full_name"));
-            d.setPhone(rs.getString("phone"));
-            d.setEmail(rs.getString("email"));
-
-            return d;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        return null;
+    }
+    
+    public List<Doctor> getAllDoctors() {
+
+        List<Doctor> list = new ArrayList<>();
+
+        String sql = """
+        SELECT 
+            d.doctor_id,
+            u.full_name,
+            d.specialization,
+            d.qualification,
+            d.experience_years,
+            d.rating,
+            d.price_booking,
+            d.clinic_address,
+            u.image_url
+        FROM doctors d
+        JOIN users u ON d.user_id = u.user_id
+    """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
+
+            while (rs.next()) {
+
+                Doctor d = new Doctor();
+                d.setDoctorId(rs.getInt("doctor_id"));
+                d.setFullName(rs.getString("full_name"));
+                d.setSpecialization(rs.getString("specialization"));
+                d.setQualification(rs.getString("qualification"));
+                d.setExperience_years(rs.getInt("experience_years"));
+                d.setRating(rs.getDouble("rating"));
+                d.setPrice(rs.getDouble("price_booking"));
+                d.setClinic_address(rs.getString("clinic_address"));
+                d.setImage(rs.getString("image_url"));
+
+                list.add(d);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+    
+    
+     public List<Doctor> filterDoctors(
+            String name,
+            String priceFrom,
+            String priceTo,
+            String experience,
+            String sort) {
+
+        List<Doctor> list = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT 
+            d.doctor_id,
+            u.full_name,
+            d.specialization,
+            d.qualification,
+            d.experience_years,
+            d.rating,
+            d.price_booking,
+            d.clinic_address,
+            u.image_url
+        FROM doctors d
+        JOIN users u ON d.user_id = u.user_id
+        WHERE 1 = 1
+    """);
+
+        if (name != null && !name.trim().isEmpty()) {
+            sql.append(" AND u.full_name LIKE ? ");
+        }
+
+        if (priceFrom != null && !priceFrom.isEmpty()) {
+            sql.append(" AND d.price_booking >= ? ");
+        }
+
+        if (priceTo != null && !priceTo.isEmpty()) {
+            sql.append(" AND d.price_booking <= ? ");
+        }
+
+        if (experience != null && !experience.isEmpty()) {
+            sql.append(" AND d.experience_years >= ? ");
+        }
+
+        if ("priceAsc".equals(sort)) {
+            sql.append(" ORDER BY d.price_booking ASC ");
+        } else if ("priceDesc".equals(sort)) {
+            sql.append(" ORDER BY d.price_booking DESC ");
+        } else if ("rating".equals(sort)) {
+            sql.append(" ORDER BY d.rating DESC ");
+        }
+
+        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
+
+            int index = 1;
+
+            if (name != null && !name.trim().isEmpty()) {
+                st.setString(index++, "%" + name + "%");
+            }
+
+            if (priceFrom != null && !priceFrom.isEmpty()) {
+                st.setDouble(index++, Double.parseDouble(priceFrom));
+            }
+
+            if (priceTo != null && !priceTo.isEmpty()) {
+                st.setDouble(index++, Double.parseDouble(priceTo));
+            }
+
+            if (experience != null && !experience.isEmpty()) {
+                st.setInt(index++, Integer.parseInt(experience));
+            }
+
+            ResultSet rs = st.executeQuery();
+
+            while (rs.next()) {
+
+                Doctor d = new Doctor();
+                d.setDoctorId(rs.getInt("doctor_id"));
+                d.setFullName(rs.getString("full_name"));
+                d.setSpecialization(rs.getString("specialization"));
+                d.setQualification(rs.getString("qualification"));
+                d.setExperience_years(rs.getInt("experience_years"));
+                d.setRating(rs.getDouble("rating"));
+                d.setPrice(rs.getDouble("price_booking"));
+                d.setClinic_address(rs.getString("clinic_address"));
+                d.setImage(rs.getString("image_url"));
+
+                list.add(d);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 
-    return null;}
 }

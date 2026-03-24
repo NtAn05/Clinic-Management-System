@@ -26,7 +26,7 @@
                             <h3>${d.fullName}</h3>
                             <p class="degree">${d.qualification}</p>
                             <p class="desc">${d.specialization}</p>
-                            
+
 
                             <div class="info">
                                 <span>⏱ ${d.experience_years} năm</span>
@@ -36,22 +36,31 @@
                             <p class="price">
                                 <fmt:formatNumber value="${d.price}" type="number"/>đ
                             </p>
-                         
-                         
-                            <c:if test="${sessionScope.account != null }">
-                                <c:if test="${user.getRole() eq 'receptionist'}">
-                                     <form method="post" action="${pageContext.request.contextPath}/listofdoctorservlet">
-                                    <button name="doctorID" value="${d.doctorId}">Đặt dịch vụ</button>
+                            <div class="action-buttons">
+                                <form method="get" action="${pageContext.request.contextPath}/listofrating">
+                                    <button class="btn btn-view" name="btnDoctorID" value="${d.doctorId}">
+                                        Xem đánh giá
+                                    </button>
                                 </form>
-                                </c:if>
-                                <c:if test="${user.getRole() != 'receptionist'}">
-                                    <form method="get" action="${pageContext.request.contextPath}/createpatientsservlet">
-                                    <button name="btnDoctorID" value="${d.doctorId}">Đặt dịch vụ</button>
-                                </form>
-                                </c:if>
-                                
-                            </c:if>
 
+                                <c:if test="${sessionScope.account != null }">
+                                    <c:if test="${user.getRole() eq 'receptionist'}">
+                                        <form method="post" action="${pageContext.request.contextPath}/listofdoctorservlet">
+                                            <button class="btn btn-book" name="doctorID" value="${d.doctorId}">
+                                                Đặt dịch vụ
+                                            </button>
+                                        </form>
+                                    </c:if>
+
+                                    <c:if test="${user.getRole() != 'receptionist'}">
+                                        <form method="get" action="${pageContext.request.contextPath}/createpatientsservlet">
+                                            <button class="btn btn-book" name="btnDoctorID" value="${d.doctorId}">
+                                                Đặt dịch vụ
+                                            </button>
+                                        </form>
+                                    </c:if>
+                                </c:if>
+                            </div>
 
                         </div>
                     </c:forEach>

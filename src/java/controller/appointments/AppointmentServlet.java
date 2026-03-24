@@ -4,6 +4,7 @@ import vn.payos.PayOS;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
 import dal.AppointmentDAO;
+import dal.DoctorDAO;
 import dal.PatientPortalDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
@@ -49,11 +50,10 @@ public class AppointmentServlet extends HttpServlet {
 
         AppointmentDAO dao = new AppointmentDAO();
         PatientPortalDAO daos = new PatientPortalDAO();
-
+        DoctorDAO doctordao = new DoctorDAO();
         Patient p = daos.getPatientsByPatientID(patientId);
-        Doctor doctor = dao.getDoctorById(doctorID);
+        Doctor doctor = doctordao.getDoctorById(doctorID);
 
-        // lấy ngày có thể đặt
         List<LocalDate> availableDates = dao.getAvailableDates(doctorId);
 
         request.setAttribute("doctor", doctor);
@@ -92,7 +92,6 @@ public class AppointmentServlet extends HttpServlet {
         java.sql.Time sqlTime = java.sql.Time.valueOf(localTime);
         String submit = request.getParameter("btnSubmit");
 
-        AppointmentDAO dao = new AppointmentDAO();
         PatientPortalDAO daos = new PatientPortalDAO();
         Patient patient = daos.getPatientsByPatientID(patientId);
         Appointment appointment;
