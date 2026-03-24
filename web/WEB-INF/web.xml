@@ -88,6 +88,10 @@
         <servlet-name>NotificationReadServlet</servlet-name>
         <servlet-class>controller.NotificationReadServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>PatientAccountServlet</servlet-name>
+        <servlet-class>controller.PatientAccountServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoctorDashboardServlet</servlet-name>
         <url-pattern>/doctorDashboard</url-pattern>
@@ -99,6 +103,14 @@
     <servlet>
         <servlet-name>AppointmentServlet</servlet-name>
         <servlet-class>controller.appointments.AppointmentServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RatingDoctorServlet</servlet-name>
+        <servlet-class>controller.ratingDoctors.RatingDoctorServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ListOfRating</servlet-name>
+        <servlet-class>controller.ratingDoctors.ListOfRating</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>RegisterServlet</servlet-name>
@@ -207,5 +219,17 @@
     <servlet-mapping>
         <servlet-name>NotificationReadServlet</servlet-name>
         <url-pattern>/notifications/read-all</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientAccountServlet</servlet-name>
+        <url-pattern>/patient-accounts</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RatingDoctorServlet</servlet-name>
+        <url-pattern>/ratingdoctorservlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ListOfRating</servlet-name>
+        <url-pattern>/listofrating</url-pattern>
     </servlet-mapping>
 </web-app>
