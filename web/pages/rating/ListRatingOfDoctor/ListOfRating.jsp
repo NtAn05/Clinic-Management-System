@@ -43,7 +43,6 @@
 
                 </div>
 
-                <!-- ===== NOTE SECTION ===== -->
                 <div class="note-section">
 
                     <h3 class="note-title">Nhận xét về bác sĩ</h3>
@@ -57,18 +56,17 @@
                             <c:forEach var="n" items="${notes}">
                                 <div class="note-item">
 
-                                    <!-- Avatar chữ cái -->
                                     <div class="note-avatar">
                                         ${n.userName.charAt(0)}
                                     </div>
 
-                                    <!-- Content -->
                                     <div class="note-content">
                                         <strong>${n.userName}</strong>
                                         <p>${n.note}</p>
                                     </div>
 
                                 </div>
+                           
                             </c:forEach>
                         </c:otherwise>
                     </c:choose>

@@ -253,3 +253,29 @@ body {
     color: #999;
     margin-top: 4px;
 }
+
+.btn-edit {
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+.btn-edit:hover {
+    background-color: #d68910;
+}
+.btn-delete {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background-color: #c0392b;
+}

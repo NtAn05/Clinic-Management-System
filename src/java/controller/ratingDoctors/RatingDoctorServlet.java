@@ -88,7 +88,6 @@ public class RatingDoctorServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         int doctorID = Integer.parseInt(request.getParameter("doctorID"));
         String appointmentId = request.getParameter("appointmentId");
         int appointmentID = Integer.parseInt(appointmentId);
@@ -102,7 +101,8 @@ public class RatingDoctorServlet extends HttpServlet {
         int userID = u.getUserId();
 
         RatingDAO dao = new RatingDAO();
-
+        dao.deleteRatingByAppointment(appointmentID);
+    
         List<Rating_review> questions = dao.getQuestions();
 
         for (Rating_review q : questions) {
