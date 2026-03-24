@@ -396,6 +396,42 @@
             .btn-submit-modal:hover {
                 background: #0052cc;
             }
+            .pagination-wrapper {
+                margin-top: 16px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .page-link {
+                min-width: 34px;
+                padding: 8px 12px;
+                border: 1px solid #dcdcdc;
+                border-radius: 6px;
+                background: #fff;
+                color: #333;
+                text-decoration: none;
+                font-weight: 600;
+                text-align: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .page-link:hover {
+                background: #f5f5f5;
+            }
+            .page-link.active {
+                background: #0061ff;
+                color: #fff;
+                border-color: #0061ff;
+                pointer-events: none;
+            }
+            .page-link.disabled {
+                opacity: .5;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
 
             @media (max-width: 1024px) {
                 .container {
@@ -462,6 +498,7 @@
                     </div>
                     <div class="actions">
                         <input type="hidden" name="weekOffset" value="${weekOffset}">
+                        <input type="hidden" name="page" value="1">
                         <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm</button>
                         <a class="btn btn-reset" href="${pageContext.request.contextPath}/admin-doctor-schedules"><i class="fas fa-redo"></i> Đặt lại</a>
                         <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin-schedule-requests">
@@ -575,8 +612,8 @@
                         </thead>
                         <tbody>
                             <c:choose>
-                                <c:when test="${not empty scheduleItems}">
-                                    <c:forEach var="item" items="${scheduleItems}">
+                                <c:when test="${not empty scheduleItemsPaged}">
+                                    <c:forEach var="item" items="${scheduleItemsPaged}">
                                         <tr>
                                             <td>${item.doctorName}</td>
                                             <td>${item.workDateText}</td>
@@ -601,6 +638,7 @@
                                                         <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                                                         <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                                                         <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
+                                                        <input type="hidden" name="filterPage" value="${currentPage}">
                                                         <button class="icon-btn delete" type="submit" title="Xóa"><i class="fas fa-trash"></i></button>
                                                     </form>
                                                 </div>
@@ -615,6 +653,83 @@
                         </tbody>
                     </table>
                 </div>
+                <c:if test="${totalPages > 1}">
+                    <div class="pagination-wrapper">
+                        <c:set var="maxVisiblePages" value="6" />
+                        <c:set var="startPage" value="1" />
+                        <c:set var="endPage" value="${totalPages}" />
+                        <c:if test="${totalPages > maxVisiblePages}">
+                            <c:set var="startPage" value="${currentPage - 2}" />
+                            <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                            <c:if test="${startPage < 1}">
+                                <c:set var="startPage" value="1" />
+                                <c:set var="endPage" value="${maxVisiblePages}" />
+                            </c:if>
+                            <c:if test="${endPage > totalPages}">
+                                <c:set var="endPage" value="${totalPages}" />
+                                <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                            </c:if>
+                        </c:if>
+                        <c:url var="prevPageUrl" value="/admin-doctor-schedules">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="shiftType" value="${selectedShiftType}" />
+                            <c:param name="dayOfWeek" value="${selectedDay}" />
+                            <c:param name="weekOffset" value="${weekOffset}" />
+                            <c:param name="page" value="${currentPage - 1}" />
+                        </c:url>
+                        <c:url var="nextPageUrl" value="/admin-doctor-schedules">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="shiftType" value="${selectedShiftType}" />
+                            <c:param name="dayOfWeek" value="${selectedDay}" />
+                            <c:param name="weekOffset" value="${weekOffset}" />
+                            <c:param name="page" value="${currentPage + 1}" />
+                        </c:url>
+
+                        <c:choose>
+                            <c:when test="${currentPage > 1}">
+                                <a class="page-link" href="${prevPageUrl}">‹ Trước</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">‹ Trước</span>
+                            </c:otherwise>
+                        </c:choose>
+
+                        <c:if test="${startPage > 1}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:forEach var="i" begin="${startPage}" end="${endPage}">
+                            <c:url var="pageUrl" value="/admin-doctor-schedules">
+                                <c:param name="keyword" value="${keyword}" />
+                                <c:param name="shiftType" value="${selectedShiftType}" />
+                                <c:param name="dayOfWeek" value="${selectedDay}" />
+                                <c:param name="weekOffset" value="${weekOffset}" />
+                                <c:param name="page" value="${i}" />
+                            </c:url>
+                            <c:choose>
+                                <c:when test="${i == currentPage}">
+                                    <span class="page-link active">${i}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <a class="page-link" href="${pageUrl}">${i}</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:forEach>
+
+                        <c:if test="${endPage < totalPages}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:choose>
+                            <c:when test="${currentPage < totalPages}">
+                                <a class="page-link" href="${nextPageUrl}">Sau ›</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">Sau ›</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
             </div>
         </div>
 
@@ -628,6 +743,7 @@
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                     <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
+                    <input type="hidden" name="filterPage" value="${currentPage}">
                     <div class="modal-grid">
                         <div class="field" style="grid-column:1/-1;">
                             <label>Bác sĩ</label>
@@ -682,6 +798,7 @@
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                     <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
+                    <input type="hidden" name="filterPage" value="${currentPage}">
                     <div class="modal-grid">
                         <div class="field">
                             <label>Thứ</label>

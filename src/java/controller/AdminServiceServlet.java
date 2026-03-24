@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import model.Role;
 import model.ServicePrice;
 import model.User;
+import util.PagingHelper;
 import util.SystemLogService;
 
 public class AdminServiceServlet extends HttpServlet {
@@ -61,7 +62,7 @@ public class AdminServiceServlet extends HttpServlet {
             throws ServletException, IOException {
         String search = trim(firstNonBlank(req.getParameter("filterSearch"), req.getParameter("search")));
         String category = trim(firstNonBlank(req.getParameter("filterCategory"), req.getParameter("category")));
-        int page = parsePage(firstNonBlank(req.getParameter("filterPage"), req.getParameter("page")), 1);
+        int page = PagingHelper.parsePage(req, "filterPage", PagingHelper.parsePage(req, "page", 1));
 
         List<ServicePrice> services = serviceDAO.getAllServices();
 
@@ -329,37 +330,10 @@ public class AdminServiceServlet extends HttpServlet {
     private void applyPaging(HttpServletRequest req, List<ServicePrice> fullList, int page) {
         List<ServicePrice> safe = fullList != null ? fullList : new ArrayList<>();
         int totalRecords = safe.size();
-        int totalPages = calculateTotalPages(totalRecords, PAGE_SIZE);
+        PagingHelper.PagingMeta paging = PagingHelper.build(page, totalRecords, PAGE_SIZE, true);
 
-        int currentPage = page;
-        if (totalPages > 0 && currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-        if (totalPages == 0) {
-            currentPage = 1;
-        }
-
-        req.setAttribute("servicesPaged", paginate(safe, currentPage, PAGE_SIZE));
-        req.setAttribute("currentPage", currentPage);
-        req.setAttribute("totalPages", totalPages);
-        req.setAttribute("totalRecords", totalRecords);
-        req.setAttribute("pageSize", PAGE_SIZE);
-    }
-
-    private int parsePage(String pageParam, int defaultValue) {
-        try {
-            int p = Integer.parseInt(pageParam);
-            return p < 1 ? 1 : p;
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-
-    private int calculateTotalPages(int totalRecords, int pageSize) {
-        if (totalRecords <= 0 || pageSize <= 0) {
-            return 0;
-        }
-        return (int) Math.ceil((double) totalRecords / pageSize);
+        req.setAttribute("servicesPaged", paginate(safe, paging.getCurrentPage(), paging.getPageSize()));
+        PagingHelper.expose(req, paging);
     }
 
     private <T> List<T> paginate(List<T> data, int page, int pageSize) {

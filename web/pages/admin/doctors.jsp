@@ -57,6 +57,11 @@
         .btn-cancel { background:#f0f0f0; color:#333; }
         .btn-submit { background:#0061ff; color:#fff; }
         .readonly-field { background:#f3f4f6; color:#6b7280; cursor:not-allowed; }
+        .pagination-wrapper { margin-top:16px; display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
+        .page-link { min-width:34px; padding:8px 12px; border:1px solid #dcdcdc; border-radius:6px; background:#fff; color:#333; text-decoration:none; font-weight:600; text-align:center; display:inline-flex; align-items:center; justify-content:center; }
+        .page-link:hover { background:#f5f5f5; }
+        .page-link.active { background:#0061ff; color:#fff; border-color:#0061ff; pointer-events:none; }
+        .page-link.disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
         @media (max-width: 992px){ .container{padding:20px;} .toolbar{grid-template-columns:1fr;} .toolbar-buttons .btn-search,.toolbar-buttons .btn-reset,.toolbar-buttons .btn-add{flex:1; justify-content:center;} .form-grid{grid-template-columns:1fr;} .input-action-row{flex-direction:column;} .btn-inline{padding:10px 14px;} }
     </style>
 </head>
@@ -96,6 +101,7 @@
                 <button class="btn-search" type="submit"><i class="fas fa-search"></i> Tìm</button>
                 <a class="btn-reset" href="${pageContext.request.contextPath}/admin-doctors"><i class="fas fa-redo"></i> Đặt lại</a>
             </div>
+            <input type="hidden" name="page" value="1">
         </form>
 
         <c:choose>
@@ -103,7 +109,7 @@
                 <table>
                     <thead><tr><th>Họ tên</th><th>Chuyên môn</th><th>Bằng cấp</th><th>Kinh nghiệm</th><th>Giá khám</th><th>Đánh giá</th><th style="width:120px;">Thao tác</th></tr></thead>
                     <tbody>
-                        <c:forEach var="d" items="${doctors}">
+                        <c:forEach var="d" items="${doctorsPaged}">
                             <c:url var="doctorScheduleUrl" value="/admin-doctor-schedules"><c:param name="keyword" value="${d.fullName}" /></c:url>
                             <tr>
                                 <td><strong>${d.fullName}</strong></td>
@@ -134,6 +140,81 @@
                         </c:forEach>
                     </tbody>
                 </table>
+
+                <c:if test="${totalPages > 1}">
+                    <div class="pagination-wrapper">
+                        <c:set var="maxVisiblePages" value="6" />
+                        <c:set var="startPage" value="1" />
+                        <c:set var="endPage" value="${totalPages}" />
+                        <c:if test="${totalPages > maxVisiblePages}">
+                            <c:set var="startPage" value="${currentPage - 2}" />
+                            <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                            <c:if test="${startPage < 1}">
+                                <c:set var="startPage" value="1" />
+                                <c:set var="endPage" value="${maxVisiblePages}" />
+                            </c:if>
+                            <c:if test="${endPage > totalPages}">
+                                <c:set var="endPage" value="${totalPages}" />
+                                <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                            </c:if>
+                        </c:if>
+                        <c:url var="prevUrl" value="/admin-doctors">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="specialization" value="${selectedSpecialization}" />
+                            <c:param name="qualification" value="${selectedQualification}" />
+                            <c:param name="page" value="${currentPage - 1}" />
+                        </c:url>
+                        <c:url var="nextUrl" value="/admin-doctors">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="specialization" value="${selectedSpecialization}" />
+                            <c:param name="qualification" value="${selectedQualification}" />
+                            <c:param name="page" value="${currentPage + 1}" />
+                        </c:url>
+
+                        <c:choose>
+                            <c:when test="${currentPage > 1}">
+                                <a class="page-link" href="${prevUrl}">‹ Trước</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">‹ Trước</span>
+                            </c:otherwise>
+                        </c:choose>
+
+                        <c:if test="${startPage > 1}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:forEach var="i" begin="${startPage}" end="${endPage}">
+                            <c:url var="pageUrl" value="/admin-doctors">
+                                <c:param name="keyword" value="${keyword}" />
+                                <c:param name="specialization" value="${selectedSpecialization}" />
+                                <c:param name="qualification" value="${selectedQualification}" />
+                                <c:param name="page" value="${i}" />
+                            </c:url>
+                            <c:choose>
+                                <c:when test="${i == currentPage}">
+                                    <span class="page-link active">${i}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <a class="page-link" href="${pageUrl}">${i}</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:forEach>
+
+                        <c:if test="${endPage < totalPages}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:choose>
+                            <c:when test="${currentPage < totalPages}">
+                                <a class="page-link" href="${nextUrl}">Sau ›</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">Sau ›</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
             </c:when>
             <c:otherwise><div class="no-data"><i class="fas fa-inbox"></i><p>Chưa có bác sĩ nào</p></div></c:otherwise>
         </c:choose>
@@ -147,6 +228,7 @@
             <input type="hidden" name="listKeyword" value="${keyword}">
             <input type="hidden" name="listSpecialization" value="${selectedSpecialization}">
             <input type="hidden" name="listQualification" value="${selectedQualification}">
+            <input type="hidden" name="listPage" value="${currentPage}">
 
             <c:if test="${not empty error and addModalOpen}"><div class="alert error" style="margin-bottom:12px;"><i class="fas fa-exclamation-circle"></i>${error}</div></c:if>
 
@@ -177,6 +259,7 @@
             <input type="hidden" name="listKeyword" value="${keyword}">
             <input type="hidden" name="listSpecialization" value="${selectedSpecialization}">
             <input type="hidden" name="listQualification" value="${selectedQualification}">
+            <input type="hidden" name="listPage" value="${currentPage}">
 
             <c:if test="${not empty error and editModalOpen}"><div class="alert error" style="margin-bottom:12px;"><i class="fas fa-exclamation-circle"></i>${error}</div></c:if>
 
@@ -251,7 +334,8 @@
                 + '<input type=\"hidden\" name=\"doctorId\" value=\"' + doctorId + '\">'
                 + '<input type=\"hidden\" name=\"listKeyword\" value=\"${fn:escapeXml(keyword)}\">'
                 + '<input type=\"hidden\" name=\"listSpecialization\" value=\"${fn:escapeXml(selectedSpecialization)}\">'
-                + '<input type=\"hidden\" name=\"listQualification\" value=\"${fn:escapeXml(selectedQualification)}\">';
+                + '<input type=\"hidden\" name=\"listQualification\" value=\"${fn:escapeXml(selectedQualification)}\">'
+                + '<input type=\"hidden\" name=\"listPage\" value=\"${currentPage}\">';
         document.body.appendChild(form);
         form.submit();
     }

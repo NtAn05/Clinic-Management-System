@@ -23,6 +23,7 @@ import util.AccountProvisionService.ProvisionResult;
 import util.AdminUserValidator;
 import util.AdminUserValidator.DoctorTransitionData;
 import util.AdminUserValidator.ValidationResult;
+import util.PagingHelper;
 import util.SystemLogService;
 
 public class AdminUserServlet extends HttpServlet {
@@ -472,22 +473,6 @@ public class AdminUserServlet extends HttpServlet {
         return "Admin User Management Servlet";
     }
 
-    private int parsePage(String pageParam, int defaultValue) {
-        try {
-            int page = Integer.parseInt(pageParam);
-            return page < 1 ? 1 : page;
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-
-    private int calculateTotalPages(int totalRecords, int pageSize) {
-        if (totalRecords <= 0 || pageSize <= 0) {
-            return 0;
-        }
-        return (int) Math.ceil((double) totalRecords / pageSize);
-    }
-
     private <T> List<T> paginate(List<T> data, int page, int pageSize) {
         if (data == null || data.isEmpty()) {
             return new ArrayList<>();
@@ -504,22 +489,12 @@ public class AdminUserServlet extends HttpServlet {
 
     private void applyPaging(HttpServletRequest request, List<User> users) {
         List<User> safeUsers = users != null ? users : new ArrayList<>();
-
-        int currentPage = parsePage(request.getParameter("page"), 1);
         int totalRecords = safeUsers.size();
-        int totalPages = calculateTotalPages(totalRecords, PAGE_SIZE);
+        int requestedPage = PagingHelper.parsePage(request, "page", 1);
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, totalRecords, PAGE_SIZE, true);
 
-        if (totalPages == 0) {
-            currentPage = 1;
-        } else if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-
-        request.setAttribute("users", paginate(safeUsers, currentPage, PAGE_SIZE));
-        request.setAttribute("currentPage", currentPage);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-        request.setAttribute("pageSize", PAGE_SIZE);
+        request.setAttribute("users", paginate(safeUsers, paging.getCurrentPage(), paging.getPageSize()));
+        PagingHelper.expose(request, paging);
         request.setAttribute("pendingResendMap", buildPendingResendMap(request, safeUsers));
     }
 

@@ -22,6 +22,7 @@ import model.Role;
 import model.User;
 import util.AccountProvisionService;
 import util.AccountProvisionService.ProvisionResult;
+import util.PagingHelper;
 import util.SystemLogService;
 
 public class AdminDoctorServlet extends HttpServlet {
@@ -29,6 +30,7 @@ public class AdminDoctorServlet extends HttpServlet {
     private static final String VIEW_PATH = "/pages/admin/doctors.jsp";
     private static final String SUCCESS_FLASH_KEY = "adminDoctorSuccess";
     private static final String SESSION_PENDING_RESEND_KEY = "adminDoctorPendingResendPasswordIds";
+    private static final int PAGE_SIZE = 10;
     private static final int MIN_EXPERIENCE = 0;
     private static final int MAX_EXPERIENCE = 50;
     private static final int MIN_PRICE = 0;
@@ -112,6 +114,7 @@ public class AdminDoctorServlet extends HttpServlet {
         String keyword = resolveListValue(req, "keyword", "listKeyword");
         String specialization = resolveListValue(req, "specialization", "listSpecialization");
         String qualification = resolveListValue(req, "qualification", "listQualification");
+        int requestedPage = PagingHelper.parsePage(req, "listPage", PagingHelper.parsePage(req, "page", 1));
         String success = "";
 
         HttpSession session = req.getSession(false);
@@ -127,7 +130,7 @@ public class AdminDoctorServlet extends HttpServlet {
         }
 
         List<Doctor> doctors = doctorDAO.getDoctorsForAdmin(keyword, specialization, qualification);
-        req.setAttribute("doctors", doctors);
+        applyPaging(req, doctors, requestedPage);
         req.setAttribute("pendingResendMap", buildPendingResendMap(req, doctors));
         req.setAttribute("specializationOptions", SPECIALIZATION_OPTIONS);
         req.setAttribute("qualificationOptions", QUALIFICATION_OPTIONS);
@@ -139,6 +142,19 @@ public class AdminDoctorServlet extends HttpServlet {
         }
 
         req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
+    }
+
+    private void applyPaging(HttpServletRequest req, List<Doctor> doctors, int requestedPage) {
+        List<Doctor> safeDoctors = doctors != null ? doctors : List.of();
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, safeDoctors.size(), PAGE_SIZE, true);
+
+        int fromIndex = paging.getOffset();
+        int toIndex = Math.min(fromIndex + paging.getPageSize(), safeDoctors.size());
+        List<Doctor> pagedDoctors = fromIndex >= safeDoctors.size() ? List.of() : safeDoctors.subList(fromIndex, toIndex);
+
+        req.setAttribute("doctors", safeDoctors);
+        req.setAttribute("doctorsPaged", pagedDoctors);
+        PagingHelper.expose(req, paging);
     }
 
     private boolean handleAdd(HttpServletRequest req) throws SQLException {

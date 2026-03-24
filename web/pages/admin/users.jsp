@@ -783,6 +783,21 @@
 
             <c:if test="${totalPages > 1}">
                 <div class="pagination-wrapper">
+                    <c:set var="maxVisiblePages" value="6" />
+                    <c:set var="startPage" value="1" />
+                    <c:set var="endPage" value="${totalPages}" />
+                    <c:if test="${totalPages > maxVisiblePages}">
+                        <c:set var="startPage" value="${currentPage - 2}" />
+                        <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                        <c:if test="${startPage < 1}">
+                            <c:set var="startPage" value="1" />
+                            <c:set var="endPage" value="${maxVisiblePages}" />
+                        </c:if>
+                        <c:if test="${endPage > totalPages}">
+                            <c:set var="endPage" value="${totalPages}" />
+                            <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                        </c:if>
+                    </c:if>
                     <c:choose>
                         <c:when test="${currentPage > 1}">
                             <a class="page-link"
@@ -795,12 +810,20 @@
                         </c:otherwise>
                     </c:choose>
 
-                    <c:forEach var="i" begin="1" end="${totalPages}">
+                    <c:if test="${startPage > 1}">
+                        <span class="page-link disabled">...</span>
+                    </c:if>
+
+                    <c:forEach var="i" begin="${startPage}" end="${endPage}">
                         <a class="page-link ${i == currentPage ? 'active' : ''}"
                            href="users?action=${currentAction}&keyword=${searchKeyword}&role=${filterRole}&status=${filterStatus}&page=${i}">
                             ${i}
                         </a>
                     </c:forEach>
+
+                    <c:if test="${endPage < totalPages}">
+                        <span class="page-link disabled">...</span>
+                    </c:if>
 
                     <c:choose>
                         <c:when test="${currentPage < totalPages}">

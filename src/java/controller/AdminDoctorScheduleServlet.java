@@ -27,6 +27,7 @@ import model.DoctorShift;
 import model.Role;
 import model.ScheduleChangeRequest;
 import model.User;
+import util.PagingHelper;
 import util.SystemLogService;
 
 public class AdminDoctorScheduleServlet extends HttpServlet {
@@ -35,6 +36,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     private static final List<Integer> DAY_ORDER = Arrays.asList(1, 2, 3, 4, 5, 6, 0);
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy", new Locale("vi", "VN"));
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final int PAGE_SIZE = 10;
 
     private static final String SHIFT_MORNING = "morning";
     private static final String SHIFT_AFTERNOON = "afternoon";
@@ -108,6 +110,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         );
         Integer selectedDay = parseNullableDay(dayFilterParam);
         int weekOffset = parseInt(firstNonBlank(req.getParameter("filterWeekOffset"), req.getParameter("weekOffset")), 0);
+        int requestedPage = PagingHelper.parsePage(req, "filterPage", PagingHelper.parsePage(req, "page", 1));
 
         String selectedShiftType = normalizeShiftType(req.getParameter("filterShiftType"));
         if (selectedShiftType.isEmpty() && isGetRequest && !hasActionParam) {
@@ -178,6 +181,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("activeDoctors", activeDoctors);
         req.setAttribute("filteredDoctors", filteredDoctors);
         req.setAttribute("scheduleItems", scheduleItems);
+        applyPaging(req, scheduleItems, requestedPage);
         req.setAttribute("weekGrid", weekGrid);
         req.setAttribute("dayDates", dayDates);
         req.setAttribute("keyword", keyword);
@@ -187,6 +191,18 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("weekLabel", weekStart.format(DATE_FMT) + " - " + weekEnd.format(DATE_FMT));
         req.setAttribute("pendingRequestCount", doctorDAO.countPendingScheduleChangeRequests());
         req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
+    }
+
+    private void applyPaging(HttpServletRequest req, List<ScheduleViewItem> scheduleItems, int requestedPage) {
+        List<ScheduleViewItem> safeItems = scheduleItems != null ? scheduleItems : List.of();
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, safeItems.size(), PAGE_SIZE, true);
+
+        int fromIndex = paging.getOffset();
+        int toIndex = Math.min(fromIndex + paging.getPageSize(), safeItems.size());
+        List<ScheduleViewItem> pagedItems = fromIndex >= safeItems.size() ? List.of() : safeItems.subList(fromIndex, toIndex);
+
+        req.setAttribute("scheduleItemsPaged", pagedItems);
+        PagingHelper.expose(req, paging);
     }
 
     private void handleAddShift(HttpServletRequest req, DoctorDAO doctorDAO) throws SQLException {

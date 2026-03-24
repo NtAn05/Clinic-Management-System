@@ -49,8 +49,10 @@ public class AdminScheduleRequestServlet extends HttpServlet {
 
             loadPage(req, resp);
         } catch (Exception e) {
-            req.setAttribute("error", "Lỗi xử lý yêu cầu đổi lịch: " + e.getMessage());
-            loadPage(req, resp);
+            session.setAttribute("scheduleReviewError",
+                    "Lỗi xử lý yêu cầu đổi lịch: " + e.getMessage());
+            resp.sendRedirect(req.getContextPath() + "/admin-schedule-requests"
+                    + buildFilterQuery(statusFilter, requestTypeFilter, actionTypeFilter, keyword));
         }
     }
 
