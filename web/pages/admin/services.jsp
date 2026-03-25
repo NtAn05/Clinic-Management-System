@@ -1,6 +1,5 @@
 ﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
-<%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <!DOCTYPE html>
 <html lang="vi">
@@ -93,7 +92,7 @@
             }
 
             .toolbar-service {
-                grid-template-columns: repeat(4, minmax(180px, 1fr)) auto;
+                grid-template-columns: minmax(320px, 2.2fr) minmax(240px, 1.6fr) minmax(260px, 1.2fr);
             }
 
             .search-box {
@@ -156,6 +155,7 @@
                 display: flex;
                 gap: 10px;
                 align-self: end;
+                width: 100%;
             }
 
             .btn-search, .btn-reset, .btn-add {
@@ -168,8 +168,14 @@
                 transition: all 0.3s ease;
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: 6px;
                 text-decoration: none;
+            }
+
+            .toolbar-buttons .btn-search,
+            .toolbar-buttons .btn-reset {
+                flex: 1 1 0;
             }
 
             .btn-search {
@@ -533,14 +539,6 @@
                                     <option value="lab" ${filterCategory == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
                                 </select>
                             </div>
-                            <div class="search-box">
-                                <label><i class="fas fa-dollar-sign"></i> Giá từ</label>
-                                <input type="number" name="minPrice" value="${minPriceValue}" min="0" placeholder="0" onchange="this.form.submit()">
-                            </div>
-                            <div class="search-box">
-                                <label><i class="fas fa-dollar-sign"></i> Giá đến</label>
-                                <input type="number" name="maxPrice" value="${maxPriceValue}" min="0" placeholder="1000000000" onchange="this.form.submit()">
-                            </div>
                             <input type="hidden" name="page" value="1">
                             <div class="toolbar-buttons">
                                     <button type="submit" class="btn-search">
@@ -554,17 +552,6 @@
                 </div>
 
                 <!-- Danh sách dịch vụ -->
-                <c:set var="pageSize" value="${not empty requestScope.pageSize ? requestScope.pageSize : 10}" />
-                <c:set var="currentPage" value="${not empty requestScope.currentPage ? requestScope.currentPage : (empty param.page ? 1 : param.page)}" />
-                <c:set var="totalRecords" value="${not empty requestScope.totalRecords ? requestScope.totalRecords : (not empty services ? fn:length(services) : 0)}" />
-                <c:set var="totalPages" value="${not empty requestScope.totalPages ? requestScope.totalPages : ((totalRecords + pageSize - 1) div pageSize)}" />
-                <c:set var="isServerPaged" value="${not empty requestScope.totalPages}" />
-                <c:if test="${totalPages == 0}">
-                    <c:set var="currentPage" value="1" />
-                </c:if>
-                <c:if test="${totalPages > 0 and currentPage > totalPages}">
-                    <c:set var="currentPage" value="${totalPages}" />
-                </c:if>
                 <c:choose>
                     <c:when test="${not empty services}">
                         <table>
@@ -577,58 +564,65 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <c:forEach var="service" items="${not empty servicesPaged ? servicesPaged : services}" varStatus="st">
-                                    <c:if test="${not empty servicesPaged or (st.index >= (currentPage - 1) * pageSize and st.index < currentPage * pageSize)}">
-                                        <c:set var="displayType" value="${service.serviceType}"/>
-                                        <c:if test="${service.serviceType eq 'booking_fee'}">
-                                            <c:set var="displayType" value="Khám & tư vấn"/>
-                                        </c:if>
-                                        <c:if test="${service.serviceType eq 'lab'}">
-                                            <c:set var="displayType" value="Kiểm tra chuyên sâu"/>
-                                        </c:if>
-                                        <tr>
-                                            <td><strong>${service.name}</strong></td>
-                                            <td>${displayType}</td>
-                                            <td><fmt:formatNumber value="${service.price}" type="number" maxFractionDigits="0"/> đ</td>
-                                            <td>
-                                                <div class="action-buttons">
-                                                    <button class="btn-action btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;<fmt:formatNumber value='${service.price}' type='number' groupingUsed='false' maxFractionDigits='0'/>&quot;)" title="Chỉnh sửa">
-                                                        <i class="fas fa-pen-to-square"></i>
-                                                    </button>
-                                                    <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
-                                                        <input type="hidden" name="action" value="delete">
-                                                        <input type="hidden" name="serviceId" value="${service.serviceId}">
-                                                        <input type="hidden" name="filterSearch" value="${not empty searchKeyword ? searchKeyword : param.search}">
-                                                        <input type="hidden" name="filterCategory" value="${not empty filterCategory ? filterCategory : param.category}">
-                                                        <input type="hidden" name="filterMinPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}">
-                                                        <input type="hidden" name="filterMaxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}">
-                                                        <input type="hidden" name="filterPage" value="${currentPage}">
-                                                        <button type="submit" class="btn-action btn-delete" title="Xóa">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                <c:forEach var="service" items="${servicesPaged}">
+                                    <c:set var="displayType" value="${service.serviceType}"/>
+                                    <c:if test="${service.serviceType eq 'booking_fee'}">
+                                        <c:set var="displayType" value="Khám & tư vấn"/>
                                     </c:if>
+                                    <c:if test="${service.serviceType eq 'lab'}">
+                                        <c:set var="displayType" value="Kiểm tra chuyên sâu"/>
+                                    </c:if>
+                                    <tr>
+                                        <td><strong>${service.name}</strong></td>
+                                        <td>${displayType}</td>
+                                        <td><fmt:formatNumber value="${service.price}" type="number" maxFractionDigits="0"/> đ</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-action btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;<fmt:formatNumber value='${service.price}' type='number' groupingUsed='false' maxFractionDigits='0'/>&quot;)" title="Chỉnh sửa">
+                                                    <i class="fas fa-pen-to-square"></i>
+                                                </button>
+                                                <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="serviceId" value="${service.serviceId}">
+                                                    <input type="hidden" name="filterSearch" value="${searchKeyword}">
+                                                    <input type="hidden" name="filterCategory" value="${filterCategory}">
+                                                    <input type="hidden" name="filterPage" value="${currentPage}">
+                                                    <button type="submit" class="btn-action btn-delete" title="Xóa">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </c:forEach>
                             </tbody>
                         </table>
 
                         <c:if test="${totalPages > 1}">
                             <div class="pagination-wrapper">
+                                <c:set var="maxVisiblePages" value="6" />
+                                <c:set var="startPage" value="1" />
+                                <c:set var="endPage" value="${totalPages}" />
+                                <c:if test="${totalPages > maxVisiblePages}">
+                                    <c:set var="startPage" value="${currentPage - 2}" />
+                                    <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                                    <c:if test="${startPage < 1}">
+                                        <c:set var="startPage" value="1" />
+                                        <c:set var="endPage" value="${maxVisiblePages}" />
+                                    </c:if>
+                                    <c:if test="${endPage > totalPages}">
+                                        <c:set var="endPage" value="${totalPages}" />
+                                        <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                                    </c:if>
+                                </c:if>
                                 <c:url var="prevUrl" value="/admin-services">
-                                    <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
-                                    <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
-                                    <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
-                                    <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
+                                    <c:param name="search" value="${searchKeyword}" />
+                                    <c:param name="category" value="${filterCategory}" />
                                     <c:param name="page" value="${currentPage - 1}" />
                                 </c:url>
                                 <c:url var="nextUrl" value="/admin-services">
-                                    <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
-                                    <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
-                                    <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
-                                    <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
+                                    <c:param name="search" value="${searchKeyword}" />
+                                    <c:param name="category" value="${filterCategory}" />
                                     <c:param name="page" value="${currentPage + 1}" />
                                 </c:url>
 
@@ -641,12 +635,14 @@
                                     </c:otherwise>
                                 </c:choose>
 
-                                <c:forEach var="i" begin="1" end="${totalPages}">
+                                <c:if test="${startPage > 1}">
+                                    <span class="page-link disabled">...</span>
+                                </c:if>
+
+                                <c:forEach var="i" begin="${startPage}" end="${endPage}">
                                     <c:url var="pageUrl" value="/admin-services">
-                                        <c:param name="search" value="${not empty searchKeyword ? searchKeyword : param.search}" />
-                                        <c:param name="category" value="${not empty filterCategory ? filterCategory : param.category}" />
-                                        <c:param name="minPrice" value="${not empty minPriceValue ? minPriceValue : param.minPrice}" />
-                                        <c:param name="maxPrice" value="${not empty maxPriceValue ? maxPriceValue : param.maxPrice}" />
+                                        <c:param name="search" value="${searchKeyword}" />
+                                        <c:param name="category" value="${filterCategory}" />
                                         <c:param name="page" value="${i}" />
                                     </c:url>
                                     <c:choose>
@@ -658,6 +654,10 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </c:forEach>
+
+                                <c:if test="${endPage < totalPages}">
+                                    <span class="page-link disabled">...</span>
+                                </c:if>
 
                                 <c:choose>
                                     <c:when test="${currentPage < totalPages}">
@@ -693,8 +693,6 @@
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="filterSearch" value="${searchKeyword}">
                     <input type="hidden" name="filterCategory" value="${filterCategory}">
-                    <input type="hidden" name="filterMinPrice" value="${minPriceValue}">
-                    <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
 
                     <c:if test="${not empty error and addModalOpen}">
@@ -758,8 +756,6 @@
                     <input type="hidden" name="serviceId" id="editServiceId" value="${editServiceId}">
                     <input type="hidden" name="filterSearch" value="${searchKeyword}">
                     <input type="hidden" name="filterCategory" value="${filterCategory}">
-                    <input type="hidden" name="filterMinPrice" value="${minPriceValue}">
-                    <input type="hidden" name="filterMaxPrice" value="${maxPriceValue}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
 
                     <c:if test="${not empty error and editModalOpen}">

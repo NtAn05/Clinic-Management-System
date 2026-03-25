@@ -177,4 +177,15 @@ public class RatingDAO extends DBContext {
         return list;
     }
 
+    public void deleteRatingByAppointment(int appointmentID) {
+ String sql = "DELETE FROM review_answers WHERE appointment_id = ?";
+    try {
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setInt(1, appointmentID);
+        ps.executeUpdate();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    }
+
 }

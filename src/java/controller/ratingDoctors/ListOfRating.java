@@ -12,10 +12,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import model.Doctor;
 import model.Rating_note;
 import model.Rating_review;
+import model.User;
 
 /**
  *
@@ -61,6 +63,8 @@ public class ListOfRating extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+         HttpSession session = request.getSession();
+    User u = (User) session.getAttribute("account");
       String doc= request.getParameter("btnDoctorID");
         int doctorId = Integer.parseInt(doc);
         DoctorDAO doctorDAO = new DoctorDAO();
@@ -81,8 +85,9 @@ public class ListOfRating extends HttpServlet {
 
         request.setAttribute("doctor", doctor);
         request.setAttribute("questions", questions);
-        request.setAttribute("notes", notes);
+        request.setAttribute("u", u);
 
+        request.setAttribute("notes", notes);
         
 request.getRequestDispatcher("/pages/rating/ListRatingOfDoctor/ListOfRating.jsp")
                 .forward(request, response);
@@ -99,7 +104,79 @@ request.getRequestDispatcher("/pages/rating/ListRatingOfDoctor/ListOfRating.jsp"
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+       
+    String action = request.getParameter("action");
+
+    int doctorID = Integer.parseInt(request.getParameter("doctorID"));
+    int appointmentID = Integer.parseInt(request.getParameter("appointmentId"));
+
+    HttpSession session = request.getSession();
+    User u = (User) session.getAttribute("account");
+
+    if (u == null) {
+        response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+        return;
+    }
+
+    int userID = u.getUserId();
+    RatingDAO dao = new RatingDAO();
+
+    if ("delete".equals(action)) {
+
+        dao.deleteRatingByAppointment(appointmentID);
+
+        response.sendRedirect(
+                request.getContextPath() + "/listofrating?btnDoctorID=" + doctorID
+        );
+        return;
+    }
+
+    
+
+    List<Rating_review> questions = dao.getQuestions();
+
+    for (Rating_review q : questions) {
+
+        if (q.getId() == 5) {
+            String noteValue = request.getParameter("note_" + q.getId());
+
+            if (noteValue != null && !noteValue.trim().isEmpty()) {
+                dao.insertReviewAnswer(
+                        q.getId(),
+                        null,
+                        userID,
+                        doctorID,
+                        appointmentID,
+                        noteValue
+                );
+            }
+
+        } else {
+            String ratingValue = request.getParameter("rating_" + q.getId());
+
+            if (ratingValue != null && !ratingValue.isEmpty()) {
+                int stars = Integer.parseInt(ratingValue);
+
+                dao.insertReviewAnswer(
+                        q.getId(),
+                        stars,
+                        userID,
+                        doctorID,
+                        appointmentID,
+                        null
+                );
+            }
+        }
+    }
+
+    Double avg = dao.getAverageRating(doctorID);
+    if (avg != null) {
+        dao.updateDoctorRating(doctorID, avg);
+    }
+
+    response.sendRedirect(
+                request.getContextPath() + "/listofrating?btnDoctorID=" + doctorID
+        );
     }
 
     /**

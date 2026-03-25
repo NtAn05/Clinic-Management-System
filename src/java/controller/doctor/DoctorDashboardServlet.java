@@ -136,8 +136,7 @@ public class DoctorDashboardServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/pages/examination/doctorDashboard.jsp")
-                .forward(request, response);
+         doGet(request, response);
     }
 
     /**

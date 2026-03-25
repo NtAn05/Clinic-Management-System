@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,22 +15,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import model.EmailOtpService;
 import model.Role;
 import model.Status;
 import model.User;
+import util.AccountProvisionService;
+import util.AccountProvisionService.ProvisionResult;
 import util.AdminUserValidator;
 import util.AdminUserValidator.DoctorTransitionData;
 import util.AdminUserValidator.ValidationResult;
+import util.PagingHelper;
 import util.SystemLogService;
 
 public class AdminUserServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 10;
-    private static final String TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%";
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String SESSION_PENDING_RESEND_KEY = "adminUserPendingResendPasswordIds";
-
+    private final AccountProvisionService accountProvisionService = new AccountProvisionService();
     private final AdminUserValidator adminUserValidator = new AdminUserValidator();
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
@@ -102,22 +101,28 @@ public class AdminUserServlet extends HttpServlet {
         }
 
         try {
-            String generatedPassword = generateRandomPassword(10);
             Role targetRole = validationResult.getTargetRole();
+            if (!isInternalManageableRole(targetRole)) {
+                keepAddForm(request, fullName, phone, email, roleStr,
+                        specialization, qualification, experienceRaw, priceRaw);
+                request.setAttribute("addRoleError", "Chỉ được tạo tài khoản nhân sự nội bộ tại trang này");
+                request.setAttribute("error", "Chỉ được tạo tài khoản nhân sự nội bộ tại trang này");
+                loadUsers(request, response);
+                return;
+            }
             DoctorTransitionData doctorData = validationResult.getDoctorData();
 
             User newUser = new User();
             newUser.setFullName(fullName);
             newUser.setPhone(phone);
             newUser.setEmail(email);
-            newUser.setPasswordHash(generatedPassword);
             newUser.setRole(targetRole);
             newUser.setStatus(Status.active);
-
-            userDAO.createUser(newUser);
-
-            User createdUser = userDAO.getUserByEmail(email);
-
+            ProvisionResult provisionResult = accountProvisionService.createAccountWithTemporaryPassword(newUser, userDAO);
+            User createdUser = provisionResult.getUser();
+            if (!provisionResult.isPasswordUpdated() || createdUser == null) {
+                throw new SQLException(provisionResult.getErrorMessage());
+            }
             if (targetRole == Role.doctor && doctorData != null && doctorData.isValid()) {
                 if (createdUser == null || createdUser.getUserId() <= 0) {
                     throw new SQLException("Không tìm thấy tài khoản vừa tạo để cập nhật hồ sơ bác sĩ");
@@ -132,25 +137,16 @@ public class AdminUserServlet extends HttpServlet {
                 );
             }
 
-            boolean mailFailed = false;
-            try {
-                EmailOtpService.sendNewAccountPassword(email, fullName, generatedPassword);
-            } catch (Exception mailEx) {
-                mailFailed = true;
-                mailEx.printStackTrace();
-            }
+            ProvisionResult deliveryResult = accountProvisionService.sendTemporaryPassword(
+                    createdUser,
+                    provisionResult.getTemporaryPassword()
+            );
+            boolean mailFailed = !deliveryResult.isMailSent();
 
             if (mailFailed) {
                 request.setAttribute("success", "Tạo tài khoản thành công nhưng gửi email thất bại. Vui lòng gửi lại mật khẩu tạm cho người dùng.");
                 if (createdUser != null && createdUser.getUserId() > 0) {
                     markPendingResend(request, createdUser.getUserId());
-                    request.setAttribute("resendModalOpen", true);
-                    request.setAttribute("resendModalUserId", createdUser.getUserId());
-                    request.setAttribute("resendModalFullName", createdUser.getFullName());
-                    request.setAttribute("resendModalPhone", createdUser.getPhone());
-                    request.setAttribute("resendModalEmail", createdUser.getEmail());
-                    request.setAttribute("resendModalRole", createdUser.getRole().toString());
-                    request.setAttribute("resendModalStatus", createdUser.getStatus().toString());
                 }
             } else {
                 if (createdUser != null && createdUser.getUserId() > 0) {
@@ -230,6 +226,14 @@ public class AdminUserServlet extends HttpServlet {
 
         try {
             Role targetRole = validationResult.getTargetRole();
+            if (!isInternalManageableRole(targetRole)) {
+                keepEditForm(request, userIdStr, originalRole, fullName, phone, email, roleStr,
+                        specialization, qualification, experienceRaw, priceRaw);
+                request.setAttribute("editRoleError", "Tài khoản bệnh nhân được quản lý ở trang riêng");
+                request.setAttribute("error", "Tài khoản bệnh nhân được quản lý ở trang riêng");
+                loadUsers(request, response);
+                return;
+            }
             DoctorTransitionData doctorData = validationResult.getDoctorData();
 
             User user = new User();
@@ -351,33 +355,19 @@ public class AdminUserServlet extends HttpServlet {
             return;
         }
 
-        String generatedPassword = generateRandomPassword(10);
-        boolean updated = userDAO.updatePasswordByEmail(targetUser.getEmail(), generatedPassword);
+        ProvisionResult provisionResult = accountProvisionService.resetTemporaryPassword(targetUser, userDAO);
 
-        if (!updated) {
+        if (!provisionResult.isPasswordUpdated()) {
             request.setAttribute("error", "Người dùng không hợp lệ");
             loadUsers(request, response);
             return;
         }
 
-        boolean mailFailed = false;
-        try {
-            EmailOtpService.sendNewAccountPassword(targetUser.getEmail(), targetUser.getFullName(), generatedPassword);
-        } catch (Exception mailEx) {
-            mailFailed = true;
-            mailEx.printStackTrace();
-        }
+        boolean mailFailed = !provisionResult.isMailSent();
 
         if (mailFailed) {
             markPendingResend(request, userId);
             request.setAttribute("success", "Đã đặt mật khẩu tạm mới nhưng gửi email thất bại. Vui lòng thử gửi lại.");
-            request.setAttribute("resendModalOpen", true);
-            request.setAttribute("resendModalUserId", targetUser.getUserId());
-            request.setAttribute("resendModalFullName", targetUser.getFullName());
-            request.setAttribute("resendModalPhone", targetUser.getPhone());
-            request.setAttribute("resendModalEmail", targetUser.getEmail());
-            request.setAttribute("resendModalRole", targetUser.getRole().toString());
-            request.setAttribute("resendModalStatus", targetUser.getStatus().toString());
         } else {
             clearPendingResend(request, userId);
             request.setAttribute("success", "Đã gửi lại mật khẩu tạm qua email cho " + targetUser.getFullName() + ".");
@@ -483,22 +473,6 @@ public class AdminUserServlet extends HttpServlet {
         return "Admin User Management Servlet";
     }
 
-    private int parsePage(String pageParam, int defaultValue) {
-        try {
-            int page = Integer.parseInt(pageParam);
-            return page < 1 ? 1 : page;
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-
-    private int calculateTotalPages(int totalRecords, int pageSize) {
-        if (totalRecords <= 0 || pageSize <= 0) {
-            return 0;
-        }
-        return (int) Math.ceil((double) totalRecords / pageSize);
-    }
-
     private <T> List<T> paginate(List<T> data, int page, int pageSize) {
         if (data == null || data.isEmpty()) {
             return new ArrayList<>();
@@ -515,22 +489,12 @@ public class AdminUserServlet extends HttpServlet {
 
     private void applyPaging(HttpServletRequest request, List<User> users) {
         List<User> safeUsers = users != null ? users : new ArrayList<>();
-
-        int currentPage = parsePage(request.getParameter("page"), 1);
         int totalRecords = safeUsers.size();
-        int totalPages = calculateTotalPages(totalRecords, PAGE_SIZE);
+        int requestedPage = PagingHelper.parsePage(request, "page", 1);
+        PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, totalRecords, PAGE_SIZE, true);
 
-        if (totalPages == 0) {
-            currentPage = 1;
-        } else if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-
-        request.setAttribute("users", paginate(safeUsers, currentPage, PAGE_SIZE));
-        request.setAttribute("currentPage", currentPage);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalRecords", totalRecords);
-        request.setAttribute("pageSize", PAGE_SIZE);
+        request.setAttribute("users", paginate(safeUsers, paging.getCurrentPage(), paging.getPageSize()));
+        PagingHelper.expose(request, paging);
         request.setAttribute("pendingResendMap", buildPendingResendMap(request, safeUsers));
     }
 
@@ -545,7 +509,7 @@ public class AdminUserServlet extends HttpServlet {
             users.addAll(getUsersByRoleWithKeyword(userDAO, Role.doctor, safeKeyword, hasKeyword));
             users.addAll(getUsersByRoleWithKeyword(userDAO, Role.receptionist, safeKeyword, hasKeyword));
             users.addAll(getUsersByRoleWithKeyword(userDAO, Role.technician, safeKeyword, hasKeyword));
-            users.addAll(getUsersByRoleWithKeyword(userDAO, Role.patient, safeKeyword, hasKeyword));
+            users.addAll(getUsersByRoleWithKeyword(userDAO, Role.patient_manager, safeKeyword, hasKeyword));
             return users;
         }
 
@@ -632,6 +596,7 @@ public class AdminUserServlet extends HttpServlet {
         request.setAttribute("editDoctorQualification", qualification);
         request.setAttribute("editDoctorExperienceYears", experienceRaw);
         request.setAttribute("editDoctorPriceBooking", priceRaw);
+        request.setAttribute("editResendAvailable", isPendingResend(request, parsePositiveId(userId)));
     }
 
     private Map<Integer, Boolean> buildPendingResendMap(HttpServletRequest request, List<User> users) {
@@ -686,6 +651,14 @@ public class AdminUserServlet extends HttpServlet {
         }
     }
 
+    private boolean isPendingResend(HttpServletRequest request, int userId) {
+        if (userId <= 0) {
+            return false;
+        }
+        Set<Integer> set = getPendingResendSet(request, false);
+        return set != null && set.contains(userId);
+    }
+
     private void applyValidationResult(HttpServletRequest request, ValidationResult validationResult) {
         if (validationResult == null) {
             return;
@@ -700,12 +673,10 @@ public class AdminUserServlet extends HttpServlet {
         }
     }
 
-    private String generateRandomPassword(int length) {
-        StringBuilder password = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            int index = SECURE_RANDOM.nextInt(TEMP_PASSWORD_CHARS.length());
-            password.append(TEMP_PASSWORD_CHARS.charAt(index));
-        }
-        return password.toString();
+    private boolean isInternalManageableRole(Role role) {
+        return role == Role.doctor
+                || role == Role.receptionist
+                || role == Role.technician
+                || role == Role.patient_manager;
     }
 }

@@ -13,5 +13,6 @@ public enum Role {
     patient,
     doctor,
     receptionist,
-    technician
+    technician,
+    patient_manager
 }

@@ -1,4 +1,4 @@
-<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
@@ -33,9 +33,9 @@
         .doctor-meta { font-size:12px; color:#6b7280; margin-top:4px; }
         .action-buttons { display:flex; gap:8px; flex-wrap:nowrap; align-items:center; white-space:nowrap; }
         .btn-action { border:none; background:none; cursor:pointer; font-size:14px; padding:6px 10px; border-radius:4px; display:inline-flex; align-items:center; gap:0px; text-decoration:none; }
-        .btn-view { color:#FB923C; }
+        .btn-edit { color:#FB923C; }
         .btn-calendar { color:#5b21b6; }
-        .btn-view:hover { background:#FFEDD5; }
+        .btn-edit:hover { background:#FFEDD5; }
         .btn-calendar:hover { background:#f3e8ff; }
         .nowrap { white-space: nowrap; }
         .no-data { text-align:center; padding:30px; color:#999; }
@@ -47,13 +47,22 @@
         .form-full { grid-column:1/-1; }
         .form-group label { display:block; font-weight:600; margin-bottom:8px; color:#333; font-size:14px; }
         .form-group input,.form-group select { width:100%; padding:10px 15px; border:1px solid #ddd; border-radius:6px; font-size:14px; }
+        .input-action-row { display:flex; gap:10px; align-items:stretch; }
+        .input-action-row input { flex:1; }
+        .btn-inline { border:none; border-radius:6px; padding:0 14px; font-size:13px; font-weight:600; background:#f59e0b; color:#fff; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; align-self:stretch; min-height:42px; }
+        .btn-inline:hover { background:#d97706; }
         .field-error { margin-top:6px; color:#dc3545; font-size:13px; font-weight:600; }
         .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; padding-top:15px; border-top:1px solid #f0f0f0; }
         .btn-cancel,.btn-submit { padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px; }
         .btn-cancel { background:#f0f0f0; color:#333; }
         .btn-submit { background:#0061ff; color:#fff; }
-        .locked-readonly { background:#f3f4f6; color:#6b7280; cursor:not-allowed; }
-        @media (max-width: 992px){ .container{padding:20px;} .toolbar{grid-template-columns:1fr;} .toolbar-buttons .btn-search,.toolbar-buttons .btn-reset,.toolbar-buttons .btn-add{flex:1; justify-content:center;} .form-grid{grid-template-columns:1fr;} }
+        .readonly-field { background:#f3f4f6; color:#6b7280; cursor:not-allowed; }
+        .pagination-wrapper { margin-top:16px; display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
+        .page-link { min-width:34px; padding:8px 12px; border:1px solid #dcdcdc; border-radius:6px; background:#fff; color:#333; text-decoration:none; font-weight:600; text-align:center; display:inline-flex; align-items:center; justify-content:center; }
+        .page-link:hover { background:#f5f5f5; }
+        .page-link.active { background:#0061ff; color:#fff; border-color:#0061ff; pointer-events:none; }
+        .page-link.disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
+        @media (max-width: 992px){ .container{padding:20px;} .toolbar{grid-template-columns:1fr;} .toolbar-buttons .btn-search,.toolbar-buttons .btn-reset,.toolbar-buttons .btn-add{flex:1; justify-content:center;} .form-grid{grid-template-columns:1fr;} .input-action-row{flex-direction:column;} .btn-inline{padding:10px 14px;} }
     </style>
 </head>
 <body>
@@ -92,6 +101,7 @@
                 <button class="btn-search" type="submit"><i class="fas fa-search"></i> Tìm</button>
                 <a class="btn-reset" href="${pageContext.request.contextPath}/admin-doctors"><i class="fas fa-redo"></i> Đặt lại</a>
             </div>
+            <input type="hidden" name="page" value="1">
         </form>
 
         <c:choose>
@@ -99,7 +109,7 @@
                 <table>
                     <thead><tr><th>Họ tên</th><th>Chuyên môn</th><th>Bằng cấp</th><th>Kinh nghiệm</th><th>Giá khám</th><th>Đánh giá</th><th style="width:120px;">Thao tác</th></tr></thead>
                     <tbody>
-                        <c:forEach var="d" items="${doctors}">
+                        <c:forEach var="d" items="${doctorsPaged}">
                             <c:url var="doctorScheduleUrl" value="/admin-doctor-schedules"><c:param name="keyword" value="${d.fullName}" /></c:url>
                             <tr>
                                 <td><strong>${d.fullName}</strong></td>
@@ -110,7 +120,7 @@
                                 <td><fmt:formatNumber value="${d.rating}" type="number" minFractionDigits="1" maxFractionDigits="1"/></td>
                                 <td>
                                     <div class="action-buttons">
-                                        <button type="button" class="btn-action btn-view" title="Xem chi tiết"
+                                        <button type="button" class="btn-action btn-edit" title="Chỉnh sửa"
                                                 data-doctor-id="${d.doctorId}"
                                                 data-full-name="${fn:escapeXml(d.fullName)}"
                                                 data-phone="${fn:escapeXml(d.phone)}"
@@ -121,7 +131,8 @@
                                                 data-experience="${d.experience_years}"
                                                 data-rating="${d.rating}"
                                                 data-price-booking="${d.price}"
-                                                onclick="openViewModal(this)"><i class="fas fa-eye"></i></button>
+                                                data-pending-resend="${pendingResendMap[d.userId] ? 'true' : 'false'}"
+                                                onclick="openEditModal(this)"><i class="fas fa-pen-to-square"></i></button>
                                         <a class="btn-action btn-calendar" title="Xem lịch" href="${doctorScheduleUrl}"><i class="fas fa-calendar-days"></i></a>
                                     </div>
                                 </td>
@@ -129,6 +140,81 @@
                         </c:forEach>
                     </tbody>
                 </table>
+
+                <c:if test="${totalPages > 1}">
+                    <div class="pagination-wrapper">
+                        <c:set var="maxVisiblePages" value="6" />
+                        <c:set var="startPage" value="1" />
+                        <c:set var="endPage" value="${totalPages}" />
+                        <c:if test="${totalPages > maxVisiblePages}">
+                            <c:set var="startPage" value="${currentPage - 2}" />
+                            <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                            <c:if test="${startPage < 1}">
+                                <c:set var="startPage" value="1" />
+                                <c:set var="endPage" value="${maxVisiblePages}" />
+                            </c:if>
+                            <c:if test="${endPage > totalPages}">
+                                <c:set var="endPage" value="${totalPages}" />
+                                <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                            </c:if>
+                        </c:if>
+                        <c:url var="prevUrl" value="/admin-doctors">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="specialization" value="${selectedSpecialization}" />
+                            <c:param name="qualification" value="${selectedQualification}" />
+                            <c:param name="page" value="${currentPage - 1}" />
+                        </c:url>
+                        <c:url var="nextUrl" value="/admin-doctors">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="specialization" value="${selectedSpecialization}" />
+                            <c:param name="qualification" value="${selectedQualification}" />
+                            <c:param name="page" value="${currentPage + 1}" />
+                        </c:url>
+
+                        <c:choose>
+                            <c:when test="${currentPage > 1}">
+                                <a class="page-link" href="${prevUrl}">‹ Trước</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">‹ Trước</span>
+                            </c:otherwise>
+                        </c:choose>
+
+                        <c:if test="${startPage > 1}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:forEach var="i" begin="${startPage}" end="${endPage}">
+                            <c:url var="pageUrl" value="/admin-doctors">
+                                <c:param name="keyword" value="${keyword}" />
+                                <c:param name="specialization" value="${selectedSpecialization}" />
+                                <c:param name="qualification" value="${selectedQualification}" />
+                                <c:param name="page" value="${i}" />
+                            </c:url>
+                            <c:choose>
+                                <c:when test="${i == currentPage}">
+                                    <span class="page-link active">${i}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <a class="page-link" href="${pageUrl}">${i}</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:forEach>
+
+                        <c:if test="${endPage < totalPages}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:choose>
+                            <c:when test="${currentPage < totalPages}">
+                                <a class="page-link" href="${nextUrl}">Sau ›</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">Sau ›</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
             </c:when>
             <c:otherwise><div class="no-data"><i class="fas fa-inbox"></i><p>Chưa có bác sĩ nào</p></div></c:otherwise>
         </c:choose>
@@ -142,6 +228,7 @@
             <input type="hidden" name="listKeyword" value="${keyword}">
             <input type="hidden" name="listSpecialization" value="${selectedSpecialization}">
             <input type="hidden" name="listQualification" value="${selectedQualification}">
+            <input type="hidden" name="listPage" value="${currentPage}">
 
             <c:if test="${not empty error and addModalOpen}"><div class="alert error" style="margin-bottom:12px;"><i class="fas fa-exclamation-circle"></i>${error}</div></c:if>
 
@@ -163,32 +250,33 @@
     </div>
 </div>
 
-<div id="viewDoctorModal" class="modal">
+<div id="editDoctorModal" class="modal">
     <div class="modal-content">
-        <div class="modal-header"><i class="fas fa-circle-info"></i><span>Chi tiết bác sĩ</span><button class="modal-close" type="button" onclick="closeViewModal()">×</button></div>
-        <form id="viewDoctorForm" method="POST" action="${pageContext.request.contextPath}/admin-doctors" onsubmit="return handleViewFormSubmit()">
+        <div class="modal-header"><i class="fas fa-pen-to-square"></i><span>Chỉnh sửa bác sĩ</span><button class="modal-close" type="button" onclick="closeEditModal()">×</button></div>
+        <form id="editDoctorForm" method="POST" action="${pageContext.request.contextPath}/admin-doctors">
             <input type="hidden" name="action" value="edit">
-            <input type="hidden" name="doctorId" id="viewDoctorId" value="${editDoctorId}">
+            <input type="hidden" name="doctorId" id="editDoctorId" value="${editDoctorId}">
             <input type="hidden" name="listKeyword" value="${keyword}">
             <input type="hidden" name="listSpecialization" value="${selectedSpecialization}">
             <input type="hidden" name="listQualification" value="${selectedQualification}">
+            <input type="hidden" name="listPage" value="${currentPage}">
 
             <c:if test="${not empty error and editModalOpen}"><div class="alert error" style="margin-bottom:12px;"><i class="fas fa-exclamation-circle"></i>${error}</div></c:if>
 
             <div class="form-grid">
-                <div class="form-group form-full"><label>Họ tên <span style="color:red;">*</span></label><input type="text" id="viewFullName" name="fullName" value="${editFullName}" required><c:if test="${not empty editFullNameError}"><div class="field-error">${editFullNameError}</div></c:if></div>
-                <div class="form-group"><label>Số điện thoại <span style="color:red;">*</span></label><input type="tel" id="viewPhone" name="phone" value="${editPhone}" required><c:if test="${not empty editPhoneError}"><div class="field-error">${editPhoneError}</div></c:if></div>
-                <div class="form-group"><label>Email <span style="color:red;">*</span></label><input type="email" id="viewEmail" name="email" value="${editEmail}" required><c:if test="${not empty editEmailError}"><div class="field-error">${editEmailError}</div></c:if></div>
-                <div class="form-group"><label>Trạng thái tài khoản</label><input type="text" id="viewStatus" value="${editStatus}" readonly></div>
-                <div class="form-group"><label>Chuyên môn <span style="color:red;">*</span></label><input type="text" id="viewSpecializationText" readonly><select id="viewSpecialization" name="specialization" required><option value="">-- Chọn chuyên môn --</option><c:forEach var="sp" items="${specializationOptions}"><option value="${sp}" ${editSpecialization == sp ? 'selected' : ''}>${sp}</option></c:forEach></select><c:if test="${not empty editSpecializationError}"><div class="field-error">${editSpecializationError}</div></c:if></div>
-                <div class="form-group"><label>Bằng cấp <span style="color:red;">*</span></label><input type="text" id="viewQualificationText" readonly><select id="viewQualification" name="qualification" required onchange="applyDefaultPrice('viewQualification','viewPriceBooking')"><option value="">-- Chọn bằng cấp --</option><c:forEach var="q" items="${qualificationOptions}"><option value="${q}" ${editQualification == q ? 'selected' : ''}>${q}</option></c:forEach></select><c:if test="${not empty editQualificationError}"><div class="field-error">${editQualificationError}</div></c:if></div>
-                <div class="form-group"><label>Kinh nghiệm (năm) <span style="color:red;">*</span></label><input type="number" id="viewExperienceYears" name="experienceYears" min="0" max="50" value="${editExperience}" required><c:if test="${not empty editExperienceError}"><div class="field-error">${editExperienceError}</div></c:if></div>
-                <div class="form-group"><label>Đánh giá</label><input type="text" id="viewRating" value="${editRating}" readonly></div>
-                <div class="form-group"><label>Giá khám <span style="color:red;">*</span></label><input type="text" id="viewPriceBooking" name="priceBooking" inputmode="numeric" value="${editPrice}" required><c:if test="${not empty editPriceError}"><div class="field-error">${editPriceError}</div></c:if></div>
+                <div class="form-group form-full"><label>Họ tên <span style="color:red;">*</span></label><input type="text" id="editFullName" name="fullName" value="${editFullName}" required><c:if test="${not empty editFullNameError}"><div class="field-error">${editFullNameError}</div></c:if></div>
+                <div class="form-group"><label>Số điện thoại <span style="color:red;">*</span></label><input type="tel" id="editPhone" name="phone" value="${editPhone}" required><c:if test="${not empty editPhoneError}"><div class="field-error">${editPhoneError}</div></c:if></div>
+                <div class="form-group"><label>Email <span style="color:red;">*</span></label><div class="input-action-row"><input type="email" id="editEmail" name="email" value="${editEmail}" required><button type="button" class="btn-inline" id="editResendButton" onclick="resendPasswordFromEditModal()" style="display:none;">Gửi lại email</button></div><c:if test="${not empty editEmailError}"><div class="field-error">${editEmailError}</div></c:if></div>
+                <div class="form-group"><label>Trạng thái tài khoản</label><input class="readonly-field" type="text" id="editStatus" value="${editStatus}" readonly></div>
+                <div class="form-group"><label>Chuyên môn <span style="color:red;">*</span></label><select id="editSpecialization" name="specialization" required><option value="">-- Chọn chuyên môn --</option><c:forEach var="sp" items="${specializationOptions}"><option value="${sp}" ${editSpecialization == sp ? 'selected' : ''}>${sp}</option></c:forEach></select><c:if test="${not empty editSpecializationError}"><div class="field-error">${editSpecializationError}</div></c:if></div>
+                <div class="form-group"><label>Bằng cấp <span style="color:red;">*</span></label><select id="editQualification" name="qualification" required onchange="applyDefaultPrice('editQualification','editPriceBooking')"><option value="">-- Chọn bằng cấp --</option><c:forEach var="q" items="${qualificationOptions}"><option value="${q}" ${editQualification == q ? 'selected' : ''}>${q}</option></c:forEach></select><c:if test="${not empty editQualificationError}"><div class="field-error">${editQualificationError}</div></c:if></div>
+                <div class="form-group"><label>Kinh nghiệm (năm) <span style="color:red;">*</span></label><input type="number" id="editExperienceYears" name="experienceYears" min="0" max="50" value="${editExperience}" required><c:if test="${not empty editExperienceError}"><div class="field-error">${editExperienceError}</div></c:if></div>
+                <div class="form-group"><label>Đánh giá</label><input class="readonly-field" type="text" id="editRating" value="${editRating}" readonly></div>
+                <div class="form-group"><label>Giá khám <span style="color:red;">*</span></label><input type="number" id="editPriceBooking" name="priceBooking" inputmode="numeric" min="0" max="10000000" value="${editPrice}" required><c:if test="${not empty editPriceError}"><div class="field-error">${editPriceError}</div></c:if></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" id="viewCloseBtn" onclick="onViewCloseOrCancel()"><i id="viewCloseBtnIcon" class="fas fa-times"></i> <span id="viewCloseBtnText">Đóng</span></button>
-                <button type="button" id="viewEditToggleBtn" class="btn-submit" onclick="onViewEditToggle()"><i class="fas fa-pen-to-square"></i> <span id="viewEditToggleText">Sửa</span></button>
+                <button type="button" class="btn-cancel" onclick="closeEditModal()"><i class="fas fa-times"></i> Hủy</button>
+                <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Lưu</button>
             </div>
         </form>
     </div>
@@ -208,12 +296,7 @@
         if (!select || !priceInput) return;
         const defaultPrice = qualificationPriceMap[select.value];
         if (defaultPrice !== undefined) {
-            const rawPrice = normalizeNumberString(defaultPrice);
-            priceInput.dataset.rawPrice = rawPrice;
-            priceInput.value = rawPrice;
-            if (!isViewEditMode && priceInputId === 'viewPriceBooking') {
-                priceInput.value = formatPriceDisplay(rawPrice);
-            }
+            priceInput.value = String(defaultPrice);
         }
     }
 
@@ -231,236 +314,57 @@
         return 'Khóa';
     }
 
-    function normalizeNumberString(value) {
-        const raw = (value || '').toString().trim();
-        if (!raw) return '';
-        const parsed = Number(raw.replace(/,/g, ''));
-        if (Number.isFinite(parsed)) return String(Math.round(parsed));
-        return raw.replace(/[^\d]/g, '');
-    }
-
-    function formatPriceDisplay(value) {
-        const normalized = normalizeNumberString(value);
-        if (!normalized) return '';
-        return Number(normalized).toLocaleString('en-US');
-    }
-
-    function getRawPriceForEdit() {
-        const priceField = document.getElementById('viewPriceBooking');
-        if (!priceField) return '';
-        const dataRaw = normalizeNumberString(priceField.dataset.rawPrice || '');
-        if (dataRaw) return dataRaw;
-        return normalizeNumberString(priceField.value);
-    }
-
-    function syncViewSelectText() {
-        const spSelect = document.getElementById('viewSpecialization');
-        const spText = document.getElementById('viewSpecializationText');
-        const qSelect = document.getElementById('viewQualification');
-        const qText = document.getElementById('viewQualificationText');
-        if (spSelect && spText) {
-            const spLabel = spSelect.selectedIndex >= 0 ? spSelect.options[spSelect.selectedIndex].text : '';
-            spText.value = (spLabel && spLabel !== '-- Chọn chuyên môn --') ? spLabel : (spSelect.value || '');
-        }
-        if (qSelect && qText) {
-            const qLabel = qSelect.selectedIndex >= 0 ? qSelect.options[qSelect.selectedIndex].text : '';
-            qText.value = (qLabel && qLabel !== '-- Chọn bằng cấp --') ? qLabel : (qSelect.value || '');
+    function toggleEditResendButton(show) {
+        const button = document.getElementById('editResendButton');
+        if (button) {
+            button.style.display = show ? 'inline-flex' : 'none';
         }
     }
 
-    const viewEditableFieldIds = [
-        'viewFullName',
-        'viewPhone',
-        'viewEmail',
-        'viewSpecialization',
-        'viewQualification',
-        'viewExperienceYears',
-        'viewPriceBooking'
-    ];
-    let originalViewSnapshot = null;
-    let isViewEditMode = false;
+    function resendPasswordFromEditModal() {
+        const doctorId = document.getElementById('editDoctorId').value;
+        if (!doctorId) return;
+        if (!confirm('Gửi lại mật khẩu tạm qua email cho bác sĩ này?')) return;
 
-    function captureViewSnapshot() {
-        originalViewSnapshot = {
-            fullName: document.getElementById('viewFullName').value || '',
-            phone: document.getElementById('viewPhone').value || '',
-            email: document.getElementById('viewEmail').value || '',
-            specialization: document.getElementById('viewSpecialization').value || '',
-            qualification: document.getElementById('viewQualification').value || '',
-            experienceYears: document.getElementById('viewExperienceYears').value || '',
-            priceBooking: normalizeNumberString(document.getElementById('viewPriceBooking').value || '')
-        };
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '${pageContext.request.contextPath}/admin-doctors';
+        form.innerHTML =
+                '<input type=\"hidden\" name=\"action\" value=\"resendPassword\">'
+                + '<input type=\"hidden\" name=\"doctorId\" value=\"' + doctorId + '\">'
+                + '<input type=\"hidden\" name=\"listKeyword\" value=\"${fn:escapeXml(keyword)}\">'
+                + '<input type=\"hidden\" name=\"listSpecialization\" value=\"${fn:escapeXml(selectedSpecialization)}\">'
+                + '<input type=\"hidden\" name=\"listQualification\" value=\"${fn:escapeXml(selectedQualification)}\">'
+                + '<input type=\"hidden\" name=\"listPage\" value=\"${currentPage}\">';
+        document.body.appendChild(form);
+        form.submit();
     }
 
-    function restoreViewSnapshot() {
-        if (!originalViewSnapshot) return;
-        document.getElementById('viewFullName').value = originalViewSnapshot.fullName;
-        document.getElementById('viewPhone').value = originalViewSnapshot.phone;
-        document.getElementById('viewEmail').value = originalViewSnapshot.email;
-        document.getElementById('viewSpecialization').value = originalViewSnapshot.specialization;
-        document.getElementById('viewSpecializationText').value = originalViewSnapshot.specialization;
-        document.getElementById('viewQualification').value = originalViewSnapshot.qualification;
-        document.getElementById('viewQualificationText').value = originalViewSnapshot.qualification;
-        document.getElementById('viewExperienceYears').value = originalViewSnapshot.experienceYears;
-        document.getElementById('viewPriceBooking').dataset.rawPrice = normalizeNumberString(originalViewSnapshot.priceBooking);
-        document.getElementById('viewPriceBooking').value = document.getElementById('viewPriceBooking').dataset.rawPrice;
+    function openEditModal(btn) {
+        document.getElementById('editDoctorId').value = btn.dataset.doctorId || '';
+        document.getElementById('editFullName').value = btn.dataset.fullName || '';
+        document.getElementById('editPhone').value = btn.dataset.phone || '';
+        document.getElementById('editEmail').value = btn.dataset.email || '';
+        document.getElementById('editStatus').value = formatStatusDisplay(btn.dataset.status);
+        document.getElementById('editSpecialization').value = btn.dataset.specialization || '';
+        document.getElementById('editQualification').value = btn.dataset.qualification || '';
+        document.getElementById('editExperienceYears').value = btn.dataset.experience || '';
+        document.getElementById('editRating').value = btn.dataset.rating || '0.0';
+        document.getElementById('editPriceBooking').value = btn.dataset.priceBooking || '';
+        toggleEditResendButton(btn.dataset.pendingResend === 'true');
+        document.getElementById('editDoctorModal').style.display = 'block';
     }
 
-    function setViewCloseButton(editMode) {
-        const icon = document.getElementById('viewCloseBtnIcon');
-        const text = document.getElementById('viewCloseBtnText');
-        if (!icon || !text) return;
-        if (editMode) {
-            icon.className = 'fas fa-rotate-left';
-            text.textContent = 'Hủy';
-        } else {
-            icon.className = 'fas fa-times';
-            text.textContent = 'Đóng';
-        }
-    }
-
-    function setLockedFieldsVisual(editMode) {
-        const statusField = document.getElementById('viewStatus');
-        const ratingField = document.getElementById('viewRating');
-        [statusField, ratingField].forEach(function (field) {
-            if (!field) return;
-            if (editMode) {
-                field.classList.add('locked-readonly');
-            } else {
-                field.classList.remove('locked-readonly');
-            }
-        });
-    }
-
-    function setViewEditMode(enabled) {
-        isViewEditMode = enabled;
-        viewEditableFieldIds.forEach(function (id) {
-            const field = document.getElementById(id);
-            if (!field) return;
-            if (field.tagName.toLowerCase() === 'select') {
-                field.disabled = !enabled;
-            } else {
-                field.readOnly = !enabled;
-            }
-        });
-
-        const priceField = document.getElementById('viewPriceBooking');
-        if (priceField) {
-            if (enabled) {
-                priceField.type = 'number';
-                priceField.min = '0';
-                priceField.max = '10000000';
-                priceField.step = '1';
-                const rawPrice = getRawPriceForEdit();
-                priceField.dataset.rawPrice = rawPrice;
-                priceField.value = rawPrice;
-            } else {
-                const rawPrice = normalizeNumberString(priceField.value);
-                priceField.dataset.rawPrice = rawPrice;
-                priceField.type = 'text';
-                priceField.value = formatPriceDisplay(rawPrice);
-            }
-        }
-
-        const spSelect = document.getElementById('viewSpecialization');
-        const spText = document.getElementById('viewSpecializationText');
-        const qSelect = document.getElementById('viewQualification');
-        const qText = document.getElementById('viewQualificationText');
-        if (spSelect && spText && qSelect && qText) {
-            if (enabled) {
-                spSelect.style.display = '';
-                qSelect.style.display = '';
-                spText.style.display = 'none';
-                qText.style.display = 'none';
-            } else {
-                syncViewSelectText();
-                spSelect.style.display = 'none';
-                qSelect.style.display = 'none';
-                spText.style.display = '';
-                qText.style.display = '';
-            }
-        }
-
-        const btn = document.getElementById('viewEditToggleBtn');
-        const text = document.getElementById('viewEditToggleText');
-        const icon = btn ? btn.querySelector('i') : null;
-        if (!btn || !text || !icon) return;
-
-        if (enabled) {
-            icon.className = 'fas fa-save';
-            text.textContent = 'Lưu';
-        } else {
-            icon.className = 'fas fa-pen-to-square';
-            text.textContent = 'Sửa';
-        }
-        setViewCloseButton(enabled);
-        setLockedFieldsVisual(enabled);
-    }
-
-    function onViewEditToggle() {
-        if (!isViewEditMode) {
-            setViewEditMode(true);
-            return;
-        }
-        const form = document.getElementById('viewDoctorForm');
-        if (form) {
-            if (typeof form.requestSubmit === 'function') {
-                form.requestSubmit();
-            } else if (form.reportValidity()) {
-                form.submit();
-            }
-        }
-    }
-
-    function onViewCloseOrCancel() {
-        if (isViewEditMode) {
-            restoreViewSnapshot();
-            setViewEditMode(false);
-            return;
-        }
-        closeViewModal();
-    }
-
-    function handleViewFormSubmit() {
-        if (!isViewEditMode) return false;
-        const priceField = document.getElementById('viewPriceBooking');
-        if (priceField) {
-            const rawPrice = normalizeNumberString(priceField.value);
-            priceField.dataset.rawPrice = rawPrice;
-            priceField.value = rawPrice;
-        }
-        return isViewEditMode;
-    }
-
-    function openViewModal(btn) {
-        document.getElementById('viewDoctorId').value = btn.dataset.doctorId || '';
-        document.getElementById('viewFullName').value = btn.dataset.fullName || '';
-        document.getElementById('viewPhone').value = btn.dataset.phone || '';
-        document.getElementById('viewEmail').value = btn.dataset.email || '';
-        document.getElementById('viewStatus').value = formatStatusDisplay(btn.dataset.status);
-        document.getElementById('viewSpecialization').value = btn.dataset.specialization || '';
-        document.getElementById('viewSpecializationText').value = btn.dataset.specialization || '';
-        document.getElementById('viewQualification').value = btn.dataset.qualification || '';
-        document.getElementById('viewQualificationText').value = btn.dataset.qualification || '';
-        document.getElementById('viewExperienceYears').value = btn.dataset.experience || '';
-        document.getElementById('viewRating').value = btn.dataset.rating || '0.0';
-        document.getElementById('viewPriceBooking').dataset.rawPrice = normalizeNumberString(btn.dataset.priceBooking || '');
-        document.getElementById('viewPriceBooking').value = document.getElementById('viewPriceBooking').dataset.rawPrice;
-        setViewEditMode(false);
-        captureViewSnapshot();
-        document.getElementById('viewDoctorModal').style.display = 'block';
-    }
-
-    function closeViewModal() {
-        setViewEditMode(false);
-        document.getElementById('viewDoctorModal').style.display = 'none';
+    function closeEditModal() {
+        toggleEditResendButton(false);
+        document.getElementById('editDoctorModal').style.display = 'none';
     }
 
     window.onclick = function (event) {
         const addModal = document.getElementById('addDoctorModal');
-        const viewModal = document.getElementById('viewDoctorModal');
+        const editModal = document.getElementById('editDoctorModal');
         if (event.target === addModal) closeAddModal();
-        if (event.target === viewModal) closeViewModal();
+        if (event.target === editModal) closeEditModal();
     };
 
     <c:if test="${addModalOpen}">
@@ -468,30 +372,18 @@
     </c:if>
 
     <c:if test="${editModalOpen}">
-    document.getElementById('viewDoctorModal').style.display = 'block';
-    document.getElementById('viewDoctorId').value = '${fn:escapeXml(editDoctorId)}';
-    document.getElementById('viewFullName').value = '${fn:escapeXml(editFullName)}';
-    document.getElementById('viewPhone').value = '${fn:escapeXml(editPhone)}';
-    document.getElementById('viewEmail').value = '${fn:escapeXml(editEmail)}';
-    document.getElementById('viewStatus').value = formatStatusDisplay('${fn:escapeXml(editStatus)}');
-    document.getElementById('viewSpecialization').value = '${fn:escapeXml(editSpecialization)}';
-    document.getElementById('viewSpecializationText').value = '${fn:escapeXml(editSpecialization)}';
-    document.getElementById('viewQualification').value = '${fn:escapeXml(editQualification)}';
-    document.getElementById('viewQualificationText').value = '${fn:escapeXml(editQualification)}';
-    document.getElementById('viewExperienceYears').value = '${fn:escapeXml(editExperience)}';
-    document.getElementById('viewRating').value = '${fn:escapeXml(editRating)}';
-    document.getElementById('viewPriceBooking').dataset.rawPrice = normalizeNumberString('${fn:escapeXml(editPrice)}');
-    document.getElementById('viewPriceBooking').value = document.getElementById('viewPriceBooking').dataset.rawPrice;
-    originalViewSnapshot = {
-        fullName: '${fn:escapeXml(editOriginalFullName)}',
-        phone: '${fn:escapeXml(editOriginalPhone)}',
-        email: '${fn:escapeXml(editOriginalEmail)}',
-        specialization: '${fn:escapeXml(editOriginalSpecialization)}',
-        qualification: '${fn:escapeXml(editOriginalQualification)}',
-        experienceYears: '${fn:escapeXml(editOriginalExperience)}',
-        priceBooking: normalizeNumberString('${fn:escapeXml(editOriginalPrice)}')
-    };
-    setViewEditMode(true);
+    document.getElementById('editDoctorModal').style.display = 'block';
+    document.getElementById('editDoctorId').value = '${fn:escapeXml(editDoctorId)}';
+    document.getElementById('editFullName').value = '${fn:escapeXml(editFullName)}';
+    document.getElementById('editPhone').value = '${fn:escapeXml(editPhone)}';
+    document.getElementById('editEmail').value = '${fn:escapeXml(editEmail)}';
+    document.getElementById('editStatus').value = formatStatusDisplay('${fn:escapeXml(editStatus)}');
+    document.getElementById('editSpecialization').value = '${fn:escapeXml(editSpecialization)}';
+    document.getElementById('editQualification').value = '${fn:escapeXml(editQualification)}';
+    document.getElementById('editExperienceYears').value = '${fn:escapeXml(editExperience)}';
+    document.getElementById('editRating').value = '${fn:escapeXml(editRating)}';
+    document.getElementById('editPriceBooking').value = '${fn:escapeXml(editPrice)}';
+    toggleEditResendButton('${editResendAvailable}' === 'true');
     </c:if>
 
     setTimeout(function () {
@@ -504,3 +396,4 @@
 </script>
 </body>
 </html>
+

@@ -141,6 +141,10 @@ body {
     display: block;
 }
 
+.tab-content-shell {
+    min-height: 960px;
+}
+
 .section-intro {
     margin-bottom: 14px;
     padding: 14px 16px;
@@ -552,5 +556,9 @@ label {
 
     .history-table {
         min-width: 820px;
+    }
+    
+    .tab-content.active {
+        min-height: 0;
     }
 }

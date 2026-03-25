@@ -5,7 +5,6 @@
 package controller.doctor;
 
 import dal.DoctorDAO;
-import dal.LabRequestDAO;
 import dal.NotificationDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -15,6 +14,8 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.text.Normalizer;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Doctor;
 import model.ExaminationHistoryItem;
 import model.ExamLabItem;
@@ -30,6 +31,7 @@ import util.SystemLogService;
  * @author anngu
  */
 public class DoctorExamServlet extends HttpServlet {
+    private static final Logger LOGGER = Logger.getLogger(DoctorExamServlet.class.getName());
 
     private static final String SECTION_HISTORY = "TIỀN SỬ";
     private static final String SECTION_CLINICAL_RESULT = "KẾT QUẢ KHÁM LÂM SÀNG";
@@ -163,7 +165,7 @@ public class DoctorExamServlet extends HttpServlet {
             request.setAttribute("error", request.getParameter("error"));
             request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to load doctor exam screen.", ex);
             request.setAttribute("pageError", "Đã xảy ra lỗi khi tải màn hình khám bệnh. Vui lòng thử lại.");
             request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
         }
@@ -304,7 +306,6 @@ public class DoctorExamServlet extends HttpServlet {
                 return;
             }
 
-            LabRequestDAO labRequestDAO = new LabRequestDAO();
             int requestId = doctorDAO.saveMedicalRecordAndCreateLabRequest(appointmentId, doctor.getDoctorId(), symptoms, diagnosis, notes);
             if (requestId > 0) {
                 SystemLogService.log(doctor.getUserId(), "LAB_REQUEST_CREATED",

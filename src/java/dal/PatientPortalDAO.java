@@ -211,11 +211,12 @@ public class PatientPortalDAO extends DBContext {
             WHERE pt.user_id = ?
             """);
 
-//        if (patientId != null) {
-//            sql.append(" AND pt.patient_id = ? ");
-//        }
-//
-//        sql.append(" ORDER BY p.created_at DESC ");
+        if (patientId != null) {
+            sql.append(" AND pt.patient_id = ? ");
+        }
+
+        sql.append(" ORDER BY p.created_at DESC ");
+        
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             bindPrescriptionParams(ps, userId, patientId);
             ResultSet rs = ps.executeQuery();

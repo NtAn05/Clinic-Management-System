@@ -466,7 +466,7 @@
                             Quản lý <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
                         </button>
                         <div class="admin-popup" id="adminPopup">
-                            <a class="profile-item" href="${pageContext.request.contextPath}/admin-users">Quản lý tài khoản</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/users">Quản lý tài khoản</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/admin-doctors">Quản lý bác sĩ</a>
                         </div>
@@ -486,6 +486,10 @@
                     <a class="header-link" href="${pageContext.request.contextPath}/lab-payment">Xác nhận thanh toán</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/listofappointment">Quản lý cuộc hẹn</a>
                     <a class="header-link" href="${pageContext.request.contextPath}/listofdoctorservlet">Đăng kí cuộc hẹn</a>
+                </c:if>
+
+                <c:if test="${roleName == 'patient_manager'}">
+                    <a class="header-link" href="${pageContext.request.contextPath}/patient-accounts">Tài khoản bệnh nhân</a>
                 </c:if>
 
                 <c:if test="${roleName == 'patient'}">

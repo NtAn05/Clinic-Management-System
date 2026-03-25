@@ -18,9 +18,10 @@
                 min-height: 100vh;
             }
             .container {
-                padding: 30px 50px;
+                padding: 24px;
                 max-width: 1400px;
                 margin: 0 auto;
+                width: 100%;
             }
             .panel {
                 background: #fff;
@@ -59,6 +60,12 @@
                 gap: 12px;
                 align-items: end;
             }
+            .field,
+            .actions,
+            .week-head,
+            .week-nav {
+                min-width: 0;
+            }
             .field label {
                 display: block;
                 font-weight: 600;
@@ -76,6 +83,7 @@
             .actions {
                 display: flex;
                 gap: 8px;
+                flex-wrap: wrap;
             }
             .btn {
                 border: none;
@@ -118,14 +126,17 @@
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 16px;
+                gap: 12px;
+                flex-wrap: wrap;
             }
             .week-nav {
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                flex-wrap: wrap;
             }
             .week-label {
-                min-width: 240px;
+                min-width: 0;
                 text-align: center;
                 font-weight: 600;
                 color: #555;
@@ -143,11 +154,15 @@
                 text-decoration: none;
             }
 
+            .week-grid-wrap {
+                width: 100%;
+                overflow-x: auto;
+            }
             .week-grid {
                 display: grid;
-                grid-template-columns: repeat(7, minmax(160px, 1fr));
+                grid-template-columns: repeat(7, minmax(140px, 1fr));
                 gap: 10px;
-                overflow-x: auto;
+                min-width: 1040px;
             }
             .day-col {
                 border: 1px solid #e2e8f0;
@@ -381,8 +396,47 @@
             .btn-submit-modal:hover {
                 background: #0052cc;
             }
+            .pagination-wrapper {
+                margin-top: 16px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .page-link {
+                min-width: 34px;
+                padding: 8px 12px;
+                border: 1px solid #dcdcdc;
+                border-radius: 6px;
+                background: #fff;
+                color: #333;
+                text-decoration: none;
+                font-weight: 600;
+                text-align: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .page-link:hover {
+                background: #f5f5f5;
+            }
+            .page-link.active {
+                background: #0061ff;
+                color: #fff;
+                border-color: #0061ff;
+                pointer-events: none;
+            }
+            .page-link.disabled {
+                opacity: .5;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
 
             @media (max-width: 1024px) {
+                .container {
+                    padding: 20px;
+                }
                 .toolbar {
                     grid-template-columns: 1fr 1fr;
                 }
@@ -392,10 +446,14 @@
             }
             @media (max-width: 768px) {
                 .container {
-                    padding: 18px;
+                    padding: 16px;
                 }
                 .toolbar, .modal-grid {
                     grid-template-columns: 1fr;
+                }
+                .week-grid {
+                    grid-template-columns: repeat(7, minmax(120px, 1fr));
+                    min-width: 900px;
                 }
             }
         </style>
@@ -440,6 +498,7 @@
                     </div>
                     <div class="actions">
                         <input type="hidden" name="weekOffset" value="${weekOffset}">
+                        <input type="hidden" name="page" value="1">
                         <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm</button>
                         <a class="btn btn-reset" href="${pageContext.request.contextPath}/admin-doctor-schedules"><i class="fas fa-redo"></i> Đặt lại</a>
                         <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin-schedule-requests">
@@ -475,7 +534,8 @@
                     </div>
                 </div>
 
-                <div class="week-grid">
+                <div class="week-grid-wrap">
+                    <div class="week-grid">
                     <c:set var="dayKeys" value="${'1,2,3,4,5,6,0'}" />
                     <c:forTokens var="dayKey" items="${dayKeys}" delims=",">
                         <div class="day-col">
@@ -499,7 +559,7 @@
                                         <c:if test="${item.shiftCode == 'morning'}">
                                             <c:set var="hasMorning" value="true" />
                                             <div class="shift-card ${item.temporary ? 'temporary' : ''}">
-                                                <div class="shift-name">Bác sĩ ${item.doctorName}</div>
+                                                <div class="shift-name">${item.doctorName}</div>
                                                 <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
                                             </div>
                                         </c:if>
@@ -517,7 +577,7 @@
                                         <c:if test="${item.shiftCode == 'afternoon'}">
                                             <c:set var="hasAfternoon" value="true" />
                                             <div class="shift-card ${item.temporary ? 'temporary' : ''}">
-                                                <div class="shift-name">Bác sĩ ${item.doctorName}</div>
+                                                <div class="shift-name">${item.doctorName}</div>
                                                 <div><i class="fas fa-user-injured"></i> Tối đa ${item.maxPatients} bệnh nhân</div>
                                             </div>
                                         </c:if>
@@ -529,6 +589,7 @@
                             </div>
                         </div>
                     </c:forTokens>
+                    </div>
                 </div>
             </div>
 
@@ -551,8 +612,8 @@
                         </thead>
                         <tbody>
                             <c:choose>
-                                <c:when test="${not empty scheduleItems}">
-                                    <c:forEach var="item" items="${scheduleItems}">
+                                <c:when test="${not empty scheduleItemsPaged}">
+                                    <c:forEach var="item" items="${scheduleItemsPaged}">
                                         <tr>
                                             <td>${item.doctorName}</td>
                                             <td>${item.workDateText}</td>
@@ -577,6 +638,7 @@
                                                         <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                                                         <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                                                         <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
+                                                        <input type="hidden" name="filterPage" value="${currentPage}">
                                                         <button class="icon-btn delete" type="submit" title="Xóa"><i class="fas fa-trash"></i></button>
                                                     </form>
                                                 </div>
@@ -591,6 +653,83 @@
                         </tbody>
                     </table>
                 </div>
+                <c:if test="${totalPages > 1}">
+                    <div class="pagination-wrapper">
+                        <c:set var="maxVisiblePages" value="6" />
+                        <c:set var="startPage" value="1" />
+                        <c:set var="endPage" value="${totalPages}" />
+                        <c:if test="${totalPages > maxVisiblePages}">
+                            <c:set var="startPage" value="${currentPage - 2}" />
+                            <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                            <c:if test="${startPage < 1}">
+                                <c:set var="startPage" value="1" />
+                                <c:set var="endPage" value="${maxVisiblePages}" />
+                            </c:if>
+                            <c:if test="${endPage > totalPages}">
+                                <c:set var="endPage" value="${totalPages}" />
+                                <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                            </c:if>
+                        </c:if>
+                        <c:url var="prevPageUrl" value="/admin-doctor-schedules">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="shiftType" value="${selectedShiftType}" />
+                            <c:param name="dayOfWeek" value="${selectedDay}" />
+                            <c:param name="weekOffset" value="${weekOffset}" />
+                            <c:param name="page" value="${currentPage - 1}" />
+                        </c:url>
+                        <c:url var="nextPageUrl" value="/admin-doctor-schedules">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="shiftType" value="${selectedShiftType}" />
+                            <c:param name="dayOfWeek" value="${selectedDay}" />
+                            <c:param name="weekOffset" value="${weekOffset}" />
+                            <c:param name="page" value="${currentPage + 1}" />
+                        </c:url>
+
+                        <c:choose>
+                            <c:when test="${currentPage > 1}">
+                                <a class="page-link" href="${prevPageUrl}">‹ Trước</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">‹ Trước</span>
+                            </c:otherwise>
+                        </c:choose>
+
+                        <c:if test="${startPage > 1}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:forEach var="i" begin="${startPage}" end="${endPage}">
+                            <c:url var="pageUrl" value="/admin-doctor-schedules">
+                                <c:param name="keyword" value="${keyword}" />
+                                <c:param name="shiftType" value="${selectedShiftType}" />
+                                <c:param name="dayOfWeek" value="${selectedDay}" />
+                                <c:param name="weekOffset" value="${weekOffset}" />
+                                <c:param name="page" value="${i}" />
+                            </c:url>
+                            <c:choose>
+                                <c:when test="${i == currentPage}">
+                                    <span class="page-link active">${i}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <a class="page-link" href="${pageUrl}">${i}</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:forEach>
+
+                        <c:if test="${endPage < totalPages}">
+                            <span class="page-link disabled">...</span>
+                        </c:if>
+
+                        <c:choose>
+                            <c:when test="${currentPage < totalPages}">
+                                <a class="page-link" href="${nextPageUrl}">Sau ›</a>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="page-link disabled">Sau ›</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
             </div>
         </div>
 
@@ -604,6 +743,7 @@
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                     <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
+                    <input type="hidden" name="filterPage" value="${currentPage}">
                     <div class="modal-grid">
                         <div class="field" style="grid-column:1/-1;">
                             <label>Bác sĩ</label>
@@ -658,6 +798,7 @@
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                     <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
+                    <input type="hidden" name="filterPage" value="${currentPage}">
                     <div class="modal-grid">
                         <div class="field">
                             <label>Thứ</label>

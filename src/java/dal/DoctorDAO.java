@@ -2424,5 +2424,32 @@ public class DoctorDAO extends DBContext {
 
         return list;
     }
-
+ public java.util.List<java.util.Map<String, Object>> getTopRatedDoctors(int limit) {
+        java.util.List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
+        String sql = "SELECT d.doctor_id, u.full_name, d.specialization, d.qualification, " +
+                     "d.clinic_address, d.experience_years, d.rating, u.image_url " +
+                     "FROM doctors d JOIN users u ON d.user_id = u.user_id " +
+                     "WHERE u.status = 'active' ORDER BY d.rating DESC LIMIT ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    java.util.Map<String, Object> doc = new java.util.HashMap<>();
+                    doc.put("doctorId", rs.getInt("doctor_id"));
+                    doc.put("fullName", rs.getString("full_name"));
+                    doc.put("specialization", rs.getString("specialization"));
+                    doc.put("qualification", rs.getString("qualification"));
+                    doc.put("clinicAddress", rs.getString("clinic_address"));
+                    doc.put("exp", rs.getInt("experience_years"));
+                    doc.put("rating", rs.getDouble("rating"));
+                    doc.put("image", rs.getString("image_url"));
+                    list.add(doc);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+ 
 }

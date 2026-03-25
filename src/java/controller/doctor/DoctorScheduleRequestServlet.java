@@ -106,7 +106,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
 
         LocalTime startTime = null;
         LocalTime endTime = null;
-        if ("ADD".equals(actionType)) {
+        if ("ADD".equals(actionType) || ("REMOVE".equals(actionType) && "ONE_DATE".equals(scopeType))) {
             LocalTime[] shiftTime = SHIFT_TIME_BY_PERIOD.get(shiftPeriod);
             if (shiftTime != null) {
                 startTime = shiftTime[0];
@@ -116,6 +116,10 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
 
         if (error == null && "ONE_DATE".equals(scopeType) && workDate == null) {
             error = "Vui lòng chọn ngày áp dụng cho yêu cầu tạm thời.";
+        }
+        if (error == null && "ONE_DATE".equals(scopeType) && workDate != null
+                && !workDate.toLocalDate().isAfter(LocalDate.now())) {
+            error = "Ngày áp dụng phải từ ngày mai trở đi.";
         }
 
         if (error == null && "WEEKLY_TEMPLATE".equals(scopeType)
@@ -133,6 +137,14 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             }
         }
 
+        if (error == null && "REMOVE".equals(actionType) && "ONE_DATE".equals(scopeType)) {
+            if (!SHIFT_TIME_BY_PERIOD.containsKey(shiftPeriod)) {
+                error = "Vui lòng chọn ca cần hủy (sáng/chiều).";
+            } else if (workDate != null) {
+                dayOfWeek = normalizeDayOfWeek(workDate.toLocalDate().getDayOfWeek());
+            }
+        }
+        
         if (error == null && "UPDATE".equals(actionType)) {
             if ("ONE_DATE".equals(scopeType) && workDate == null) {
                 error = "Vui lòng chọn ngày để tìm ca bác sĩ muốn đổi.";
