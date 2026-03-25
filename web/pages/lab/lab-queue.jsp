@@ -467,17 +467,6 @@
           <input type="hidden" name="page" value="1" />
           <div class="filters">
             <div class="field-group">
-              <label class="field-label">Trạng thái</label>
-              <select class="select" name="status" id="filterStatus">
-                <option value="">Tất cả</option>
-                <option value="pending" ${filterStatus == 'pending' ? 'selected' : ''}>Chờ lấy mẫu</option>
-                <option value="processing" ${filterStatus == 'processing' ? 'selected' : ''}>Đang xét nghiệm</option>
-                <option value="completed" ${filterStatus == 'completed' ? 'selected' : ''}>Đã có kết quả</option>
-                <option value="cancelled" ${filterStatus == 'cancelled' ? 'selected' : ''}>Đã hủy</option>
-              </select>
-            </div>
-
-            <div class="field-group">
               <label class="field-label">Khoa / Phòng gửi</label>
               <select class="select" name="department" id="filterDepartment">
                 <option value="">Tất cả</option>
@@ -586,9 +575,6 @@
                             <button class="btn btn-success" onclick="event.stopPropagation(); updateStatusToProcessing(${request.requestId});" style="font-size: 12px; padding: 6px 12px;">
                               <i class="fas fa-play"></i> Bắt đầu XN
                             </button>
-                            <button class="btn btn-outline" onclick="event.stopPropagation(); cancelRequest(${request.requestId});" style="font-size: 12px; padding: 6px 12px; margin-left: 4px;">
-                              <i class="fas fa-times"></i> Hủy phiếu
-                            </button>
                             <button class="btn btn-outline" onclick="event.stopPropagation(); editNotes(${request.requestId});" style="font-size: 12px; padding: 6px 10px; margin-left: 4px;">
                               <i class="fas fa-pen"></i> Ghi chú
                             </button>
@@ -596,9 +582,6 @@
                           <c:when test="${request.status == 'processing'}">
                             <button class="btn btn-primary" onclick="event.stopPropagation(); window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}';" style="font-size: 12px; padding: 6px 12px;">
                               <i class="fas fa-paper-plane"></i> Gửi KQ
-                            </button>
-                            <button class="btn btn-outline" onclick="event.stopPropagation(); cancelRequest(${request.requestId});" style="font-size: 12px; padding: 6px 12px; margin-left: 4px;">
-                              <i class="fas fa-times"></i> Hủy phiếu
                             </button>
                             <button class="btn btn-outline" onclick="event.stopPropagation(); editNotes(${request.requestId});" style="font-size: 12px; padding: 6px 10px; margin-left: 4px;">
                               <i class="fas fa-pen"></i> Ghi chú

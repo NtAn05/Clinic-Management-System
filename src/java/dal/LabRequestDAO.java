@@ -168,7 +168,7 @@ public class LabRequestDAO extends DBContext {
             params.add(searchPattern);
         }
         
-        sql.append(" ORDER BY lr.created_at DESC");
+        sql.append(" ORDER BY CASE lr.status WHEN 'pending' THEN 0 WHEN 'processing' THEN 1 ELSE 2 END ASC, CASE WHEN lr.status IN ('pending','processing') THEN lr.created_at END ASC, CASE WHEN lr.status NOT IN ('pending','processing') THEN lr.created_at END DESC");
         sql.append(" LIMIT ? OFFSET ?");
         
         int offset = (page - 1) * pageSize;
