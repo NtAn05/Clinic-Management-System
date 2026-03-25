@@ -2069,48 +2069,83 @@ public class DoctorDAO extends DBContext {
             return false;
         }
 
-        String deleteItemsSql = "DELETE FROM prescription_items WHERE prescription_id = ?";
-        String findRecordSql = "SELECT record_id FROM medical_records WHERE appointment_id = ? LIMIT 1";
+        try {
+            return savePrescriptionByRecordSchema(appointmentId, doctorId, prescriptionItems);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean savePrescriptionByRecordSchema(long appointmentId, int doctorId, List<PrescriptionItem> prescriptionItems) throws SQLException {
+        long recordId = ensureMedicalRecordForAppointment(appointmentId, doctorId);
+        if (recordId <= 0) {
+            return false;
+        }
+
         String findPrescriptionSql = "SELECT prescription_id FROM prescriptions WHERE record_id = ? LIMIT 1";
         String insertPrescriptionSql = "INSERT INTO prescriptions (record_id, doctor_id, created_at) VALUES (?, ?, NOW())";
         String updatePrescriptionSql = "UPDATE prescriptions SET doctor_id = ?, created_at = NOW() WHERE prescription_id = ?";
+        return savePrescriptionTransactional(recordId, doctorId, prescriptionItems, findPrescriptionSql, insertPrescriptionSql, updatePrescriptionSql);
+    }
+
+    private long ensureMedicalRecordForAppointment(long appointmentId, int doctorId) throws SQLException {
+        String findRecordSql = "SELECT record_id FROM medical_records WHERE appointment_id = ? LIMIT 1";
+        try (PreparedStatement findRecord = connection.prepareStatement(findRecordSql)) {
+            findRecord.setLong(1, appointmentId);
+            try (ResultSet rs = findRecord.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("record_id");
+                }
+            }
+        }
+
+        String createRecordSql = """
+            INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
+            VALUES (?, ?, '', '', '', NOW())
+        """;
+        try (PreparedStatement createRecord = connection.prepareStatement(createRecordSql, Statement.RETURN_GENERATED_KEYS)) {
+            createRecord.setLong(1, appointmentId);
+            createRecord.setInt(2, doctorId);
+            if (createRecord.executeUpdate() == 0) {
+                return 0;
+            }
+
+            try (ResultSet keys = createRecord.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getLong(1);
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private boolean savePrescriptionTransactional(long recordId,
+            int doctorId,
+            List<PrescriptionItem> prescriptionItems,
+            String findPrescriptionSql,
+            String insertPrescriptionSql,
+            String updatePrescriptionSql) throws SQLException {
+        String deleteItemsSql = "DELETE FROM prescription_items WHERE prescription_id = ?";
         String insertItemSql = """
             INSERT INTO prescription_items
                 (prescription_id, medicine_name, dosage, frequency, duration)
             VALUES (?, ?, ?, ?, ?)
         """;
 
-        boolean originalAutoCommit;
-        try {
-            originalAutoCommit = connection.getAutoCommit();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            return false;
-        }
-
+        boolean originalAutoCommit = connection.getAutoCommit();
         try {
             connection.setAutoCommit(false);
-            int recordId;
-            try (PreparedStatement findRecord = connection.prepareStatement(findRecordSql)) {
-                findRecord.setLong(1, appointmentId);
-                try (ResultSet rs = findRecord.executeQuery()) {
-                    if (!rs.next()) {
-                        connection.rollback();
-                        return false;
-                    }
-                    recordId = rs.getInt("record_id");
-                }
-            }
-
             int prescriptionId;
             try (PreparedStatement find = connection.prepareStatement(findPrescriptionSql)) {
-                find.setInt(1, recordId);
+                find.setLong(1, recordId);
                 try (ResultSet rs = find.executeQuery()) {
                     if (rs.next()) {
                         prescriptionId = rs.getInt("prescription_id");
                     } else {
                         try (PreparedStatement insertPrescription = connection.prepareStatement(insertPrescriptionSql, Statement.RETURN_GENERATED_KEYS)) {
-                            insertPrescription.setInt(1, recordId);
+                            insertPrescription.setLong(1, recordId);
                             insertPrescription.setInt(2, doctorId);
                             if (insertPrescription.executeUpdate() == 0) {
                                 connection.rollback();
@@ -2160,25 +2195,16 @@ public class DoctorDAO extends DBContext {
             connection.commit();
             return true;
         } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
-            }
-            e.printStackTrace();
-            return false;
+            connection.rollback();
+            throw e;
         } finally {
-            try {
-                connection.setAutoCommit(originalAutoCommit);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
+            connection.setAutoCommit(originalAutoCommit);
         }
-
     }
 
     public List<PrescriptionItem> getPrescriptionItemsByAppointment(long appointmentId) {
         List<PrescriptionItem> list = new ArrayList<>();
+
         String sql = """
             SELECT
                 pi.item_id,
@@ -2194,6 +2220,16 @@ public class DoctorDAO extends DBContext {
             ORDER BY pi.item_id
         """;
 
+        try {
+            loadPrescriptionItems(list, sql, appointmentId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    private void loadPrescriptionItems(List<PrescriptionItem> list, String sql, long appointmentId) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, appointmentId);
             ResultSet rs = ps.executeQuery();
@@ -2208,11 +2244,7 @@ public class DoctorDAO extends DBContext {
                 item.setDurationDays(rs.getString("duration_value"));
                 list.add(item);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-
-        return list;
     }
 
     public List<Medicine> getAllMedicines() {
