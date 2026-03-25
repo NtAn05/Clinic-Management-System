@@ -93,7 +93,10 @@ public class DoctorDashboardServlet extends HttpServlet {
         //Danh sách chờ khám
         List<DoctorQueueItem> queueList
                 = doctorDAO.getQueueByDoctorWithFilterPaging(doctorId, status, keyword, paging.getCurrentPage(), paging.getPageSize());
-
+        DoctorQueueItem currentExamining = doctorDAO.getCurrentExaminingQueueItem(doctorId);
+        DoctorQueueItem nextWaiting = doctorDAO.getNextWaitingQueueItem(doctorId);
+        DoctorQueueItem startTarget = currentExamining != null ? currentExamining : nextWaiting;
+        
         // số liệu dashboard
         DoctorDashboardStats stats
                 = doctorDAO.getDashboardStats(doctorId);
@@ -116,7 +119,10 @@ public class DoctorDashboardServlet extends HttpServlet {
         PagingHelper.expose(request, paging);
         request.setAttribute("selectedStatus", status);
         request.setAttribute("keyword", keyword == null ? "" : keyword.trim());
-
+        request.setAttribute("startAppointmentId", startTarget == null ? null : startTarget.getAppointmentId());
+        request.setAttribute("startQueuePosition", startTarget == null ? null : startTarget.getQueuePosition());
+        request.setAttribute("startPatientName", startTarget == null ? null : startTarget.getPatientName());
+        
         request.getRequestDispatcher("/pages/examination/doctorDashboard.jsp")
                 .forward(request, response);
 //        String queueId = request.getParameter("queueId");

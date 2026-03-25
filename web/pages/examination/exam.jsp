@@ -37,7 +37,10 @@
                     <c:if test="${success == 'saved'}">
                         <div class="alert-success">Đã lưu thông tin bệnh án.</div>
                     </c:if>
-
+                    <c:if test="${success == 'examFinished'}">
+                        <div class="alert-success">Đã hoàn tất bệnh nhân trước đó. Hệ thống đã chuyển sang bệnh nhân kế tiếp trong hàng đợi.</div>
+                    </c:if>
+                        
                     <c:if test="${error == 'saveFailed'}">
                         <div class="alert-error">Không thể lưu hồ sơ khám. Vui lòng thử lại.</div>
                     </c:if>

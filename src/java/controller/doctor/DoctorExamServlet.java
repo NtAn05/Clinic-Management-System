@@ -38,7 +38,30 @@ public class DoctorExamServlet extends HttpServlet {
     private static final String SECTION_DOCTOR_NOTE = "GHI CHÚ BÁC SĨ";
     private static final String SECTION_TREATMENT_PLAN = "PHƯƠNG ÁN ĐIỀU TRỊ";
     private static final String SECTION_LAB_REQUEST = "YÊU CẦU XÉT NGHIỆM";
+    
+    private DoctorQueueItem resolveQueueForSequentialExam(DoctorDAO doctorDAO, int doctorId, Long requestedAppointmentId) {
+        DoctorQueueItem currentExamining = doctorDAO.getCurrentExaminingQueueItem(doctorId);
+        if (currentExamining != null) {
+            if (requestedAppointmentId == null || requestedAppointmentId == currentExamining.getAppointmentId()) {
+                return currentExamining;
+            }
+            return null;
+        }
 
+        DoctorQueueItem nextWaiting = doctorDAO.getNextWaitingQueueItem(doctorId);
+        if (nextWaiting == null) {
+            return null;
+        }
+
+        if (requestedAppointmentId != null && requestedAppointmentId != nextWaiting.getAppointmentId()) {
+            return null;
+        }
+
+        doctorDAO.startExamination(nextWaiting.getAppointmentId());
+        nextWaiting.setStatus("examining");
+        return nextWaiting;
+    }
+    
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -103,38 +126,32 @@ public class DoctorExamServlet extends HttpServlet {
             }
 
             String appointmentParam = request.getParameter("appointmentId");
-            if (appointmentParam == null || appointmentParam.trim().isEmpty()) {
-                request.setAttribute("pageError", "Thiếu mã lịch khám. Vui lòng quay lại danh sách chờ khám.");
-                request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
-                return;
-            }
-
-            long appointmentId;
-            try {
-                appointmentId = Long.parseLong(appointmentParam.trim());
-            } catch (NumberFormatException ex) {
-                request.setAttribute("pageError", "Mã lịch khám không hợp lệ.");
-                request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
-                return;
+            
+            Long appointmentId = null;
+            if (appointmentParam != null && !appointmentParam.trim().isEmpty()) {
+                try {
+                    appointmentId = Long.parseLong(appointmentParam.trim());
+                } catch (NumberFormatException ex) {
+                    request.setAttribute("pageError", "Mã lịch khám không hợp lệ.");
+                    request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
+                    return;
+                }
             }
 
             DoctorDAO doctorDAO = new DoctorDAO();
-            DoctorQueueItem examData = doctorDAO.getQueueItemByAppointment(doctor.getDoctorId(), appointmentId);
+            DoctorQueueItem examData = resolveQueueForSequentialExam(doctorDAO, doctor.getDoctorId(), appointmentId);
             if (examData == null) {
-                request.setAttribute("pageError", "Không tìm thấy bệnh nhân trong hàng đợi khám của bác sĩ.");
+                request.setAttribute("pageError", "Chỉ được khám tuần tự theo thứ tự hàng đợi. Vui lòng bắt đầu từ bệnh nhân đầu danh sách.");
                 request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
                 return;
             }
 
-            if ("waiting".equalsIgnoreCase(examData.getStatus())) {
-                doctorDAO.startExamination(appointmentId);
-                examData.setStatus("examining");
-            }
+            long resolvedAppointmentId = examData.getAppointmentId();
 
             request.setAttribute("examData", examData);
-            List<ExamLabItem> labResults = doctorDAO.getLabResultsByAppointment(appointmentId);
+            List<ExamLabItem> labResults = doctorDAO.getLabResultsByAppointment(resolvedAppointmentId);
             request.setAttribute("labResults", labResults);
-            MedicalRecord medicalRecord = doctorDAO.getMedicalRecordByAppointment(appointmentId);
+            MedicalRecord medicalRecord = doctorDAO.getMedicalRecordByAppointment(resolvedAppointmentId);
             request.setAttribute("medicalRecord", medicalRecord);
 
             String notes = medicalRecord != null ? medicalRecord.getNotes() : null;
@@ -148,12 +165,12 @@ public class DoctorExamServlet extends HttpServlet {
             request.setAttribute("treatmentPlan", extractSection(notes, SECTION_TREATMENT_PLAN));
             request.setAttribute("labRequestInstruction", extractSection(notes, SECTION_LAB_REQUEST));
 
-            List<PrescriptionItem> prescriptionItems = doctorDAO.getPrescriptionItemsByAppointment(appointmentId);
+            List<PrescriptionItem> prescriptionItems = doctorDAO.getPrescriptionItemsByAppointment(resolvedAppointmentId);
             request.setAttribute("prescriptionItems", prescriptionItems);
             List<Medicine> medicineList = doctorDAO.getAllMedicines();
             request.setAttribute("medicineList", medicineList);
             List<ExaminationHistoryItem> examinationHistory
-                    = doctorDAO.getExaminationHistoryByAppointment(appointmentId);
+                    = doctorDAO.getExaminationHistoryByAppointment(resolvedAppointmentId);
             request.setAttribute("examData", examData);
             request.setAttribute("historyList", examinationHistory);
             String activeTab = cleanText(request.getParameter("tab"));
@@ -205,9 +222,9 @@ public class DoctorExamServlet extends HttpServlet {
         }
 
         DoctorDAO doctorDAO = new DoctorDAO();
-        DoctorQueueItem examData = doctorDAO.getQueueItemByAppointment(doctor.getDoctorId(), appointmentId);
+        DoctorQueueItem examData = resolveQueueForSequentialExam(doctorDAO, doctor.getDoctorId(), appointmentId);
         if (examData == null) {
-            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=notInQueue");
+            response.sendRedirect(request.getContextPath() + "/doctorDashboard?error=notAllowedQueueOrder");
             return;
         }
 
@@ -296,6 +313,11 @@ public class DoctorExamServlet extends HttpServlet {
                     "examination_completed",
                     "appointment:" + appointmentId + ":exam_done"
             );
+            DoctorQueueItem nextWaiting = doctorDAO.getNextWaitingQueueItem(doctor.getDoctorId());
+            if (nextWaiting != null) {
+                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + nextWaiting.getAppointmentId() + "&success=examFinished");
+                return;
+            }
             response.sendRedirect(request.getContextPath() + "/doctorDashboard?success=examFinished");
             return;
         }

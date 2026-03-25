@@ -87,6 +87,29 @@ body {
     margin: 0;
 }
 
+.quick-start-wrap {
+    margin-top: 12px;
+}
+
+.quick-start-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #2563eb;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.quick-start-btn.disabled {
+    background: #e2e8f0;
+    color: #64748b;
+    pointer-events: none;
+}
+
 .section-heading p {
     margin: 6px 0 0;
     color: #64748b;
@@ -190,7 +213,7 @@ body {
 
 .queue-table-header {
     display: grid;
-    grid-template-columns: minmax(56px, 0.5fr) minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(220px, 2fr) minmax(120px, 0.9fr) minmax(130px, 1fr);
+    grid-template-columns: minmax(56px, 0.5fr) minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(220px, 2fr) minmax(120px, 0.9fr);
     gap: 10px;
     align-items: center;
     padding: 0 16px;
@@ -206,7 +229,7 @@ body {
     border-radius: 14px;
     padding: 14px 16px;
     display: grid;
-    grid-template-columns: minmax(56px, 0.5fr) minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(220px, 2fr) minmax(120px, 0.9fr) minmax(130px, 1fr);
+    grid-template-columns: minmax(56px, 0.5fr) minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(220px, 2fr) minmax(120px, 0.9fr);
     gap: 10px;
     align-items: center;
     cursor: pointer;
@@ -249,15 +272,13 @@ body {
     white-space: nowrap;
 }
 
-.queue-state,
-.queue-action {
+.queue-state {
     display: flex;
     align-items: center;
     justify-content: flex-end;
 }
 
-.queue-table-header span:nth-child(6),
-.queue-table-header span:nth-child(7) {
+.queue-table-header span:nth-child(6){
     justify-self: end;
 }
 
@@ -293,113 +314,6 @@ body {
 
 .shift-item:last-child { border-bottom: none; }
 
-.popup-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(2px);
-    opacity: 0;
-    pointer-events: none;
-    transition: 0.2s;
-    z-index: 99;
-}
-
-.control-panel-popup {
-    position: fixed;
-    top: 50%;
-    right: 24px;
-    width: min(380px, calc(100% - 32px));
-    transform: translateY(-50%) translateX(120%);
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.32);
-    padding: 18px;
-    z-index: 100;
-    transition: transform 0.25s ease;
-}
-
-.popup-backdrop.open {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.control-panel-popup.open {
-    transform: translateY(-50%) translateX(0);
-}
-
-.control-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px;
-}
-
-.panel-kicker {
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 11px;
-    color: #64748b;
-}
-
-.control-panel-header h3 {
-    margin: 4px 0 0;
-}
-
-.btn-close {
-    border: none;
-    background: #e2e8f0;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.panel-meta,
-.panel-symptom {
-    margin-top: 12px;
-    background: #f8fafc;
-    border: 1px solid #e6edf8;
-    border-radius: 12px;
-    padding: 10px 12px;
-}
-
-.panel-meta p,
-.panel-symptom p {
-    margin: 6px 0;
-    font-size: 14px;
-}
-
-.actions {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin-top: 14px;
-}
-
-.actions .btn {
-    border: none;
-    border-radius: 10px;
-    padding: 11px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.actions .btn-primary {
-    background: #2563eb;
-    color: #fff;
-}
-
-.actions .btn-lab {
-    background: #0f766e;
-    color: #fff;
-}
-
-.actions .btn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
 @media (max-width: 992px) {
     .summary-cards,
     .content {
@@ -421,8 +335,7 @@ body {
     .queue-info::before,
     .queue-dob::before,
     .queue-symptom::before,
-    .queue-state::before,
-    .queue-action::before {
+    .queue-state::before{
         display: block;
         font-size: 11px;
         text-transform: uppercase;
@@ -437,10 +350,8 @@ body {
     .queue-dob::before { content: 'Ngày sinh'; }
     .queue-symptom::before { content: 'Triệu chứng'; }
     .queue-state::before { content: 'Trạng thái'; }
-    .queue-action::before { content: 'Thao tác'; }
 
-    .queue-symptom,
-    .queue-action {
+    .queue-symptom{
         grid-column: 1 / -1;
     }
 
@@ -448,19 +359,7 @@ body {
         white-space: normal;
     }
 
-    .queue-state,
-    .queue-action {
+    .queue-state{
         justify-self: start;
-    }
-    
-    .control-panel-popup {
-        right: 16px;
-        top: auto;
-        bottom: 16px;
-        transform: translateY(120%);
-    }
-
-    .control-panel-popup.open {
-        transform: translateY(0);
     }
 }
