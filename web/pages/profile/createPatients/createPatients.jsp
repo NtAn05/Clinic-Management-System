@@ -10,9 +10,9 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Appointment</title>
+        <title>Create Patient</title>
         <link rel="stylesheet"
-              href="${pageContext.request.contextPath}/pages/appointments/appointment/appointment.css">
+              href="<c:url value='/pages/appointments/appointment/appointment.css'/>">
     </head>
     <body>
 
@@ -30,7 +30,7 @@
                     <input type="hidden" name="patientID" value="${patient.getPatientId()}">
                     <input type="hidden" name="DoctorID" value="${DoctorID}">
                     <div class="card-box">
-                        <h3>Thông tin của bạn</h3>
+                        <h3>Đăng kí thông tin của bệnh nhân</h3>
 
                         <div class="form-grid">
                             <div>
@@ -53,15 +53,24 @@
 
                             <div>
                                 <label>Ngày sinh *</label>
-                                <input type="date" name="dateofbirth" value="${patient.dob}" >
+                                <fmt:formatDate value="${patient.dob}" pattern="yyyy-MM-dd" var="formattedDob"/>
+                                <input type="date" name="dateofbirth"
+                                       value="${not empty dob ? dob : formattedDob}">
                                 <span style="color:red">${errorDOB}</span>
                             </div>
 
                             <div>
                                 <label>Giới tính *</label>
                                 <select name="gender" required>
-                                    <option value="MALE">Nam</option>
-                                    <option value="FEMALE">Nữ</option>
+                                    <option value="MALE"
+                                            ${gender == 'MALE' ? 'selected' : ''}>
+                                        Nam
+                                    </option>
+
+                                    <option value="FEMALE"
+                                            ${gender == 'FEMALE' ? 'selected' : ''}>
+                                        Nữ
+                                    </option>
                                 </select>
                             </div>
 
@@ -73,7 +82,7 @@
 
                     <div class="actions">
                         <button type="button" class="btn-outline"
-                                onclick="location.href = '${pageContext.request.contextPath}/createpatientsservlet'">
+                                onclick="location.href = '${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}'">
                             Hủy
                         </button>
                         <c:if test="${user.getRole() eq 'receptionist'}">

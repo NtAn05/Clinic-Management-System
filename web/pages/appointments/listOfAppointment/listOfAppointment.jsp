@@ -49,8 +49,8 @@
                 </select>
 
                 <select id="dateFilter">
-                    <option value="all">Tất cả thời gian</option>
                     <option value="today">Hôm nay</option>
+                    <option value="all">Tất cả thời gian</option>
                     <option value="month">Tháng này</option>
                     <option value="year">Năm nay</option>
                 </select>
@@ -67,9 +67,6 @@
             <div class="stats">
 
                 <span class="badge blue">${list.size()} cuộc</span>
-                <span class="badge yellow">Booked</span>
-                <span class="badge purple">Waiting</span>
-                <span class="badge green">Completed</span>
 
             </div>
 
@@ -126,7 +123,9 @@
                             </td>
 
                             <td>
-                                <c:if test="${a.status eq 'booked'}">
+                                <jsp:useBean id="now" class="java.util.Date" />
+                                <fmt:formatDate value="${now}" pattern="yyyy-MM-dd" var="today"/>
+                                <c:if test="${a.status eq 'booked' and a.appointmentDate eq today}">
                                     <form action="listofappointment" method="post">
 
                                         <input type="hidden" name="id" value="${a.appointmentId}">
@@ -153,8 +152,13 @@
         </div>
 
         <script>
-            const dateFilter = document.getElementById("dateFilter");
 
+            const dateFilter = document.getElementById("dateFilter");
+            window.onload = function () {
+                const dateFilter = document.getElementById("dateFilter");
+                dateFilter.value = "today"; 
+                filterTable();            
+            };
             dateFilter.addEventListener("change", filterTable);
             const statusFilter = document.getElementById("statusFilter");
             const searchBox = document.getElementById("searchBox");
@@ -182,17 +186,14 @@
 
                     let show = true;
 
-                    // filter status
                     if (status !== "all" && rowStatus !== status) {
                         show = false;
                     }
 
-                    // filter search
                     if (!text.includes(keyword)) {
                         show = false;
                     }
 
-                    // filter date
                     if (dateType === "today") {
                         if (rowDate.toDateString() !== today.toDateString()) {
                             show = false;
@@ -220,7 +221,7 @@
 
             function clearFilter() {
 
-                statusFilter.value = "all";
+                statusFilter.value = "today";
                 searchBox.value = "";
                 filterTable();
 

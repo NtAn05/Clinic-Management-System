@@ -44,7 +44,7 @@
                                         <textarea name="note_${q.id}" placeholder="Nhập ghi chú..." required></textarea>
                                     </div>
                                 </c:if>
-                            </c:forEach>
+                           </c:forEach>
                         </div>
 
                         <div class="actions">

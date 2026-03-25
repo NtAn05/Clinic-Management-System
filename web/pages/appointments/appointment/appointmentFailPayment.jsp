@@ -2,12 +2,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Thanh toán thất bại</title>
+    <head>
+        <title>Thanh toán thất bại</title>
 
-<link rel="stylesheet"
+        <link rel="stylesheet"
               href="${pageContext.request.contextPath}/pages/appointments/appointment/appointment.css">
-    
+
     </head>
     <body>
 
@@ -18,52 +18,58 @@
 
                 <div class="main">
 
+                    <!-- STEPS -->
                     <div class="steps-wrapper">
-                        <div class="step-circle done">
-                            <span>✓</span>
-                            <p>Xác nhận</p>
-                        </div>
-                        <div class="step-line"></div>
 
-                        <div class="step-circle done">
-                            <span>✓</span>
+                        <div class="step active">
+                            <div class="circle">✓</div>
+                            <p>Xác nhận và chọn ca</p>
+                        </div>
+
+                        <div class="line"></div>
+
+                        <div class="step">
+                            <div class="circle">✓</div>
                             <p>Thanh toán</p>
                         </div>
-                        <div class="step-line"></div>
 
-                        <div class="step-circle done">
-                            <span>✓</span>
-                            <p>Hủy</p>
+                        <div class="line"></div>
+
+                        <div class="step">
+                            <div class="circle">✕</div>
+                            <p>Hoàn tất</p>
                         </div>
-                        <div class="step-line"></div>
 
-                        
                     </div>
 
-                    <div class="card-box">
-                        <h3>❌ Thanh toán thất bại hoặc đã huỷ!</h2</h3>
+                    <!-- FAIL CARD -->
+                    <div class="card-box fail-card">
 
-                        <div class="success-wrapper">
-                            <div class="success-icon-box">
-                                <img src="https://tse1.mm.bing.net/th/id/OIP.MD5CapzfmiFzbwPNCYDVvwHaGr?pid=ImgDet&w=187&h=168&c=7&dpr=1.3&o=7&rm=3"
-                                     alt="Thất bại"
-                                     class="success-icon">
-                            </div>
+                        <div class="fail-icon">
+                            ✕
                         </div>
 
-                        <label style="color: red">Cuộc hẹn của bạn bị hủy !!!</label>
-                        <br>
+                        <h2>Thanh toán thất bại</h2>
+
+                        <p class="fail-text">
+                            Giao dịch của bạn không thành công. <br>
+                            Vui lòng kiểm tra lại thông tin hoặc thử lại sau.
+                        </p>
 
                         <div class="actions">
-                            <a href="${pageContext.request.contextPath}/index.jsp" class="btn-primary">
+                            <a href="javascript:history.back()" class="btn-outline">
+                                Quay lại
+                            </a>
+
+                            <a href="${pageContext.request.contextPath}/index.jsp"
+                               class="btn-primary">
                                 Về trang chủ
                             </a>
                         </div>
+
                     </div>
 
                 </div>
-
-                
 
             </div>
         </div>

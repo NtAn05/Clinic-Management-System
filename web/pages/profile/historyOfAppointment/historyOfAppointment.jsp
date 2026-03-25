@@ -183,7 +183,7 @@
                     let cardStatus = card.dataset.status;
 
                     if (status === "all" || cardStatus === status) {
-                        card.style.display = "block";
+                        card.style.display = "flex";
                     } else {
                         card.style.display = "none";
                     }
@@ -197,7 +197,7 @@
                 cards.forEach(card => {
                     let name = card.dataset.name;
                     if (selectedName === "all" || name === selectedName) {
-                        card.style.display = "block";
+                        card.style.display = "flex";
                     } else {
                         card.style.display = "none";
                     }

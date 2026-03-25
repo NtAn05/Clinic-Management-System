@@ -27,22 +27,27 @@
 
                     <!-- STEPS -->
                     <div class="steps-wrapper">
-                        <div class="step-circle active">
-                            <span>1</span>
+
+                        <div class="step active">
+                            <div class="circle">✓</div>
                             <p>Xác nhận và chọn ca</p>
                         </div>
-                        <div class="step-line"></div>
-                        <div class="step-circle">
-                            <span>2</span>
+
+                        <div class="line"></div>
+
+                        <div class="step">
+                            <div class="circle">2</div>
                             <p>Thanh toán</p>
                         </div>
-                        <div class="step-line"></div>
-                        <div class="step-circle">
-                            <span>3</span>
-                            <p>Hoàn tất</p>
-                        </div>                        
-                    </div>
 
+                        <div class="line"></div>
+
+                        <div class="step">
+                            <div class="circle">3</div>
+                            <p>Hoàn tất</p>
+                        </div>
+
+                    </div>
                     <!-- THÔNG TIN XÁC NHẬN -->
 
                     <form method="post" action="${pageContext.request.contextPath}/appointmentservlet">
@@ -59,7 +64,7 @@
 
                                 <div>
                                     <label>Số điện thoại</label>
-                                    <p>${patient.getPhone()}</p>
+                                    <p>${ patient.phone}</p>
                                 </div>
 
                                 <div>
@@ -81,7 +86,7 @@
                             </div>
                             <div>
                                 <label>Ghi chú bệnh lý</label>
-                                <input type="text" name="note" >
+                                <textarea name="note" class="note-box" placeholder="Nhập ghi chú bệnh lý..." required></textarea>
 
                             </div>
 
@@ -144,7 +149,7 @@
 
 
 
-                                <button type="submit" name="btnSubmit" value="thanhtoan" class="btn-primary">
+                                <button type="submit"name="btnSubmit" value="thanhtoan"class="btn-primary"onclick="return confirmSubmit()">
                                     Xác nhận & Thanh toán
                                 </button>
 
@@ -162,7 +167,6 @@
                     <h3>${doctor.getFullName()}</h3>
                     <p class="degree">${doctor.getQualification()}</p>
                     <p class="desc">${doctor.getSpecialization()}</p>
-                    <p class="desc">${doctor.getClinic_address()}</p>
                     <br>
                     <div class="info">
                         <span>⏱ ${doctor.getExperience_years()} năm</span>
@@ -179,6 +183,13 @@
 
             </div>
         </div>
+        <script>
+            function confirmSubmit() {
+                return confirm("Bạn đã chắc chắn đúng và đủ thông tin chưa?\n\
+Vui lòng kiểm tra kĩ các thông tin trước khi thanh toán.");
+
+            }
+        </script>
         <jsp:include page="/common/footer.jsp" />
 
     </body>
