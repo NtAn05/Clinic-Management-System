@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,6 +39,20 @@ public class DoctorExamServlet extends HttpServlet {
     private static final String SECTION_DOCTOR_NOTE = "GHI CHÚ BÁC SĨ";
     private static final String SECTION_TREATMENT_PLAN = "PHƯƠNG ÁN ĐIỀU TRỊ";
     private static final String SECTION_LAB_REQUEST = "YÊU CẦU XÉT NGHIỆM";
+    
+    private static final class LabRequestDraft {
+        private final String testType;
+        private final String priority;
+        private final String collectionMethod;
+        private final String note;
+
+        private LabRequestDraft(String testType, String priority, String collectionMethod, String note) {
+            this.testType = testType;
+            this.priority = priority;
+            this.collectionMethod = collectionMethod;
+            this.note = note;
+        }
+    }
     
     private DoctorQueueItem resolveQueueForSequentialExam(DoctorDAO doctorDAO, int doctorId, Long requestedAppointmentId) {
         DoctorQueueItem currentExamining = doctorDAO.getCurrentExaminingQueueItem(doctorId);
@@ -151,6 +166,7 @@ public class DoctorExamServlet extends HttpServlet {
             request.setAttribute("examData", examData);
             List<ExamLabItem> labResults = doctorDAO.getLabResultsByAppointment(resolvedAppointmentId);
             request.setAttribute("labResults", labResults);
+            request.setAttribute("canSavePrescription", canSavePrescriptionByLabStatus(labResults));
             MedicalRecord medicalRecord = doctorDAO.getMedicalRecordByAppointment(resolvedAppointmentId);
             request.setAttribute("medicalRecord", medicalRecord);
 
@@ -240,32 +256,14 @@ public class DoctorExamServlet extends HttpServlet {
         String clinicalResult = cleanText(request.getParameter("clinicalResult"));
         String doctorNote = cleanText(request.getParameter("doctorNote"));
         String treatmentPlan = cleanText(request.getParameter("treatmentPlan"));
-        String labTestType = cleanText(request.getParameter("labTestType"));
-        String labPriority = cleanText(request.getParameter("labPriority"));
-        String labCollectionMethod = cleanText(request.getParameter("labCollectionMethod"));
-        String labRequestNote = cleanText(request.getParameter("labRequestNote"));
+         List<LabRequestDraft> labRequestDrafts = parseLabRequestDrafts(request);
 
         String labRequestInstruction = cleanText(request.getParameter("labRequestInstruction"));
         if ("createLabRequest".equalsIgnoreCase(action)) {
-            StringBuilder labInstructionBuilder = new StringBuilder();
-            if (!labTestType.isEmpty()) {
-                labInstructionBuilder.append("- Loại xét nghiệm: ").append(labTestType).append("\n");
-            }
-            if (!labPriority.isEmpty()) {
-                labInstructionBuilder.append("- Mức độ ưu tiên: ").append(labPriority).append("\n");
-            }
-            if (!labCollectionMethod.isEmpty()) {
-                labInstructionBuilder.append("- Hình thức lấy mẫu: ").append(labCollectionMethod).append("\n");
-            }
-            if (!labRequestNote.isEmpty()) {
-                labInstructionBuilder.append("- Ghi chú chỉ định: ").append(labRequestNote);
-            }
-            if (labInstructionBuilder.length() > 0) {
-                labRequestInstruction = labInstructionBuilder.toString().trim();
-            }
+            labRequestInstruction = buildLabRequestInstruction(labRequestDrafts);
         }
         String requiredFieldError = validateRequiredFields(action, diagnosis, clinicalResult, treatmentPlan,
-                labTestType, labPriority, labCollectionMethod);
+                labRequestDrafts);
         if (!requiredFieldError.isEmpty()) {
             String errorTab = "createLabRequest".equalsIgnoreCase(action) ? "lab" : "info";
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=" + errorTab + "&error=" + requiredFieldError);
@@ -275,6 +273,11 @@ public class DoctorExamServlet extends HttpServlet {
         String notes = buildMedicalRecordNote(allergies, chronic, family, social, vaccination, clinicalResult, doctorNote, treatmentPlan, labRequestInstruction);
 
         if ("savePrescription".equalsIgnoreCase(action)) {
+            if (doctorDAO.hasIncompleteLabRequests(appointmentId)) {
+                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=prescription&error=incompleteLabResults");
+                return;
+            }
+            
             List<PrescriptionItem> prescriptionItems = parsePrescriptionItems(request);
             if (prescriptionItems.isEmpty()) {
                 response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=prescription&error=emptyPrescription");
@@ -328,11 +331,17 @@ public class DoctorExamServlet extends HttpServlet {
                 return;
             }
 
-            int requestId = doctorDAO.saveMedicalRecordAndCreateLabRequest(appointmentId, doctor.getDoctorId(), symptoms, diagnosis, notes);
-            if (requestId > 0) {
+            int createdCount = doctorDAO.saveMedicalRecordAndCreateLabRequests(
+                    appointmentId,
+                    doctor.getDoctorId(),
+                    symptoms,
+                    diagnosis,
+                    notes,
+                    labRequestDrafts.size());
+            if (createdCount > 0) { 
                 SystemLogService.log(doctor.getUserId(), "LAB_REQUEST_CREATED",
-                        "Tạo yêu cầu xét nghiệm: appointmentId=" + appointmentId + ", labRequestId=" + requestId);
-                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&success=labRequested");
+                        "Tạo yêu cầu xét nghiệm: appointmentId=" + appointmentId + ", quantity=" + createdCount);
+                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&success=labRequestedMultiple");
                 return;
             }
             response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&error=labRequestFailed");
@@ -399,6 +408,48 @@ public class DoctorExamServlet extends HttpServlet {
         return cleanText(values[index]);
     }
 
+    private List<LabRequestDraft> parseLabRequestDrafts(HttpServletRequest request) {
+        List<LabRequestDraft> drafts = new ArrayList<>();
+
+        String[] testTypes = request.getParameterValues("labTestType");
+        String[] priorities = request.getParameterValues("labPriority");
+        String[] collectionMethods = request.getParameterValues("labCollectionMethod");
+        String[] notes = request.getParameterValues("labRequestItemNote");
+
+        if (testTypes == null && priorities == null && collectionMethods == null && notes == null) {
+            return drafts;
+        }
+
+        int rowCount = maxLength(testTypes, priorities, collectionMethods, notes);
+        for (int i = 0; i < rowCount; i++) {
+            String testType = getArrayValue(testTypes, i);
+            String priority = getArrayValue(priorities, i);
+            String collectionMethod = getArrayValue(collectionMethods, i);
+            String note = getArrayValue(notes, i);
+
+            if (testType.isEmpty() && priority.isEmpty() && collectionMethod.isEmpty() && note.isEmpty()) {
+                continue;
+            }
+            drafts.add(new LabRequestDraft(testType, priority, collectionMethod, note));
+        }
+
+        return drafts;
+    }
+
+    private int maxLength(String[]... arrays) {
+        int max = 0;
+        if (arrays == null) {
+            return max;
+        }
+
+        for (String[] array : arrays) {
+            if (array != null && array.length > max) {
+                max = array.length;
+            }
+        }
+        return max;
+    }
+    
     // Chuẩn hóa dữ liệu nhập cho form khám.
     // Giải quyết null và khoảng trắng dư để tránh lỗi validate/ghi DB.
     // null -> "", còn lại trim().
@@ -416,9 +467,7 @@ public class DoctorExamServlet extends HttpServlet {
             String diagnosis,
             String clinicalResult,
             String treatmentPlan,
-            String labTestType,
-            String labPriority,
-            String labCollectionMethod) {
+            List<LabRequestDraft> labRequestDrafts) {
         if ("finish".equalsIgnoreCase(action)) {
             if (diagnosis.isEmpty() || clinicalResult.isEmpty() || treatmentPlan.isEmpty()) {
                 return "missingRequiredFinishFields";
@@ -426,15 +475,61 @@ public class DoctorExamServlet extends HttpServlet {
         }
 
         if ("createLabRequest".equalsIgnoreCase(action)) {
-            if (diagnosis.isEmpty() || clinicalResult.isEmpty()
-                    || labTestType.isEmpty() || labPriority.isEmpty() || labCollectionMethod.isEmpty()) {
+            if (diagnosis.isEmpty() || clinicalResult.isEmpty() || labRequestDrafts.isEmpty()) {
                 return "missingRequiredLabFields";
+            }
+            
+            for (LabRequestDraft draft : labRequestDrafts) {
+                if (draft.testType.isEmpty() || draft.priority.isEmpty() || draft.collectionMethod.isEmpty()) {
+                    return "missingRequiredLabFields";
+                }
             }
         }
 
         return "";
     }
 
+    private String buildLabRequestInstruction(List<LabRequestDraft> labRequestDrafts) {
+        if (labRequestDrafts == null || labRequestDrafts.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < labRequestDrafts.size(); i++) {
+            LabRequestDraft draft = labRequestDrafts.get(i);
+            builder.append("[").append(i + 1).append("] ").append(draft.testType).append("\n");
+            builder.append("- Mức độ ưu tiên: ").append(draft.priority).append("\n");
+            builder.append("- Hình thức lấy mẫu: ").append(draft.collectionMethod).append("\n");
+            builder.append("- Trạng thái kết quả: Chưa có kết quả");
+            if (!draft.note.isEmpty()) {
+                builder.append("\n- Ghi chú chỉ định: ").append(draft.note);
+            }
+            if (i < labRequestDrafts.size() - 1) {
+                builder.append("\n\n");
+            }
+        }
+
+        return builder.toString().trim();
+    }
+
+    private boolean canSavePrescriptionByLabStatus(List<ExamLabItem> labResults) {
+        if (labResults == null || labResults.isEmpty()) {
+            return true;
+        }
+
+        for (ExamLabItem lab : labResults) {
+            if (lab == null) {
+                continue;
+            }
+            String status = cleanText(lab.getStatus());
+            if (!"completed".equalsIgnoreCase(status)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    
     // Gộp (tiền sử, kết quả khám, ghi chú...) thành 1 field "notes.
     // Dùng section header dạng [SECTION] + nội dung tương ứng, tách ra để parse ngược khi tải lại. 
     private String buildMedicalRecordNote(

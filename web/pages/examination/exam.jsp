@@ -40,7 +40,7 @@
                     <c:if test="${success == 'examFinished'}">
                         <div class="alert-success">Đã hoàn tất bệnh nhân trước đó. Hệ thống đã chuyển sang bệnh nhân kế tiếp trong hàng đợi.</div>
                     </c:if>
-                        
+
                     <c:if test="${error == 'saveFailed'}">
                         <div class="alert-error">Không thể lưu hồ sơ khám. Vui lòng thử lại.</div>
                     </c:if>
@@ -50,8 +50,8 @@
                     <c:if test="${error == 'missingRequiredLabFields'}">
                         <div class="alert-error">Cần nhập Chẩn đoán, Kết quả khám lâm sàng và đầy đủ thông tin chỉ định xét nghiệm trước khi tạo yêu cầu.</div>
                     </c:if>
-                    <c:if test="${success == 'labRequested'}">
-                        <div class="alert-success">Đã tạo yêu cầu xét nghiệm và chuyển bệnh nhân sang hàng đợi xét nghiệm.</div>
+                    <c:if test="${success == 'labRequestedMultiple'}">
+                        <div class="alert-success">Đã gửi các yêu cầu xét nghiệm và chuyển bệnh nhân sang hàng đợi xét nghiệm.</div>
                     </c:if>
                     <c:if test="${error == 'labRequestFailed'}">
                         <div class="alert-error">Không thể tạo yêu cầu xét nghiệm. Có thể lịch khám này đã có phiếu xét nghiệm.</div>
@@ -67,6 +67,9 @@
                     </c:if>
                     <c:if test="${error == 'savePrescriptionFailed'}">
                         <div class="alert-error">Không thể lưu đơn thuốc. Vui lòng thử lại.</div>
+                    </c:if>
+                    <c:if test="${error == 'incompleteLabResults'}">
+                        <div class="alert-error">Chỉ có thể lưu đơn thuốc khi tất cả yêu cầu xét nghiệm đã có kết quả.</div>
                     </c:if>
 
                     <div class="tabs">
@@ -165,13 +168,12 @@
                                                 <option value="Nhịn ăn trước xét nghiệm">Nhịn ăn trước xét nghiệm</option>
                                                 <option value="Theo hướng dẫn bác sĩ">Theo hướng dẫn bác sĩ</option>
                                             </select>
+                                            <input name="labRequestItemNote" placeholder="Ghi chú từng yêu cầu (tuỳ chọn)">
+                                            <button type="button" class="btn-outline btn-remove-lab" onclick="removeLabRow(this)" disabled>Xoá</button>
                                         </div>
                                     </div>
-
-                                    <label>Hướng dẫn / ghi chú chỉ định</label>
-                                    <textarea rows="3" name="labRequestNote" placeholder="Ví dụ: ưu tiên xử lý trước 10h, lưu ý tiền sử dị ứng thuốc cản quang..."><c:out value="${labRequestInstruction}"/></textarea>
-
                                     <div class="actions">
+                                        <button type="button" class="btn-outline" onclick="addLabRow()">+ Thêm yêu cầu xét nghiệm</button>
                                         <button type="submit" class="btn-primary" name="action" value="createLabRequest" onclick="return confirm('Xác nhận gửi yêu cầu xét nghiệm cho bệnh nhân này?');">🧪 Gửi yêu cầu xét nghiệm</button>
                                     </div>
                                 </div>
@@ -225,6 +227,9 @@
                         <div class="tab-content ${activeTab == 'prescription' ? 'active' : ''}" id="prescription">
                             <div class="card">
                                 <h3>Đơn thuốc</h3>
+                                <c:if test="${not canSavePrescription}">
+                                    <div class="alert-error">Đang có yêu cầu xét nghiệm chưa hoàn tất. Vui lòng đợi có đủ kết quả trước khi lưu đơn thuốc.</div>
+                                </c:if>
                                 <!--                            <label>Ghi chú đơn thuốc</label>
                                                             <textarea rows="2" name="prescriptionNote" placeholder="Lưu ý chung cho bệnh nhân khi dùng thuốc..."></textarea>-->
 
@@ -258,7 +263,7 @@
                                 </c:if>
                                 <div class="actions">
                                     <button type="button" class="btn-outline" onclick="addRxRow()">+ Thêm thuốc</button>
-                                    <button type="submit" class="btn-primary" name="action" value="savePrescription">💊 Lưu đơn thuốc</button>
+                                    <button type="submit" class="btn-primary" name="action" value="savePrescription" ${canSavePrescription ? '' : 'disabled'}>💊 Lưu đơn thuốc</button>
                                 </div>
                             </div>
                         </div>
@@ -346,7 +351,28 @@
             <input name="frequency" placeholder="Số lần/ngày">
             <input name="durationDays" placeholder="Số ngày">
         </template>
-
+        <template id="labTemplate">
+            <select name="labTestType">
+                <option value="">Chọn loại xét nghiệm</option>
+                <option value="Công thức máu">Công thức máu</option>
+                <option value="Đường huyết">Đường huyết</option>
+                <option value="Sinh hóa máu">Sinh hóa máu</option>
+                <option value="Nước tiểu">Nước tiểu</option>
+                <option value="X-quang">X-quang</option>
+            </select>
+            <select name="labPriority">
+                <option value="Bình thường">Bình thường</option>
+                <option value="Khẩn">Khẩn</option>
+            </select>
+            <select name="labCollectionMethod">
+                <option value="Lấy mẫu tại chỗ">Lấy mẫu tại chỗ</option>
+                <option value="Nhịn ăn trước xét nghiệm">Nhịn ăn trước xét nghiệm</option>
+                <option value="Theo hướng dẫn bác sĩ">Theo hướng dẫn bác sĩ</option>
+            </select>
+            <input name="labRequestItemNote" placeholder="Ghi chú từng yêu cầu (tuỳ chọn)">
+            <button type="button" class="btn-outline btn-remove-lab" onclick="removeLabRow(this)">Xoá</button>
+        </template>
+        
         <script>
             function showTab(id) {
                 document.querySelectorAll('.tab').forEach(t => {
@@ -405,8 +431,47 @@
                 }
             }
 
+            function addLabRow() {
+                const wrap = document.getElementById('labRequestList');
+                if (!wrap) {
+                    return;
+                }
+                const row = document.createElement('div');
+                row.className = 'rx-row lab-row';
+                row.innerHTML = document.getElementById('labTemplate').innerHTML;
+                wrap.appendChild(row);
+                syncLabRemoveButtons();
+            }
+
+            function removeLabRow(button) {
+                const wrap = document.getElementById('labRequestList');
+                const row = button ? button.closest('.lab-row') : null;
+                if (!wrap || !row) {
+                    return;
+                }
+                row.remove();
+                syncLabRemoveButtons();
+            }
+
+            function syncLabRemoveButtons() {
+                const rows = document.querySelectorAll('#labRequestList .lab-row');
+                rows.forEach((row, index) => {
+                    const btn = row.querySelector('.btn-remove-lab');
+                    if (!btn) {
+                        return;
+                    }
+                    btn.disabled = rows.length <= 1;
+                    if (rows.length <= 1 && index === 0) {
+                        btn.setAttribute('title', 'Cần ít nhất 1 yêu cầu');
+                    } else {
+                        btn.removeAttribute('title');
+                    }
+                });
+            }
+            
             document.addEventListener('DOMContentLoaded', () => {
                 document.querySelectorAll('#rxList select[name="medicineId"]').forEach(syncMedicineName);
+                syncLabRemoveButtons();
             });
         </script>
         <jsp:include page="/common/footer.jsp" />
