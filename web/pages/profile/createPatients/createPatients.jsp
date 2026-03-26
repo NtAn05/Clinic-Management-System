@@ -92,13 +92,12 @@
 
                         <c:if test="${user.getRole() != 'receptionist'}">
 
-
-                            <c:if test="${patient.getPatientId() != null}">
+                            <c:if test="${not empty param.patientID}">
                                 <button type="submit" name="btnSubmit" value="edit" class="btn-primary">
                                     Lưu hồ sơ
                                 </button>
                             </c:if>
-                            <c:if test="${patient.getPatientId() == null}">
+                            <c:if test="${empty param.patientID}">
                                 <button type="submit" name="btnSubmit" value="create" class="btn-primary">
                                     Tạo hồ sơ
                                 </button>

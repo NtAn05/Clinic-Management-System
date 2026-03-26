@@ -180,7 +180,7 @@ public class PatientsServlet extends HttpServlet {
         PatientPortalDAO dao = new PatientPortalDAO();
         request.setAttribute("DoctorID", DoctorID);
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-
+       
         int newPatientId;
         if (valid) {
 
