@@ -113,8 +113,8 @@ public class AppointmentDAO extends DBContext {
                 + "a.appointment_time, "
                 + "a.status, "
                 + "a.symptom, "
-                + "d.specialization, "
-                + "d.qualification, "
+                + "sp.specialization, "
+                + "sp.qualification, "
                 + "d.price_booking, "
                 + "du.user_id AS doctor_user_id, "
                 + "du.full_name AS doctor_name, "
@@ -125,6 +125,7 @@ public class AppointmentDAO extends DBContext {
                 + "FROM appointments a "
                 + "JOIN patients p ON a.patient_id = p.patient_id "
                 + "JOIN doctors d ON a.doctor_id = d.doctor_id "
+                + "LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id "
                 + "JOIN users du ON d.user_id = du.user_id "
                 + "WHERE p.user_id = ? "
                 + "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
@@ -186,8 +187,8 @@ public class AppointmentDAO extends DBContext {
                 + "a.appointment_time, "
                 + "a.status, "
                 + "a.symptom, "
-                + "d.specialization, "
-                + "d.qualification, "
+                + "sp.specialization, "
+                + "sp.qualification, "
                 + "d.price_booking, "
                 + "du.user_id AS doctor_user_id, "
                 + "du.full_name AS doctor_name, "
@@ -198,6 +199,7 @@ public class AppointmentDAO extends DBContext {
                 + "FROM appointments a "
                 + "JOIN patients p ON a.patient_id = p.patient_id "
                 + "JOIN doctors d ON a.doctor_id = d.doctor_id "
+                + "LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id "
                 + "JOIN users du ON d.user_id = du.user_id "
                 + "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
 

@@ -21,10 +21,11 @@ public class DoctorDAO extends DBContext {
     /* get doctor by id*/
     public Doctor getDoctorByUserId(int userId) {
         String sql = """
-            SELECT d.doctor_id, d.user_id, d.specialization,
+            SELECT d.doctor_id, d.user_id, sp.specialization,
                    u.full_name, u.phone, u.email
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             WHERE d.user_id = ?
         """;
 
@@ -82,12 +83,13 @@ public class DoctorDAO extends DBContext {
     }
 
     public List<Doctor> getAllDoctorsForSchedule() {
-        syncDoctorProfilesForAllDoctorUsers();
+        syncDoctorRowsForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
         String sql = """
-            SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
+            SELECT d.doctor_id, d.user_id, sp.specialization, u.full_name
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             WHERE u.role = 'doctor'
             ORDER BY u.full_name
         """;
@@ -109,12 +111,13 @@ public class DoctorDAO extends DBContext {
     }
 
     public List<Doctor> getActiveDoctorsForSchedule() {
-        syncDoctorProfilesForAllDoctorUsers();
+        syncDoctorRowsForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
         String sql = """
-            SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
+            SELECT d.doctor_id, d.user_id, sp.specialization, u.full_name
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             WHERE u.role = 'doctor' AND u.status = 'active'
             ORDER BY u.full_name
         """;
@@ -133,6 +136,22 @@ public class DoctorDAO extends DBContext {
         }
 
         return list;
+    }
+
+    public void syncDoctorRowsForAllDoctorUsers() {
+        String sql = """
+            INSERT INTO doctors (user_id)
+            SELECT u.user_id
+            FROM users u
+            LEFT JOIN doctors d ON d.user_id = u.user_id
+            WHERE u.role = 'doctor' AND d.doctor_id IS NULL
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void syncDoctorProfilesForAllDoctorUsers() {
@@ -178,45 +197,58 @@ public class DoctorDAO extends DBContext {
 
     public void upsertDoctorProfileByUserId(int userId, String specialization, String qualification,
             int experienceYears, int priceBooking) throws SQLException {
-        String updateSql = """
+        syncDoctorRowsForAllDoctorUsers();
+
+        String updateDoctorSql = """
             UPDATE doctors
-            SET specialization = ?, qualification = ?, experience_years = ?, price_booking = ?
+            SET price_booking = ?
             WHERE user_id = ?
         """;
-        try (PreparedStatement update = connection.prepareStatement(updateSql)) {
-            update.setString(1, specialization);
-            update.setString(2, qualification);
-            update.setInt(3, experienceYears);
-            update.setInt(4, priceBooking);
-            update.setInt(5, userId);
-            int affected = update.executeUpdate();
-            if (affected > 0) {
-                return;
+        try (PreparedStatement updateDoctor = connection.prepareStatement(updateDoctorSql)) {
+            updateDoctor.setInt(1, priceBooking);
+            updateDoctor.setInt(2, userId);
+            if (updateDoctor.executeUpdate() == 0) {
+                try (PreparedStatement insertDoctor = connection.prepareStatement(
+                        "INSERT INTO doctors (user_id, price_booking) VALUES (?, ?)")) {
+                    insertDoctor.setInt(1, userId);
+                    insertDoctor.setInt(2, priceBooking);
+                    insertDoctor.executeUpdate();
+                }
             }
         }
 
-        String insertSql = """
-            INSERT INTO doctors (user_id, specialization, qualification, experience_years, price_booking)
-            VALUES (?, ?, ?, ?, ?)
+        String updateStaffSql = """
+            UPDATE staff_profiles
+            SET specialization = ?, qualification = ?, experience_years = ?
+            WHERE user_id = ?
         """;
-        try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
-            insert.setInt(1, userId);
-            insert.setString(2, specialization);
-            insert.setString(3, qualification);
-            insert.setInt(4, experienceYears);
-            insert.setInt(5, priceBooking);
-            insert.executeUpdate();
+        try (PreparedStatement updateStaff = connection.prepareStatement(updateStaffSql)) {
+            updateStaff.setString(1, specialization);
+            updateStaff.setString(2, qualification);
+            updateStaff.setInt(3, experienceYears);
+            updateStaff.setInt(4, userId);
+            if (updateStaff.executeUpdate() == 0) {
+                try (PreparedStatement insertStaff = connection.prepareStatement(
+                        "INSERT INTO staff_profiles (user_id, specialization, qualification, experience_years) VALUES (?, ?, ?, ?)")) {
+                    insertStaff.setInt(1, userId);
+                    insertStaff.setString(2, specialization);
+                    insertStaff.setString(3, qualification);
+                    insertStaff.setInt(4, experienceYears);
+                    insertStaff.executeUpdate();
+                }
+            }
         }
     }
 
     public List<Doctor> getDoctorsForAdmin(String keyword, String specializationFilter, String qualificationFilter) {
-        syncDoctorProfilesForAllDoctorUsers();
+        syncDoctorRowsForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("""
-            SELECT d.doctor_id, d.user_id, d.specialization, d.qualification, d.experience_years, d.price_booking, d.rating,
+            SELECT d.doctor_id, d.user_id, sp.specialization, sp.qualification, sp.experience_years, d.price_booking, d.rating,
                    u.full_name, u.phone, u.email, u.status AS user_status
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             WHERE u.role = 'doctor'
         """);
 
@@ -229,11 +261,11 @@ public class DoctorDAO extends DBContext {
             params.add(like);
         }
         if (specializationFilter != null && !specializationFilter.isBlank()) {
-            sql.append(" AND d.specialization = ?");
+            sql.append(" AND sp.specialization = ?");
             params.add(specializationFilter.trim());
         }
         if (qualificationFilter != null && !qualificationFilter.isBlank()) {
-            sql.append(" AND d.qualification = ?");
+            sql.append(" AND sp.qualification = ?");
             params.add(qualificationFilter.trim());
         }
         sql.append(" ORDER BY u.full_name");
@@ -270,7 +302,7 @@ public class DoctorDAO extends DBContext {
         List<String> list = new ArrayList<>();
         String sql = """
             SELECT DISTINCT specialization
-            FROM doctors
+            FROM staff_profiles
             WHERE specialization IS NOT NULL AND specialization <> ''
             ORDER BY specialization
         """;
@@ -288,7 +320,7 @@ public class DoctorDAO extends DBContext {
         List<String> list = new ArrayList<>();
         String sql = """
             SELECT DISTINCT qualification
-            FROM doctors
+            FROM staff_profiles
             WHERE qualification IS NOT NULL AND qualification <> ''
             ORDER BY qualification
         """;
@@ -304,10 +336,11 @@ public class DoctorDAO extends DBContext {
 
     public Doctor getDoctorByIdForAdmin(int doctorId) {
         String sql = """
-            SELECT d.doctor_id, d.user_id, d.specialization, d.qualification, d.experience_years, d.price_booking, d.rating,
+            SELECT d.doctor_id, d.user_id, sp.specialization, sp.qualification, sp.experience_years, d.price_booking, d.rating,
                    u.full_name, u.phone, u.email, u.status AS user_status
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             WHERE d.doctor_id = ? AND u.role = 'doctor'
             LIMIT 1
         """;
@@ -343,8 +376,12 @@ public class DoctorDAO extends DBContext {
             VALUES (?, ?, ?, ?, 'doctor', 'active')
         """;
         String sqlDoctor = """
-            INSERT INTO doctors (user_id, specialization, qualification, experience_years, price_booking)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO doctors (user_id, price_booking)
+            VALUES (?, ?)
+        """;
+        String sqlStaff = """
+            INSERT INTO staff_profiles (user_id, specialization, qualification, experience_years)
+            VALUES (?, ?, ?, ?)
         """;
 
         boolean originalAutoCommit = connection.getAutoCommit();
@@ -373,11 +410,20 @@ public class DoctorDAO extends DBContext {
 
             try (PreparedStatement doctorSt = connection.prepareStatement(sqlDoctor)) {
                 doctorSt.setInt(1, userId);
-                doctorSt.setString(2, specialization);
-                doctorSt.setString(3, qualification);
-                doctorSt.setInt(4, experienceYears);
-                doctorSt.setInt(5, priceBooking);
+                doctorSt.setInt(2, priceBooking);
                 int affected = doctorSt.executeUpdate();
+                if (affected == 0) {
+                    connection.rollback();
+                    return 0;
+                }
+            }
+
+            try (PreparedStatement staffSt = connection.prepareStatement(sqlStaff)) {
+                staffSt.setInt(1, userId);
+                staffSt.setString(2, specialization);
+                staffSt.setString(3, qualification);
+                staffSt.setInt(4, experienceYears);
+                int affected = staffSt.executeUpdate();
                 if (affected == 0) {
                     connection.rollback();
                     return 0;
@@ -400,8 +446,17 @@ public class DoctorDAO extends DBContext {
         String sqlUser = "UPDATE users SET full_name = ?, phone = ?, email = ? WHERE user_id = ? AND role = 'doctor'";
         String sqlDoctor = """
             UPDATE doctors
-            SET specialization = ?, qualification = ?, experience_years = ?, price_booking = ?
+            SET price_booking = ?
             WHERE doctor_id = ?
+        """;
+        String sqlStaff = """
+            UPDATE staff_profiles
+            SET specialization = ?, qualification = ?, experience_years = ?
+            WHERE user_id = ?
+        """;
+        String sqlInsertStaff = """
+            INSERT INTO staff_profiles (user_id, specialization, qualification, experience_years)
+            VALUES (?, ?, ?, ?)
         """;
 
         boolean originalAutoCommit = connection.getAutoCommit();
@@ -433,14 +488,30 @@ public class DoctorDAO extends DBContext {
             }
 
             try (PreparedStatement doctorSt = connection.prepareStatement(sqlDoctor)) {
-                doctorSt.setString(1, specialization);
-                doctorSt.setString(2, qualification);
-                doctorSt.setInt(3, experienceYears);
-                doctorSt.setInt(4, priceBooking);
-                doctorSt.setInt(5, doctorId);
+                doctorSt.setInt(1, priceBooking);
+                doctorSt.setInt(2, doctorId);
                 if (doctorSt.executeUpdate() == 0) {
                     connection.rollback();
                     return false;
+                }
+            }
+
+            try (PreparedStatement staffSt = connection.prepareStatement(sqlStaff)) {
+                staffSt.setString(1, specialization);
+                staffSt.setString(2, qualification);
+                staffSt.setInt(3, experienceYears);
+                staffSt.setInt(4, userId);
+                if (staffSt.executeUpdate() == 0) {
+                    try (PreparedStatement insertStaffSt = connection.prepareStatement(sqlInsertStaff)) {
+                        insertStaffSt.setInt(1, userId);
+                        insertStaffSt.setString(2, specialization);
+                        insertStaffSt.setString(3, qualification);
+                        insertStaffSt.setInt(4, experienceYears);
+                        if (insertStaffSt.executeUpdate() == 0) {
+                            connection.rollback();
+                            return false;
+                        }
+                    }
                 }
             }
 
@@ -2100,17 +2171,41 @@ public class DoctorDAO extends DBContext {
     }
 
     public void updateDoctor(int doctorId, String qualification, int experience, String specialization) {
-        String sql = "UPDATE doctors SET qualification=?, experience_years=?, specialization=? "
-                + "WHERE doctor_id=?";
+        String sqlGetUser = "SELECT user_id FROM doctors WHERE doctor_id = ?";
+        String sqlUpdateStaff = """
+            UPDATE staff_profiles
+            SET qualification = ?, experience_years = ?, specialization = ?
+            WHERE user_id = ?
+        """;
+        String sqlInsertStaff = """
+            INSERT INTO staff_profiles (user_id, qualification, experience_years, specialization)
+            VALUES (?, ?, ?, ?)
+        """;
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
+        try (PreparedStatement getUser = connection.prepareStatement(sqlGetUser)) {
+            getUser.setInt(1, doctorId);
+            ResultSet userRs = getUser.executeQuery();
+            if (!userRs.next()) {
+                return;
+            }
 
-            st.setString(1, qualification);
-            st.setInt(2, experience);
-            st.setString(3, specialization);
-            st.setInt(4, doctorId);
+            int userId = userRs.getInt("user_id");
+            try (PreparedStatement st = connection.prepareStatement(sqlUpdateStaff)) {
+                st.setString(1, qualification);
+                st.setInt(2, experience);
+                st.setString(3, specialization);
+                st.setInt(4, userId);
 
-            st.executeUpdate();
+                if (st.executeUpdate() == 0) {
+                    try (PreparedStatement insert = connection.prepareStatement(sqlInsertStaff)) {
+                        insert.setInt(1, userId);
+                        insert.setString(2, qualification);
+                        insert.setInt(3, experience);
+                        insert.setString(4, specialization);
+                        insert.executeUpdate();
+                    }
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -2118,7 +2213,12 @@ public class DoctorDAO extends DBContext {
     }
 
     public Object getDoctorByUserId2(int userId) {
-        String sql = "SELECT * FROM doctors WHERE user_id=?";
+        String sql = """
+            SELECT d.doctor_id, sp.qualification, sp.experience_years, sp.specialization
+            FROM doctors d
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
+            WHERE d.user_id = ?
+        """;
         try (PreparedStatement st = connection.prepareStatement(sql)) {
 
             st.setInt(1, userId);
@@ -2353,15 +2453,15 @@ public class DoctorDAO extends DBContext {
         SELECT 
             d.doctor_id,
             u.full_name,
-            d.specialization,
-            d.qualification,
-            d.experience_years,
+            sp.specialization,
+            sp.qualification,
+            sp.experience_years,
             d.rating,
             d.price_booking,
-            d.clinic_address,
             u.image_url
         FROM doctors d
         JOIN users u ON d.user_id = u.user_id
+        LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
         WHERE d.doctor_id = ?
     """;
 
@@ -2380,7 +2480,6 @@ public class DoctorDAO extends DBContext {
                 d.setExperience_years(rs.getInt("experience_years"));
                 d.setRating(rs.getDouble("rating"));
                 d.setPrice(rs.getDouble("price_booking"));
-                d.setClinic_address(rs.getString("clinic_address"));
                 d.setImage(rs.getString("image_url"));
 
                 return d;
@@ -2401,15 +2500,15 @@ public class DoctorDAO extends DBContext {
         SELECT 
             d.doctor_id,
             u.full_name,
-            d.specialization,
-            d.qualification,
-            d.experience_years,
+            sp.specialization,
+            sp.qualification,
+            sp.experience_years,
             d.rating,
             d.price_booking,
-            d.clinic_address,
             u.image_url
         FROM doctors d
         JOIN users u ON d.user_id = u.user_id
+        LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
     """;
 
         try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
@@ -2424,7 +2523,6 @@ public class DoctorDAO extends DBContext {
                 d.setExperience_years(rs.getInt("experience_years"));
                 d.setRating(rs.getDouble("rating"));
                 d.setPrice(rs.getDouble("price_booking"));
-                d.setClinic_address(rs.getString("clinic_address"));
                 d.setImage(rs.getString("image_url"));
 
                 list.add(d);
@@ -2451,15 +2549,15 @@ public class DoctorDAO extends DBContext {
         SELECT 
             d.doctor_id,
             u.full_name,
-            d.specialization,
-            d.qualification,
-            d.experience_years,
+            sp.specialization,
+            sp.qualification,
+            sp.experience_years,
             d.rating,
             d.price_booking,
-            d.clinic_address,
             u.image_url
         FROM doctors d
         JOIN users u ON d.user_id = u.user_id
+        LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
         WHERE 1 = 1
     """);
 
@@ -2476,7 +2574,7 @@ public class DoctorDAO extends DBContext {
         }
 
         if (experience != null && !experience.isEmpty()) {
-            sql.append(" AND d.experience_years >= ? ");
+            sql.append(" AND sp.experience_years >= ? ");
         }
 
         if ("priceAsc".equals(sort)) {
@@ -2519,7 +2617,6 @@ public class DoctorDAO extends DBContext {
                 d.setExperience_years(rs.getInt("experience_years"));
                 d.setRating(rs.getDouble("rating"));
                 d.setPrice(rs.getDouble("price_booking"));
-                d.setClinic_address(rs.getString("clinic_address"));
                 d.setImage(rs.getString("image_url"));
 
                 list.add(d);
@@ -2533,9 +2630,10 @@ public class DoctorDAO extends DBContext {
     }
  public java.util.List<java.util.Map<String, Object>> getTopRatedDoctors(int limit) {
         java.util.List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
-        String sql = "SELECT d.doctor_id, u.full_name, d.specialization, d.qualification, " +
-                     "d.clinic_address, d.experience_years, d.rating, u.image_url " +
+        String sql = "SELECT d.doctor_id, u.full_name, sp.specialization, sp.qualification, " +
+                     "sp.experience_years, d.rating, u.image_url " +
                      "FROM doctors d JOIN users u ON d.user_id = u.user_id " +
+                     "LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id " +
                      "WHERE u.status = 'active' ORDER BY d.rating DESC LIMIT ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, limit);
@@ -2546,7 +2644,6 @@ public class DoctorDAO extends DBContext {
                     doc.put("fullName", rs.getString("full_name"));
                     doc.put("specialization", rs.getString("specialization"));
                     doc.put("qualification", rs.getString("qualification"));
-                    doc.put("clinicAddress", rs.getString("clinic_address"));
                     doc.put("exp", rs.getInt("experience_years"));
                     doc.put("rating", rs.getDouble("rating"));
                     doc.put("image", rs.getString("image_url"));

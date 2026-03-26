@@ -35,7 +35,7 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
+                sp.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -45,6 +45,7 @@ public class LabRequestDAO extends DBContext {
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             ORDER BY lr.created_at DESC
         """;
@@ -73,6 +74,7 @@ public class LabRequestDAO extends DBContext {
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
             AND EXISTS (
@@ -91,7 +93,7 @@ public class LabRequestDAO extends DBContext {
         }
         
         if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
+            sql.append(" AND sp.specialization = ?");
             params.add(department);
         }
         
@@ -140,7 +142,7 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
+                sp.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -150,6 +152,7 @@ public class LabRequestDAO extends DBContext {
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
             AND EXISTS (
@@ -168,7 +171,7 @@ public class LabRequestDAO extends DBContext {
         }
         
         if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
+            sql.append(" AND sp.specialization = ?");
             params.add(department);
         }
         
@@ -226,7 +229,7 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
+                sp.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -236,6 +239,7 @@ public class LabRequestDAO extends DBContext {
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
             AND EXISTS (
@@ -255,7 +259,7 @@ public class LabRequestDAO extends DBContext {
         }
         
         if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
+            sql.append(" AND sp.specialization = ?");
             params.add(department);
         }
         
@@ -311,7 +315,7 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
+                sp.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -321,6 +325,7 @@ public class LabRequestDAO extends DBContext {
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE lr.request_id = ?
         """;
@@ -637,7 +642,7 @@ public class LabRequestDAO extends DBContext {
     public List<String> getAllSpecializations() {
         List<String> list = new ArrayList<>();
         
-        String sql = "SELECT DISTINCT specialization FROM doctors ORDER BY specialization";
+        String sql = "SELECT DISTINCT specialization FROM staff_profiles WHERE specialization IS NOT NULL AND specialization <> '' ORDER BY specialization";
         
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             ResultSet rs = st.executeQuery();
@@ -677,6 +682,7 @@ public class LabRequestDAO extends DBContext {
             JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
+            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
             AND EXISTS (
@@ -695,7 +701,7 @@ public class LabRequestDAO extends DBContext {
         }
 
         if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
+            sql.append(" AND sp.specialization = ?");
             params.add(department);
         }
 
