@@ -119,12 +119,6 @@
               <div class="detail-label">Triệu chứng / Chỉ định xét nghiệm</div>
               <div class="detail-value" style="margin-top: 4px;">${labRequest.appointment.symptom != null ? labRequest.appointment.symptom : 'Không có'}</div>
             </div>
-            <div class="detail-row" style="margin-top: 16px;">
-              <div>
-                <div class="detail-label">Thời gian chỉ định</div>
-                <div class="detail-value"><fmt:formatDate value="${labRequest.createdAt}" pattern="HH:mm - dd/MM/yyyy" timeZone="Asia/Ho_Chi_Minh" /></div>
-              </div>
-            </div>
           </div>
         </div>
 

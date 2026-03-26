@@ -312,24 +312,15 @@
             </div>
           </div>
 
-          <!-- BỘ LỌC -->
+
+          <!-- TÌM KIẾM -->
           <form method="GET" action="${pageContext.request.contextPath}/lab-payment" id="filterForm">
             <input type="hidden" name="page" value="1" />
             <div class="filters">
-              <div class="field-group">
-                <label class="field-label">Trạng thái thanh toán</label>
-                <select class="select" name="status" id="filterStatus">
-                  <option value="">Tất cả</option>
-                  <option value="pending" ${filterStatus == 'pending' ? 'selected' : ''}>Chờ thanh toán</option>
-                  <option value="paid" ${filterStatus == 'paid' ? 'selected' : ''}>Đã thanh toán</option>
-                </select>
-              </div>
-
               <div class="field-group" style="flex: 2 1 220px;">
-                <label class="field-label">Tìm theo tên BN / Mã BN / Mã phiếu</label>
+                <label class="field-label" for="searchInput">Tìm theo tên BN / Mã BN / Mã phiếu</label>
                 <input class="input" name="search" id="searchInput" placeholder="Nhập từ khóa tìm kiếm..." value="${searchTerm}" />
               </div>
-
               <div class="field-group" style="flex: 0 0 auto; align-self: flex-end;">
                 <button type="button" id="clearFiltersBtn" class="btn btn-outline" style="white-space: nowrap;">
                   <i class="fas fa-times-circle"></i> Xóa bộ lọc
@@ -418,7 +409,7 @@
                           </span>
                         </td>
                         <td>
-                          <fmt:formatDate value="${payment.createdAt}" pattern="HH:mm dd/MM/yyyy" />
+                          <fmt:formatDate value="${payment.labRequest.createdAt}" pattern="HH:mm dd/MM/yyyy" timeZone="UTC" />
                         </td>
                         <td>
                           <c:choose>
@@ -547,12 +538,6 @@
       });
     }
 
-    // Xử lý thay đổi bộ lọc
-    document.getElementById('filterStatus').addEventListener('change', () => {
-      document.getElementById('filterForm').submit();
-    });
-
-    // Xử lý tìm kiếm
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
@@ -566,12 +551,11 @@
       }
     });
 
-    // Xóa tất cả bộ lọc
     document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-      document.getElementById('filterStatus').value = '';
       document.getElementById('searchInput').value = '';
       window.location.href = '${pageContext.request.contextPath}/lab-payment';
     });
+
   </script>
 
   <jsp:include page="../../common/footer.jsp" />

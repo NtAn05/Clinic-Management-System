@@ -67,11 +67,32 @@ public class LabPaymentDAO extends DBContext {
         }
 
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            sql.append(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CAST(lr.request_id AS CHAR) LIKE ?)");
             String searchPattern = "%" + searchTerm + "%";
+            Integer patientIdSearch = null;
+            Integer requestIdSearch = null;
+            String upperTerm = searchTerm.trim().toUpperCase();
+            if (upperTerm.matches("BN\\d+")) {
+                try { patientIdSearch = Integer.parseInt(upperTerm.substring(2)); } catch (NumberFormatException ignored) {}
+            }
+            java.util.regex.Matcher labMatcher = java.util.regex.Pattern.compile("(?:LAB-\\d+-)(\\d+)").matcher(upperTerm);
+            if (labMatcher.find()) {
+                try { requestIdSearch = Integer.parseInt(labMatcher.group(1)); } catch (NumberFormatException ignored) {}
+            }
+            StringBuilder cond = new StringBuilder(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ? OR CONCAT('BN', LPAD(p.patient_id, 6, '0')) LIKE ?");
             params.add(searchPattern);
             params.add(searchPattern);
             params.add(searchPattern);
+            params.add(searchPattern);
+            if (patientIdSearch != null) {
+                cond.append(" OR p.patient_id = ?");
+                params.add(patientIdSearch);
+            }
+            if (requestIdSearch != null) {
+                cond.append(" OR lr.request_id = ?");
+                params.add(requestIdSearch);
+            }
+            cond.append(")");
+            sql.append(cond);
         }
 
         sql.append(" ORDER BY pay.status ASC, pay.created_at DESC");
@@ -121,11 +142,32 @@ public class LabPaymentDAO extends DBContext {
         }
 
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            sql.append(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CAST(lr.request_id AS CHAR) LIKE ?)");
             String searchPattern = "%" + searchTerm + "%";
+            Integer patientIdSearch = null;
+            Integer requestIdSearch = null;
+            String upperTerm = searchTerm.trim().toUpperCase();
+            if (upperTerm.matches("BN\\d+")) {
+                try { patientIdSearch = Integer.parseInt(upperTerm.substring(2)); } catch (NumberFormatException ignored) {}
+            }
+            java.util.regex.Matcher labMatcher = java.util.regex.Pattern.compile("(?:LAB-\\d+-)(\\d+)").matcher(upperTerm);
+            if (labMatcher.find()) {
+                try { requestIdSearch = Integer.parseInt(labMatcher.group(1)); } catch (NumberFormatException ignored) {}
+            }
+            StringBuilder cond = new StringBuilder(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ? OR CONCAT('BN', LPAD(p.patient_id, 6, '0')) LIKE ?");
             params.add(searchPattern);
             params.add(searchPattern);
             params.add(searchPattern);
+            params.add(searchPattern);
+            if (patientIdSearch != null) {
+                cond.append(" OR p.patient_id = ?");
+                params.add(patientIdSearch);
+            }
+            if (requestIdSearch != null) {
+                cond.append(" OR lr.request_id = ?");
+                params.add(requestIdSearch);
+            }
+            cond.append(")");
+            sql.append(cond);
         }
 
         try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
@@ -168,11 +210,32 @@ public class LabPaymentDAO extends DBContext {
         List<Object> params = new ArrayList<>();
 
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            sql.append(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CAST(lr.request_id AS CHAR) LIKE ?)");
             String searchPattern = "%" + searchTerm + "%";
+            Integer patientIdSearch = null;
+            Integer requestIdSearch = null;
+            String upperTerm = searchTerm.trim().toUpperCase();
+            if (upperTerm.matches("BN\\d+")) {
+                try { patientIdSearch = Integer.parseInt(upperTerm.substring(2)); } catch (NumberFormatException ignored) {}
+            }
+            java.util.regex.Matcher labMatcher = java.util.regex.Pattern.compile("(?:LAB-\\d+-)(\\d+)").matcher(upperTerm);
+            if (labMatcher.find()) {
+                try { requestIdSearch = Integer.parseInt(labMatcher.group(1)); } catch (NumberFormatException ignored) {}
+            }
+            StringBuilder cond = new StringBuilder(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ? OR CONCAT('BN', LPAD(p.patient_id, 6, '0')) LIKE ?");
             params.add(searchPattern);
             params.add(searchPattern);
             params.add(searchPattern);
+            params.add(searchPattern);
+            if (patientIdSearch != null) {
+                cond.append(" OR p.patient_id = ?");
+                params.add(patientIdSearch);
+            }
+            if (requestIdSearch != null) {
+                cond.append(" OR lr.request_id = ?");
+                params.add(requestIdSearch);
+            }
+            cond.append(")");
+            sql.append(cond);
         }
 
         try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
