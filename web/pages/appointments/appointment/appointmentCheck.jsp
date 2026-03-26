@@ -85,8 +85,8 @@
 
                             </div>
                             <div>
-                                <label>Ghi chú bệnh lý</label>
-                                <textarea name="note" class="note-box" placeholder="Nhập ghi chú bệnh lý..." required></textarea>
+                                <label>Triệu chứng bệnh *:</label>
+                                <textarea name="note" class="note-box" placeholder="Nhập triệu chứng bệnh ..." required></textarea>
 
                             </div>
 

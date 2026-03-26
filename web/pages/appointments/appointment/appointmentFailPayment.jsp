@@ -28,14 +28,14 @@
 
                         <div class="line"></div>
 
-                        <div class="step">
+                        <div class="step active">
                             <div class="circle">✓</div>
                             <p>Thanh toán</p>
                         </div>
 
                         <div class="line"></div>
 
-                        <div class="step">
+                        <div class="step active">
                             <div class="circle">✕</div>
                             <p>Hoàn tất</p>
                         </div>
@@ -43,7 +43,7 @@
                     </div>
 
                     <!-- FAIL CARD -->
-                    <div class="card-box fail-card">
+                    <div class="card-boxs fail-card">
 
                         <div class="fail-icon">
                             ✕

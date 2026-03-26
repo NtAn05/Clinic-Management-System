@@ -552,8 +552,7 @@
                         <a class="profile-item" href="${pageContext.request.contextPath}/userinformationservlet">Tài khoản của tôi</a>
 
                         <c:if test="${roleName == 'patient'}">
-                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-medical-records">Hồ sơ bệnh án</a>
-                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-prescription">Đơn thuốc</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-health-dashboard">Hồ sơ khám bệnh</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/historyofappointmentservlet">Thông tin đặt lịch</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/createpatientsservlet">Danh sách bệnh nhân</a>
                         </c:if>

@@ -36,19 +36,18 @@
                             <div>
                                 <label>Họ và tên *</label>
                                 <input type="text" name="name" value="${patient.fullName}" required>
-                                <span style="color:red">${errorName}</span>
-                            </div>
+                                <span class="error-message">${errorName}</span>                            </div>
 
                             <div>
                                 <label>Số điện thoại ( Không bắt buộc )</label>
                                 <input type="text" name="sdt" value="${patient.phone}" >
-                                <span style="color:red">${errorPhone}</span>
+                                <span class="error-message"">${errorPhone}</span>
                             </div>
 
                             <div>
                                 <label>Email ( Không bắt buộc )</label>
                                 <input type="email" name="email" value="${patient.email}" >
-                                <span style="color:red">${errorEmail}</span>
+                                <span class="error-message">${errorEmail}</span>
                             </div>
 
                             <div>
@@ -56,7 +55,7 @@
                                 <fmt:formatDate value="${patient.dob}" pattern="yyyy-MM-dd" var="formattedDob"/>
                                 <input type="date" name="dateofbirth"
                                        value="${not empty dob ? dob : formattedDob}">
-                                <span style="color:red">${errorDOB}</span>
+                                <span class="error-message">${errorDOB}</span>
                             </div>
 
                             <div>

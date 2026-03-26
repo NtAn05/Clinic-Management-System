@@ -4,15 +4,18 @@
 .page {
     width: 900px;
     margin: 0 auto;
+   
 }
 
 .content {
     padding: 24px;
+
+    padding-left: 150px; 
 }
 
 .card-box {
     width: 100%;
-    max-width: 900px;
+    width: 900px;
     flex-shrink: 0;
     background: #ffffff;
     border: 1px solid #e2ebff;
@@ -111,6 +114,12 @@
 .btn-outline:hover {
     background: #f1f5ff;
 }
-
+.error-message {
+    color: #c0392b;
+    font-size: 13px;
+    margin-top: 4px;
+    display: block;
+    font-style: italic;
+}
 
 

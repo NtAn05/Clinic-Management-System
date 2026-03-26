@@ -24,12 +24,13 @@
             <p>Chi tiết các cuộc hẹn</p>
             <div>
                 <div class="status-filter">
-                    <a href="#" onclick="filterStatus('all')">Tất cả</a>
+
                     <a href="#" onclick="filterStatus('booked')">Đã đặt</a>
                     <a href="#" onclick="filterStatus('checked_in')">Đã check-in</a>
                     <a href="#" onclick="filterStatus('waiting')">Đang chờ</a>
                     <a href="#" onclick="filterStatus('completed')">Hoàn thành</a>
                     <a href="#" onclick="filterStatus('cancelled')">Đã hủy</a>
+                    <a href="#" onclick="filterStatus('all')">Tất cả</a>
                 </div>
 
                 <div class="name-filter">
@@ -204,6 +205,9 @@
                 });
 
             }
+            window.onload = function () {
+                filterStatus('booked');
+            };
         </script>
 
     </body>
