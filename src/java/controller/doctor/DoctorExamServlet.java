@@ -40,7 +40,7 @@ public class DoctorExamServlet extends HttpServlet {
     private static final String SECTION_TREATMENT_PLAN = "PHƯƠNG ÁN ĐIỀU TRỊ";
     private static final String SECTION_LAB_REQUEST = "YÊU CẦU XÉT NGHIỆM";
     
-    private static final class LabRequestDraft {
+    public static final class LabRequestDraft {
         private final String testType;
         private final String priority;
         private final String collectionMethod;
@@ -51,6 +51,22 @@ public class DoctorExamServlet extends HttpServlet {
             this.priority = priority;
             this.collectionMethod = collectionMethod;
             this.note = note;
+        }
+        
+        public String getTestType() {
+            return testType;
+        }
+
+        public String getPriority() {
+            return priority;
+        }
+
+        public String getCollectionMethod() {
+            return collectionMethod;
+        }
+
+        public String getNote() {
+            return note;
         }
     }
     
@@ -163,32 +179,7 @@ public class DoctorExamServlet extends HttpServlet {
 
             long resolvedAppointmentId = examData.getAppointmentId();
 
-            request.setAttribute("examData", examData);
-            List<ExamLabItem> labResults = doctorDAO.getLabResultsByAppointment(resolvedAppointmentId);
-            request.setAttribute("labResults", labResults);
-            request.setAttribute("canSavePrescription", canSavePrescriptionByLabStatus(labResults));
-            MedicalRecord medicalRecord = doctorDAO.getMedicalRecordByAppointment(resolvedAppointmentId);
-            request.setAttribute("medicalRecord", medicalRecord);
-
-            String notes = medicalRecord != null ? medicalRecord.getNotes() : null;
-            request.setAttribute("historyAllergies", extractHistoryLine(notes, "Dị ứng"));
-            request.setAttribute("historyChronic", extractHistoryLine(notes, "Bệnh mạn tính"));
-            request.setAttribute("historyFamily", extractHistoryLine(notes, "Tiền sử gia đình"));
-            request.setAttribute("historySocial", extractHistoryLine(notes, "Tiền sử xã hội"));
-            request.setAttribute("historyVaccination", extractHistoryLine(notes, "Lịch sử tiêm chủng"));
-            request.setAttribute("clinicalResult", extractSection(notes, SECTION_CLINICAL_RESULT));
-            request.setAttribute("doctorNote", extractSection(notes, SECTION_DOCTOR_NOTE));
-            request.setAttribute("treatmentPlan", extractSection(notes, SECTION_TREATMENT_PLAN));
-            request.setAttribute("labRequestInstruction", extractSection(notes, SECTION_LAB_REQUEST));
-
-            List<PrescriptionItem> prescriptionItems = doctorDAO.getPrescriptionItemsByAppointment(resolvedAppointmentId);
-            request.setAttribute("prescriptionItems", prescriptionItems);
-            List<Medicine> medicineList = doctorDAO.getAllMedicines();
-            request.setAttribute("medicineList", medicineList);
-            List<ExaminationHistoryItem> examinationHistory
-                    = doctorDAO.getExaminationHistoryByAppointment(resolvedAppointmentId);
-            request.setAttribute("examData", examData);
-            request.setAttribute("historyList", examinationHistory);
+            populateExamPageAttributes(request, doctorDAO, examData);
             String activeTab = cleanText(request.getParameter("tab"));
             if (activeTab.isEmpty()) {
                 activeTab = "info";
@@ -266,7 +257,9 @@ public class DoctorExamServlet extends HttpServlet {
                 labRequestDrafts);
         if (!requiredFieldError.isEmpty()) {
             String errorTab = "createLabRequest".equalsIgnoreCase(action) ? "lab" : "info";
-            response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=" + errorTab + "&error=" + requiredFieldError);
+            forwardExamWithDraftData(request, response, doctorDAO, examData, errorTab, requiredFieldError,
+                    symptoms, diagnosis, allergies, chronic, family, social, vaccination,
+                    clinicalResult, doctorNote, treatmentPlan, labRequestDrafts);
             return;
         }
 
@@ -327,7 +320,9 @@ public class DoctorExamServlet extends HttpServlet {
 
         if ("createLabRequest".equalsIgnoreCase(action)) {
             if ("done".equalsIgnoreCase(examData.getStatus())) {
-                response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&error=labRequestNotAllowed");
+                forwardExamWithDraftData(request, response, doctorDAO, examData, "lab", "labRequestNotAllowed",
+                        symptoms, diagnosis, allergies, chronic, family, social, vaccination,
+                        clinicalResult, doctorNote, treatmentPlan, labRequestDrafts);
                 return;
             }
 
@@ -344,7 +339,9 @@ public class DoctorExamServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&success=labRequestedMultiple");
                 return;
             }
-            response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&tab=lab&error=labRequestFailed");
+            forwardExamWithDraftData(request, response, doctorDAO, examData, "lab", "labRequestFailed",
+                    symptoms, diagnosis, allergies, chronic, family, social, vaccination,
+                    clinicalResult, doctorNote, treatmentPlan, labRequestDrafts);
             return;
         }
 
@@ -359,6 +356,57 @@ public class DoctorExamServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&success=saved");
     }
 
+    private void populateExamPageAttributes(HttpServletRequest request, DoctorDAO doctorDAO, DoctorQueueItem examData) {
+        long appointmentId = examData.getAppointmentId();
+        request.setAttribute("examData", examData);
+        List<ExamLabItem> labResults = doctorDAO.getLabResultsByAppointment(appointmentId);
+        request.setAttribute("labResults", labResults);
+        request.setAttribute("canSavePrescription", canSavePrescriptionByLabStatus(labResults));
+        MedicalRecord medicalRecord = doctorDAO.getMedicalRecordByAppointment(appointmentId);
+        request.setAttribute("medicalRecord", medicalRecord);
+
+        String notes = medicalRecord != null ? medicalRecord.getNotes() : null;
+        request.setAttribute("historyAllergies", extractHistoryLine(notes, "Dị ứng"));
+        request.setAttribute("historyChronic", extractHistoryLine(notes, "Bệnh mạn tính"));
+        request.setAttribute("historyFamily", extractHistoryLine(notes, "Tiền sử gia đình"));
+        request.setAttribute("historySocial", extractHistoryLine(notes, "Tiền sử xã hội"));
+        request.setAttribute("historyVaccination", extractHistoryLine(notes, "Lịch sử tiêm chủng"));
+        request.setAttribute("clinicalResult", extractSection(notes, SECTION_CLINICAL_RESULT));
+        request.setAttribute("doctorNote", extractSection(notes, SECTION_DOCTOR_NOTE));
+        request.setAttribute("treatmentPlan", extractSection(notes, SECTION_TREATMENT_PLAN));
+        request.setAttribute("labRequestInstruction", extractSection(notes, SECTION_LAB_REQUEST));
+
+        List<PrescriptionItem> prescriptionItems = doctorDAO.getPrescriptionItemsByAppointment(appointmentId);
+        request.setAttribute("prescriptionItems", prescriptionItems);
+        List<Medicine> medicineList = doctorDAO.getAllMedicines();
+        request.setAttribute("medicineList", medicineList);
+        List<ExaminationHistoryItem> examinationHistory
+                = doctorDAO.getExaminationHistoryByAppointment(appointmentId);
+        request.setAttribute("historyList", examinationHistory);
+    }
+
+    private void forwardExamWithDraftData(HttpServletRequest request, HttpServletResponse response,
+            DoctorDAO doctorDAO, DoctorQueueItem examData, String activeTab, String errorCode,
+            String symptoms, String diagnosis, String allergies, String chronic, String family, String social,
+            String vaccination, String clinicalResult, String doctorNote, String treatmentPlan,
+            List<LabRequestDraft> labRequestDrafts) throws ServletException, IOException {
+        populateExamPageAttributes(request, doctorDAO, examData);
+        request.setAttribute("activeTab", activeTab);
+        request.setAttribute("error", errorCode);
+        request.setAttribute("formSymptoms", symptoms);
+        request.setAttribute("formDiagnosis", diagnosis);
+        request.setAttribute("historyAllergies", allergies);
+        request.setAttribute("historyChronic", chronic);
+        request.setAttribute("historyFamily", family);
+        request.setAttribute("historySocial", social);
+        request.setAttribute("historyVaccination", vaccination);
+        request.setAttribute("clinicalResult", clinicalResult);
+        request.setAttribute("doctorNote", doctorNote);
+        request.setAttribute("treatmentPlan", treatmentPlan);
+        request.setAttribute("labRequestDrafts", labRequestDrafts);
+        request.getRequestDispatcher("/pages/examination/exam.jsp").forward(request, response);
+    }
+    
     private List<PrescriptionItem> parsePrescriptionItems(HttpServletRequest request) {
         List<PrescriptionItem> items = new java.util.ArrayList<>();
 

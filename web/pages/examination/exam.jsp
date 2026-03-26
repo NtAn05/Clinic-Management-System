@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -30,7 +31,7 @@
                         <div class="actions">
                             <button class="btn-outline" type="button" onclick="location.href = '${pageContext.request.contextPath}/doctorDashboard'">← Quay lại</button>
                             <button class="btn-primary" type="submit" name="action" value="save">💾 Lưu tạm</button>
-                            <button class="btn-success" type="submit" name="action" value="finish" onclick="return confirm('Xác nhận hoàn tất phiên khám này?');">✔ Hoàn thành</button>
+                            <button id="finishExamBtn" class="btn-success" type="submit" name="action" value="finish">✔ Hoàn thành</button>
                         </div>
                     </div>
 
@@ -107,10 +108,10 @@
                                     <textarea rows="3" readonly>${examData.symptom}</textarea>
 
                                     <label>Triệu chứng hiện tại</label>
-                                    <textarea rows="3" name="symptoms" placeholder="Mô tả triệu chứng hiện tại của bệnh nhân..."><c:out value="${medicalRecord != null ? medicalRecord.symptoms : examData.symptom}"/></textarea>
+                                    <textarea rows="3" name="symptoms" placeholder="Mô tả triệu chứng hiện tại của bệnh nhân..."><c:out value="${not empty formSymptoms ? formSymptoms : (medicalRecord != null ? medicalRecord.symptoms : examData.symptom)}"/></textarea>
 
                                     <label>Chẩn đoán</label>
-                                    <textarea rows="3" name="diagnosis" placeholder="Nhập chẩn đoán lâm sàng..."><c:out value="${medicalRecord != null ? medicalRecord.diagnosis : ''}"/></textarea>
+                                    <textarea rows="3" name="diagnosis" placeholder="Nhập chẩn đoán lâm sàng..."><c:out value="${not empty formDiagnosis ? formDiagnosis : (medicalRecord != null ? medicalRecord.diagnosis : '')}"/></textarea>
                                 </section>
 
                                 <section class="card">
@@ -150,31 +151,60 @@
                                 <div class="card">
                                     <h3>Tạo yêu cầu xét nghiệm</h3>
                                     <div id="labRequestList" class="rx-list">
-                                        <div class="rx-row lab-row">
-                                            <select name="labTestType">
-                                                <option value="">Chọn loại xét nghiệm</option>
-                                                <option value="Công thức máu">Công thức máu</option>
-                                                <option value="Đường huyết">Đường huyết</option>
-                                                <option value="Sinh hóa máu">Sinh hóa máu</option>
-                                                <option value="Nước tiểu">Nước tiểu</option>
-                                                <option value="X-quang">X-quang</option>
-                                            </select>
-                                            <select name="labPriority">
-                                                <option value="Bình thường">Bình thường</option>
-                                                <option value="Khẩn">Khẩn</option>
-                                            </select>
-                                            <select name="labCollectionMethod">
-                                                <option value="Lấy mẫu tại chỗ">Lấy mẫu tại chỗ</option>
-                                                <option value="Nhịn ăn trước xét nghiệm">Nhịn ăn trước xét nghiệm</option>
-                                                <option value="Theo hướng dẫn bác sĩ">Theo hướng dẫn bác sĩ</option>
-                                            </select>
-                                            <input name="labRequestItemNote" placeholder="Ghi chú từng yêu cầu (tuỳ chọn)">
-                                            <button type="button" class="btn-outline btn-remove-lab" onclick="removeLabRow(this)" disabled>Xoá</button>
-                                        </div>
+                                        <c:choose>
+                                            <c:when test="${not empty labRequestDrafts}">
+                                                <c:forEach var="draft" items="${labRequestDrafts}" varStatus="status">
+                                                    <div class="rx-row lab-row">
+                                                        <select name="labTestType">
+                                                            <option value="">Chọn loại xét nghiệm</option>
+                                                            <option value="Công thức máu" ${draft.testType == 'Công thức máu' ? 'selected' : ''}>Công thức máu</option>
+                                                            <option value="Đường huyết" ${draft.testType == 'Đường huyết' ? 'selected' : ''}>Đường huyết</option>
+                                                            <option value="Sinh hóa máu" ${draft.testType == 'Sinh hóa máu' ? 'selected' : ''}>Sinh hóa máu</option>
+                                                            <option value="Nước tiểu" ${draft.testType == 'Nước tiểu' ? 'selected' : ''}>Nước tiểu</option>
+                                                            <option value="X-quang" ${draft.testType == 'X-quang' ? 'selected' : ''}>X-quang</option>
+                                                        </select>
+                                                        <select name="labPriority">
+                                                            <option value="Bình thường" ${draft.priority == 'Bình thường' ? 'selected' : ''}>Bình thường</option>
+                                                            <option value="Khẩn" ${draft.priority == 'Khẩn' ? 'selected' : ''}>Khẩn</option>
+                                                        </select>
+                                                        <select name="labCollectionMethod">
+                                                            <option value="Lấy mẫu tại chỗ" ${draft.collectionMethod == 'Lấy mẫu tại chỗ' ? 'selected' : ''}>Lấy mẫu tại chỗ</option>
+                                                            <option value="Nhịn ăn trước xét nghiệm" ${draft.collectionMethod == 'Nhịn ăn trước xét nghiệm' ? 'selected' : ''}>Nhịn ăn trước xét nghiệm</option>
+                                                            <option value="Theo hướng dẫn bác sĩ" ${draft.collectionMethod == 'Theo hướng dẫn bác sĩ' ? 'selected' : ''}>Theo hướng dẫn bác sĩ</option>
+                                                        </select>
+                                                        <input name="labRequestItemNote" placeholder="Ghi chú từng yêu cầu (tuỳ chọn)" value="${fn:escapeXml(draft.note)}">
+                                                        <button type="button" class="btn-outline btn-remove-lab" onclick="removeLabRow(this)" ${fn:length(labRequestDrafts) == 1 ? 'disabled' : ''}>Xoá</button>
+                                                    </div>
+                                                </c:forEach>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="rx-row lab-row">
+                                                    <select name="labTestType">
+                                                        <option value="">Chọn loại xét nghiệm</option>
+                                                        <option value="Công thức máu">Công thức máu</option>
+                                                        <option value="Đường huyết">Đường huyết</option>
+                                                        <option value="Sinh hóa máu">Sinh hóa máu</option>
+                                                        <option value="Nước tiểu">Nước tiểu</option>
+                                                        <option value="X-quang">X-quang</option>
+                                                    </select>
+                                                    <select name="labPriority">
+                                                        <option value="Bình thường">Bình thường</option>
+                                                        <option value="Khẩn">Khẩn</option>
+                                                    </select>
+                                                    <select name="labCollectionMethod">
+                                                        <option value="Lấy mẫu tại chỗ">Lấy mẫu tại chỗ</option>
+                                                        <option value="Nhịn ăn trước xét nghiệm">Nhịn ăn trước xét nghiệm</option>
+                                                        <option value="Theo hướng dẫn bác sĩ">Theo hướng dẫn bác sĩ</option>
+                                                    </select>
+                                                    <input name="labRequestItemNote" placeholder="Ghi chú từng yêu cầu (tuỳ chọn)">
+                                                    <button type="button" class="btn-outline btn-remove-lab" onclick="removeLabRow(this)" disabled>Xoá</button>
+                                                </div>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                     <div class="actions">
                                         <button type="button" class="btn-outline" onclick="addLabRow()">+ Thêm yêu cầu xét nghiệm</button>
-                                        <button type="submit" class="btn-primary" name="action" value="createLabRequest" onclick="return confirm('Xác nhận gửi yêu cầu xét nghiệm cho bệnh nhân này?');">🧪 Gửi yêu cầu xét nghiệm</button>
+                                        <button id="createLabRequestBtn" type="submit" class="btn-primary" name="action" value="createLabRequest">🧪 Gửi yêu cầu xét nghiệm</button>
                                     </div>
                                 </div>
                             </c:if>
@@ -372,6 +402,8 @@
             <input name="labRequestItemNote" placeholder="Ghi chú từng yêu cầu (tuỳ chọn)">
             <button type="button" class="btn-outline btn-remove-lab" onclick="removeLabRow(this)">Xoá</button>
         </template>
+
+        <jsp:include page="/common/modal-alert.jsp" />
         
         <script>
             function showTab(id) {
@@ -468,10 +500,50 @@
                     }
                 });
             }
-            
+
             document.addEventListener('DOMContentLoaded', () => {
                 document.querySelectorAll('#rxList select[name="medicineId"]').forEach(syncMedicineName);
                 syncLabRemoveButtons();
+                
+                const examForm = document.getElementById('examForm');
+                const createLabRequestBtn = document.getElementById('createLabRequestBtn');
+                const finishExamBtn = document.getElementById('finishExamBtn');
+
+                if (examForm) {
+                    examForm.addEventListener('submit', function (event) {
+                        const submitter = event.submitter;
+                        if (!submitter || (submitter.id !== 'createLabRequestBtn' && submitter.id !== 'finishExamBtn')) {
+                            return;
+                        }
+
+                        if (submitter.dataset.confirmed === 'true') {
+                            delete submitter.dataset.confirmed;
+                            return;
+                        }
+
+                        event.preventDefault();
+                        if (typeof showConfirm !== 'function') {
+                            const fallbackAccepted = confirm(
+                                    submitter.id === 'createLabRequestBtn'
+                                    ? 'Xác nhận gửi yêu cầu xét nghiệm cho bệnh nhân này?'
+                                    : 'Xác nhận hoàn tất phiên khám này?'
+                                    );
+                            if (fallbackAccepted) {
+                                submitter.dataset.confirmed = 'true';
+                                submitter.click();
+                            }
+                            return;
+                        }
+
+                        const message = submitter.id === 'createLabRequestBtn'
+                                ? 'Xác nhận gửi yêu cầu xét nghiệm cho bệnh nhân này?'
+                                : 'Xác nhận hoàn tất phiên khám này?';
+                        showConfirm(message, function () {
+                            submitter.dataset.confirmed = 'true';
+                            submitter.click();
+                        });
+                    });
+                }
             });
         </script>
         <jsp:include page="/common/footer.jsp" />

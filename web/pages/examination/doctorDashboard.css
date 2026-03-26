@@ -41,6 +41,32 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(59, 130, 246, 0.12);
+}
+
+.summary-card.total {
+    background: linear-gradient(150deg, #ffffff 0%, #eff6ff 65%, #e0f2fe 100%);
+    border-color: #bfdbfe;
+}
+
+.summary-card.waiting {
+    background: linear-gradient(150deg, #ffffff 0%, #fffbeb 65%, #fef3c7 100%);
+    border-color: #fde68a;
+}
+
+.summary-card.examining {
+    background: linear-gradient(150deg, #ffffff 0%, #ecfeff 65%, #cffafe 100%);
+    border-color: #a5f3fc;
+}
+
+.summary-card.done {
+    background: linear-gradient(150deg, #ffffff 0%, #f0fdf4 65%, #dcfce7 100%);
+    border-color: #bbf7d0;
 }
 
 .summary-left p {
@@ -64,9 +90,15 @@ body {
     font-size: 22px;
 }
 
-.summary-icon.blue { background: #dbeafe; }
-.summary-icon.yellow { background: #fef3c7; }
-.summary-icon.green { background: #dcfce7; }
+.summary-icon.blue {
+    background: #dbeafe;
+}
+.summary-icon.yellow {
+    background: #fef3c7;
+}
+.summary-icon.green {
+    background: #dcfce7;
+}
 
 .content {
     display: grid;
@@ -76,10 +108,10 @@ body {
 
 .queue-section{
     grid-column: 1 / -1;
-    background: #ffffff;
+    background: linear-gradient(160deg, #ffffff 0%, #f8fbff 45%, #f0fdfa 100%);
     padding: 20px;
     border-radius: 18px;
-    border: 1px solid #e6edf8;
+    border: 1px solid #dbeafe;
     box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
 }
 
@@ -98,10 +130,11 @@ body {
     min-height: 42px;
     padding: 10px 16px;
     border-radius: 10px;
-    background: #2563eb;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #fff;
     text-decoration: none;
     font-weight: 700;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.22);
 }
 
 .quick-start-btn.disabled {
@@ -133,7 +166,8 @@ body {
     border-radius: 10px;
     font-size: 14px;
     outline: none;
-    background: #fff;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .queue-filter input[type="text"] {
@@ -149,12 +183,13 @@ body {
 
 .queue-filter button {
     padding: 10px 18px;
-    background: #2563eb;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #fff;
     border: none;
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
 }
 
 .queue-list {
@@ -234,7 +269,11 @@ body {
     align-items: center;
     cursor: pointer;
     transition: 0.2s ease;
-    background: linear-gradient(140deg, #ffffff, #f8fbff);
+    background: linear-gradient(140deg, #ffffff 0%, #f8fbff 70%, #f0f9ff 100%);
+}
+
+.queue-card:nth-child(odd) {
+    background: linear-gradient(140deg, #ffffff 0%, #eff6ff 70%, #ecfeff 100%);
 }
 
 .queue-card:hover {
@@ -298,11 +337,29 @@ body {
     font-weight: 700;
     text-transform: capitalize;
     width: fit-content;
+    border: 1px solid transparent;
 }
 
-.waiting { background: #fffbeb; color: #b45309; }
-.examining { background: #eff6ff; color: #1d4ed8; }
-.done { background: #f0fdf4; color: #15803d; }
+.queue-status.waiting,
+.status-badge.waiting {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+.queue-status.examining,
+.status-badge.examining {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.queue-status.done,
+.status-badge.done {
+    background: #f0fdf4;
+    color: #15803d;
+    border-color: #bbf7d0;
+}
 
 .shift-item {
     display: flex;
@@ -312,7 +369,9 @@ body {
     font-size: 14px;
 }
 
-.shift-item:last-child { border-bottom: none; }
+.shift-item:last-child {
+    border-bottom: none;
+}
 
 @media (max-width: 992px) {
     .summary-cards,
@@ -344,12 +403,24 @@ body {
         margin-bottom: 2px;
     }
 
-    .queue-position::before { content: 'STT'; }
-    .queue-name::before { content: 'Họ tên'; }
-    .queue-info::before { content: 'Giới tính'; }
-    .queue-dob::before { content: 'Ngày sinh'; }
-    .queue-symptom::before { content: 'Triệu chứng'; }
-    .queue-state::before { content: 'Trạng thái'; }
+    .queue-position::before {
+        content: 'STT';
+    }
+    .queue-name::before {
+        content: 'Họ tên';
+    }
+    .queue-info::before {
+        content: 'Giới tính';
+    }
+    .queue-dob::before {
+        content: 'Ngày sinh';
+    }
+    .queue-symptom::before {
+        content: 'Triệu chứng';
+    }
+    .queue-state::before {
+        content: 'Trạng thái';
+    }
 
     .queue-symptom{
         grid-column: 1 / -1;

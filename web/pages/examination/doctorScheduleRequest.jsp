@@ -19,7 +19,7 @@
 
         <div class="schedule-request-container">
             <div class="hero-card">
-                <h2>Quản lý lịch làm việc / Gửi yêu cầu đổi lịch</h2>
+                <h2>Lịch làm việc của bạn</h2>
             </div>
 
             <c:if test="${not empty sessionScope.scheduleRequestSuccess}">
@@ -141,7 +141,7 @@
                                 </select>
                             </label>
                         </div>
-                        
+
                         <div class="form-row" id="swapShiftGroup">
                             <label>Ca bác sĩ muốn đổi
                                 <select name="swapShiftId" id="swapShiftId">
@@ -181,6 +181,7 @@
             </div>
 
             <section class="panel">
+
                 <h3>Lịch sử đơn đổi lịch gần đây</h3>
                 <c:choose>
                     <c:when test="${empty recentRequests}">
@@ -194,6 +195,7 @@
                                     <th>Loại</th>
                                     <th>Hành động</th>
                                     <th>Thời gian</th>
+                                    <th>Chi tiết đơn</th>
                                     <th>Trạng thái</th>
                                     <th>Ghi chú admin</th>
                                 </tr>
@@ -219,6 +221,71 @@
                                         </td>
                                         <td><fmt:formatDate value="${item.requestedAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                                         <td>
+                                            <c:choose>
+                                                <c:when test="${item.actionType == 'UPDATE'}">
+                                                    <c:choose>
+                                                        <c:when test="${item.requestType == 'PERMANENT'}">
+                                                            <c:choose>
+                                                                <c:when test="${item.oldDayOfWeek == 0}">CN</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 1}">T2</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 2}">T3</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 3}">T4</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 4}">T5</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 5}">T6</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 6}">T7</c:when>
+                                                                <c:otherwise>-</c:otherwise>
+                                                            </c:choose>
+                                                            ${item.oldStartTime} - ${item.oldEndTime}
+                                                            <span class="detail-arrow">→</span>
+                                                            <c:choose>
+                                                                <c:when test="${item.dayOfWeek == 0}">CN</c:when>
+                                                                <c:when test="${item.dayOfWeek == 1}">T2</c:when>
+                                                                <c:when test="${item.dayOfWeek == 2}">T3</c:when>
+                                                                <c:when test="${item.dayOfWeek == 3}">T4</c:when>
+                                                                <c:when test="${item.dayOfWeek == 4}">T5</c:when>
+                                                                <c:when test="${item.dayOfWeek == 5}">T6</c:when>
+                                                                <c:when test="${item.dayOfWeek == 6}">T7</c:when>
+                                                                <c:otherwise>-</c:otherwise>
+                                                            </c:choose>
+                                                            ${item.startTime} - ${item.endTime}
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:if test="${not empty item.oldWorkDate}">
+                                                                <fmt:formatDate value="${item.oldWorkDate}" pattern="dd/MM" />
+                                                            </c:if>
+                                                            ${item.oldStartTime} - ${item.oldEndTime}
+                                                            <span class="detail-arrow">→</span>
+                                                            <fmt:formatDate value="${item.workDate}" pattern="dd/MM" />
+                                                            ${item.startTime} - ${item.endTime}
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                    <c:if test="${not empty item.newDoctorName}">
+                                                        <div class="subtle-note">Đổi với: ${item.newDoctorName}</div>
+                                                    </c:if>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:choose>
+                                                        <c:when test="${not empty item.workDate}">
+                                                            <fmt:formatDate value="${item.workDate}" pattern="dd/MM/yyyy" />
+                                                        </c:when>
+                                                        <c:when test="${not empty item.dayOfWeek}">
+                                                            <c:choose>
+                                                                <c:when test="${item.dayOfWeek == 0}">Chủ nhật</c:when>
+                                                                <c:when test="${item.dayOfWeek == 1}">Thứ 2</c:when>
+                                                                <c:when test="${item.dayOfWeek == 2}">Thứ 3</c:when>
+                                                                <c:when test="${item.dayOfWeek == 3}">Thứ 4</c:when>
+                                                                <c:when test="${item.dayOfWeek == 4}">Thứ 5</c:when>
+                                                                <c:when test="${item.dayOfWeek == 5}">Thứ 6</c:when>
+                                                                <c:otherwise>Thứ 7</c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <c:otherwise>-</c:otherwise>
+                                                    </c:choose>
+                                                    - ${item.startTime} - ${item.endTime}
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td>
                                             <span class="status ${item.status}">
                                                 <c:choose>
                                                     <c:when test="${item.status == 'PENDING'}">Đang chờ duyệt</c:when>
@@ -228,7 +295,7 @@
                                                 </c:choose>
                                             </span>
                                         </td>
-                                        <td>
+                                        <td class="admin-note-cell">
                                             <c:choose>
                                                 <c:when test="${empty item.adminNote}">-</c:when>
                                                 <c:otherwise><c:out value="${item.adminNote}"/></c:otherwise>
@@ -272,7 +339,7 @@
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 oneDateInput.min = toDateInputValue(tomorrow);
-                
+
                 function toggleGroup(group, input, visible) {
                     group.classList.toggle('hidden', !visible);
                     input.disabled = !visible;

@@ -54,6 +54,13 @@ body {
     color: #64748b;
 }
 
+.subtle-note {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 .hero-card p,
 .sub {
     margin: 8px 0 0;
@@ -222,6 +229,28 @@ textarea:focus {
 .status.CANCELLED {
     color: #991b1b;
     background: #fee2e2;
+}
+
+.detail-arrow {
+    color: #2563eb;
+    font-weight: 700;
+    margin: 0 4px;
+}
+
+.detail-before {
+    color: #64748b;
+}
+
+.detail-after {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.admin-note-cell {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.4;
 }
 
 @media (max-width: 980px) {
