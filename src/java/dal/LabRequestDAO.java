@@ -707,6 +707,32 @@ public class LabRequestDAO extends DBContext {
     /**
      * Lấy danh sách các khoa/phòng (specializations)
      */
+    public int getActiveRequestId() {
+        String sql = """
+            SELECT lr.request_id
+            FROM lab_requests lr
+            JOIN appointments a ON lr.appointment_id = a.appointment_id
+            JOIN patients p ON a.patient_id = p.patient_id
+            JOIN doctors d ON lr.doctor_id = d.doctor_id
+            JOIN users u ON d.user_id = u.user_id
+            WHERE lr.status IN ('pending', 'processing')
+            AND EXISTS (
+                SELECT 1 FROM payments pay
+                WHERE pay.appointment_id = lr.appointment_id AND pay.status = 'paid'
+            )
+            ORDER BY CASE lr.status WHEN 'processing' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END ASC,
+                     lr.created_at ASC
+            LIMIT 1
+            """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            ResultSet rs = st.executeQuery();
+            if (rs.next()) return rs.getInt("request_id");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
     public List<String> getAllSpecializations() {
         List<String> list = new ArrayList<>();
         
