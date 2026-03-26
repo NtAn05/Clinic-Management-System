@@ -111,12 +111,15 @@ public class LabQueueServlet extends HttpServlet {
         List<String> specializations = labRequestDAO.getAllSpecializations();
 
         // Set attributes for JSP
+        int activeRequestId = labRequestDAO.getActiveRequestId();
+
         request.setAttribute("labRequests", labRequests);
         request.setAttribute("stats", stats);
         request.setAttribute("specializations", specializations);
         request.setAttribute("filterStatus", status != null ? status : "");
         request.setAttribute("filterDepartment", department != null ? department : "");
         request.setAttribute("searchTerm", search != null ? search : "");
+        request.setAttribute("activeRequestId", activeRequestId);
         PagingHelper.expose(request, paging);
         
         // Forward to JSP
