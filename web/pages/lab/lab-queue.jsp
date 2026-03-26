@@ -590,7 +590,7 @@
                       <c:when test="${request.status == 'completed' or request.status == 'cancelled'}">
                         <%-- Phiếu đã xong: không lock, không active --%>
                       </c:when>
-                      <c:when test="${activeFound == 'false'}">
+                      <c:when test="${currentPage == 1 and activeFound == 'false'}">
                         <c:set var="isActiveRow" value="true" />
                         <c:set var="activeFound" value="true" />
                       </c:when>
