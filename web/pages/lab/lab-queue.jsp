@@ -319,6 +319,34 @@
       color: #6b7280;
     }
 
+    /* Hàng bị khoá - chờ lượt */
+    tr.queue-row.row-locked {
+      opacity: 0.55;
+    }
+    tr.queue-row.row-locked td {
+      cursor: default !important;
+      pointer-events: none;
+    }
+    tr.queue-row.row-locked td:last-child {
+      pointer-events: auto;
+    }
+    .badge-waiting {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border: 1px dashed #cbd5e1;
+    }
+    /* Hàng active (phiếu đang được xử lý) */
+    tr.queue-row.row-active {
+      background: #eff6ff !important;
+      border-left: 3px solid #2563eb;
+    }
+
     .badge-priority {
       padding: 2px 6px;
       border-radius: 8px;
@@ -538,6 +566,8 @@
                   </tr>
                 </c:when>
                 <c:otherwise>
+                  <%-- Track phiếu active đầu tiên (pending/processing) --%>
+                  <c:set var="activeFound" value="false" />
                   <c:forEach var="request" items="${labRequests}">
                     <fmt:formatDate value="${request.createdAt}" pattern="yyyy" var="year" />
                     <c:set var="requestCode" value="LAB-${year}-${request.requestId}" />
@@ -552,25 +582,56 @@
                     <c:set var="genderText" value="${request.patient.gender == 'male' ? 'Nam' : (request.patient.gender == 'female' ? 'Nữ' : 'Khác')}" />
                     <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : (request.status == 'cancelled' ? 'Đã hủy' : 'Đã có kết quả'))}" />
                     <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : (request.status == 'cancelled' ? 'status-cancelled' : 'status-done'))}" />
-                    <tr class="queue-row" data-request-id="${request.requestId}" data-notes="${fn:escapeXml(request.notes)}">
-                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${requestCode}</td>
-                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
+
+                    <%-- Xác định hàng active/locked --%>
+                    <c:set var="isActiveRow" value="false" />
+                    <c:set var="isLockedRow" value="false" />
+                    <c:choose>
+                      <c:when test="${request.status == 'completed' or request.status == 'cancelled'}">
+                        <%-- Phiếu đã xong: không lock, không active --%>
+                      </c:when>
+                      <c:when test="${activeFound == 'false'}">
+                        <c:set var="isActiveRow" value="true" />
+                        <c:set var="activeFound" value="true" />
+                      </c:when>
+                      <c:otherwise>
+                        <c:set var="isLockedRow" value="true" />
+                      </c:otherwise>
+                    </c:choose>
+
+                    <c:set var="rowClass" value="queue-row${isActiveRow ? ' row-active' : ''}${isLockedRow ? ' row-locked' : ''}" />
+                    <tr class="${rowClass}" data-request-id="${request.requestId}" data-notes="${fn:escapeXml(request.notes)}">
+                      <c:choose>
+                        <c:when test="${not isLockedRow and (request.status == 'pending' or request.status == 'processing')}">
+                          <c:set var="clickNav" value="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&amp;requestId=${request.requestId}'" />
+                          <c:set var="clickStyle" value="cursor: pointer;" />
+                        </c:when>
+                        <c:otherwise>
+                          <c:set var="clickNav" value="" />
+                          <c:set var="clickStyle" value="" />
+                        </c:otherwise>
+                      </c:choose>
+                      <td onclick="${clickNav}" style="${clickStyle}">${requestCode}</td>
+                      <td onclick="${clickNav}" style="${clickStyle}">
                         ${request.patient.fullName}<br />
                         <span class="text-muted">${patientCode}</span>
                       </td>
-                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${age} / ${genderText}</td>
-                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${request.doctor.specialization}</td>
-                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">${request.appointment.symptom != null ? request.appointment.symptom : '-'}</td>
-                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
+                      <td onclick="${clickNav}" style="${clickStyle}">${age} / ${genderText}</td>
+                      <td onclick="${clickNav}" style="${clickStyle}">${request.doctor.specialization}</td>
+                      <td onclick="${clickNav}" style="${clickStyle}">${request.appointment.symptom != null ? request.appointment.symptom : '-'}</td>
+                      <td onclick="${clickNav}" style="${clickStyle}">
                         <fmt:formatDate value="${request.createdAt}" pattern="HH:mm" />
                       </td>
-                      <td onclick="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&requestId=${request.requestId}'" style="cursor: pointer;">
+                      <td onclick="${clickNav}" style="${clickStyle}">
                         <span class="status-pill ${statusClass}">
                           ● ${statusText}
                         </span>
                       </td>
                       <td>
                         <c:choose>
+                          <c:when test="${isLockedRow}">
+                            <span class="badge-waiting"><i class="fas fa-lock"></i> Chờ lượt</span>
+                          </c:when>
                           <c:when test="${request.status == 'pending'}">
                             <button class="btn btn-success" onclick="event.stopPropagation(); updateStatusToProcessing(${request.requestId});" style="font-size: 12px; padding: 6px 12px;">
                               <i class="fas fa-play"></i> Bắt đầu XN
@@ -587,18 +648,13 @@
                               <i class="fas fa-pen"></i> Ghi chú
                             </button>
                           </c:when>
-                          <c:when test="${request.status == 'completed'}">
-                            <a href="${pageContext.request.contextPath}/lab-queue?action=viewDetail&requestId=${request.requestId}" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
-                              <i class="fas fa-eye"></i> Xem chi tiết
-                            </a>
-                          </c:when>
-                          <c:when test="${request.status == 'cancelled'}">
+                          <c:when test="${request.status == 'completed' or request.status == 'cancelled'}">
                             <a href="${pageContext.request.contextPath}/lab-queue?action=viewDetail&requestId=${request.requestId}" class="btn btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">
                               <i class="fas fa-eye"></i> Xem chi tiết
                             </a>
                           </c:when>
                           <c:otherwise>
-                            <span class="text-muted" style="font-size: 12px;">Đã hoàn thành</span>
+                            <span class="text-muted" style="font-size: 12px;">—</span>
                           </c:otherwise>
                         </c:choose>
                       </td>
