@@ -74,19 +74,20 @@
                     </div>
 
                     <div class="queue-filter">
-                        <form method="get">
+                        <form method="get" id="queueFilterForm">
                             <input type="text" name="keyword"
                                    placeholder="Tìm kiếm bệnh nhân theo tên hoặc mã..."
                                    value="${keyword}"/>
 
-                            <select name="status">
-                                <option value="all" ${selectedStatus=='all'?'selected':''}>Tất cả</option>
-                                <option value="waiting" ${selectedStatus=='waiting'?'selected':''}>Đang chờ</option>
-                                <option value="examining" ${selectedStatus=='examining'?'selected':''}>Đang khám</option>
-                                <option value="done" ${selectedStatus=='done'?'selected':''}>Hoàn tất</option>
+                            <select name="status" onchange="document.getElementById('queueFilterForm').submit()">
+                                <option value="active" ${selectedStatus eq 'active' ? 'selected' : ''}>Tất cả (đang chờ + đang khám)</option>
+                                <option value="waiting" ${selectedStatus eq 'waiting' ? 'selected' : ''}>Đang chờ</option>
+                                <option value="examining" ${selectedStatus eq 'examining' ? 'selected' : ''}>Đang khám</option>
+                                <option value="done" ${selectedStatus eq 'done' ? 'selected' : ''}>Hoàn tất</option>
                             </select>
                             <input type="hidden" name="page" value="1"/>
                             <button type="submit">Lọc</button>
+                            <a href="${pageContext.request.contextPath}/doctorDashboard?status=${selectedStatus}" class="page-btn">Đặt lại</a>
                         </form>
                     </div>
 

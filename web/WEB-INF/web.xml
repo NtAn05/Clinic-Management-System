@@ -65,6 +65,10 @@
         <servlet-class>controller.medicalRecord.PatientPrescriptionServlet</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>PatientHealthDashboardServlet</servlet-name>
+        <servlet-class>controller.medicalRecord.PatientHealthDashboardServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>listOfAppointment</servlet-name>
         <servlet-class>controller.appointments.listOfAppointment</servlet-class>
     </servlet>
@@ -199,6 +203,10 @@
     <servlet-mapping>
         <servlet-name>PatientPrescriptionServlet</servlet-name>
         <url-pattern>/patient-prescription</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientHealthDashboardServlet</servlet-name>
+        <url-pattern>/patient-health-dashboard</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>DoctorScheduleRequestServlet</servlet-name>
