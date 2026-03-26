@@ -1631,6 +1631,8 @@ public class DoctorDAO extends DBContext {
 
         if (hasActiveFilter) {
             sql.append(" AND LOWER(q.status) IN ('waiting', 'examining') ");
+        } else if ("done".equalsIgnoreCase(status) || "completed".equalsIgnoreCase(status)) {
+            sql.append(" AND LOWER(q.status) IN ('done', 'completed') ");
         } else if (hasStatusFilter) {
             sql.append(" AND LOWER(q.status) = ? ");
         }
@@ -1643,7 +1645,7 @@ public class DoctorDAO extends DBContext {
             int index = 1;
             ps.setInt(index++, doctorId);
 
-            if (hasStatusFilter) {
+            if (hasStatusFilter && !"done".equalsIgnoreCase(status) && !"completed".equalsIgnoreCase(status)) {
                 ps.setString(index++, status.trim().toLowerCase());
             }
 
@@ -1702,6 +1704,8 @@ public class DoctorDAO extends DBContext {
 
         if (hasActiveFilter) {
             sql.append(" AND LOWER(q.status) IN ('waiting', 'examining') ");
+        } else if ("done".equalsIgnoreCase(status) || "completed".equalsIgnoreCase(status)) {
+            sql.append(" AND LOWER(q.status) IN ('done', 'completed') ");
         } else if (hasStatusFilter) {
             sql.append(" AND LOWER(q.status) = ? ");
         }
@@ -1716,7 +1720,7 @@ public class DoctorDAO extends DBContext {
             int index = 1;
             ps.setInt(index++, doctorId);
 
-            if (hasStatusFilter) {
+            if (hasStatusFilter && !"done".equalsIgnoreCase(status) && !"completed".equalsIgnoreCase(status)) {
                 ps.setString(index++, status.trim().toLowerCase());
             }
 

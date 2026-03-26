@@ -87,7 +87,7 @@
                             </select>
                             <input type="hidden" name="page" value="1"/>
                             <button type="submit">Lọc</button>
-                            <a href="${pageContext.request.contextPath}/doctorDashboard?status=${selectedStatus}" class="page-btn">Đặt lại</a>
+                            <a href="${pageContext.request.contextPath}/doctorDashboard?status=active" class="page-btn">Đặt lại</a>
                         </form>
                     </div>
 

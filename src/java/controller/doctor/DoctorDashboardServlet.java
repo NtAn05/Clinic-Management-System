@@ -86,7 +86,10 @@ public class DoctorDashboardServlet extends HttpServlet {
             status = "active";
         } else {
             status = status.trim().toLowerCase();
-            if (!"active".equals(status) && !"waiting".equals(status) && !"examining".equals(status)) {
+            if ("completed".equals(status)) {
+                status = "done";
+            }
+            if (!"active".equals(status) && !"waiting".equals(status) && !"examining".equals(status) && !"done".equals(status)) {
                 status = "active";
             }
         }
