@@ -301,7 +301,7 @@
                 <span>Danh sách chờ thanh toán xét nghiệm</span>
               </div>
               <div class="card-subtitle">
-                Xác nhận thanh toán cho các phiếu xét nghiệm đã hoàn thành
+                Xác nhận thanh toán cho các phiếu xét nghiệm đang chờ xác nhận thanh toán
               </div>
             </div>
             <div class="text-right text-muted">
