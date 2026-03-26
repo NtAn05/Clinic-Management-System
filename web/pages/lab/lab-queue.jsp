@@ -801,54 +801,44 @@
     function editNotes(requestId) {
       const row = document.querySelector('.queue-row[data-request-id="' + requestId + '"]');
       const currentNotes = row ? (row.getAttribute('data-notes') || '') : '';
-      const newNotes = prompt('Nhập / cập nhật ghi chú cho phiếu LAB (để trống để xóa):', currentNotes);
-      if (newNotes === null) {
-        return;
-      }
 
-      const trimmedNotes = newNotes.trim();
+      showPrompt('Ghi chú phiếu xét nghiệm', 'Nhập ghi chú (để trống để xóa):', currentNotes, function(newNotes) {
+        if (newNotes === null) return;
 
-      // Không cho phép chỉ nhập toàn khoảng trắng
-      if (newNotes.length > 0 && trimmedNotes.length === 0) {
-        showAlert('Ghi chú không được chỉ chứa khoảng trắng.', 'error');
-        return;
-      }
+        const trimmedNotes = newNotes.trim();
 
-      // Giới hạn độ dài tối đa 500 ký tự
-      if (trimmedNotes.length > 500) {
-        showAlert('Ghi chú không được vượt quá 500 ký tự (hiện tại: ' + trimmedNotes.length + ' ký tự).', 'error');
-        return;
-      }
-
-      // Không cho phép ký tự đặc biệt nguy hiểm (< > để tránh XSS)
-      if (/<|>/.test(trimmedNotes)) {
-        showAlert('Ghi chú không được chứa ký tự < hoặc >.', 'error');
-        return;
-      }
-
-      const params = new URLSearchParams();
-      params.append('action', 'updateNotes');
-      params.append('requestId', requestId);
-      params.append('notes', trimmedNotes);
-
-      fetch('${pageContext.request.contextPath}/lab-queue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          if (row) {
-            row.setAttribute('data-notes', trimmedNotes);
-          }
-          showAlert('Đã cập nhật ghi chú phiếu xét nghiệm.', 'success');
-        } else {
-          showAlert(data.message || 'Cập nhật ghi chú thất bại.', 'error');
+        if (newNotes.length > 0 && trimmedNotes.length === 0) {
+          showAlert('Ghi chú không được chỉ chứa khoảng trắng.', 'error');
+          return;
         }
-      })
-      .catch(err => {
-        showAlert('Đã xảy ra lỗi khi cập nhật ghi chú.', 'error');
+
+        if (/<|>/.test(trimmedNotes)) {
+          showAlert('Ghi chú không được chứa ký tự < hoặc >.', 'error');
+          return;
+        }
+
+        const params = new URLSearchParams();
+        params.append('action', 'updateNotes');
+        params.append('requestId', requestId);
+        params.append('notes', trimmedNotes);
+
+        fetch('${pageContext.request.contextPath}/lab-queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            if (row) row.setAttribute('data-notes', trimmedNotes);
+            showAlert('Đã cập nhật ghi chú phiếu xét nghiệm.', 'success');
+          } else {
+            showAlert(data.message || 'Cập nhật ghi chú thất bại.', 'error');
+          }
+        })
+        .catch(() => {
+          showAlert('Đã xảy ra lỗi khi cập nhật ghi chú.', 'error');
+        });
       });
     }
 

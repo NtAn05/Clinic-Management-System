@@ -113,6 +113,43 @@
     background: #15803d;
     transform: translateY(-1px);
   }
+  /* Prompt modal – textarea */
+  #customPromptOverlay .modal-box {
+    max-width: 480px;
+  }
+  #customPromptOverlay .modal-icon-wrap.prompt {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+  #promptTextarea {
+    width: 100%;
+    min-height: 90px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+    color: #1e293b;
+    line-height: 1.5;
+  }
+  #promptTextarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  #promptCharCount {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: right;
+    margin-top: 4px;
+  }
+  #promptCharCount.over-limit {
+    color: #dc2626;
+    font-weight: 600;
+  }
 </style>
 
 <div id="customAlertOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="customAlertTitle">
@@ -127,6 +164,28 @@
     <div id="customAlertActions" class="modal-actions single">
       <button type="button" id="customAlertOkBtn" class="btn-modal btn-modal-primary">
         <i class="fas fa-check"></i> <span id="customAlertOkLabel">Đóng</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="customPromptOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="customPromptTitle">
+  <div class="modal-box">
+    <div class="modal-icon-wrap prompt" style="margin: 24px auto 16px;">
+      <i class="fas fa-pen"></i>
+    </div>
+    <div class="modal-body" style="padding-top: 0;">
+      <div id="customPromptTitle" class="modal-title">Ghi chú</div>
+      <div id="customPromptMessage" class="modal-message" style="margin-bottom: 12px;"></div>
+      <textarea id="promptTextarea" placeholder="Nhập ghi chú..." maxlength="500"></textarea>
+      <div id="promptCharCount">0 / 500</div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="customPromptCancelBtn" class="btn-modal btn-modal-outline">
+        <i class="fas fa-times"></i> Hủy
+      </button>
+      <button type="button" id="customPromptOkBtn" class="btn-modal btn-modal-primary">
+        <i class="fas fa-save"></i> Lưu ghi chú
       </button>
     </div>
   </div>
@@ -259,6 +318,70 @@
     document.body.style.overflow = 'hidden';
     confirmOverlay.classList.add('is-open');
     confirmCancelBtn.focus();
+  };
+
+  // Prompt modal
+  var promptOverlay = document.getElementById('customPromptOverlay');
+  var promptTitleEl = document.getElementById('customPromptTitle');
+  var promptMessageEl = document.getElementById('customPromptMessage');
+  var promptTextarea = document.getElementById('promptTextarea');
+  var promptCharCount = document.getElementById('promptCharCount');
+  var promptCancelBtn = document.getElementById('customPromptCancelBtn');
+  var promptOkBtn = document.getElementById('customPromptOkBtn');
+  var promptCallback = null;
+
+  function closePrompt() {
+    promptOverlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+    promptCallback = null;
+  }
+
+  promptTextarea.addEventListener('input', function() {
+    var len = promptTextarea.value.length;
+    promptCharCount.textContent = len + ' / 500';
+    promptCharCount.classList.toggle('over-limit', len > 500);
+    promptOkBtn.disabled = len > 500;
+  });
+
+  promptCancelBtn.addEventListener('click', function() {
+    if (typeof promptCallback === 'function') promptCallback(null);
+    closePrompt();
+  });
+
+  promptOkBtn.addEventListener('click', function() {
+    if (promptOkBtn.disabled) return;
+    if (typeof promptCallback === 'function') promptCallback(promptTextarea.value);
+    closePrompt();
+  });
+
+  promptOverlay.addEventListener('click', function(e) {
+    if (e.target === promptOverlay) {
+      if (typeof promptCallback === 'function') promptCallback(null);
+      closePrompt();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && promptOverlay.classList.contains('is-open')) {
+      if (typeof promptCallback === 'function') promptCallback(null);
+      closePrompt();
+    }
+  });
+
+  // showPrompt(title, message, defaultValue, onSubmit)
+  // onSubmit(value) — value is null if cancelled
+  window.showPrompt = function(title, message, defaultValue, onSubmit) {
+    promptTitleEl.textContent = title || 'Ghi chú';
+    promptMessageEl.textContent = message || '';
+    promptTextarea.value = defaultValue || '';
+    var len = promptTextarea.value.length;
+    promptCharCount.textContent = len + ' / 500';
+    promptCharCount.classList.toggle('over-limit', len > 500);
+    promptOkBtn.disabled = len > 500;
+    promptCallback = typeof onSubmit === 'function' ? onSubmit : null;
+    document.body.style.overflow = 'hidden';
+    promptOverlay.classList.add('is-open');
+    setTimeout(function() { promptTextarea.focus(); }, 50);
   };
 })();
 </script>
