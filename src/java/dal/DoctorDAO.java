@@ -1892,62 +1892,15 @@ public class DoctorDAO extends DBContext {
     }
 
     public boolean upsertMedicalRecord(long appointmentId, String symptoms, String diagnosis, String notes) {
-        String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
-
-        try (PreparedStatement check = connection.prepareStatement(checkSql)) {
-            check.setLong(1, appointmentId);
-            boolean exists;
-            try (ResultSet rs = check.executeQuery()) {
-                exists = rs.next();
-            }
-
-            if (exists) {
-                String updateSql = """
-                    UPDATE medical_records
-                    SET symptoms = ?, diagnosis = ?, notes = ?, updated_at = NOW()
-                    WHERE appointment_id = ?
-                """;
-
-                try (PreparedStatement update = connection.prepareStatement(updateSql)) {
-                    update.setString(1, symptoms);
-                    update.setString(2, diagnosis);
-                    update.setString(3, notes);
-                    update.setLong(4, appointmentId);
-                    return update.executeUpdate() > 0;
-                }
-            }
-
-            String insertSql = """
-                INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
-                VALUES (?, (SELECT doctor_id FROM appointments WHERE appointment_id = ?), ?, ?, ?, NOW())
-            """;
-
-            try (PreparedStatement insert = connection.prepareStatement(insertSql)) {
-                insert.setLong(1, appointmentId);
-                insert.setLong(2, appointmentId);
-                insert.setString(3, symptoms);
-                insert.setString(4, diagnosis);
-                insert.setString(5, notes);
-                return insert.executeUpdate() > 0;
-            }
+        try {
+            return upsertMedicalRecordTx(appointmentId, symptoms, diagnosis, notes);
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-
-        return false;
     }
 
     public boolean saveMedicalRecordAndFinishExamination(long appointmentId, String symptoms, String diagnosis, String notes) {
-        String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
-        String updateRecordSql = """
-            UPDATE medical_records
-            SET symptoms = ?, diagnosis = ?, notes = ?, updated_at = NOW()
-            WHERE appointment_id = ?
-        """;
-        String insertRecordSql = """
-            INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
-            VALUES (?, (SELECT doctor_id FROM appointments WHERE appointment_id = ?), ?, ?, ?, NOW())
-        """;
         String finishSql = """
             UPDATE exam_queue
             SET status = 'done'
@@ -1957,37 +1910,9 @@ public class DoctorDAO extends DBContext {
         try {
             connection.setAutoCommit(false);
 
-            boolean exists;
-            try (PreparedStatement check = connection.prepareStatement(checkSql)) {
-                check.setLong(1, appointmentId);
-                try (ResultSet rs = check.executeQuery()) {
-                    exists = rs.next();
-                }
-            }
-
-            if (exists) {
-                try (PreparedStatement update = connection.prepareStatement(updateRecordSql)) {
-                    update.setString(1, symptoms);
-                    update.setString(2, diagnosis);
-                    update.setString(3, notes);
-                    update.setLong(4, appointmentId);
-                    if (update.executeUpdate() == 0) {
-                        connection.rollback();
-                        return false;
-                    }
-                }
-            } else {
-                try (PreparedStatement insert = connection.prepareStatement(insertRecordSql)) {
-                    insert.setLong(1, appointmentId);
-                    insert.setLong(2, appointmentId);
-                    insert.setString(3, symptoms);
-                    insert.setString(4, diagnosis);
-                    insert.setString(5, notes);
-                    if (insert.executeUpdate() == 0) {
-                        connection.rollback();
-                        return false;
-                    }
-                }
+            if (!upsertMedicalRecordTx(appointmentId, symptoms, diagnosis, notes)) {
+                connection.rollback();
+                return false;
             }
 
             try (PreparedStatement finish = connection.prepareStatement(finishSql)) {
@@ -2018,76 +1943,29 @@ public class DoctorDAO extends DBContext {
     }
 
     public int saveMedicalRecordAndCreateLabRequest(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes) {
-        String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
-        String updateRecordSql = """
-            UPDATE medical_records
-            SET symptoms = ?, diagnosis = ?, notes = ?, updated_at = NOW()
-            WHERE appointment_id = ?
-        """;
-        String insertRecordSql = """
-            INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
-            VALUES (?, (SELECT doctor_id FROM appointments WHERE appointment_id = ?), ?, ?, ?, NOW())
-        """;
         String insertLabSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
         String deleteQueueSql = "DELETE FROM exam_queue WHERE appointment_id = ?";
 
         try {
             connection.setAutoCommit(false);
 
-            boolean exists;
-            try (PreparedStatement check = connection.prepareStatement(checkSql)) {
-                check.setLong(1, appointmentId);
-                try (ResultSet rs = check.executeQuery()) {
-                    exists = rs.next();
-                }
+            if (!upsertMedicalRecordTx(appointmentId, symptoms, diagnosis, notes)) {
+                connection.rollback();
+                return 0;
             }
 
-            if (exists) {
-                try (PreparedStatement update = connection.prepareStatement(updateRecordSql)) {
-                    update.setString(1, symptoms);
-                    update.setString(2, diagnosis);
-                    update.setString(3, notes);
-                    update.setLong(4, appointmentId);
-                    if (update.executeUpdate() == 0) {
-                        connection.rollback();
-                        return 0;
-                    }
-                }
-            } else {
-                try (PreparedStatement insert = connection.prepareStatement(insertRecordSql)) {
-                    insert.setLong(1, appointmentId);
-                    insert.setLong(2, appointmentId);
-                    insert.setString(3, symptoms);
-                    insert.setString(4, diagnosis);
-                    insert.setString(5, notes);
-                    if (insert.executeUpdate() == 0) {
-                        connection.rollback();
-                        return 0;
-                    }
-                }
+            int requestId = insertLabRequestTx(appointmentId, doctorId, insertLabSql);
+            if (requestId <= 0) {
+                connection.rollback();
+                return 0;
             }
 
-            int requestId;
-            try (PreparedStatement insertLab = connection.prepareStatement(insertLabSql, Statement.RETURN_GENERATED_KEYS)) {
-                insertLab.setLong(1, appointmentId);
-                insertLab.setInt(2, doctorId);
-                if (insertLab.executeUpdate() == 0) {
-                    connection.rollback();
-                    return 0;
-                }
-                try (ResultSet keys = insertLab.getGeneratedKeys()) {
-                    if (!keys.next()) {
-                        connection.rollback();
-                        return 0;
-                    }
-                    requestId = keys.getInt(1);
-                }
+            if (!ensureLabPaymentPendingTx(appointmentId)) {
+                connection.rollback();
+                return 0;
             }
 
-            try (PreparedStatement del = connection.prepareStatement(deleteQueueSql)) {
-                del.setLong(1, appointmentId);
-                del.executeUpdate();
-            }
+            deleteAppointmentFromExamQueueTx(appointmentId, deleteQueueSql);
 
             connection.commit();
             return requestId;
@@ -2105,6 +1983,103 @@ public class DoctorDAO extends DBContext {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private boolean upsertMedicalRecordTx(long appointmentId, String symptoms, String diagnosis, String notes) throws SQLException {
+        String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
+        String updateRecordSql = """
+            UPDATE medical_records
+            SET symptoms = ?, diagnosis = ?, notes = ?, updated_at = NOW()
+            WHERE appointment_id = ?
+        """;
+        String insertRecordSql = """
+            INSERT INTO medical_records (appointment_id, doctor_id, symptoms, diagnosis, notes, updated_at)
+            VALUES (?, (SELECT doctor_id FROM appointments WHERE appointment_id = ?), ?, ?, ?, NOW())
+        """;
+
+        boolean exists;
+        try (PreparedStatement check = connection.prepareStatement(checkSql)) {
+            check.setLong(1, appointmentId);
+            try (ResultSet rs = check.executeQuery()) {
+                exists = rs.next();
+            }
+        }
+
+        if (exists) {
+            try (PreparedStatement update = connection.prepareStatement(updateRecordSql)) {
+                update.setString(1, symptoms);
+                update.setString(2, diagnosis);
+                update.setString(3, notes);
+                update.setLong(4, appointmentId);
+                return update.executeUpdate() > 0;
+            }
+        }
+
+        try (PreparedStatement insert = connection.prepareStatement(insertRecordSql)) {
+            insert.setLong(1, appointmentId);
+            insert.setLong(2, appointmentId);
+            insert.setString(3, symptoms);
+            insert.setString(4, diagnosis);
+            insert.setString(5, notes);
+            return insert.executeUpdate() > 0;
+        }
+    }
+
+    private int insertLabRequestTx(long appointmentId, int doctorId, String insertLabSql) throws SQLException {
+        try (PreparedStatement insertLab = connection.prepareStatement(insertLabSql, Statement.RETURN_GENERATED_KEYS)) {
+            insertLab.setLong(1, appointmentId);
+            insertLab.setInt(2, doctorId);
+            if (insertLab.executeUpdate() == 0) {
+                return 0;
+            }
+
+            try (ResultSet keys = insertLab.getGeneratedKeys()) {
+                if (!keys.next()) {
+                    return 0;
+                }
+                return keys.getInt(1);
+            }
+        }
+    }
+
+    private void deleteAppointmentFromExamQueueTx(long appointmentId, String deleteQueueSql) throws SQLException {
+        try (PreparedStatement del = connection.prepareStatement(deleteQueueSql)) {
+            del.setLong(1, appointmentId);
+            del.executeUpdate();
+        }
+    }
+
+    /**
+     * Tạo payment pending cho xét nghiệm ngay khi bác sĩ chỉ định.
+     * Nếu payment đã tồn tại cho appointment này thì giữ nguyên và coi như thành công.
+     */
+    private boolean ensureLabPaymentPendingTx(long appointmentId) throws SQLException {
+        String checkPaymentSql = "SELECT payment_id FROM payments WHERE appointment_id = ? LIMIT 1";
+        try (PreparedStatement check = connection.prepareStatement(checkPaymentSql)) {
+            check.setLong(1, appointmentId);
+            try (ResultSet rs = check.executeQuery()) {
+                if (rs.next()) {
+                    return true;
+                }
+            }
+        }
+
+        java.math.BigDecimal labPrice = new java.math.BigDecimal("150000");
+        String priceSql = "SELECT price FROM service_prices WHERE service_type = 'lab' LIMIT 1";
+        try (PreparedStatement priceSt = connection.prepareStatement(priceSql)) {
+            try (ResultSet priceRs = priceSt.executeQuery()) {
+                if (priceRs.next() && priceRs.getBigDecimal("price") != null) {
+                    labPrice = priceRs.getBigDecimal("price");
+                }
+            }
+        }
+
+        String insertPaymentSql = "INSERT INTO payments (appointment_id, amount, method, status, created_at) VALUES (?, ?, 'cash', 'pending', NOW())";
+        try (PreparedStatement ins = connection.prepareStatement(insertPaymentSql)) {
+            ins.setLong(1, appointmentId);
+            ins.setBigDecimal(2, labPrice);
+            return ins.executeUpdate() > 0;
         }
     }
 
