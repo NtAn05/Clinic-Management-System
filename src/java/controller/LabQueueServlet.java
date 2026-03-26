@@ -50,6 +50,11 @@ public class LabQueueServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 8;
 
+    private boolean isCurrentActiveRequest(int requestId) {
+        int activeRequestId = labRequestDAO.getActiveRequestId();
+        return activeRequestId == requestId;
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -137,6 +142,11 @@ public class LabQueueServlet extends HttpServlet {
         if ("updateStatus".equals(action)) {
             int requestId = Integer.parseInt(request.getParameter("requestId"));
             String newStatus = request.getParameter("status");
+
+            if (!isCurrentActiveRequest(requestId)) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Phiếu này chưa tới lượt xử lý\"}");
+                return;
+            }
             
             boolean success = labRequestDAO.updateLabRequestStatus(requestId, newStatus);
             
@@ -153,6 +163,11 @@ public class LabQueueServlet extends HttpServlet {
         } else         if ("updateNotes".equals(action)) {
             int requestId = Integer.parseInt(request.getParameter("requestId"));
             String notes = request.getParameter("notes");
+
+            if (!isCurrentActiveRequest(requestId)) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Phiếu này chưa tới lượt xử lý\"}");
+                return;
+            }
             
             boolean success = labRequestDAO.updateLabRequestNotes(requestId, notes);
             
@@ -239,6 +254,11 @@ public class LabQueueServlet extends HttpServlet {
                     }
                 } else {
                     requestId = Integer.parseInt(requestIdParam);
+                }
+
+                if (!isCurrentActiveRequest(requestId)) {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Phiếu này chưa tới lượt xử lý\"}");
+                    return;
                 }
                 
                 String notes = request.getParameter("notes");

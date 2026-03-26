@@ -45,7 +45,7 @@ public class LabPaymentDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                sp.specialization,
+                d.specialization,
                 u.full_name AS doctor_name,
                 a.symptom,
                 a.status AS appointment_status
@@ -54,7 +54,6 @@ public class LabPaymentDAO extends DBContext {
             JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE lr.status IN ('pending', 'processing')
                           AND pay.status = 'pending'
@@ -281,7 +280,7 @@ public class LabPaymentDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                sp.specialization,
+                d.specialization,
                 u.full_name AS doctor_name,
                 a.symptom,
                 a.status AS appointment_status
@@ -290,7 +289,6 @@ public class LabPaymentDAO extends DBContext {
             JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE pay.payment_id = ?
         """;
