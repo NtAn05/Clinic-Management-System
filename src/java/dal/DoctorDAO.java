@@ -1622,11 +1622,17 @@ public class DoctorDAO extends DBContext {
         WHERE q.doctor_id = ?
     """);
 
-        boolean hasStatusFilter = status != null && !status.equals("all");
+        boolean hasActiveFilter = status == null
+                || status.isBlank()
+                || "active".equalsIgnoreCase(status)
+                || "all".equalsIgnoreCase(status);
+        boolean hasStatusFilter = !hasActiveFilter;
         boolean hasKeywordFilter = keyword != null && !keyword.isBlank();
 
-        if (hasStatusFilter) {
-            sql.append(" AND q.status = ? ");
+        if (hasActiveFilter) {
+            sql.append(" AND LOWER(q.status) IN ('waiting', 'examining') ");
+        } else if (hasStatusFilter) {
+            sql.append(" AND LOWER(q.status) = ? ");
         }
 
         if (hasKeywordFilter) {
@@ -1638,7 +1644,7 @@ public class DoctorDAO extends DBContext {
             ps.setInt(index++, doctorId);
 
             if (hasStatusFilter) {
-                ps.setString(index++, status);
+                ps.setString(index++, status.trim().toLowerCase());
             }
 
             if (hasKeywordFilter) {
@@ -1687,11 +1693,17 @@ public class DoctorDAO extends DBContext {
         WHERE q.doctor_id = ?
     """);
 
-        boolean hasStatusFilter = status != null && !status.equals("all");
+        boolean hasActiveFilter = status == null
+                || status.isBlank()
+                || "active".equalsIgnoreCase(status)
+                || "all".equalsIgnoreCase(status);
+        boolean hasStatusFilter = !hasActiveFilter;
         boolean hasKeywordFilter = keyword != null && !keyword.isBlank();
 
-        if (hasStatusFilter) {
-            sql.append(" AND q.status = ? ");
+        if (hasActiveFilter) {
+            sql.append(" AND LOWER(q.status) IN ('waiting', 'examining') ");
+        } else if (hasStatusFilter) {
+            sql.append(" AND LOWER(q.status) = ? ");
         }
 
         if (hasKeywordFilter) {
@@ -1705,7 +1717,7 @@ public class DoctorDAO extends DBContext {
             ps.setInt(index++, doctorId);
 
             if (hasStatusFilter) {
-                ps.setString(index++, status);
+                ps.setString(index++, status.trim().toLowerCase());
             }
 
             if (hasKeywordFilter) {

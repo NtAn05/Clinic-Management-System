@@ -83,7 +83,12 @@ public class DoctorDashboardServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
 
         if (status == null || status.isBlank()) {
-            status = "all";
+            status = "active";
+        } else {
+            status = status.trim().toLowerCase();
+            if (!"active".equals(status) && !"waiting".equals(status) && !"examining".equals(status)) {
+                status = "active";
+            }
         }
 
         int requestedPage = PagingHelper.parsePage(request, "page", 1);
