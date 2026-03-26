@@ -2029,10 +2029,11 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    public int saveMedicalRecordAndCreateLabRequest(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes) {
+    public int saveMedicalRecordAndCreateLabRequests(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes, int requestCount) {
         String insertLabSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
         String deleteQueueSql = "DELETE FROM exam_queue WHERE appointment_id = ?";
-
+        int safeRequestCount = Math.max(1, requestCount);
+        
         try {
             connection.setAutoCommit(false);
 
@@ -2041,10 +2042,14 @@ public class DoctorDAO extends DBContext {
                 return 0;
             }
 
-            int requestId = insertLabRequestTx(appointmentId, doctorId, insertLabSql);
-            if (requestId <= 0) {
-                connection.rollback();
-                return 0;
+            int createdCount = 0;
+            for (int i = 0; i < safeRequestCount; i++) {
+                int requestId = insertLabRequestTx(appointmentId, doctorId, insertLabSql);
+                if (requestId <= 0) {
+                    connection.rollback();
+                    return 0;
+                }
+                createdCount++;
             }
 
             if (!ensureLabPaymentPendingTx(appointmentId)) {
@@ -2055,7 +2060,7 @@ public class DoctorDAO extends DBContext {
             deleteAppointmentFromExamQueueTx(appointmentId, deleteQueueSql);
 
             connection.commit();
-            return requestId;
+            return createdCount;
         } catch (SQLException e) {
             try {
                 connection.rollback();
@@ -2072,6 +2077,27 @@ public class DoctorDAO extends DBContext {
             }
         }
     }
+    
+    public boolean hasIncompleteLabRequests(long appointmentId) {
+        String sql = """
+            SELECT 1
+            FROM lab_requests
+            WHERE appointment_id = ?
+              AND status <> 'completed'
+            LIMIT 1
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, appointmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    } 
 
     private boolean upsertMedicalRecordTx(long appointmentId, String symptoms, String diagnosis, String notes) throws SQLException {
         String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";

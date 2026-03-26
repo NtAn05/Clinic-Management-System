@@ -1,3 +1,8 @@
+html {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+}
+
 body {
     margin: 0;
     background: radial-gradient(circle at top right, #dbeafe 0%, #f8fafc 45%, #f0fdfa 100%);
@@ -6,6 +11,7 @@ body {
 }
 
 .exam-container {
+    width: min(1180px, calc(100% - 48px));
     max-width: 1180px;
     margin: 24px auto;
     background: linear-gradient(165deg, #ffffff 0%, #f8fbff 55%, #f0fdfa 100%);
@@ -91,6 +97,12 @@ body {
     background: linear-gradient(130deg, #f8fbff 0%, #f1f5ff 100%);
 }
 
+#examForm,
+.tab-content {
+    width: 100%;
+    max-width: 100%;
+}
+
 .tab {
     background: transparent;
     border: 1px solid transparent;
@@ -142,6 +154,8 @@ body {
 }
 
 .tab-content-shell {
+    width: 100%;
+    max-width: 100%;
     min-height: 960px;
 }
 
@@ -207,6 +221,7 @@ select {
     border-radius: 8px;
     margin-bottom: 10px;
     font: inherit;
+    min-width: 0;   
 }
 
 label {
@@ -268,8 +283,24 @@ label {
     gap: 8px;
 }
 
+.rx-row > * {
+    min-width: 0;
+}
+
 .lab-row {
-    grid-template-columns: 1.6fr 1fr 1.2fr;
+    grid-template-columns: 1.4fr 1fr 1.2fr 1.4fr auto;
+    align-items: start;
+}
+
+.btn-remove-lab {
+    white-space: nowrap;
+    height: 42px;
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 .lab-item,
