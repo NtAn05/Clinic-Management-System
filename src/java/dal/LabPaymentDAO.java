@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO for Lab Payment - handles payment waiting list for lab tests
- * Uses existing 'payments' table linked via appointment_id
+ * DAO for Lab Payment - handles payment waiting list for lab tests Uses
+ * existing 'payments' table linked via appointment_id
  */
 public class LabPaymentDAO extends DBContext {
 
     /**
-     * Get payment waiting list with filters and pagination
-     * Only shows payments for completed lab requests
+     * Get payment waiting list with filters and pagination Only shows payments
+     * waiting receptionist confirmation before lab processing
      */
     public List<LabPayment> getPaymentWaitingListWithFilter(String paymentStatus, String searchTerm, int page, int pageSize) {
         List<LabPayment> list = new ArrayList<>();
@@ -55,7 +55,8 @@ public class LabPaymentDAO extends DBContext {
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
             JOIN users u ON d.user_id = u.user_id
-            WHERE lr.status = 'completed'
+            WHERE lr.status IN ('pending', 'processing')
+                          AND pay.status = 'pending'
         """);
 
         List<Object> params = new ArrayList<>();
@@ -108,7 +109,8 @@ public class LabPaymentDAO extends DBContext {
             JOIN appointments a ON pay.appointment_id = a.appointment_id
             JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
-            WHERE lr.status = 'completed'
+            WHERE lr.status IN ('pending', 'processing')
+                          AND pay.status = 'pending'
         """);
 
         List<Object> params = new ArrayList<>();
@@ -144,6 +146,7 @@ public class LabPaymentDAO extends DBContext {
 
     /**
      * Get payment statistics
+     *
      * @return [total, pending, paid]
      */
     public int[] getPaymentStatistics(String searchTerm) {
@@ -158,7 +161,8 @@ public class LabPaymentDAO extends DBContext {
             JOIN appointments a ON pay.appointment_id = a.appointment_id
             JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
-            WHERE lr.status = 'completed'
+            WHERE lr.status IN ('pending', 'processing')
+                          AND pay.status = 'pending'
         """);
 
         List<Object> params = new ArrayList<>();
@@ -241,14 +245,18 @@ public class LabPaymentDAO extends DBContext {
     }
 
     /**
-     * Confirm payment - mark as paid
+     * Confirm payment: mark as paid. Lab queue visibility is controlled by
+     * paid-payment filter at LabRequestDAO queries.
      */
     public boolean confirmPayment(long paymentId) {
-        String sql = "UPDATE payments SET status = 'paid' WHERE payment_id = ?";
+        String updatePaymentSql = "UPDATE payments SET status = 'paid' WHERE payment_id = ?";
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setLong(1, paymentId);
-            int rowsAffected = st.executeUpdate();
+        try {
+            int rowsAffected;
+            try (PreparedStatement st = connection.prepareStatement(updatePaymentSql)) {
+                st.setLong(1, paymentId);
+                rowsAffected = st.executeUpdate();
+            }
             return rowsAffected > 0;
         } catch (SQLException e) {
             e.printStackTrace();

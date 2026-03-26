@@ -75,6 +75,12 @@ public class LabRequestDAO extends DBContext {
             JOIN doctors d ON lr.doctor_id = d.doctor_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
+            AND EXISTS (
+                SELECT 1
+                FROM payments pay
+                WHERE pay.appointment_id = lr.appointment_id
+                AND pay.status = 'paid'
+             )
         """);
         
         List<Object> params = new ArrayList<>();
@@ -146,6 +152,12 @@ public class LabRequestDAO extends DBContext {
             JOIN doctors d ON lr.doctor_id = d.doctor_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
+            AND EXISTS (
+            SELECT 1
+            FROM payments pay
+            WHERE pay.appointment_id = lr.appointment_id
+               AND pay.status = 'paid'
+            )
         """);
         
         List<Object> params = new ArrayList<>();
@@ -226,6 +238,12 @@ public class LabRequestDAO extends DBContext {
             JOIN doctors d ON lr.doctor_id = d.doctor_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
+            AND EXISTS (
+            SELECT 1
+            FROM payments pay
+              WHERE pay.appointment_id = lr.appointment_id
+               AND pay.status = 'paid'
+            )
         """);
         
         List<Object> params = new ArrayList<>();
@@ -324,7 +342,7 @@ public class LabRequestDAO extends DBContext {
     /**
      * Tạo phiếu chỉ định xét nghiệm (bác sĩ). Trả về requestId nếu thành công, 0 nếu thất bại.
      * Cho phép nhiều phiếu xét nghiệm cho cùng một appointment (ví dụ: bệnh khác, chỉ định thêm).
-     * Xóa bệnh nhân khỏi exam_queue (DELETE) để họ chuyển sang hàng đợi xét nghiệm.
+     * Xóa bệnh nhân khỏi exam_queue (DELETE) để họ chuyển sang luồng chờ xác nhận thanh toán xét nghiệm.
      */
     public int insertLabRequest(long appointmentId, int doctorId) {
         String insertSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', ?)";
@@ -339,7 +357,7 @@ public class LabRequestDAO extends DBContext {
             ResultSet keys = st.getGeneratedKeys();
             if (keys.next()) {
                 int requestId = keys.getInt(1);
-                // Chuyển bệnh nhân sang hàng đợi xét nghiệm: xóa khỏi exam_queue (schema không có status 'lab')
+                // Chuyển bệnh nhân ra khỏi hàng chờ khám để sang luồng lễ tân xác nhận payment lab
                 String deleteQueue = "DELETE FROM exam_queue WHERE appointment_id = ?";
                 try (PreparedStatement del = connection.prepareStatement(deleteQueue)) {
                     del.setLong(1, appointmentId);
@@ -599,34 +617,8 @@ public class LabRequestDAO extends DBContext {
                 }
             }
 
-            // 6) Create payment record for this completed lab request (using existing payments table)
-            String checkPayment = "SELECT payment_id FROM payments WHERE appointment_id = ?";
-            try (PreparedStatement checkSt = connection.prepareStatement(checkPayment)) {
-                checkSt.setLong(1, appointmentId);
-                ResultSet rs = checkSt.executeQuery();
-                if (!rs.next()) {
-                    // Get lab test price from service_prices
-                    java.math.BigDecimal labPrice = new java.math.BigDecimal("150000");
-                    String priceSql = "SELECT price FROM service_prices WHERE service_type = 'lab' LIMIT 1";
-                    try (PreparedStatement priceSt = connection.prepareStatement(priceSql)) {
-                        ResultSet priceRs = priceSt.executeQuery();
-                        if (priceRs.next()) {
-                            labPrice = priceRs.getBigDecimal("price");
-                        }
-                    }
-                    // Insert payment record into existing payments table
-                    String insertPayment = "INSERT INTO payments (appointment_id, amount, method, status, created_at) VALUES (?, ?, 'cash', 'pending', ?)";
-                    try (PreparedStatement ins = connection.prepareStatement(insertPayment)) {
-                        Timestamp vnNow = Timestamp.valueOf(
-                            ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime()
-                        );
-                        ins.setLong(1, appointmentId);
-                        ins.setBigDecimal(2, labPrice);
-                        ins.setTimestamp(3, vnNow);
-                        ins.executeUpdate();
-                    }
-                }
-            }
+            // Payment được tạo từ lúc bác sĩ chỉ định xét nghiệm (pending + payment pending -> payment paid -> vào lab queue),
+            // nên không tạo payment ở bước gửi kết quả để tránh lệch luồng nghiệp vụ.
 
             connection.commit();
             return true;
@@ -687,6 +679,12 @@ public class LabRequestDAO extends DBContext {
             JOIN doctors d ON lr.doctor_id = d.doctor_id
             JOIN users u ON d.user_id = u.user_id
             WHERE 1=1
+            AND EXISTS (
+            SELECT 1
+             FROM payments pay
+             WHERE pay.appointment_id = lr.appointment_id
+             AND pay.status = 'paid'
+             )
         """);
 
         List<Object> params = new ArrayList<>();
