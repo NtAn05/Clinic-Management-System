@@ -1,86 +1,144 @@
-.patient-container{
-    max-width:1000px;
-    margin:40px auto;
-    background:#fff;
-    padding:25px 30px;
-    border-radius:12px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+/* CONTAINER */
+.patient-container {
+    max-width: 1100px;
+    margin: 32px auto;
+    background: #ffffff;
+    padding: 24px 26px;
+    border-radius: 16px;
+    border: 1px solid #e2ebff;
+    box-shadow: 0 12px 24px rgba(15, 44, 110, 0.08);
 }
 
-/* Header */
-.patient-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
+/* HEADER */
+.patient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
 }
 
-.patient-header h2{
-    font-size:26px;
-    font-weight:600;
-    color:#333;
+.patient-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e3a8a;
 }
 
-/* Add button */
-.btn-add-patient{
-    width:45px;
-    height:45px;
-    border-radius:50%;
-    background:linear-gradient(135deg,#2ecc71,#27ae60);
-    color:white;
-    text-align:center;
-    line-height:45px;
-    font-size:26px;
-    text-decoration:none;
-    box-shadow:0 3px 8px rgba(0,0,0,0.15);
-    transition:all 0.25s ease;
+/* ADD BUTTON */
+.btn-add-patient {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0b5ad9, #3b82f6);
+    color: white;
+    text-align: center;
+    line-height: 46px;
+    font-size: 26px;
+    text-decoration: none;
+    box-shadow: 0 10px 18px rgba(11, 90, 217, 0.25);
+    transition: all 0.25s ease;
 }
 
-.btn-add-patient:hover{
-    transform:scale(1.1);
-    box-shadow:0 5px 12px rgba(0,0,0,0.2);
+.btn-add-patient:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 14px 24px rgba(11, 90, 217, 0.3);
 }
 
-/* Table */
-.patient-table{
-    width:100%;
-    border-collapse:collapse;
-    border-radius:10px;
-    overflow:hidden;
+/* TABLE */
+.patient-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
-/* Table header */
-.patient-table th{
-    background:#f3f6fb;
-    font-weight:600;
-    color:#444;
-    text-align:left;
+/* HEADER TABLE */
+.patient-table th {
+    background: #f8fbff;
+    font-weight: 700;
+    color: #1e3a8a;
+    text-align: left;
+    font-size: 14px;
 }
 
-/* Table cells */
+/* CELL */
 .patient-table th,
-.patient-table td{
-    padding:14px 16px;
-    border-bottom:1px solid #eee;
-    font-size:15px;
+.patient-table td {
+    padding: 13px 15px;
+    border-bottom: 1px solid #e4edff;
+    font-size: 14px;
+    color: #334155;
 }
 
-/* Row hover */
-.patient-row{
-    transition:background 0.2s ease;
+/* ROW */
+.patient-row {
+    transition: all 0.2s ease;
 }
 
-.patient-row:hover{
-    background:#f8fbff;
+.patient-row:hover {
+    background: #f1f5ff;
 }
 
-/* Edit link */
-.patient-table a{
-    color:#3498db;
-    text-decoration:none;
-    font-weight:500;
+/* LINK */
+.patient-table a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
 }
 
-.patient-table a:hover{
-    text-decoration:underline;
+.patient-table a:hover {
+    text-decoration: underline;
+}
+
+/* STATUS TAG (optional nếu bạn có trạng thái) */
+.status-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef4ff;
+    color: #1e3a8a;
+}
+
+/* EMPTY STATE */
+.empty {
+    text-align: center;
+    padding: 20px;
+    color: #64748b;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .patient-container {
+        padding: 18px 14px;
+    }
+
+    .patient-header h2 {
+        font-size: 20px;
+    }
+
+    .patient-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+.patient-filter {
+    margin-bottom: 15px;
+}
+
+#searchPatient {
+    width: 280px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #dbeafe;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+#searchPatient:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
 }

@@ -16,24 +16,28 @@
 
                 <div class="main">
 
-                    <div class="main">
-
                     <!-- STEPS -->
                     <div class="steps-wrapper">
-                        <div class="step-circle active">
-                            <span>✓</span>
+
+                        <div class="step active">
+                            <div class="circle">✓</div>
                             <p>Xác nhận và chọn ca</p>
                         </div>
-                        <div class="step-line"></div>
-                        <div class="step-circle active">
-                            <span>✓</span>
+
+                        <div class="line"></div>
+
+                        <div class="step">
+                            <div class="circle">✓</div>
                             <p>Thanh toán</p>
                         </div>
-                        <div class="step-line"></div>
-                        <div class="step-circle active">
-                            <span>✓</span>
+
+                        <div class="line"></div>
+
+                        <div class="step">
+                            <div class="circle">✓</div>
                             <p>Hoàn tất</p>
-                        </div>                        
+                        </div>
+
                     </div>
                     <div class="card-box">
                         <h3>Cảm ơn đã đặt lịch hẹn</h3>
@@ -59,12 +63,11 @@
 
                 </div>
 
-                
+
 
             </div>
-        </div>
 
-        <jsp:include page="/common/footer.jsp" />
+            <jsp:include page="/common/footer.jsp" />
 
     </body>
 </html>

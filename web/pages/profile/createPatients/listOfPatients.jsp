@@ -3,111 +3,132 @@
 
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Patient List</title>
+    <head>
+        <title>Patient List</title>
 
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/pages/profile/createPatients/listOfPatients.css">
+        <link rel="stylesheet"
+              href="${pageContext.request.contextPath}/pages/profile/createPatients/listOfPatients.css">
 
-</head>
+    </head>
 
-<body>
+    <body>
 
-<jsp:include page="/common/header.jsp" />
+        <jsp:include page="/common/header.jsp" />
 
-<div class="patient-page">
+        <div class="patient-page">
 
-    <div class="patient-container">
+            <div class="patient-container">
 
-        <!-- header -->
-        <div class="patient-header">
+                <!-- header -->
+                <div class="patient-header">
 
-            <h2 class="patient-title">
-                Danh sách đăng kí bệnh nhân
-            </h2>
+                    <h2 class="patient-title">
+                        Danh sách bệnh nhân của ${sessionScope.account.fullName}
+                    </h2>
 
-            <a href="${pageContext.request.contextPath}/pages/profile/createPatients/createPatients.jsp"
-               class="btn-add-patiaent">
-                +
-            </a>
+                    <a href="${pageContext.request.contextPath}/pages/profile/createPatients/createPatients.jsp"
+                       class="btn-add-patiaent">
+                        +
+                    </a>
+
+                </div>
+                <div class="patient-filter">
+                    <input type="text" id="searchPatient"
+                           placeholder="Tìm theo tên bệnh nhân...">
+                </div>
+
+                <!-- bảng danh sách -->
+                <div class="patient-table-wrapper">
+
+                    <table class="patient-table">
+
+                        <thead>
+                            <tr>
+                                <th class="col-name">Họ tên</th>
+                                <th class="col-dob">Ngày sinh</th>
+                                <th class="col-gender">Giới tính</th>
+                                <th class="col-phone">Điện thoại</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <c:forEach items="${patientList}" var="p">
+
+                                <tr class="patient-row">
+
+                                    <td class="patient-name">
+                                        ${p.fullName}
+                                    </td>
+
+                                    <td class="patient-dob">
+                                        ${p.dob}
+                                    </td>
+
+                                    <td class="patient-gender">
+                                        ${p.gender}
+                                    </td>
+
+                                    <td class="patient-phone">
+                                        ${p.phone}
+                                    </td>
+
+                                    <td class="patient-action">
+
+                                        <a class="btn-edit"
+                                           href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=edit&id=${p.patientId}">
+                                            Sửa
+                                        </a>
+
+                                    </td>
+                                    <c:if test="${DoctorID != null}">
+                                        <td class="patient-action">
+
+                                            <a class="btn-edit"
+                                               href="${pageContext.request.contextPath}/appointmentservlet?doctor=${DoctorID}&patientid=${p.patientId}">
+                                                Chọn
+                                            </a>
+
+                                        </td>
+                                    </c:if>
+
+
+
+                                </tr>
+
+                            </c:forEach>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
 
         </div>
+        <script>
+            const searchInput = document.getElementById("searchPatient");
 
+            searchInput.addEventListener("keyup", function () {
+                let keyword = this.value.toLowerCase();
 
-        <!-- bảng danh sách -->
-        <div class="patient-table-wrapper">
+                let rows = document.querySelectorAll(".patient-row");
 
-            <table class="patient-table">
+                rows.forEach(row => {
+                    let name = row.querySelector(".patient-name").innerText.toLowerCase();
 
-                <thead>
-                    <tr>
-                        <th class="col-name">Họ tên</th>
-                        <th class="col-dob">Ngày sinh</th>
-                        <th class="col-gender">Giới tính</th>
-                        <th class="col-phone">Điện thoại</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </thead>
+                    if (name.includes(keyword)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
+        </script>
+        <jsp:include page="/common/footer.jsp" />
 
-                <tbody>
-
-                     <c:forEach items="${patientList}" var="p">
-
-                        <tr class="patient-row">
-
-                            <td class="patient-name">
-                                ${p.fullName}
-                            </td>
-
-                            <td class="patient-dob">
-                                ${p.dob}
-                            </td>
-
-                            <td class="patient-gender">
-                                ${p.gender}
-                            </td>
-
-                            <td class="patient-phone">
-                                ${p.phone}
-                            </td>
-
-                            <td class="patient-action">
-
-                                <a class="btn-edit"
-                                   href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=edit&id=${p.patientId}">
-                                    Sửa
-                                </a>
-
-                            </td>
-                             <c:if test="${DoctorID != null}">
-                                <td class="patient-action">
-
-                                <a class="btn-edit"
-                                   href="${pageContext.request.contextPath}/appointmentservlet?doctor=${DoctorID}&patientid=${p.patientId}">
-                                    Chọn
-                                </a>
-
-                            </td>
-                            </c:if>
-                            
-                            
-
-                        </tr>
-
-                    </c:forEach>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-</div>
-
-<jsp:include page="/common/footer.jsp" />
-
-</body>
+    </body>
 </html>

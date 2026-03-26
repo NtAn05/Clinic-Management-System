@@ -178,34 +178,35 @@ public class PatientsServlet extends HttpServlet {
         }
 
         PatientPortalDAO dao = new PatientPortalDAO();
-
+        request.setAttribute("DoctorID", DoctorID);
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-        
+
         int newPatientId;
         if (valid) {
 
             if ("edit".equals(submit)) {
                 dao.editPatient(patientID, patient);
             } else {
-                 newPatientId = dao.addPatient(patient);
-            
-            if (user.getRole().toString() == "receptionist") {
-                System.out.println(">>>>>> DoctorID trước redirect: " + DoctorID);
+                newPatientId = dao.addPatient(patient);
 
-                response.sendRedirect(request.getContextPath()
-                        + "/appointmentservlet?doctor=" + DoctorID
-                        + "&patientid=" + newPatientId);
-                return;
-            }
-            }
-            response.sendRedirect(request.getContextPath() + "/createpatientsservlet");
+                if ("receptionist".equals(user.getRole().toString())) {
 
+                    response.sendRedirect(request.getContextPath()
+                            + "/appointmentservlet?doctor=" + DoctorID
+                            + "&patientid=" + newPatientId);
+                    return;
+                }
+            }
+            response.sendRedirect(request.getContextPath() + "/createpatientsservlet?DoctorID=" + DoctorID);
         } else {
             request.setAttribute("errorPhone", errorPhone);
-        request.setAttribute("errorEmail", errorEmail);
-        request.setAttribute("errorName", errorName);
-        request.setAttribute("errorDOB", errorDOB);
-        request.setAttribute("DoctorID", DoctorID);
+            request.setAttribute("errorEmail", errorEmail);
+            request.setAttribute("errorName", errorName);
+            request.setAttribute("errorDOB", errorDOB);
+            request.setAttribute("patient", patient);
+
+            request.setAttribute("dob", request.getParameter("dateofbirth"));
+
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
         }

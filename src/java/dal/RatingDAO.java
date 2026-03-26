@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import model.Rating_note;
 import model.Rating_review;
+import model.ReviewAnswer;
 
 public class RatingDAO extends DBContext {
 
@@ -147,7 +148,7 @@ public class RatingDAO extends DBContext {
     public List<Rating_note> getNotesByDoctor(int doctorId) {
         List<Rating_note> list = new ArrayList<>();
 
-        String sql = "SELECT u.full_name, r.note "
+        String sql = "SELECT u.full_name, r.note, r.appointment_id "
                 + "FROM review_answers r "
                 + "JOIN users u ON r.users_id = u.user_id "
                 + "WHERE r.doctor_id = ? "
@@ -166,6 +167,7 @@ public class RatingDAO extends DBContext {
 
                 n.setUserName(rs.getString("full_name"));
                 n.setNote(rs.getString("note"));
+                n.setAppointment_id(rs.getInt("appointment_id"));
 
                 list.add(n);
             }
@@ -178,14 +180,44 @@ public class RatingDAO extends DBContext {
     }
 
     public void deleteRatingByAppointment(int appointmentID) {
- String sql = "DELETE FROM review_answers WHERE appointment_id = ?";
-    try {
-        PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setInt(1, appointmentID);
-        ps.executeUpdate();
-    } catch (Exception e) {
-        e.printStackTrace();
+        String sql = "DELETE FROM review_answers WHERE appointment_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, appointmentID);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
+    public List<ReviewAnswer> getAnswersByAppointment(int appId) {
+        List<ReviewAnswer> list = new ArrayList<>();
+
+        String sql = "SELECT id, question_id, rating_value, note "
+                + "FROM review_answers "
+                + "WHERE appointment_id = ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            ps.setInt(1, appId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                ReviewAnswer a = new ReviewAnswer();
+
+                a.setId(rs.getInt("id"));
+                a.setQuestionid(rs.getInt("question_id"));
+                a.setRating(rs.getInt("rating_value"));
+                a.setNote(rs.getString("note"));
+
+                list.add(a);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 
 }
