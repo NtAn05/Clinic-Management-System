@@ -551,7 +551,7 @@
                 <th>Tuổi / Giới</th>
                 <th>Khoa gửi</th>
                 <th>Triệu chứng</th>
-                <th>Giờ chỉ định</th>
+
                 <th>Trạng thái</th>
                 <th>Thao tác</th>
               </tr>
@@ -619,9 +619,7 @@
                       <td onclick="${clickNav}" style="${clickStyle}">${age} / ${genderText}</td>
                       <td onclick="${clickNav}" style="${clickStyle}">${request.doctor.specialization}</td>
                       <td onclick="${clickNav}" style="${clickStyle}">${request.appointment.symptom != null ? request.appointment.symptom : '-'}</td>
-                      <td onclick="${clickNav}" style="${clickStyle}">
-                        <fmt:formatDate value="${request.createdAt}" pattern="HH:mm" />
-                      </td>
+
                       <td onclick="${clickNav}" style="${clickStyle}">
                         <span class="status-pill ${statusClass}">
                           ● ${statusText}
@@ -973,10 +971,6 @@
             '<div class="detail-label">Khoa gửi</div>' +
             '<div class="detail-value" style="text-align:left;">' + selectedRequest.doctor.specialization + '</div>' +
           '</div>' +
-          '<div>' +
-            '<div class="detail-label">Thời gian chỉ định</div>' +
-            '<div class="detail-value">' + dateTime + '</div>' +
-          '</div>' +
         '</div>';
 
       // Update lab test info
@@ -1033,10 +1027,6 @@
     }
 
     // Filter change handlers
-    document.getElementById('filterStatus').addEventListener('change', () => {
-      document.getElementById('filterForm').submit();
-    });
-    
     document.getElementById('filterDepartment').addEventListener('change', () => {
       document.getElementById('filterForm').submit();
     });
@@ -1059,7 +1049,6 @@
     // Clear all filters button
     document.getElementById('clearFiltersBtn').addEventListener('click', () => {
       // Reset all filter fields
-      document.getElementById('filterStatus').value = '';
       document.getElementById('filterDepartment').value = '';
       document.getElementById('searchInput').value = '';
       

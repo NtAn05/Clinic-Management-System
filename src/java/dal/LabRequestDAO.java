@@ -90,21 +90,46 @@ public class LabRequestDAO extends DBContext {
         if (status != null && !status.isEmpty()) {
             sql.append(" AND lr.status = ?");
             params.add(status);
+        } else {
+            sql.append(" AND lr.status != 'cancelled'");
         }
-        
+
         if (department != null && !department.isEmpty()) {
             sql.append(" AND sp.specialization = ?");
             params.add(department);
         }
-        
+
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            sql.append(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ?)");
             String searchPattern = "%" + searchTerm + "%";
+            // Tách số từ BN<số> hoặc LAB-<năm>-<số>
+            Integer patientIdSearch = null;
+            Integer requestIdSearch = null;
+            String upperTerm = searchTerm.trim().toUpperCase();
+            if (upperTerm.matches("BN\\d+")) {
+                try { patientIdSearch = Integer.parseInt(upperTerm.substring(2)); } catch (NumberFormatException ignored) {}
+            }
+            java.util.regex.Matcher labMatcher = java.util.regex.Pattern.compile("(?:LAB-\\d+-)(\\d+)").matcher(upperTerm);
+            if (labMatcher.find()) {
+                try { requestIdSearch = Integer.parseInt(labMatcher.group(1)); } catch (NumberFormatException ignored) {}
+            }
+
+            StringBuilder cond = new StringBuilder(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ? OR CONCAT('BN', LPAD(p.patient_id, 6, '0')) LIKE ?");
             params.add(searchPattern);
             params.add(searchPattern);
             params.add(searchPattern);
+            params.add(searchPattern);
+            if (patientIdSearch != null) {
+                cond.append(" OR p.patient_id = ?");
+                params.add(patientIdSearch);
+            }
+            if (requestIdSearch != null) {
+                cond.append(" OR lr.request_id = ?");
+                params.add(requestIdSearch);
+            }
+            cond.append(")");
+            sql.append(cond);
         }
-        
+
         try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 st.setObject(i + 1, params.get(i));
@@ -168,21 +193,46 @@ public class LabRequestDAO extends DBContext {
         if (status != null && !status.isEmpty()) {
             sql.append(" AND lr.status = ?");
             params.add(status);
+        } else {
+            sql.append(" AND lr.status != 'cancelled'");
         }
-        
+
         if (department != null && !department.isEmpty()) {
             sql.append(" AND sp.specialization = ?");
             params.add(department);
         }
-        
+
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            sql.append(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ?)");
             String searchPattern = "%" + searchTerm + "%";
+            // Tách số từ BN<số> hoặc LAB-<năm>-<số>
+            Integer patientIdSearch = null;
+            Integer requestIdSearch = null;
+            String upperTerm = searchTerm.trim().toUpperCase();
+            if (upperTerm.matches("BN\\d+")) {
+                try { patientIdSearch = Integer.parseInt(upperTerm.substring(2)); } catch (NumberFormatException ignored) {}
+            }
+            java.util.regex.Matcher labMatcher = java.util.regex.Pattern.compile("(?:LAB-\\d+-)(\\d+)").matcher(upperTerm);
+            if (labMatcher.find()) {
+                try { requestIdSearch = Integer.parseInt(labMatcher.group(1)); } catch (NumberFormatException ignored) {}
+            }
+
+            StringBuilder cond = new StringBuilder(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ? OR CONCAT('BN', LPAD(p.patient_id, 6, '0')) LIKE ?");
             params.add(searchPattern);
             params.add(searchPattern);
             params.add(searchPattern);
+            params.add(searchPattern);
+            if (patientIdSearch != null) {
+                cond.append(" OR p.patient_id = ?");
+                params.add(patientIdSearch);
+            }
+            if (requestIdSearch != null) {
+                cond.append(" OR lr.request_id = ?");
+                params.add(requestIdSearch);
+            }
+            cond.append(")");
+            sql.append(cond);
         }
-        
+
         sql.append(" ORDER BY CASE lr.status WHEN 'processing' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END ASC, CASE WHEN lr.status IN ('pending','processing') THEN lr.created_at END ASC, CASE WHEN lr.status NOT IN ('pending','processing') THEN lr.created_at END DESC");
         sql.append(" LIMIT ? OFFSET ?");
         
@@ -264,11 +314,34 @@ public class LabRequestDAO extends DBContext {
         }
         
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            sql.append(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ?)");
             String searchPattern = "%" + searchTerm + "%";
+            // Tách số từ BN<số> hoặc LAB-<năm>-<số>
+            Integer patientIdSearch = null;
+            Integer requestIdSearch = null;
+            String upperTerm = searchTerm.trim().toUpperCase();
+            if (upperTerm.matches("BN\\d+")) {
+                try { patientIdSearch = Integer.parseInt(upperTerm.substring(2)); } catch (NumberFormatException ignored) {}
+            }
+            java.util.regex.Matcher labMatcher = java.util.regex.Pattern.compile("(?:LAB-\\d+-)(\\d+)").matcher(upperTerm);
+            if (labMatcher.find()) {
+                try { requestIdSearch = Integer.parseInt(labMatcher.group(1)); } catch (NumberFormatException ignored) {}
+            }
+
+            StringBuilder cond = new StringBuilder(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ? OR CONCAT('BN', LPAD(p.patient_id, 6, '0')) LIKE ?");
             params.add(searchPattern);
             params.add(searchPattern);
             params.add(searchPattern);
+            params.add(searchPattern);
+            if (patientIdSearch != null) {
+                cond.append(" OR p.patient_id = ?");
+                params.add(patientIdSearch);
+            }
+            if (requestIdSearch != null) {
+                cond.append(" OR lr.request_id = ?");
+                params.add(requestIdSearch);
+            }
+            cond.append(")");
+            sql.append(cond);
         }
         
         sql.append(" ORDER BY lr.created_at DESC");
@@ -706,11 +779,34 @@ public class LabRequestDAO extends DBContext {
         }
 
         if (searchTerm != null && !searchTerm.isEmpty()) {
-            sql.append(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ?)");
             String searchPattern = "%" + searchTerm + "%";
+            // Tách số từ BN<số> hoặc LAB-<năm>-<số>
+            Integer patientIdSearch = null;
+            Integer requestIdSearch = null;
+            String upperTerm = searchTerm.trim().toUpperCase();
+            if (upperTerm.matches("BN\\d+")) {
+                try { patientIdSearch = Integer.parseInt(upperTerm.substring(2)); } catch (NumberFormatException ignored) {}
+            }
+            java.util.regex.Matcher labMatcher = java.util.regex.Pattern.compile("(?:LAB-\\d+-)(\\d+)").matcher(upperTerm);
+            if (labMatcher.find()) {
+                try { requestIdSearch = Integer.parseInt(labMatcher.group(1)); } catch (NumberFormatException ignored) {}
+            }
+
+            StringBuilder cond = new StringBuilder(" AND (p.full_name LIKE ? OR p.phone LIKE ? OR CONCAT('LAB-', YEAR(lr.created_at), '-', LPAD(lr.request_id, 4, '0')) LIKE ? OR CONCAT('BN', LPAD(p.patient_id, 6, '0')) LIKE ?");
             params.add(searchPattern);
             params.add(searchPattern);
             params.add(searchPattern);
+            params.add(searchPattern);
+            if (patientIdSearch != null) {
+                cond.append(" OR p.patient_id = ?");
+                params.add(patientIdSearch);
+            }
+            if (requestIdSearch != null) {
+                cond.append(" OR lr.request_id = ?");
+                params.add(requestIdSearch);
+            }
+            cond.append(")");
+            sql.append(cond);
         }
 
         try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
