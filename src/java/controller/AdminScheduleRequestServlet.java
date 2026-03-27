@@ -1,6 +1,6 @@
 package controller;
 
-import dal.DoctorDAO;
+import dal.DoctorScheduleDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -67,16 +67,16 @@ public class AdminScheduleRequestServlet extends HttpServlet {
     }
 
     private void loadPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorScheduleDAO requestDAO = new DoctorScheduleDAO();
         String statusFilter = normalizeStatusFilter(req.getParameter("status"));
         String requestTypeFilter = normalizeRequestTypeFilter(req.getParameter("requestType"));
         String actionTypeFilter = normalizeActionTypeFilter(req.getParameter("actionType"));
         String keyword = trimOrEmpty(req.getParameter("keyword"));
 
-        List<ScheduleChangeRequest> requests = doctorDAO.getScheduleChangeRequestsForAdmin(
+        List<ScheduleChangeRequest> requests = requestDAO.getScheduleChangeRequestsForAdmin(
                 statusFilter, requestTypeFilter, actionTypeFilter, keyword
         );
-        int pendingCount = doctorDAO.countPendingScheduleChangeRequests();
+        int pendingCount = requestDAO.countPendingScheduleChangeRequests();
 
         req.setAttribute("statusFilter", statusFilter);
         req.setAttribute("requestTypeFilter", requestTypeFilter);
@@ -89,7 +89,7 @@ public class AdminScheduleRequestServlet extends HttpServlet {
 
     private void handleReview(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-        DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorScheduleDAO requestDAO = new DoctorScheduleDAO();
 
         int requestId = parseInt(req.getParameter("requestId"), -1);
         String decision = normalizeDecision(req.getParameter("decision"));
@@ -100,7 +100,7 @@ public class AdminScheduleRequestServlet extends HttpServlet {
             return;
         }
 
-        boolean reviewed = doctorDAO.reviewScheduleChangeRequest(requestId, decision, adminNote);
+        boolean reviewed = requestDAO.reviewScheduleChangeRequest(requestId, decision, adminNote);
         if (!reviewed) {
             session.setAttribute("scheduleReviewError", "Không thể xử lý đơn. Đơn có thể đã được duyệt trước đó.");
             return;

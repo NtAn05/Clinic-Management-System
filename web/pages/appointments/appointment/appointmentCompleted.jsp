@@ -26,20 +26,20 @@
 
                         <div class="line"></div>
 
-                        <div class="step">
+                        <div class="step active">
                             <div class="circle">✓</div>
                             <p>Thanh toán</p>
                         </div>
 
                         <div class="line"></div>
 
-                        <div class="step">
+                        <div class="step active">
                             <div class="circle">✓</div>
                             <p>Hoàn tất</p>
                         </div>
 
                     </div>
-                    <div class="card-box">
+                    <div class="card-boxs">
                         <h3>Cảm ơn đã đặt lịch hẹn</h3>
 
                         <div class="success-wrapper">

@@ -130,12 +130,9 @@
 
                                         <input type="hidden" name="id" value="${a.appointmentId}">
 
-                                        <select name="status" class="status-select">
+                                        <input type="hidden" name="status" class="status-select" value="checked_in">
 
-                                            <option value="checked_in">Checked In</option>
-                                        </select>
-
-                                        <button class="btn-update">Update</button>
+                                        <button class="btn-update">Check in</button>
 
                                     </form>
                                 </c:if>

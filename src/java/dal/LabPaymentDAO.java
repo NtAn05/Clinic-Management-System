@@ -50,14 +50,13 @@ public class LabPaymentDAO extends DBContext {
                 a.symptom,
                 a.status AS appointment_status
             FROM payments pay
-            JOIN appointments a ON pay.appointment_id = a.appointment_id
-            JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
+            JOIN lab_requests lr ON lr.request_id = pay.lab_request_id
+            JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
-            WHERE lr.status IN ('pending', 'processing')
-                          AND pay.status = 'pending'
+            WHERE lr.status = 'pending'
+              AND pay.status = 'pending'
         """);
 
         List<Object> params = new ArrayList<>();
@@ -128,11 +127,11 @@ public class LabPaymentDAO extends DBContext {
         StringBuilder sql = new StringBuilder("""
             SELECT COUNT(*) as total
             FROM payments pay
-            JOIN appointments a ON pay.appointment_id = a.appointment_id
-            JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
+            JOIN lab_requests lr ON lr.request_id = pay.lab_request_id
+            JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
-            WHERE lr.status IN ('pending', 'processing')
-                          AND pay.status = 'pending'
+            WHERE lr.status = 'pending'
+              AND pay.status = 'pending'
         """);
 
         List<Object> params = new ArrayList<>();
@@ -201,11 +200,11 @@ public class LabPaymentDAO extends DBContext {
                 COALESCE(SUM(CASE WHEN pay.status = 'pending' THEN 1 ELSE 0 END), 0) as pending,
                 COALESCE(SUM(CASE WHEN pay.status = 'paid' THEN 1 ELSE 0 END), 0) as paid
             FROM payments pay
-            JOIN appointments a ON pay.appointment_id = a.appointment_id
-            JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
+            JOIN lab_requests lr ON lr.request_id = pay.lab_request_id
+            JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
-            WHERE lr.status IN ('pending', 'processing')
-                          AND pay.status = 'pending'
+            WHERE lr.status = 'pending'
+              AND pay.status = 'pending'
         """);
 
         List<Object> params = new ArrayList<>();
@@ -286,11 +285,10 @@ public class LabPaymentDAO extends DBContext {
                 a.symptom,
                 a.status AS appointment_status
             FROM payments pay
-            JOIN appointments a ON pay.appointment_id = a.appointment_id
-            JOIN lab_requests lr ON lr.appointment_id = a.appointment_id
+            JOIN lab_requests lr ON lr.request_id = pay.lab_request_id
+            JOIN appointments a ON lr.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             JOIN doctors d ON lr.doctor_id = d.doctor_id
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             JOIN users u ON d.user_id = u.user_id
             WHERE pay.payment_id = ?
         """;
@@ -330,31 +328,31 @@ public class LabPaymentDAO extends DBContext {
     }
 
     /**
-     * Create a payment record for lab request (using appointment_id)
+     * Create a payment record for a lab request.
+     * Uses lab_request_id to link payment directly to the lab request (not appointment).
      */
-    public boolean createLabPayment(long appointmentId, BigDecimal amount, String method) {
-        // Check if payment already exists for this appointment
-        String checkSql = "SELECT payment_id FROM payments WHERE appointment_id = ?";
+    public boolean createLabPayment(long appointmentId, int labRequestId, BigDecimal amount, String method) {
+        // Check if payment already exists for this lab request
+        String checkSql = "SELECT payment_id FROM payments WHERE lab_request_id = ?";
         try (PreparedStatement checkSt = connection.prepareStatement(checkSql)) {
-            checkSt.setLong(1, appointmentId);
+            checkSt.setInt(1, labRequestId);
             ResultSet rs = checkSt.executeQuery();
             if (rs.next()) {
-                // Payment already exists
-                return true;
+                return true; // already created
             }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
 
-        String sql = "INSERT INTO payments (appointment_id, amount, method, status, created_at) VALUES (?, ?, ?, 'pending', NOW())";
+        String sql = "INSERT INTO payments (appointment_id, lab_request_id, amount, method, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())";
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setLong(1, appointmentId);
-            st.setBigDecimal(2, amount);
-            st.setString(3, method != null ? method : "cash");
-            int rowsAffected = st.executeUpdate();
-            return rowsAffected > 0;
+            st.setInt(2, labRequestId);
+            st.setBigDecimal(3, amount);
+            st.setString(4, method != null ? method : "cash");
+            return st.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -414,7 +412,6 @@ public class LabPaymentDAO extends DBContext {
         // Map Doctor
         Doctor doctor = new Doctor();
         doctor.setDoctorId(rs.getInt("doctor_id"));
-        doctor.setSpecialization(rs.getString("specialization"));
         doctor.setFullName(rs.getString("doctor_name"));
         labRequest.setDoctor(doctor);
 

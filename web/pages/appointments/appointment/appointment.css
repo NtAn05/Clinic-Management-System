@@ -11,7 +11,7 @@ body {
 
 /* ================= PAGE ================= */
 .page {
-    max-width: 1350px;
+    width: 1350px;
     margin: auto;
 }
 
@@ -110,7 +110,21 @@ body {
     margin-bottom: 15px;
     color: #2f80ed;
 }
+.card-boxs {
+    width: 1000px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
 
+.section-box h3,
+.card-boxs h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #2f80ed;
+}
 /* ================= FORM ================= */
 .form-grid {
     display: grid;
@@ -372,8 +386,8 @@ textarea {
     width: 200px;
     height: 200px;
     border-radius: 50%;
-    background-color: #e8f8f0; 
-    display: flex;
+    background-color: white; 
+    display: flex;  
     justify-content: center;
     align-items: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -382,7 +396,6 @@ textarea {
 .success-icon {
     width: 200px;
     height: 200px;
-    object-fit: contain;
 }
 
 .note-box {

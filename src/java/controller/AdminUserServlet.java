@@ -260,7 +260,7 @@ public class AdminUserServlet extends HttpServlet {
             }
 
             if (targetRole == Role.doctor || existingUser.getRole() == Role.doctor) {
-                doctorDAO.syncDoctorProfilesForAllDoctorUsers();
+                doctorDAO.syncDoctorRowsForAllDoctorUsers();
             }
 
             request.setAttribute("success", "Cập nhật tài khoản thành công");

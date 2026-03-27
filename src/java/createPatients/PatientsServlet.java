@@ -134,9 +134,9 @@ public class PatientsServlet extends HttpServlet {
 
         String patientID = request.getParameter("patientID");
         String DoctorID = request.getParameter("DoctorID");
-        String sdt = request.getParameter("sdt");
-        String name = request.getParameter("name");
-        String email = request.getParameter("email");
+        String sdt = request.getParameter("sdt").trim();
+        String name = request.getParameter("name").trim();
+        String email = request.getParameter("email").trim();
         String gender = request.getParameter("gender");
         String dateofbirth = request.getParameter("dateofbirth");
 
@@ -173,14 +173,14 @@ public class PatientsServlet extends HttpServlet {
         }
 
         if (!checkDOB(localDate)) {
-            errorDOB = "Date of birth must be between 1900 and today";
+            errorDOB = "Date of birth must be between 1980 and today";
             valid = false;
         }
 
         PatientPortalDAO dao = new PatientPortalDAO();
         request.setAttribute("DoctorID", DoctorID);
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-
+        patient.setPatientId(-1);
         int newPatientId;
         if (valid) {
 
@@ -242,7 +242,7 @@ public class PatientsServlet extends HttpServlet {
         if (dob == null) {
             return false;
         }
-        LocalDate minDate = LocalDate.of(1990, 1, 1);
+        LocalDate minDate = LocalDate.of(1980, 1, 1);
         LocalDate today = LocalDate.now();
 
         return (dob.compareTo(minDate) >= 0) && (dob.compareTo(today) <= 0);

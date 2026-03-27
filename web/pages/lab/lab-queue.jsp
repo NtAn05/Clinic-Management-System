@@ -566,8 +566,6 @@
                   </tr>
                 </c:when>
                 <c:otherwise>
-                  <%-- Track phiếu active đầu tiên (pending/processing) --%>
-                  <c:set var="activeFound" value="false" />
                   <c:forEach var="request" items="${labRequests}">
                     <fmt:formatDate value="${request.createdAt}" pattern="yyyy" var="year" />
                     <c:set var="requestCode" value="LAB-${year}-${request.requestId}" />
@@ -583,26 +581,14 @@
                     <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : (request.status == 'cancelled' ? 'Đã hủy' : 'Đã có kết quả'))}" />
                     <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : (request.status == 'cancelled' ? 'status-cancelled' : 'status-done'))}" />
 
-                    <%-- Xác định hàng active/locked --%>
-                    <c:set var="isActiveRow" value="false" />
-                    <c:set var="isLockedRow" value="false" />
-                    <c:choose>
-                      <c:when test="${request.status == 'completed' or request.status == 'cancelled'}">
-                        <%-- Phiếu đã xong: không lock, không active --%>
-                      </c:when>
-                      <c:when test="${activeFound == 'false'}">
-                        <c:set var="isActiveRow" value="true" />
-                        <c:set var="activeFound" value="true" />
-                      </c:when>
-                      <c:otherwise>
-                        <c:set var="isLockedRow" value="true" />
-                      </c:otherwise>
-                    </c:choose>
+                    <%-- isActiveRow: phiếu đang processing; isLockedRow: pending/processing khác bị khóa khi đã có phiếu đang processing --%>
+                    <c:set var="isActiveRow" value="${request.requestId == activeRequestId}" />
+                    <c:set var="isLockedRow" value="${hasProcessingRequest and not isActiveRow and (request.status == 'pending' or request.status == 'processing')}" />
 
                     <c:set var="rowClass" value="queue-row${isActiveRow ? ' row-active' : ''}${isLockedRow ? ' row-locked' : ''}" />
                     <tr class="${rowClass}" data-request-id="${request.requestId}" data-notes="${fn:escapeXml(request.notes)}">
                       <c:choose>
-                        <c:when test="${not isLockedRow and (request.status == 'pending' or request.status == 'processing')}">
+                        <c:when test="${isActiveRow and (request.status == 'pending' or request.status == 'processing')}">
                           <c:set var="clickNav" value="window.location.href='${pageContext.request.contextPath}/lab-queue?action=viewSendResult&amp;requestId=${request.requestId}'" />
                           <c:set var="clickStyle" value="cursor: pointer;" />
                         </c:when>

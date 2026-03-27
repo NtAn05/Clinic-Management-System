@@ -517,6 +517,10 @@
                 font-weight: 500;
             }
 
+            .field-input-error {
+                border-color: #d32f2f !important;
+            }
+
             .modal-footer {
                 display: flex;
                 gap: 10px;
@@ -690,7 +694,7 @@
                     <label><i class="fas fa-filter"></i> Vai trò</label>
                     <select id="userRoleFilter">
                         <option value="all" ${filterRole == 'all' ? 'selected' : ''}>-- Tất cả --</option>
-                        <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Quản trị viên</option>
+                        <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Admin</option>
                         <option value="doctor" ${filterRole == 'doctor' ? 'selected' : ''}>Bác sĩ</option>
                         <option value="receptionist" ${filterRole == 'receptionist' ? 'selected' : ''}>Tiếp tân</option>
                         <option value="technician" ${filterRole == 'technician' ? 'selected' : ''}>Kỹ thuật viên</option>
@@ -746,7 +750,7 @@
                                         <td>${not empty user.email ? user.email : '<em>Chưa cập nhật</em>'}</td>
                                         <td>
                                             <span class="badge ${user.role.toString() == 'admin' ? 'badge-admin' : user.role.toString() == 'doctor' ? 'badge-doctor' : user.role.toString() == 'receptionist' ? 'badge-receptionist' : user.role.toString() == 'technician' ? 'badge-technician' : user.role.toString() == 'patient_manager' ? 'badge-patient-manager' : 'badge-patient'}">
-                                                ${user.role.toString() == 'admin' ? 'Quản trị viên' : user.role.toString() == 'doctor' ? 'Bác sĩ' : user.role.toString() == 'receptionist' ? 'Tiếp tân' : user.role.toString() == 'technician' ? 'Kỹ thuật viên' : user.role.toString() == 'patient_manager' ? 'Quản lý bệnh nhân' : 'Bệnh nhân'}
+                                                ${user.role.toString() == 'admin' ? 'Admin' : user.role.toString() == 'doctor' ? 'Bác sĩ' : user.role.toString() == 'receptionist' ? 'Tiếp tân' : user.role.toString() == 'technician' ? 'Kỹ thuật viên' : user.role.toString() == 'patient_manager' ? 'Quản lý bệnh nhân' : 'Bệnh nhân'}
                                             </span>
                                         </td>
                                         <td>
@@ -850,7 +854,7 @@
                     <button class="modal-close" onclick="closeModal('addAccountModal')">×</button>
                 </div>
 
-                <form action="users" method="POST" id="addAccountForm">
+                <form action="users" method="POST" id="addAccountForm" novalidate>
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="role" id="addRoleInput">
 
@@ -863,7 +867,7 @@
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="addFullName" required maxlength="100" placeholder="Nhập họ và tên" value="${addFullName}">
+                        <input type="text" name="fullname" id="addFullName" class="${not empty addFullNameError ? 'field-input-error' : ''}" maxlength="100" placeholder="Nhập họ và tên" value="${addFullName}">
                         <c:if test="${not empty addFullNameError}">
                             <div class="field-error">${addFullNameError}</div>
                         </c:if>
@@ -871,7 +875,7 @@
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="addPhone" required maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" placeholder="Nhập số điện thoại" value="${addPhone}">
+                        <input type="tel" name="phone" id="addPhone" class="${not empty addPhoneError ? 'field-input-error' : ''}" maxlength="10" placeholder="Nhập số điện thoại" value="${addPhone}">
                         <c:if test="${not empty addPhoneError}">
                             <div class="field-error">${addPhoneError}</div>
                         </c:if>
@@ -879,7 +883,7 @@
 
                     <div class="form-group">
                         <label>Email <span style="color: red;">*</span></label>
-                        <input type="email" name="email" id="addEmail" required maxlength="100" pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" title="Email không đúng định dạng" placeholder="Nhập email" value="${addEmail}">
+                        <input type="email" name="email" id="addEmail" class="${not empty addEmailError ? 'field-input-error' : ''}" maxlength="100" placeholder="Nhập email" value="${addEmail}">
                         <c:if test="${not empty addEmailError}">
                             <div class="field-error">${addEmailError}</div>
                         </c:if>
@@ -887,7 +891,7 @@
 
                                         <div id="addRoleGroup" class="form-group">
                         <label>Vai trò <span style="color: red;">*</span></label>
-                        <select name="staffRole" id="addStaffRole">
+                        <select name="staffRole" id="addStaffRole" class="${not empty addRoleError ? 'field-input-error' : ''}">
                             <option value="">-- Chọn vai trò --</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
@@ -902,7 +906,7 @@
                     <div id="addDoctorFieldsGroup" style="display: none;">
                         <div class="form-group">
                             <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
-                            <select name="doctorSpecialization" id="addDoctorSpecialization">
+                            <select name="doctorSpecialization" id="addDoctorSpecialization" class="${not empty addDoctorSpecializationError ? 'field-input-error' : ''}">
                                 <option value="">-- Chọn chuyên môn --</option>
                                 <option value="Da liễu dị ứng">Da liễu dị ứng</option>
                                 <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
@@ -915,7 +919,7 @@
                         </div>
                         <div class="form-group">
                             <label>Bằng cấp <span style="color: red;">*</span></label>
-                            <select name="doctorQualification" id="addDoctorQualification">
+                            <select name="doctorQualification" id="addDoctorQualification" class="${not empty addDoctorQualificationError ? 'field-input-error' : ''}">
                                 <option value="">-- Chọn bằng cấp --</option>
                                 <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
                                 <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
@@ -927,14 +931,14 @@
                         </div>
                         <div class="form-group">
                             <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorExperienceYears" id="addDoctorExperienceYears" min="0" max="50" value="${addDoctorExperienceYears}">
+                            <input type="number" name="doctorExperienceYears" id="addDoctorExperienceYears" min="0" max="50" class="${not empty addDoctorExperienceError ? 'field-input-error' : ''}" value="${addDoctorExperienceYears}">
                             <c:if test="${not empty addDoctorExperienceError}">
                                 <div class="field-error">${addDoctorExperienceError}</div>
                             </c:if>
                         </div>
                         <div class="form-group">
                             <label>Giá khám <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorPriceBooking" id="addDoctorPriceBooking" min="0" max="10000000" value="${addDoctorPriceBooking}">
+                            <input type="number" name="doctorPriceBooking" id="addDoctorPriceBooking" min="0" max="10000000" class="${not empty addDoctorPriceError ? 'field-input-error' : ''}" value="${addDoctorPriceBooking}">
                             <c:if test="${not empty addDoctorPriceError}">
                                 <div class="field-error">${addDoctorPriceError}</div>
                             </c:if>
@@ -963,7 +967,7 @@
                     <button class="modal-close" onclick="closeModal('editAccountModal')">×</button>
                 </div>
 
-                <form action="users" method="POST" id="editAccountForm">
+                <form action="users" method="POST" id="editAccountForm" novalidate>
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="userId" id="editUserId" value="${editUserId}">
                     <input type="hidden" name="originalRole" id="editOriginalRoleInput" value="${editOriginalRole}">
@@ -977,12 +981,15 @@
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="editFullName" required value="${editFullName}">
+                        <input type="text" name="fullname" id="editFullName" class="${not empty editFullNameError ? 'field-input-error' : ''}" value="${editFullName}">
+                        <c:if test="${not empty editFullNameError}">
+                            <div class="field-error">${editFullNameError}</div>
+                        </c:if>
                     </div>
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="editPhone" required pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" value="${editPhone}">
+                        <input type="tel" name="phone" id="editPhone" class="${not empty editPhoneError ? 'field-input-error' : ''}" value="${editPhone}">
                         <c:if test="${not empty editPhoneError}">
                             <div class="field-error">${editPhoneError}</div>
                         </c:if>
@@ -991,7 +998,7 @@
                     <div class="form-group">
                         <label>Email <span style="color: red;">*</span></label>
                         <div class="input-action-row">
-                            <input type="email" name="email" id="editEmail" required pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không đúng định dạng" value="${editEmail}">
+                            <input type="email" name="email" id="editEmail" class="${not empty editEmailError ? 'field-input-error' : ''}" value="${editEmail}">
                             <button type="button" class="btn-inline" id="editResendButton" onclick="resendPasswordFromEditModal()" style="display: none;">Gửi lại email</button>
                         </div>
                         <c:if test="${not empty editEmailError}">
@@ -1001,7 +1008,7 @@
 
                     <div id="editRoleGroup" class="form-group">
                         <label>Vai trò <span style="color: red;">*</span></label>
-                        <select name="role" id="editRole">
+                        <select name="role" id="editRole" class="${not empty editRoleError ? 'field-input-error' : ''}">
                             <option value="">-- Chọn vai trò --</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
@@ -1015,7 +1022,7 @@
                     <div id="editDoctorFieldsGroup" style="display: none;">
                         <div class="form-group">
                             <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
-                            <select name="doctorSpecialization" id="editDoctorSpecialization">
+                            <select name="doctorSpecialization" id="editDoctorSpecialization" class="${not empty editDoctorSpecializationError ? 'field-input-error' : ''}">
                                 <option value="">-- Chọn chuyên môn --</option>
                                 <option value="Da liễu dị ứng">Da liễu dị ứng</option>
                                 <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
@@ -1028,7 +1035,7 @@
                         </div>
                         <div class="form-group">
                             <label>Bằng cấp <span style="color: red;">*</span></label>
-                            <select name="doctorQualification" id="editDoctorQualification">
+                            <select name="doctorQualification" id="editDoctorQualification" class="${not empty editDoctorQualificationError ? 'field-input-error' : ''}">
                                 <option value="">-- Chọn bằng cấp --</option>
                                 <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
                                 <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
@@ -1040,14 +1047,14 @@
                         </div>
                         <div class="form-group">
                             <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorExperienceYears" id="editDoctorExperienceYears" min="0" max="50" value="${editDoctorExperienceYears}">
+                            <input type="number" name="doctorExperienceYears" id="editDoctorExperienceYears" min="0" max="50" class="${not empty editDoctorExperienceError ? 'field-input-error' : ''}" value="${editDoctorExperienceYears}">
                             <c:if test="${not empty editDoctorExperienceError}">
                                 <div class="field-error">${editDoctorExperienceError}</div>
                             </c:if>
                         </div>
                         <div class="form-group">
                             <label>Giá khám <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorPriceBooking" id="editDoctorPriceBooking" min="0" max="10000000" value="${editDoctorPriceBooking}">
+                            <input type="number" name="doctorPriceBooking" id="editDoctorPriceBooking" min="0" max="10000000" class="${not empty editDoctorPriceError ? 'field-input-error' : ''}" value="${editDoctorPriceBooking}">
                             <c:if test="${not empty editDoctorPriceError}">
                                 <div class="field-error">${editDoctorPriceError}</div>
                             </c:if>
@@ -1107,6 +1114,7 @@
                 const modal = document.getElementById(modalId);
                 if (!modal) return;
                 modal.querySelectorAll('.field-error').forEach(el => el.remove());
+                modal.querySelectorAll('.field-input-error').forEach(el => el.classList.remove('field-input-error'));
             }
 
             function toggleEditResendButton(show) {

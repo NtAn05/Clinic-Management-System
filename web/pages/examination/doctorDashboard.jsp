@@ -29,14 +29,6 @@
                     <div class="summary-icon yellow">⏰</div>
                 </div>
 
-                <div class="card summary-card examining">
-                    <div class="summary-left">
-                        <p>Đang khám</p>
-                        <h3>${stats.examining}</h3>
-                    </div>
-                    <div class="summary-icon green">🩺</div>
-                </div>
-
                 <div class="card summary-card done">
                     <div class="summary-left">
                         <p>Đã hoàn tất</p>
@@ -99,7 +91,6 @@
                             <span>Ngày sinh</span>
                             <span>Triệu chứng</span>
                             <span>Trạng thái</span>
-                            <span>Thao tác</span>
                         </div>
 
                         <c:forEach var="q" items="${queueList}">

@@ -1,10 +1,8 @@
 package dal;
 
 import model.Doctor;
-import model.DoctorShift;
 import model.DoctorQueueItem;
 import java.sql.*;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import model.DoctorDashboardStats;
@@ -13,19 +11,16 @@ import model.ExaminationHistoryItem;
 import model.MedicalRecord;
 import model.Medicine;
 import model.PrescriptionItem;
-import model.ScheduleChangeRequest;
-import model.ScheduleSwapShiftOption;
 
 public class DoctorDAO extends DBContext {
 
     /* get doctor by id*/
     public Doctor getDoctorByUserId(int userId) {
         String sql = """
-            SELECT d.doctor_id, d.user_id, sp.specialization,
+            SELECT d.doctor_id, d.user_id, d.specialization,
                    u.full_name, u.phone, u.email
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
             WHERE d.user_id = ?
         """;
 
@@ -49,99 +44,10 @@ public class DoctorDAO extends DBContext {
         return null;
     }
 
-    // lịch làm việc
-    public List<DoctorShift> getDoctorShifts(int doctorId) {
-        List<DoctorShift> list = new ArrayList<>();
-
-        String sql = """
-            SELECT shift_id, doctor_id, day_of_week,
-                   start_time, end_time, max_patients
-            FROM doctor_shifts
-            WHERE doctor_id = ?
-              AND status = 'active'
-            ORDER BY day_of_week, start_time
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            ResultSet rs = st.executeQuery();
-
-            while (rs.next()) {
-                DoctorShift s = new DoctorShift();
-                s.setShiftId(rs.getInt("shift_id"));
-                s.setDoctorId(rs.getInt("doctor_id"));
-                s.setDayOfWeek(rs.getInt("day_of_week"));
-                s.setStartTime(rs.getTime("start_time").toLocalTime());
-                s.setEndTime(rs.getTime("end_time").toLocalTime());
-                s.setMaxPatients(rs.getInt("max_patients"));
-                list.add(s);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    public List<Doctor> getAllDoctorsForSchedule() {
-        syncDoctorRowsForAllDoctorUsers();
-        List<Doctor> list = new ArrayList<>();
-        String sql = """
-            SELECT d.doctor_id, d.user_id, sp.specialization, u.full_name
-            FROM doctors d
-            JOIN users u ON d.user_id = u.user_id
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
-            WHERE u.role = 'doctor'
-            ORDER BY u.full_name
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
-            while (rs.next()) {
-                Doctor d = new Doctor();
-                d.setDoctorId(rs.getInt("doctor_id"));
-                d.setUserId(rs.getInt("user_id"));
-                d.setSpecialization(rs.getString("specialization"));
-                d.setFullName(rs.getString("full_name"));
-                list.add(d);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
-    public List<Doctor> getActiveDoctorsForSchedule() {
-        syncDoctorRowsForAllDoctorUsers();
-        List<Doctor> list = new ArrayList<>();
-        String sql = """
-            SELECT d.doctor_id, d.user_id, sp.specialization, u.full_name
-            FROM doctors d
-            JOIN users u ON d.user_id = u.user_id
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
-            WHERE u.role = 'doctor' AND u.status = 'active'
-            ORDER BY u.full_name
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
-            while (rs.next()) {
-                Doctor d = new Doctor();
-                d.setDoctorId(rs.getInt("doctor_id"));
-                d.setUserId(rs.getInt("user_id"));
-                d.setSpecialization(rs.getString("specialization"));
-                d.setFullName(rs.getString("full_name"));
-                list.add(d);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
     public void syncDoctorRowsForAllDoctorUsers() {
         String sql = """
-            INSERT INTO doctors (user_id)
-            SELECT u.user_id
+            INSERT INTO doctors (user_id, specialization)
+            SELECT u.user_id, 'Chua cap nhat'
             FROM users u
             LEFT JOIN doctors d ON d.user_id = u.user_id
             WHERE u.role = 'doctor' AND d.doctor_id IS NULL
@@ -157,7 +63,7 @@ public class DoctorDAO extends DBContext {
     public void syncDoctorProfilesForAllDoctorUsers() {
         String sql = """
             INSERT INTO doctors (user_id, specialization)
-            SELECT u.user_id, 'Chưa cập nhật'
+            SELECT u.user_id, 'ChÆ°a cáº­p nháº­t'
             FROM users u
             LEFT JOIN doctors d ON d.user_id = u.user_id
             WHERE u.role = 'doctor' AND d.doctor_id IS NULL
@@ -195,23 +101,37 @@ public class DoctorDAO extends DBContext {
         return false;
     }
 
-    public void upsertDoctorProfileByUserId(int userId, String specialization, String qualification,
-            int experienceYears, int priceBooking) throws SQLException {
+    public void upsertDoctorProfileByUserId(int userId, String academicDegree, Date dob, String gender,
+            String specialization, int experienceYears, String academicTitle,
+            String professionalQualification, int priceBooking) throws SQLException {
         syncDoctorRowsForAllDoctorUsers();
 
         String updateDoctorSql = """
             UPDATE doctors
-            SET price_booking = ?
+            SET specialization = ?, experience_years = ?, academic_title = ?,
+                professional_qualification = ?, price_booking = ?
             WHERE user_id = ?
         """;
         try (PreparedStatement updateDoctor = connection.prepareStatement(updateDoctorSql)) {
-            updateDoctor.setInt(1, priceBooking);
-            updateDoctor.setInt(2, userId);
+            updateDoctor.setString(1, specialization);
+            updateDoctor.setInt(2, experienceYears);
+            updateDoctor.setString(3, academicTitle);
+            updateDoctor.setString(4, professionalQualification);
+            updateDoctor.setInt(5, priceBooking);
+            updateDoctor.setInt(6, userId);
             if (updateDoctor.executeUpdate() == 0) {
                 try (PreparedStatement insertDoctor = connection.prepareStatement(
-                        "INSERT INTO doctors (user_id, price_booking) VALUES (?, ?)")) {
+                        """
+                        INSERT INTO doctors (user_id, specialization, experience_years, academic_title,
+                                             professional_qualification, price_booking)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """)) {
                     insertDoctor.setInt(1, userId);
-                    insertDoctor.setInt(2, priceBooking);
+                    insertDoctor.setString(2, specialization);
+                    insertDoctor.setInt(3, experienceYears);
+                    insertDoctor.setString(4, academicTitle);
+                    insertDoctor.setString(5, professionalQualification);
+                    insertDoctor.setInt(6, priceBooking);
                     insertDoctor.executeUpdate();
                 }
             }
@@ -219,21 +139,24 @@ public class DoctorDAO extends DBContext {
 
         String updateStaffSql = """
             UPDATE staff_profiles
-            SET specialization = ?, qualification = ?, experience_years = ?
+            SET academic_degree = ?, dob = ?, gender = ?
             WHERE user_id = ?
         """;
         try (PreparedStatement updateStaff = connection.prepareStatement(updateStaffSql)) {
-            updateStaff.setString(1, specialization);
-            updateStaff.setString(2, qualification);
-            updateStaff.setInt(3, experienceYears);
+            updateStaff.setString(1, academicDegree);
+            updateStaff.setDate(2, dob);
+            updateStaff.setString(3, gender);
             updateStaff.setInt(4, userId);
             if (updateStaff.executeUpdate() == 0) {
                 try (PreparedStatement insertStaff = connection.prepareStatement(
-                        "INSERT INTO staff_profiles (user_id, specialization, qualification, experience_years) VALUES (?, ?, ?, ?)")) {
+                        """
+                        INSERT INTO staff_profiles (user_id, academic_degree, dob, gender)
+                        VALUES (?, ?, ?, ?)
+                        """)) {
                     insertStaff.setInt(1, userId);
-                    insertStaff.setString(2, specialization);
-                    insertStaff.setString(3, qualification);
-                    insertStaff.setInt(4, experienceYears);
+                    insertStaff.setString(2, academicDegree);
+                    insertStaff.setDate(3, dob);
+                    insertStaff.setString(4, gender);
                     insertStaff.executeUpdate();
                 }
             }
@@ -244,7 +167,8 @@ public class DoctorDAO extends DBContext {
         syncDoctorRowsForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("""
-            SELECT d.doctor_id, d.user_id, sp.specialization, sp.qualification, sp.experience_years, d.price_booking, d.rating,
+            SELECT d.doctor_id, d.user_id, d.specialization, sp.academic_degree, sp.dob, sp.gender,
+                   d.experience_years, d.academic_title, d.professional_qualification, d.price_booking, d.rating,
                    u.full_name, u.phone, u.email, u.status AS user_status
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
@@ -261,11 +185,11 @@ public class DoctorDAO extends DBContext {
             params.add(like);
         }
         if (specializationFilter != null && !specializationFilter.isBlank()) {
-            sql.append(" AND sp.specialization = ?");
+            sql.append(" AND d.specialization = ?");
             params.add(specializationFilter.trim());
         }
         if (qualificationFilter != null && !qualificationFilter.isBlank()) {
-            sql.append(" AND sp.qualification = ?");
+            sql.append(" AND sp.academic_degree = ?");
             params.add(qualificationFilter.trim());
         }
         sql.append(" ORDER BY u.full_name");
@@ -281,8 +205,12 @@ public class DoctorDAO extends DBContext {
                     d.setDoctorId(rs.getInt("doctor_id"));
                     d.setUserId(rs.getInt("user_id"));
                     d.setSpecialization(rs.getString("specialization"));
-                    d.setQualification(rs.getString("qualification"));
+                    d.setAcademicDegree(rs.getString("academic_degree"));
+                    d.setDob(rs.getDate("dob"));
+                    d.setGender(rs.getString("gender"));
                     d.setExperience_years(rs.getInt("experience_years"));
+                    d.setAcademicTitle(rs.getString("academic_title"));
+                    d.setProfessionalQualification(rs.getString("professional_qualification"));
                     d.setPrice(rs.getDouble("price_booking"));
                     d.setRating(rs.getDouble("rating"));
                     d.setFullName(rs.getString("full_name"));
@@ -298,11 +226,58 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
+    public List<Doctor> getStaffsForAdmin(String keyword, String roleFilter, String qualificationFilter) {
+        syncDoctorRowsForAllDoctorUsers();
+        List<Doctor> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
+            SELECT d.doctor_id, u.user_id, u.role, sp.academic_degree, sp.dob, sp.gender,
+                   d.specialization, d.experience_years, d.academic_title, d.professional_qualification,
+                   d.price_booking, d.rating, u.full_name, u.phone, u.email, u.status AS user_status
+            FROM users u
+            LEFT JOIN staff_profiles sp ON sp.user_id = u.user_id
+            LEFT JOIN doctors d ON d.user_id = u.user_id
+            WHERE u.role IN ('doctor', 'receptionist', 'technician', 'patient_manager')
+        """);
+
+        List<Object> params = new ArrayList<>();
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append(" AND (u.full_name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)");
+            String like = "%" + keyword.trim() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (roleFilter != null && !roleFilter.isBlank()) {
+            sql.append(" AND u.role = ?");
+            params.add(roleFilter.trim());
+        }
+        if (qualificationFilter != null && !qualificationFilter.isBlank()) {
+            sql.append(" AND sp.academic_degree = ?");
+            params.add(qualificationFilter.trim());
+        }
+        sql.append(" ORDER BY u.full_name");
+
+        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            for (Object param : params) {
+                st.setObject(idx++, param);
+            }
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapAdminStaff(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public List<String> getDistinctDoctorSpecializations() {
         List<String> list = new ArrayList<>();
         String sql = """
             SELECT DISTINCT specialization
-            FROM staff_profiles
+            FROM doctors
             WHERE specialization IS NOT NULL AND specialization <> ''
             ORDER BY specialization
         """;
@@ -319,14 +294,14 @@ public class DoctorDAO extends DBContext {
     public List<String> getDistinctDoctorQualifications() {
         List<String> list = new ArrayList<>();
         String sql = """
-            SELECT DISTINCT qualification
+            SELECT DISTINCT academic_degree
             FROM staff_profiles
-            WHERE qualification IS NOT NULL AND qualification <> ''
-            ORDER BY qualification
+            WHERE academic_degree IS NOT NULL AND academic_degree <> ''
+            ORDER BY academic_degree
         """;
         try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
             while (rs.next()) {
-                list.add(rs.getString("qualification"));
+                list.add(rs.getString("academic_degree"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -336,7 +311,8 @@ public class DoctorDAO extends DBContext {
 
     public Doctor getDoctorByIdForAdmin(int doctorId) {
         String sql = """
-            SELECT d.doctor_id, d.user_id, sp.specialization, sp.qualification, sp.experience_years, d.price_booking, d.rating,
+            SELECT d.doctor_id, d.user_id, d.specialization, sp.academic_degree, sp.dob, sp.gender,
+                   d.experience_years, d.academic_title, d.professional_qualification, d.price_booking, d.rating,
                    u.full_name, u.phone, u.email, u.status AS user_status
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
@@ -352,8 +328,12 @@ public class DoctorDAO extends DBContext {
                     d.setDoctorId(rs.getInt("doctor_id"));
                     d.setUserId(rs.getInt("user_id"));
                     d.setSpecialization(rs.getString("specialization"));
-                    d.setQualification(rs.getString("qualification"));
+                    d.setAcademicDegree(rs.getString("academic_degree"));
+                    d.setDob(rs.getDate("dob"));
+                    d.setGender(rs.getString("gender"));
                     d.setExperience_years(rs.getInt("experience_years"));
+                    d.setAcademicTitle(rs.getString("academic_title"));
+                    d.setProfessionalQualification(rs.getString("professional_qualification"));
                     d.setPrice(rs.getDouble("price_booking"));
                     d.setRating(rs.getDouble("rating"));
                     d.setFullName(rs.getString("full_name"));
@@ -369,6 +349,89 @@ public class DoctorDAO extends DBContext {
         return null;
     }
 
+    public Doctor getStaffByUserIdForAdmin(int userId) {
+        syncDoctorRowsForAllDoctorUsers();
+        String sql = """
+            SELECT d.doctor_id, u.user_id, u.role, sp.academic_degree, sp.dob, sp.gender,
+                   d.specialization, d.experience_years, d.academic_title, d.professional_qualification,
+                   d.price_booking, d.rating, u.full_name, u.phone, u.email, u.status AS user_status
+            FROM users u
+            LEFT JOIN staff_profiles sp ON sp.user_id = u.user_id
+            LEFT JOIN doctors d ON d.user_id = u.user_id
+            WHERE u.user_id = ?
+              AND u.role IN ('doctor', 'receptionist', 'technician', 'patient_manager')
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return mapAdminStaff(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void upsertStaffProfileByUserId(int userId, String academicDegree, Date dob, String gender) throws SQLException {
+        String updateStaffSql = """
+            UPDATE staff_profiles
+            SET academic_degree = ?, dob = ?, gender = ?
+            WHERE user_id = ?
+        """;
+        try (PreparedStatement updateStaff = connection.prepareStatement(updateStaffSql)) {
+            updateStaff.setString(1, academicDegree);
+            updateStaff.setDate(2, dob);
+            updateStaff.setString(3, gender);
+            updateStaff.setInt(4, userId);
+            if (updateStaff.executeUpdate() == 0) {
+                try (PreparedStatement insertStaff = connection.prepareStatement(
+                        """
+                        INSERT INTO staff_profiles (user_id, academic_degree, dob, gender)
+                        VALUES (?, ?, ?, ?)
+                        """)) {
+                    insertStaff.setInt(1, userId);
+                    insertStaff.setString(2, academicDegree);
+                    insertStaff.setDate(3, dob);
+                    insertStaff.setString(4, gender);
+                    insertStaff.executeUpdate();
+                }
+            }
+        }
+    }
+
+    public void ensureDoctorRowByUserId(int userId, int priceBooking) throws SQLException {
+        syncDoctorRowsForAllDoctorUsers();
+        String sql = """
+            UPDATE doctors
+            SET price_booking = ?
+            WHERE user_id = ?
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, priceBooking);
+            st.setInt(2, userId);
+            if (st.executeUpdate() == 0) {
+                try (PreparedStatement insert = connection.prepareStatement(
+                        "INSERT INTO doctors (user_id, price_booking) VALUES (?, ?)")) {
+                    insert.setInt(1, userId);
+                    insert.setInt(2, priceBooking);
+                    insert.executeUpdate();
+                }
+            }
+        }
+    }
+
+    public void updateDoctorPriceByUserId(int userId, int priceBooking) throws SQLException {
+        String sql = "UPDATE doctors SET price_booking = ? WHERE user_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, priceBooking);
+            st.setInt(2, userId);
+            st.executeUpdate();
+        }
+    }
+
     public int createDoctorWithUser(String fullName, String phone, String email, String password,
             String specialization, String qualification, int experienceYears, int priceBooking) throws SQLException {
         String sqlUser = """
@@ -376,12 +439,12 @@ public class DoctorDAO extends DBContext {
             VALUES (?, ?, ?, ?, 'doctor', 'active')
         """;
         String sqlDoctor = """
-            INSERT INTO doctors (user_id, price_booking)
-            VALUES (?, ?)
+            INSERT INTO doctors (user_id, specialization, experience_years, price_booking)
+            VALUES (?, ?, ?, ?)
         """;
         String sqlStaff = """
-            INSERT INTO staff_profiles (user_id, specialization, qualification, experience_years)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO staff_profiles (user_id, academic_degree)
+            VALUES (?, ?)
         """;
 
         boolean originalAutoCommit = connection.getAutoCommit();
@@ -410,7 +473,9 @@ public class DoctorDAO extends DBContext {
 
             try (PreparedStatement doctorSt = connection.prepareStatement(sqlDoctor)) {
                 doctorSt.setInt(1, userId);
-                doctorSt.setInt(2, priceBooking);
+                doctorSt.setString(2, specialization);
+                doctorSt.setInt(3, experienceYears);
+                doctorSt.setInt(4, priceBooking);
                 int affected = doctorSt.executeUpdate();
                 if (affected == 0) {
                     connection.rollback();
@@ -420,9 +485,7 @@ public class DoctorDAO extends DBContext {
 
             try (PreparedStatement staffSt = connection.prepareStatement(sqlStaff)) {
                 staffSt.setInt(1, userId);
-                staffSt.setString(2, specialization);
-                staffSt.setString(3, qualification);
-                staffSt.setInt(4, experienceYears);
+                staffSt.setString(2, qualification);
                 int affected = staffSt.executeUpdate();
                 if (affected == 0) {
                     connection.rollback();
@@ -446,17 +509,17 @@ public class DoctorDAO extends DBContext {
         String sqlUser = "UPDATE users SET full_name = ?, phone = ?, email = ? WHERE user_id = ? AND role = 'doctor'";
         String sqlDoctor = """
             UPDATE doctors
-            SET price_booking = ?
+            SET specialization = ?, experience_years = ?, price_booking = ?
             WHERE doctor_id = ?
         """;
         String sqlStaff = """
             UPDATE staff_profiles
-            SET specialization = ?, qualification = ?, experience_years = ?
+            SET academic_degree = ?
             WHERE user_id = ?
         """;
         String sqlInsertStaff = """
-            INSERT INTO staff_profiles (user_id, specialization, qualification, experience_years)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO staff_profiles (user_id, academic_degree)
+            VALUES (?, ?)
         """;
 
         boolean originalAutoCommit = connection.getAutoCommit();
@@ -488,8 +551,10 @@ public class DoctorDAO extends DBContext {
             }
 
             try (PreparedStatement doctorSt = connection.prepareStatement(sqlDoctor)) {
-                doctorSt.setInt(1, priceBooking);
-                doctorSt.setInt(2, doctorId);
+                doctorSt.setString(1, specialization);
+                doctorSt.setInt(2, experienceYears);
+                doctorSt.setInt(3, priceBooking);
+                doctorSt.setInt(4, doctorId);
                 if (doctorSt.executeUpdate() == 0) {
                     connection.rollback();
                     return false;
@@ -497,16 +562,12 @@ public class DoctorDAO extends DBContext {
             }
 
             try (PreparedStatement staffSt = connection.prepareStatement(sqlStaff)) {
-                staffSt.setString(1, specialization);
-                staffSt.setString(2, qualification);
-                staffSt.setInt(3, experienceYears);
-                staffSt.setInt(4, userId);
+                staffSt.setString(1, qualification);
+                staffSt.setInt(2, userId);
                 if (staffSt.executeUpdate() == 0) {
                     try (PreparedStatement insertStaffSt = connection.prepareStatement(sqlInsertStaff)) {
                         insertStaffSt.setInt(1, userId);
-                        insertStaffSt.setString(2, specialization);
-                        insertStaffSt.setString(3, qualification);
-                        insertStaffSt.setInt(4, experienceYears);
+                        insertStaffSt.setString(2, qualification);
                         if (insertStaffSt.executeUpdate() == 0) {
                             connection.rollback();
                             return false;
@@ -525,228 +586,37 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    public void addDoctorShift(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
-        Integer inactiveShiftId = findInactiveExactShiftId(doctorId, dayOfWeek, startTime, endTime);
-        if (inactiveShiftId != null) {
-            reactivateDoctorShift(inactiveShiftId, maxPatients);
-            return;
-        }
-
-        String sql = """
-            INSERT INTO doctor_shifts (doctor_id, day_of_week, start_time, end_time, max_patients, status)
-            VALUES (?, ?, ?, ?, ?, 'active')
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            st.setInt(2, dayOfWeek);
-            st.setTime(3, Time.valueOf(startTime));
-            st.setTime(4, Time.valueOf(endTime));
-            st.setInt(5, maxPatients);
-            st.executeUpdate();
-        }
+    public void upsertDoctorProfileByUserId(int userId, String specialization, String qualification,
+            int experienceYears, int priceBooking) throws SQLException {
+        upsertDoctorProfileByUserId(userId, qualification, null, null, specialization,
+                experienceYears, null, null, priceBooking);
     }
 
-    public boolean doctorExists(int doctorId) {
-        String sql = "SELECT 1 FROM doctors WHERE doctor_id = ? LIMIT 1";
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
+    public void upsertStaffProfileByUserId(int userId, String qualification, int experienceYears) throws SQLException {
+        upsertStaffProfileByUserId(userId, qualification, null, null);
     }
 
-    public boolean isDoctorActive(int doctorId) {
-        String sql = """
-            SELECT 1
-            FROM doctors d
-            JOIN users u ON d.user_id = u.user_id
-            WHERE d.doctor_id = ? AND u.role = 'doctor' AND u.status = 'active'
-            LIMIT 1
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
+    private Doctor mapAdminStaff(ResultSet rs) throws SQLException {
+        Doctor d = new Doctor();
+        d.setDoctorId(rs.getInt("doctor_id"));
+        d.setUserId(rs.getInt("user_id"));
+        d.setRole(rs.getString("role"));
+        d.setSpecialization(rs.getString("specialization"));
+        d.setAcademicDegree(rs.getString("academic_degree"));
+        d.setDob(rs.getDate("dob"));
+        d.setGender(rs.getString("gender"));
+        d.setExperience_years(rs.getInt("experience_years"));
+        d.setAcademicTitle(rs.getString("academic_title"));
+        d.setProfessionalQualification(rs.getString("professional_qualification"));
+        d.setPrice(rs.getDouble("price_booking"));
+        d.setRating(rs.getDouble("rating"));
+        d.setFullName(rs.getString("full_name"));
+        d.setPhone(rs.getString("phone"));
+        d.setEmail(rs.getString("email"));
+        d.setStatus(rs.getString("user_status"));
+        return d;
     }
 
-    public DoctorShift getDoctorShiftById(int shiftId) {
-        String sql = """
-            SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
-            FROM doctor_shifts
-            WHERE shift_id = ?
-            LIMIT 1
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    DoctorShift s = new DoctorShift();
-                    s.setShiftId(rs.getInt("shift_id"));
-                    s.setDoctorId(rs.getInt("doctor_id"));
-                    s.setDayOfWeek(rs.getInt("day_of_week"));
-                    s.setStartTime(rs.getTime("start_time").toLocalTime());
-                    s.setEndTime(rs.getTime("end_time").toLocalTime());
-                    s.setMaxPatients(rs.getInt("max_patients"));
-                    return s;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public boolean shiftExists(int shiftId) {
-        String sql = "SELECT 1 FROM doctor_shifts WHERE shift_id = ? LIMIT 1";
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean isShiftOwnedByDoctor(int shiftId, int doctorId) {
-        String sql = """
-            SELECT 1
-            FROM doctor_shifts
-            WHERE shift_id = ? AND doctor_id = ?
-            LIMIT 1
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            st.setInt(2, doctorId);
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean hasUpcomingAppointmentsForShift(int shiftId) {
-        String sql = """
-            SELECT 1
-            FROM appointments
-            WHERE shift_id = ?
-              AND (
-                  appointment_date > CURRENT_DATE
-                  OR (appointment_date = CURRENT_DATE AND appointment_time >= CURRENT_TIME)
-              )
-            LIMIT 1
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean hasAnyAppointmentsForShift(int shiftId) {
-        String sql = "SELECT 1 FROM appointments WHERE shift_id = ? LIMIT 1";
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean hasAppointmentsForShiftOnDate(int shiftId, Date workDate) {
-        String sql = "SELECT 1 FROM appointments WHERE shift_id = ? AND appointment_date = ? LIMIT 1";
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            st.setDate(2, workDate);
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-    
-    public void updateDoctorShift(int shiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
-        String sql = """
-            UPDATE doctor_shifts
-            SET day_of_week = ?, start_time = ?, end_time = ?, max_patients = ?
-            WHERE shift_id = ?
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, dayOfWeek);
-            st.setTime(2, Time.valueOf(startTime));
-            st.setTime(3, Time.valueOf(endTime));
-            st.setInt(4, maxPatients);
-            st.setInt(5, shiftId);
-            st.executeUpdate();
-        }
-    }
-
-    public void deleteDoctorShift(int shiftId) throws SQLException {
-        String sql = "UPDATE doctor_shifts SET status = 'inactive' WHERE shift_id = ?";
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            st.executeUpdate();
-        }
-    }
-
-    public boolean hasShiftConflict(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime, Integer excludeShiftId) {
-        StringBuilder sql = new StringBuilder("""
-            SELECT 1
-            FROM doctor_shifts
-            WHERE doctor_id = ?
-              AND day_of_week = ?
-              AND status = 'active'
-              AND start_time < ?
-              AND end_time > ?
-        """);
-        if (excludeShiftId != null) {
-            sql.append(" AND shift_id <> ? ");
-        }
-        sql.append(" LIMIT 1 ");
-
-        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
-            int index = 1;
-            st.setInt(index++, doctorId);
-            st.setInt(index++, dayOfWeek);
-            st.setTime(index++, Time.valueOf(endTime));
-            st.setTime(index++, Time.valueOf(startTime));
-            if (excludeShiftId != null) {
-                st.setInt(index, excludeShiftId);
-            }
-
-            try (ResultSet rs = st.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    /* CẬP NHẬT TRẠNG THÁI HÀNG ĐỢI */
     public void updateQueueStatus(long appointmentId, String status) {
         String sql = """
             UPDATE exam_queue
@@ -763,7 +633,6 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    /* BẮT ĐẦU KHÁM */
     public void startExamination(long appointmentId) {
         String sql = """
             UPDATE exam_queue
@@ -793,7 +662,9 @@ public class DoctorDAO extends DBContext {
             FROM exam_queue q
             JOIN appointments a ON q.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
-            WHERE q.doctor_id = ? AND q.status = 'examining'
+            WHERE q.doctor_id = ?
+               AND q.status = 'examining'
+               AND a.appointment_date = CURRENT_DATE
             ORDER BY q.queue_position
             LIMIT 1
         """;
@@ -835,7 +706,9 @@ public class DoctorDAO extends DBContext {
             FROM exam_queue q
             JOIN appointments a ON q.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
-            WHERE q.doctor_id = ? AND q.status = 'waiting'
+            WHERE q.doctor_id = ?
+               AND q.status = 'waiting'
+               AND a.appointment_date = CURRENT_DATE
             ORDER BY q.queue_position
             LIMIT 1
         """;
@@ -878,8 +751,7 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    // DANH SÁCH CHỜ KHÁM CỦA BÁC SĨ
-    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) { // được thay thế bởi getqueuewithfilterpaging
+    public List<DoctorQueueItem> getTodayQueueByDoctor(int doctorId) {
         List<DoctorQueueItem> list = new ArrayList<>();
 
         String sql = """
@@ -915,733 +787,7 @@ public class DoctorDAO extends DBContext {
             e.printStackTrace();
         }
         return list;
-    }
-
-    public List<DoctorShift> getShiftsByDoctorAndDay(int doctorId, int dayOfWeek) {
-        List<DoctorShift> list = new ArrayList<>();
-
-        String sql = """
-        SELECT shift_id, start_time, end_time, max_patients
-        FROM doctor_shifts
-        WHERE doctor_id = ? AND day_of_week = ?
-          AND status = 'active'
-    """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            st.setInt(2, dayOfWeek);
-            ResultSet rs = st.executeQuery();
-
-            while (rs.next()) {
-                DoctorShift s = new DoctorShift();
-                s.setShiftId(rs.getInt("shift_id"));
-                s.setStartTime(rs.getTime("start_time").toLocalTime());
-                s.setEndTime(rs.getTime("end_time").toLocalTime());
-                s.setMaxPatients(rs.getInt("max_patients"));
-                list.add(s);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    
-    public List<ScheduleSwapShiftOption> getSwapShiftOptionsByDate(int requesterDoctorId, int dayOfWeek) {
-        List<ScheduleSwapShiftOption> list = new ArrayList<>();
-        String sql = """
-            SELECT s.shift_id, s.doctor_id, s.day_of_week, s.start_time, s.end_time,
-                   u.full_name AS doctor_name
-            FROM doctor_shifts s
-            JOIN doctors d ON d.doctor_id = s.doctor_id
-            JOIN users u ON u.user_id = d.user_id
-            WHERE s.day_of_week = ?
-              AND s.doctor_id <> ?
-              AND s.status = 'active'
-              AND u.role = 'doctor'
-              AND u.status = 'active'
-            ORDER BY u.full_name, s.start_time
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, dayOfWeek);
-            st.setInt(2, requesterDoctorId);
-            ResultSet rs = st.executeQuery();
-
-            while (rs.next()) {
-                ScheduleSwapShiftOption option = new ScheduleSwapShiftOption();
-                option.setShiftId(rs.getInt("shift_id"));
-                option.setDoctorId(rs.getInt("doctor_id"));
-                option.setDoctorName(rs.getString("doctor_name"));
-                option.setDayOfWeek(rs.getInt("day_of_week"));
-                option.setStartTime(rs.getTime("start_time").toLocalTime());
-                option.setEndTime(rs.getTime("end_time").toLocalTime());
-                list.add(option);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-    
-    public List<ScheduleChangeRequest> getScheduleChangeRequestsByDoctor(int doctorId, int limit) {
-        List<ScheduleChangeRequest> list = new ArrayList<>();
-        String sql = """
-            SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
-                   r.reason, r.status, r.requested_at, r.admin_note,
-                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
-                   i.start_time, i.end_time, i.max_patients
-            FROM schedule_change_requests r
-            LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
-            WHERE r.doctor_id = ?
-            ORDER BY r.requested_at DESC
-            LIMIT ?
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            st.setInt(2, limit);
-            ResultSet rs = st.executeQuery();
-
-            while (rs.next()) {
-                ScheduleChangeRequest request = new ScheduleChangeRequest();
-                request.setRequestId(rs.getInt("request_id"));
-                request.setDoctorId(rs.getInt("doctor_id"));
-                request.setRequestType(rs.getString("request_type"));
-                request.setScopeType(rs.getString("scope_type"));
-                request.setReason(rs.getString("reason"));
-                request.setStatus(rs.getString("status"));
-                request.setRequestedAt(rs.getTimestamp("requested_at"));
-                request.setAdminNote(rs.getString("admin_note"));
-                request.setActionType(rs.getString("action_type"));
-
-                int targetShiftId = rs.getInt("target_shift_id");
-                request.setTargetShiftId(rs.wasNull() ? null : targetShiftId);
-
-                request.setWorkDate(rs.getDate("work_date"));
-                int dayOfWeek = rs.getInt("day_of_week");
-                request.setDayOfWeek(rs.wasNull() ? null : dayOfWeek);
-
-                Time startTime = rs.getTime("start_time");
-                if (startTime != null) {
-                    request.setStartTime(startTime.toLocalTime());
-                }
-
-                Time endTime = rs.getTime("end_time");
-                if (endTime != null) {
-                    request.setEndTime(endTime.toLocalTime());
-                }
-
-                int maxPatients = rs.getInt("max_patients");
-                request.setMaxPatients(rs.wasNull() ? null : maxPatients);
-                list.add(request);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
-    public List<ScheduleChangeRequest> getScheduleChangeRequestsForAdmin(String statusFilter) {
-        return getScheduleChangeRequestsForAdmin(statusFilter, "ALL", "ALL", "");
-    }
-
-    public List<ScheduleChangeRequest> getScheduleChangeRequestsForAdmin(
-            String statusFilter,
-            String requestTypeFilter,
-            String actionTypeFilter,
-            String keyword
-    ) {
-        List<ScheduleChangeRequest> list = new ArrayList<>();
-        boolean hasStatusFilter = statusFilter != null && !statusFilter.isBlank() && !"ALL".equalsIgnoreCase(statusFilter);
-        boolean hasRequestTypeFilter = requestTypeFilter != null && !requestTypeFilter.isBlank() && !"ALL".equalsIgnoreCase(requestTypeFilter);
-        boolean hasActionTypeFilter = actionTypeFilter != null && !actionTypeFilter.isBlank() && !"ALL".equalsIgnoreCase(actionTypeFilter);
-        boolean hasKeyword = keyword != null && !keyword.isBlank();
-
-        StringBuilder sql = new StringBuilder("""
-            SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
-                   r.reason, r.status, r.requested_at, r.admin_note,
-                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
-                   i.start_time, i.end_time, i.max_patients,
-                   u.full_name AS doctor_name,
-                   u_old.full_name AS old_doctor_name,
-                   s_old.day_of_week AS old_day_of_week,
-                   s_old.start_time AS old_start_time,
-                   s_old.end_time AS old_end_time,
-                   u_new.full_name AS new_doctor_name,
-                   CASE
-                       WHEN i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
-                       THEN DATE_ADD(i.work_date, INTERVAL (s_old.day_of_week - i.day_of_week) DAY)
-                       ELSE NULL
-                   END AS old_work_date
-            FROM schedule_change_requests r
-            JOIN doctors d ON r.doctor_id = d.doctor_id
-            JOIN users u ON d.user_id = u.user_id
-            LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
-            LEFT JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
-            LEFT JOIN doctors d_old ON s_old.doctor_id = d_old.doctor_id
-            LEFT JOIN users u_old ON d_old.user_id = u_old.user_id
-            LEFT JOIN doctor_shifts s_new ON s_new.shift_id = (
-                SELECT s2.shift_id
-                FROM doctor_shifts s2
-                WHERE i.action_type = 'UPDATE'
-                  AND s2.day_of_week = i.day_of_week
-                  AND s2.start_time = i.start_time
-                  AND s2.end_time = i.end_time
-                  AND s2.doctor_id <> r.doctor_id
-                ORDER BY s2.shift_id
-                LIMIT 1
-            )
-            LEFT JOIN doctors d_new ON s_new.doctor_id = d_new.doctor_id
-            LEFT JOIN users u_new ON d_new.user_id = u_new.user_id
-        """);
-
-        sql.append(" WHERE 1=1 ");
-        if (hasStatusFilter) {
-            sql.append(" AND r.status = ? ");
-        }
-        if (hasRequestTypeFilter) {
-            sql.append(" AND r.request_type = ? ");
-        }
-        if (hasActionTypeFilter) {
-            sql.append(" AND i.action_type = ? ");
-        }
-        if (hasKeyword) {
-            sql.append(" AND (u.full_name LIKE ? OR r.reason LIKE ?) ");
-        }
-        sql.append(" ORDER BY r.requested_at DESC ");
-
-        try (PreparedStatement st = connection.prepareStatement(sql.toString())) {
-            int index = 1;
-            if (hasStatusFilter) {
-                st.setString(index++, statusFilter.trim().toUpperCase());
-            }
-            if (hasRequestTypeFilter) {
-                st.setString(index++, requestTypeFilter.trim().toUpperCase());
-            }
-            if (hasActionTypeFilter) {
-                st.setString(index++, actionTypeFilter.trim().toUpperCase());
-            }
-            if (hasKeyword) {
-                String keywordLike = "%" + keyword.trim() + "%";
-                st.setString(index++, keywordLike);
-                st.setString(index++, keywordLike);
-            }
-            ResultSet rs = st.executeQuery();
-
-            while (rs.next()) {
-                ScheduleChangeRequest request = new ScheduleChangeRequest();
-                request.setRequestId(rs.getInt("request_id"));
-                request.setDoctorId(rs.getInt("doctor_id"));
-                request.setDoctorName(rs.getString("doctor_name"));
-                request.setRequestType(rs.getString("request_type"));
-                request.setScopeType(rs.getString("scope_type"));
-                request.setReason(rs.getString("reason"));
-                request.setStatus(rs.getString("status"));
-                request.setRequestedAt(rs.getTimestamp("requested_at"));
-                request.setAdminNote(rs.getString("admin_note"));
-                request.setActionType(rs.getString("action_type"));
-
-                int targetShiftId = rs.getInt("target_shift_id");
-                request.setTargetShiftId(rs.wasNull() ? null : targetShiftId);
-
-                request.setWorkDate(rs.getDate("work_date"));
-                int dayOfWeek = rs.getInt("day_of_week");
-                request.setDayOfWeek(rs.wasNull() ? null : dayOfWeek);
-
-                Time startTime = rs.getTime("start_time");
-                if (startTime != null) {
-                    request.setStartTime(startTime.toLocalTime());
-                }
-
-                Time endTime = rs.getTime("end_time");
-                if (endTime != null) {
-                    request.setEndTime(endTime.toLocalTime());
-                }
-
-                int maxPatients = rs.getInt("max_patients");
-                request.setMaxPatients(rs.wasNull() ? null : maxPatients);
-
-                request.setOldDoctorName(rs.getString("old_doctor_name"));
-                int oldDayOfWeek = rs.getInt("old_day_of_week");
-                request.setOldDayOfWeek(rs.wasNull() ? null : oldDayOfWeek);
-
-                Time oldStartTime = rs.getTime("old_start_time");
-                if (oldStartTime != null) {
-                    request.setOldStartTime(oldStartTime.toLocalTime());
-                }
-
-                Time oldEndTime = rs.getTime("old_end_time");
-                if (oldEndTime != null) {
-                    request.setOldEndTime(oldEndTime.toLocalTime());
-                }
-
-                request.setNewDoctorName(rs.getString("new_doctor_name"));
-                request.setOldWorkDate(rs.getDate("old_work_date"));
-                list.add(request);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
-    public int countPendingScheduleChangeRequests() {
-        String sql = "SELECT COUNT(*) FROM schedule_change_requests WHERE status = 'PENDING'";
-        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    public boolean reviewScheduleChangeRequest(int requestId, String decision, String adminNote) {
-        String normalizedDecision = decision == null ? "" : decision.trim().toUpperCase();
-        boolean shouldApply = "APPROVED".equals(normalizedDecision);
-        String reviewSql = """
-            UPDATE schedule_change_requests
-            SET status = ?, admin_note = ?
-            WHERE request_id = ? AND status = 'PENDING'
-        """;
-
-        boolean originalAutoCommit = true;
-        try {
-            originalAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
-
-            PendingScheduleReview request = getPendingScheduleReviewForUpdate(requestId);
-            if (request == null) {
-                connection.rollback();
-                return false;
-            }
-
-            if (shouldApply && !applyApprovedScheduleRequest(request)) {
-                connection.rollback();
-                return false;
-            }
-
-            try (PreparedStatement st = connection.prepareStatement(reviewSql)) {
-                st.setString(1, normalizedDecision);
-                if (adminNote == null || adminNote.isBlank()) {
-                    st.setNull(2, Types.VARCHAR);
-                } else {
-                    st.setString(2, adminNote.trim());
-                }
-                st.setInt(3, requestId);
-                if (st.executeUpdate() == 0) {
-                    connection.rollback();
-                    return false;
-                }
-            }
-
-            connection.commit();
-            return true;
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                connection.setAutoCommit(originalAutoCommit);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private PendingScheduleReview getPendingScheduleReviewForUpdate(int requestId) throws SQLException {
-        String sql = """
-            SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
-                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
-                   i.start_time, i.end_time, i.max_patients
-            FROM schedule_change_requests r
-            LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
-            WHERE r.request_id = ? AND r.status = 'PENDING'
-            LIMIT 1
-            FOR UPDATE
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, requestId);
-            try (ResultSet rs = st.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-
-                PendingScheduleReview review = new PendingScheduleReview();
-                review.requestId = rs.getInt("request_id");
-                review.doctorId = rs.getInt("doctor_id");
-                review.requestType = rs.getString("request_type");
-                review.scopeType = rs.getString("scope_type");
-                review.actionType = rs.getString("action_type");
-
-                int targetShiftId = rs.getInt("target_shift_id");
-                review.targetShiftId = rs.wasNull() ? null : targetShiftId;
-
-                review.workDate = rs.getDate("work_date");
-                int dayOfWeek = rs.getInt("day_of_week");
-                review.dayOfWeek = rs.wasNull() ? null : dayOfWeek;
-
-                Time startTime = rs.getTime("start_time");
-                review.startTime = startTime == null ? null : startTime.toLocalTime();
-
-                Time endTime = rs.getTime("end_time");
-                review.endTime = endTime == null ? null : endTime.toLocalTime();
-
-                int maxPatients = rs.getInt("max_patients");
-                review.maxPatients = rs.wasNull() ? null : maxPatients;
-                return review;
-            }
-        }
-    }
-
-    private boolean applyApprovedScheduleRequest(PendingScheduleReview request) throws SQLException {
-        if (request.actionType == null || request.actionType.isBlank()) {
-            return true;
-        }
-
-        // One-date/temporary requests are rendered as weekly overlays on schedule view,
-        // so they should not mutate fixed weekly templates in doctor_shifts.
-        if ("TEMPORARY".equalsIgnoreCase(request.requestType)
-                || "ONE_DATE".equalsIgnoreCase(request.scopeType)) {
-            return true;
-        }
-
-        String actionType = request.actionType.trim().toUpperCase();
-        switch (actionType) {
-            case "ADD":
-                return applyApprovedAddRequest(request);
-            case "REMOVE":
-                return applyApprovedRemoveRequest(request);
-            case "UPDATE":
-                return applyApprovedUpdateRequest(request);
-            default:
-                return true;
-        }
-    }
-
-    private boolean applyApprovedAddRequest(PendingScheduleReview request) throws SQLException {
-        if (request.dayOfWeek == null || request.startTime == null || request.endTime == null || request.maxPatients == null) {
-            return false;
-        }
-        if (hasShiftConflict(request.doctorId, request.dayOfWeek, request.startTime, request.endTime, null)) {
-            return false;
-        }
-
-        addDoctorShift(request.doctorId, request.dayOfWeek, request.startTime, request.endTime, request.maxPatients);
-        return true;
-    }
-
-    private boolean applyApprovedRemoveRequest(PendingScheduleReview request) throws SQLException {
-        if (request.targetShiftId == null) {
-            // Temporary remove without a weekly shift anchor cannot be persisted to doctor_shifts.
-            return true;
-        }
-
-        DoctorShift shift = getDoctorShiftByIdForUpdate(request.targetShiftId);
-        if (shift == null || shift.getDoctorId() != request.doctorId) {
-            return false;
-        }
-
-        String deleteSql = "UPDATE doctor_shifts SET status = 'inactive' WHERE shift_id = ?";
-        try (PreparedStatement st = connection.prepareStatement(deleteSql)) {
-            st.setInt(1, request.targetShiftId);
-            return st.executeUpdate() > 0;
-        }
-    }
-
-    private boolean applyApprovedUpdateRequest(PendingScheduleReview request) throws SQLException {
-        if (request.targetShiftId == null || request.dayOfWeek == null || request.startTime == null || request.endTime == null) {
-            return false;
-        }
-
-        DoctorShift requesterShift = getDoctorShiftByIdForUpdate(request.targetShiftId);
-        if (requesterShift == null || requesterShift.getDoctorId() != request.doctorId) {
-            return false;
-        }
-
-        DoctorShift counterpart = findCounterpartShiftForSwap(
-                request.doctorId, request.targetShiftId, request.dayOfWeek, request.startTime, request.endTime
-        );
-
-        int requesterMaxPatients = request.maxPatients != null ? request.maxPatients : requesterShift.getMaxPatients();
-        if (!updateShiftById(
-                requesterShift.getShiftId(),
-                request.dayOfWeek,
-                request.startTime,
-                request.endTime,
-                requesterMaxPatients
-        )) {
-            return false;
-        }
-
-        if (counterpart != null) {
-            return updateShiftById(
-                    counterpart.getShiftId(),
-                    requesterShift.getDayOfWeek(),
-                    requesterShift.getStartTime(),
-                    requesterShift.getEndTime(),
-                    counterpart.getMaxPatients()
-            );
-        }
-        return true;
-    }
-
-    private DoctorShift getDoctorShiftByIdForUpdate(int shiftId) throws SQLException {
-        String sql = """
-            SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
-            FROM doctor_shifts
-            WHERE shift_id = ?
-              AND status = 'active'
-            LIMIT 1
-            FOR UPDATE
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, shiftId);
-            try (ResultSet rs = st.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-                DoctorShift s = new DoctorShift();
-                s.setShiftId(rs.getInt("shift_id"));
-                s.setDoctorId(rs.getInt("doctor_id"));
-                s.setDayOfWeek(rs.getInt("day_of_week"));
-                s.setStartTime(rs.getTime("start_time").toLocalTime());
-                s.setEndTime(rs.getTime("end_time").toLocalTime());
-                s.setMaxPatients(rs.getInt("max_patients"));
-                return s;
-            }
-        }
-    }
-
-    private DoctorShift findCounterpartShiftForSwap(int requesterDoctorId, int requesterShiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime) throws SQLException {
-        String sql = """
-            SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
-            FROM doctor_shifts
-            WHERE day_of_week = ?
-              AND start_time = ?
-              AND end_time = ?
-              AND status = 'active'
-              AND doctor_id <> ?
-              AND shift_id <> ?
-            ORDER BY shift_id
-            LIMIT 1
-            FOR UPDATE
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, dayOfWeek);
-            st.setTime(2, Time.valueOf(startTime));
-            st.setTime(3, Time.valueOf(endTime));
-            st.setInt(4, requesterDoctorId);
-            st.setInt(5, requesterShiftId);
-
-            try (ResultSet rs = st.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-                DoctorShift s = new DoctorShift();
-                s.setShiftId(rs.getInt("shift_id"));
-                s.setDoctorId(rs.getInt("doctor_id"));
-                s.setDayOfWeek(rs.getInt("day_of_week"));
-                s.setStartTime(rs.getTime("start_time").toLocalTime());
-                s.setEndTime(rs.getTime("end_time").toLocalTime());
-                s.setMaxPatients(rs.getInt("max_patients"));
-                return s;
-            }
-        }
-    }
-
-    private boolean updateShiftById(int shiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
-        String sql = """
-            UPDATE doctor_shifts
-            SET day_of_week = ?, start_time = ?, end_time = ?, max_patients = ?
-            WHERE shift_id = ?
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, dayOfWeek);
-            st.setTime(2, Time.valueOf(startTime));
-            st.setTime(3, Time.valueOf(endTime));
-            st.setInt(4, maxPatients);
-            st.setInt(5, shiftId);
-            return st.executeUpdate() > 0;
-        }
-    }
-
-    private Integer findInactiveExactShiftId(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime) throws SQLException {
-        String sql = """
-            SELECT shift_id
-            FROM doctor_shifts
-            WHERE doctor_id = ?
-              AND day_of_week = ?
-              AND start_time = ?
-              AND end_time = ?
-              AND status = 'inactive'
-            ORDER BY shift_id
-            LIMIT 1
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            st.setInt(2, dayOfWeek);
-            st.setTime(3, Time.valueOf(startTime));
-            st.setTime(4, Time.valueOf(endTime));
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("shift_id");
-                }
-            }
-        }
-        return null;
-    }
-
-    private void reactivateDoctorShift(int shiftId, int maxPatients) throws SQLException {
-        String sql = """
-            UPDATE doctor_shifts
-            SET status = 'active',
-                max_patients = ?
-            WHERE shift_id = ?
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, maxPatients);
-            st.setInt(2, shiftId);
-            st.executeUpdate();
-        }
-    }
-
-    private static final class PendingScheduleReview {
-
-        private int requestId;
-        private int doctorId;
-        private String requestType;
-        private String scopeType;
-        private String actionType;
-        private Integer targetShiftId;
-        private Date workDate;
-        private Integer dayOfWeek;
-        private LocalTime startTime;
-        private LocalTime endTime;
-        private Integer maxPatients;
-    }
-
-    public boolean createScheduleChangeRequest(
-            int doctorId,
-            String requestType,
-            String scopeType,
-            String reason,
-            String actionType,
-            Integer targetShiftId,
-            Date workDate,
-            Integer dayOfWeek,
-            LocalTime startTime,
-            LocalTime endTime,
-            Integer maxPatients
-    ) {
-        String insertRequestSql = """
-            INSERT INTO schedule_change_requests
-            (doctor_id, request_type, scope_type, reason, status, requested_at)
-            VALUES (?, ?, ?, ?, 'PENDING', NOW())
-        """;
-
-        String insertItemSql = """
-            INSERT INTO schedule_change_request_items
-            (request_id, action_type, target_shift_id, work_date, day_of_week, start_time, end_time, max_patients)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-
-        try {
-            boolean originalAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
-
-            int requestId;
-            try (PreparedStatement insertRequest = connection.prepareStatement(insertRequestSql, Statement.RETURN_GENERATED_KEYS)) {
-                insertRequest.setInt(1, doctorId);
-                insertRequest.setString(2, requestType);
-                insertRequest.setString(3, scopeType);
-                insertRequest.setString(4, reason);
-                if (insertRequest.executeUpdate() == 0) {
-                    connection.rollback();
-                    return false;
-                }
-
-                try (ResultSet keys = insertRequest.getGeneratedKeys()) {
-                    if (!keys.next()) {
-                        connection.rollback();
-                        return false;
-                    }
-                    requestId = keys.getInt(1);
-                }
-            }
-
-            try (PreparedStatement insertItem = connection.prepareStatement(insertItemSql)) {
-                insertItem.setInt(1, requestId);
-                insertItem.setString(2, actionType);
-
-                if (targetShiftId == null) {
-                    insertItem.setNull(3, Types.INTEGER);
-                } else {
-                    insertItem.setInt(3, targetShiftId);
-                }
-
-                if (workDate == null) {
-                    insertItem.setNull(4, Types.DATE);
-                } else {
-                    insertItem.setDate(4, workDate);
-                }
-
-                if (dayOfWeek == null) {
-                    insertItem.setNull(5, Types.TINYINT);
-                } else {
-                    insertItem.setInt(5, dayOfWeek);
-                }
-
-                if (startTime == null) {
-                    insertItem.setNull(6, Types.TIME);
-                } else {
-                    insertItem.setTime(6, Time.valueOf(startTime));
-                }
-
-                if (endTime == null) {
-                    insertItem.setNull(7, Types.TIME);
-                } else {
-                    insertItem.setTime(7, Time.valueOf(endTime));
-                }
-
-                if (maxPatients == null) {
-                    insertItem.setNull(8, Types.INTEGER);
-                } else {
-                    insertItem.setInt(8, maxPatients);
-                }
-
-                if (insertItem.executeUpdate() == 0) {
-                    connection.rollback();
-                    return false;
-                }
-            }
-
-            connection.commit();
-            connection.setAutoCommit(originalAutoCommit);
-            return true;
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-                connection.setAutoCommit(true);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    //thống kê số liệu 
+    }
     public DoctorDashboardStats getDashboardStats(int doctorId) {
         DoctorDashboardStats stats = new DoctorDashboardStats();
         String sql = """
@@ -1653,6 +799,7 @@ public class DoctorDAO extends DBContext {
             FROM exam_queue q
             JOIN appointments a ON q.appointment_id = a.appointment_id
             WHERE q.doctor_id = ?
+                AND a.appointment_date = CURRENT_DATE
         """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -1673,7 +820,7 @@ public class DoctorDAO extends DBContext {
         return stats;
     }
 
-    // lọc theo keyword , trạng thái
+    // lá»c theo keyword , tráº¡ng thÃ¡i
     public List<DoctorQueueItem> getQueueByDoctorWithFilter(
             int doctorId,
             String status,
@@ -1682,8 +829,8 @@ public class DoctorDAO extends DBContext {
         return getQueueByDoctorWithFilterPaging(doctorId, status, keyword, 1, Integer.MAX_VALUE);
     }
 
-    // tính tổng số bản ghi theo bộ lọc để controller tính totalPages cho phân trang.
-    // dùng query COUNT(*) cùng điều kiện status/keyword giống query lấy dữ liệu trang.
+    // tÃ­nh tá»•ng sá»‘ báº£n ghi theo bá»™ lá»c Ä‘á»ƒ controller tÃ­nh totalPages cho phÃ¢n trang.
+    // dÃ¹ng query COUNT(*) cÃ¹ng Ä‘iá»u kiá»‡n status/keyword giá»‘ng query láº¥y dá»¯ liá»‡u trang.
     public int countQueueByDoctorWithFilter(int doctorId, String status, String keyword) {
         StringBuilder sql = new StringBuilder("""
         SELECT COUNT(*)
@@ -1691,6 +838,7 @@ public class DoctorDAO extends DBContext {
         JOIN appointments a ON q.appointment_id = a.appointment_id
         JOIN patients p ON a.patient_id = p.patient_id
         WHERE q.doctor_id = ?
+           AND a.appointment_date = CURRENT_DATE
     """);
 
         boolean hasActiveFilter = status == null
@@ -1735,8 +883,8 @@ public class DoctorDAO extends DBContext {
         return 0;
     }
 
-    // Pagination, hiển thị theo phân trang và bộ lọc.
-    // LIMIT/OFFSET sau khi chuẩn hóa page/pageSize và bind điều kiện động.
+    // Pagination, hiá»ƒn thá»‹ theo phÃ¢n trang vÃ  bá»™ lá»c.
+    // LIMIT/OFFSET sau khi chuáº©n hÃ³a page/pageSize vÃ  bind Ä‘iá»u kiá»‡n Ä‘á»™ng.
     public List<DoctorQueueItem> getQueueByDoctorWithFilterPaging(
             int doctorId,
             String status,
@@ -1764,6 +912,7 @@ public class DoctorDAO extends DBContext {
         JOIN appointments a ON q.appointment_id = a.appointment_id
         JOIN patients p ON a.patient_id = p.patient_id
         WHERE q.doctor_id = ?
+           AND a.appointment_date = CURRENT_DATE
     """);
 
         boolean hasActiveFilter = status == null
@@ -1821,8 +970,8 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
-    // Xác thực appointment có nằm trong queue của chính bác sĩ hay không.
-    // Join exam_queue/appointments/patients và lọc theo doctor_id + appointment_id.
+    // XÃ¡c thá»±c appointment cÃ³ náº±m trong queue cá»§a chÃ­nh bÃ¡c sÄ© hay khÃ´ng.
+    // Join exam_queue/appointments/patients vÃ  lá»c theo doctor_id + appointment_id.
     public DoctorQueueItem getQueueItemByAppointment(int doctorId, long appointmentId) {
         String sql = """
             SELECT
@@ -1865,8 +1014,8 @@ public class DoctorDAO extends DBContext {
         return null;
     }
 
-    // Nnạp timeline các phiếu xét nghiệm và kết quả theo appointment hiện tại.
-    // LEFT JOIN lab_requests với lab_results.
+    // Nnáº¡p timeline cÃ¡c phiáº¿u xÃ©t nghiá»‡m vÃ  káº¿t quáº£ theo appointment hiá»‡n táº¡i.
+    // LEFT JOIN lab_requests vá»›i lab_results.
     public List<ExamLabItem> getLabResultsByAppointment(long appointmentId) {
         List<ExamLabItem> list = new ArrayList<>();
         String sql = """
@@ -2029,10 +1178,11 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    public int saveMedicalRecordAndCreateLabRequest(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes) {
+    public int saveMedicalRecordAndCreateLabRequests(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes, int requestCount) {
         String insertLabSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
         String deleteQueueSql = "DELETE FROM exam_queue WHERE appointment_id = ?";
-
+        int safeRequestCount = Math.max(1, requestCount);
+        
         try {
             connection.setAutoCommit(false);
 
@@ -2041,10 +1191,14 @@ public class DoctorDAO extends DBContext {
                 return 0;
             }
 
-            int requestId = insertLabRequestTx(appointmentId, doctorId, insertLabSql);
-            if (requestId <= 0) {
-                connection.rollback();
-                return 0;
+            int createdCount = 0;
+            for (int i = 0; i < safeRequestCount; i++) {
+                int requestId = insertLabRequestTx(appointmentId, doctorId, insertLabSql);
+                if (requestId <= 0) {
+                    connection.rollback();
+                    return 0;
+                }
+                createdCount++;
             }
 
             if (!ensureLabPaymentPendingTx(appointmentId)) {
@@ -2055,7 +1209,7 @@ public class DoctorDAO extends DBContext {
             deleteAppointmentFromExamQueueTx(appointmentId, deleteQueueSql);
 
             connection.commit();
-            return requestId;
+            return createdCount;
         } catch (SQLException e) {
             try {
                 connection.rollback();
@@ -2072,6 +1226,27 @@ public class DoctorDAO extends DBContext {
             }
         }
     }
+    
+    public boolean hasIncompleteLabRequests(long appointmentId) {
+        String sql = """
+            SELECT 1
+            FROM lab_requests
+            WHERE appointment_id = ?
+              AND status <> 'completed'
+            LIMIT 1
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, appointmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    } 
 
     private boolean upsertMedicalRecordTx(long appointmentId, String symptoms, String diagnosis, String notes) throws SQLException {
         String checkSql = "SELECT 1 FROM medical_records WHERE appointment_id = ? LIMIT 1";
@@ -2138,8 +1313,8 @@ public class DoctorDAO extends DBContext {
     }
 
     /**
-     * Tạo payment pending cho xét nghiệm ngay khi bác sĩ chỉ định.
-     * Nếu payment đã tồn tại cho appointment này thì giữ nguyên và coi như thành công.
+     * Táº¡o payment pending cho xÃ©t nghiá»‡m ngay khi bÃ¡c sÄ© chá»‰ Ä‘á»‹nh.
+     * Náº¿u payment Ä‘Ã£ tá»“n táº¡i cho appointment nÃ y thÃ¬ giá»¯ nguyÃªn vÃ  coi nhÆ° thÃ nh cÃ´ng.
      */
     private boolean ensureLabPaymentPendingTx(long appointmentId) throws SQLException {
         String checkPaymentSql = "SELECT payment_id FROM payments WHERE appointment_id = ? LIMIT 1";
@@ -2172,14 +1347,19 @@ public class DoctorDAO extends DBContext {
 
     public void updateDoctor(int doctorId, String qualification, int experience, String specialization) {
         String sqlGetUser = "SELECT user_id FROM doctors WHERE doctor_id = ?";
+        String sqlUpdateDoctor = """
+            UPDATE doctors
+            SET specialization = ?, experience_years = ?
+            WHERE doctor_id = ?
+        """;
         String sqlUpdateStaff = """
             UPDATE staff_profiles
-            SET qualification = ?, experience_years = ?, specialization = ?
+            SET academic_degree = ?
             WHERE user_id = ?
         """;
         String sqlInsertStaff = """
-            INSERT INTO staff_profiles (user_id, qualification, experience_years, specialization)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO staff_profiles (user_id, academic_degree)
+            VALUES (?, ?)
         """;
 
         try (PreparedStatement getUser = connection.prepareStatement(sqlGetUser)) {
@@ -2190,18 +1370,21 @@ public class DoctorDAO extends DBContext {
             }
 
             int userId = userRs.getInt("user_id");
+            try (PreparedStatement updateDoctor = connection.prepareStatement(sqlUpdateDoctor)) {
+                updateDoctor.setString(1, specialization);
+                updateDoctor.setInt(2, experience);
+                updateDoctor.setInt(3, doctorId);
+                updateDoctor.executeUpdate();
+            }
+
             try (PreparedStatement st = connection.prepareStatement(sqlUpdateStaff)) {
                 st.setString(1, qualification);
-                st.setInt(2, experience);
-                st.setString(3, specialization);
-                st.setInt(4, userId);
+                st.setInt(2, userId);
 
                 if (st.executeUpdate() == 0) {
                     try (PreparedStatement insert = connection.prepareStatement(sqlInsertStaff)) {
                         insert.setInt(1, userId);
                         insert.setString(2, qualification);
-                        insert.setInt(3, experience);
-                        insert.setString(4, specialization);
                         insert.executeUpdate();
                     }
                 }
@@ -2210,33 +1393,6 @@ public class DoctorDAO extends DBContext {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public Object getDoctorByUserId2(int userId) {
-        String sql = """
-            SELECT d.doctor_id, sp.qualification, sp.experience_years, sp.specialization
-            FROM doctors d
-            LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
-            WHERE d.user_id = ?
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-
-            st.setInt(1, userId);
-            ResultSet rs = st.executeQuery();
-
-            if (rs.next()) {
-                Doctor d = new Doctor();
-                d.setDoctorId(rs.getInt("doctor_id"));
-                d.setQualification(rs.getString("qualification"));
-                d.setExperience_years(rs.getInt("experience_years"));
-                d.setSpecialization(rs.getString("specialization"));
-                return d;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public boolean savePrescription(long appointmentId, int doctorId, String prescriptionNote, List<PrescriptionItem> prescriptionItems) {
@@ -2355,7 +1511,7 @@ public class DoctorDAO extends DBContext {
                     if (medicineName == null || medicineName.isBlank()) {
                         medicineName = item.getMedicineId() > 0
                                 ? "Medicine #" + item.getMedicineId()
-                                : "Chưa cập nhật";
+                                : "ChÆ°a cáº­p nháº­t";
                     }
                     insertItem.setInt(1, prescriptionId);
                     insertItem.setString(2, medicineName);
@@ -2453,16 +1609,18 @@ public class DoctorDAO extends DBContext {
         SELECT 
             d.doctor_id,
             u.full_name,
-            sp.specialization,
-            sp.qualification,
-            sp.experience_years,
+            d.specialization,
+            sp.academic_degree AS qualification,
+            d.experience_years,
             d.rating,
             d.price_booking,
-            u.image_url
+            u.image_url,
+            u.status AS user_status
         FROM doctors d
         JOIN users u ON d.user_id = u.user_id
         LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
         WHERE d.doctor_id = ?
+          AND u.status = 'active'
     """;
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -2481,6 +1639,7 @@ public class DoctorDAO extends DBContext {
                 d.setRating(rs.getDouble("rating"));
                 d.setPrice(rs.getDouble("price_booking"));
                 d.setImage(rs.getString("image_url"));
+                d.setStatus(rs.getString("user_status"));
 
                 return d;
             }
@@ -2500,15 +1659,16 @@ public class DoctorDAO extends DBContext {
         SELECT 
             d.doctor_id,
             u.full_name,
-            sp.specialization,
-            sp.qualification,
-            sp.experience_years,
+            d.specialization,
+            sp.academic_degree AS qualification,
+            d.experience_years,
             d.rating,
             d.price_booking,
             u.image_url
         FROM doctors d
         JOIN users u ON d.user_id = u.user_id
         LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
+        WHERE u.status = 'active'
     """;
 
         try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
@@ -2549,16 +1709,16 @@ public class DoctorDAO extends DBContext {
         SELECT 
             d.doctor_id,
             u.full_name,
-            sp.specialization,
-            sp.qualification,
-            sp.experience_years,
+            d.specialization,
+            sp.academic_degree AS qualification,
+            d.experience_years,
             d.rating,
             d.price_booking,
             u.image_url
         FROM doctors d
         JOIN users u ON d.user_id = u.user_id
         LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
-        WHERE 1 = 1
+        WHERE u.status = 'active'
     """);
 
         if (name != null && !name.trim().isEmpty()) {
@@ -2574,7 +1734,7 @@ public class DoctorDAO extends DBContext {
         }
 
         if (experience != null && !experience.isEmpty()) {
-            sql.append(" AND sp.experience_years >= ? ");
+            sql.append(" AND d.experience_years >= ? ");
         }
 
         if ("priceAsc".equals(sort)) {
@@ -2630,8 +1790,8 @@ public class DoctorDAO extends DBContext {
     }
  public java.util.List<java.util.Map<String, Object>> getTopRatedDoctors(int limit) {
         java.util.List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
-        String sql = "SELECT d.doctor_id, u.full_name, sp.specialization, sp.qualification, " +
-                     "sp.experience_years, d.rating, u.image_url " +
+        String sql = "SELECT d.doctor_id, u.full_name, d.specialization, " +
+                     "sp.academic_degree AS qualification, d.experience_years, d.rating, u.image_url " +
                      "FROM doctors d JOIN users u ON d.user_id = u.user_id " +
                      "LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id " +
                      "WHERE u.status = 'active' ORDER BY d.rating DESC LIMIT ?";
@@ -2657,3 +1817,4 @@ public class DoctorDAO extends DBContext {
     }
  
 }
+
