@@ -5,6 +5,7 @@
 package controller.doctor;
 
 import dal.DoctorDAO;
+import dal.DoctorScheduleDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -68,6 +69,7 @@ public class DoctorDashboardServlet extends HttpServlet {
         }
 
         DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorScheduleDAO scheduleDAO = new DoctorScheduleDAO();
         Doctor doctor = doctorDAO.getDoctorByUserId(account.getUserId());
         if (doctor == null) {
             response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
@@ -119,7 +121,7 @@ public class DoctorDashboardServlet extends HttpServlet {
         int dayOfWeek = LocalDate.now().getDayOfWeek().getValue() % 7; // CN = 0
 //        int dayOfWeek = 1; // test 
         List<DoctorShift> shifts
-                = doctorDAO.getShiftsByDoctorAndDay(doctorId, dayOfWeek);
+                = scheduleDAO.getShiftsByDoctorAndDay(doctorId, dayOfWeek);
 
         request.setAttribute("queueList", queueList);
         request.setAttribute("stats", stats);

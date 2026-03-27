@@ -80,6 +80,15 @@
                 border-radius: 6px;
                 font-size: 14px;
             }
+            .field-error {
+                margin-top: 6px;
+                color: #dc3545;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            .field-input-error {
+                border-color: #dc3545 !important;
+            }
             .actions {
                 display: flex;
                 gap: 8px;
@@ -737,45 +746,50 @@
         <div class="modal" id="addModal">
             <div class="modal-content">
                 <div class="modal-title"><i class="fas fa-plus-circle"></i> Thêm ca làm việc</div>
-                <form id="addShiftForm" method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules">
+                <form id="addShiftForm" method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules" novalidate>
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="filterKeyword" value="${keyword}">
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                     <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
+                    <c:if test="${not empty error and addModalOpen}">
+                        <div class="alert error" style="margin-bottom: 12px;">
+                            <i class="fas fa-exclamation-circle"></i>${error}
+                        </div>
+                    </c:if>
                     <div class="modal-grid">
                         <div class="field" style="grid-column:1/-1;">
                             <label>Bác sĩ</label>
-                            <select id="addDoctorSelect" name="doctorId" required>
-                                <option value="" selected disabled>Chọn bác sĩ</option>
+                            <select id="addDoctorSelect" name="doctorId" class="${addModalOpen and empty addDoctorId ? 'field-input-error' : ''}">
+                                <option value="" ${empty addDoctorId ? 'selected' : ''}>Chọn bác sĩ</option>
                                 <c:forEach var="doctor" items="${activeDoctors}">
-                                    <option value="${doctor.doctorId}">${doctor.fullName}</option>
+                                    <option value="${doctor.doctorId}" ${addDoctorId == doctor.doctorId.toString() ? 'selected' : ''}>${doctor.fullName}</option>
                                 </c:forEach>
                             </select>
                         </div>
                         <div class="field">
                             <label>Thứ</label>
-                            <select name="dayOfWeek" required>
-                                <option value="1">Thứ 2</option>
-                                <option value="2">Thứ 3</option>
-                                <option value="3">Thứ 4</option>
-                                <option value="4">Thứ 5</option>
-                                <option value="5">Thứ 6</option>
-                                <option value="6">Thứ 7</option>
-                                <option value="0">Chủ nhật</option>
+                            <select name="dayOfWeek" class="${addModalOpen and empty addDayOfWeek ? 'field-input-error' : ''}">
+                                <option value="1" ${addDayOfWeek == '1' or empty addDayOfWeek ? 'selected' : ''}>Thứ 2</option>
+                                <option value="2" ${addDayOfWeek == '2' ? 'selected' : ''}>Thứ 3</option>
+                                <option value="3" ${addDayOfWeek == '3' ? 'selected' : ''}>Thứ 4</option>
+                                <option value="4" ${addDayOfWeek == '4' ? 'selected' : ''}>Thứ 5</option>
+                                <option value="5" ${addDayOfWeek == '5' ? 'selected' : ''}>Thứ 6</option>
+                                <option value="6" ${addDayOfWeek == '6' ? 'selected' : ''}>Thứ 7</option>
+                                <option value="0" ${addDayOfWeek == '0' ? 'selected' : ''}>Chủ nhật</option>
                             </select>
                         </div>
                         <div class="field">
                             <label>Ca làm việc</label>
-                            <select name="shiftType" required>
-                                <option value="morning">Ca sáng (07:00 - 11:30)</option>
-                                <option value="afternoon">Ca chiều (13:00 - 16:30)</option>
+                            <select name="shiftType" class="${addModalOpen and empty addShiftType ? 'field-input-error' : ''}">
+                                <option value="morning" ${addShiftType == 'morning' or empty addShiftType ? 'selected' : ''}>Ca sáng (07:00 - 11:30)</option>
+                                <option value="afternoon" ${addShiftType == 'afternoon' ? 'selected' : ''}>Ca chiều (13:00 - 16:30)</option>
                             </select>
                         </div>
                         <div class="field">
                             <label>Số bệnh nhân tối đa</label>
-                            <input type="number" name="maxPatients" min="1" max="100" value="20" required>
+                            <input type="number" name="maxPatients" min="1" max="100" class="${addModalOpen and empty addMaxPatients ? 'field-input-error' : ''}" value="${not empty addMaxPatients ? addMaxPatients : '20'}">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -790,38 +804,43 @@
         <div class="modal" id="editModal">
             <div class="modal-content">
                 <div class="modal-title"><i class="fas fa-pen-to-square"></i> Cập nhật ca làm việc</div>
-                <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules">
+                <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules" novalidate>
                     <input type="hidden" name="action" value="update">
-                    <input type="hidden" name="shiftId" id="editShiftId">
-                    <input type="hidden" name="doctorId" id="editDoctorId">
+                    <input type="hidden" name="shiftId" id="editShiftId" value="${editShiftIdValue}">
+                    <input type="hidden" name="doctorId" id="editDoctorId" value="${editDoctorIdValue}">
                     <input type="hidden" name="filterKeyword" value="${keyword}">
                     <input type="hidden" name="filterDayOfWeek" value="${selectedDay}">
                     <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                     <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
                     <input type="hidden" name="filterPage" value="${currentPage}">
+                    <c:if test="${not empty error and editModalOpen}">
+                        <div class="alert error" style="margin-bottom: 12px;">
+                            <i class="fas fa-exclamation-circle"></i>${error}
+                        </div>
+                    </c:if>
                     <div class="modal-grid">
                         <div class="field">
                             <label>Thứ</label>
-                            <select name="dayOfWeek" id="editDayOfWeek" required>
-                                <option value="1">Thứ 2</option>
-                                <option value="2">Thứ 3</option>
-                                <option value="3">Thứ 4</option>
-                                <option value="4">Thứ 5</option>
-                                <option value="5">Thứ 6</option>
-                                <option value="6">Thứ 7</option>
-                                <option value="0">Chủ nhật</option>
+                            <select name="dayOfWeek" id="editDayOfWeek" class="${editModalOpen and empty editDayOfWeekValue ? 'field-input-error' : ''}">
+                                <option value="1" ${editDayOfWeekValue == '1' ? 'selected' : ''}>Thứ 2</option>
+                                <option value="2" ${editDayOfWeekValue == '2' ? 'selected' : ''}>Thứ 3</option>
+                                <option value="3" ${editDayOfWeekValue == '3' ? 'selected' : ''}>Thứ 4</option>
+                                <option value="4" ${editDayOfWeekValue == '4' ? 'selected' : ''}>Thứ 5</option>
+                                <option value="5" ${editDayOfWeekValue == '5' ? 'selected' : ''}>Thứ 6</option>
+                                <option value="6" ${editDayOfWeekValue == '6' ? 'selected' : ''}>Thứ 7</option>
+                                <option value="0" ${editDayOfWeekValue == '0' ? 'selected' : ''}>Chủ nhật</option>
                             </select>
                         </div>
                         <div class="field">
                             <label>Ca làm việc</label>
-                            <select name="shiftType" id="editShiftType" required>
-                                <option value="morning">Ca sáng (07:00 - 11:30)</option>
-                                <option value="afternoon">Ca chiều (13:00 - 16:30)</option>
+                            <select name="shiftType" id="editShiftType" class="${editModalOpen and empty editShiftTypeValue ? 'field-input-error' : ''}">
+                                <option value="morning" ${editShiftTypeValue == 'morning' ? 'selected' : ''}>Ca sáng (07:00 - 11:30)</option>
+                                <option value="afternoon" ${editShiftTypeValue == 'afternoon' ? 'selected' : ''}>Ca chiều (13:00 - 16:30)</option>
                             </select>
                         </div>
                         <div class="field">
                             <label>Số bệnh nhân tối đa</label>
-                            <input type="number" name="maxPatients" id="editMaxPatients" min="1" max="100" required>
+                            <input type="number" name="maxPatients" id="editMaxPatients" min="1" max="100" class="${editModalOpen and empty editMaxPatientsValue ? 'field-input-error' : ''}" value="${editMaxPatientsValue}">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -835,26 +854,37 @@
         <jsp:include page="../../common/footer.jsp" />
                     
         <script>
-            // Áp dụng bộ lọc
             function submitFilterForm() {
                 var form = document.getElementById("filterForm");
                 if (form) form.submit();
             }
 
-            // Mở modal thêm
+            function clearModalValidation(modalId) {
+                var modal = document.getElementById(modalId);
+                if (!modal) return;
+                var inlineAlerts = modal.querySelectorAll(".alert.error");
+                var errorFields = modal.querySelectorAll(".field-input-error");
+                for (var i = 0; i < inlineAlerts.length; i++) {
+                    inlineAlerts[i].remove();
+                }
+                for (var j = 0; j < errorFields.length; j++) {
+                    errorFields[j].classList.remove("field-input-error");
+                }
+            }
+
             function openAddModal() {
+                clearModalValidation("addModal");
                 document.getElementById("addModal").style.display = "block";
                 var doctorSelect = document.getElementById("addDoctorSelect");
                 if (doctorSelect) doctorSelect.focus();
             }
 
-            // Đóng modal thêm
             function closeAddModal() {
                 document.getElementById("addModal").style.display = "none";
             }
 
-            // Mở modal chỉnh sửa
             function openEditModal(btn) {
+                clearModalValidation("editModal");
                 document.getElementById("editShiftId").value = btn.dataset.shiftId;
                 document.getElementById("editDoctorId").value = btn.dataset.doctorId;
                 document.getElementById("editDayOfWeek").value = btn.dataset.dayOfWeek;
@@ -863,12 +893,10 @@
                 document.getElementById("editModal").style.display = "block";
             }
 
-            // Đóng modal chỉnh sửa
             function closeEditModal() {
                 document.getElementById("editModal").style.display = "none";
             }
 
-            // Đóng modal khi click bên ngoài
             window.onclick = function (event) {
                 const addModal = document.getElementById("addModal");
                 const editModal = document.getElementById("editModal");
@@ -887,7 +915,12 @@
 
                 if (shiftTypeFilter) shiftTypeFilter.addEventListener("change", submitFilterForm);
                 if (dayFilter) dayFilter.addEventListener("change", submitFilterForm);
-                // Tự động đóng thông báo sau 5 giây
+                if ('${addModalOpen}' === 'true') {
+                    document.getElementById("addModal").style.display = "block";
+                }
+                if ('${editModalOpen}' === 'true') {
+                    document.getElementById("editModal").style.display = "block";
+                }
                 if (alerts && alerts.length > 0) {
                     setTimeout(function () {
                         for (var i = 0; i < alerts.length; i++) {
@@ -906,6 +939,3 @@
         </script>
     </body>
 </html>
-
-
-

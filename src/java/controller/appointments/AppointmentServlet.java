@@ -53,6 +53,10 @@ public class AppointmentServlet extends HttpServlet {
         DoctorDAO doctordao = new DoctorDAO();
         Patient p = daos.getPatientsByPatientID(patientId);
         Doctor doctor = doctordao.getDoctorById(doctorID);
+        if (doctor == null) {
+            response.sendRedirect(request.getContextPath() + "/listofdoctorservlet");
+            return;
+        }
 
         List<LocalDate> availableDates = dao.getAvailableDates(doctorId);
 
@@ -80,6 +84,12 @@ public class AppointmentServlet extends HttpServlet {
 
         String doctorID = request.getParameter("doctorID");
         int doctorId = Integer.parseInt(doctorID);
+        DoctorDAO doctorDAO = new DoctorDAO();
+        Doctor doctor = doctorDAO.getDoctorById(doctorID);
+        if (doctor == null) {
+            response.sendRedirect(request.getContextPath() + "/listofdoctorservlet");
+            return;
+        }
         String patientID = request.getParameter("patientID");
         int patientId = Integer.parseInt(patientID);
         String note = request.getParameter("note");

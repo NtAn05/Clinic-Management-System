@@ -7,6 +7,21 @@ import java.sql.SQLException;
 
 public class ReportDAO extends DBContext {
 
+    private void syncDoctorRowsForAllDoctorUsers() {
+        String sql = """
+            INSERT INTO doctors (user_id, specialization)
+            SELECT u.user_id, 'Chua cap nhat'
+            FROM users u
+            LEFT JOIN doctors d ON d.user_id = u.user_id
+            WHERE u.role = 'doctor' AND d.doctor_id IS NULL
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public int[] getAppointmentStatusStats() {
         return getAppointmentStatusStats(0);
     }
@@ -136,6 +151,7 @@ public class ReportDAO extends DBContext {
     }
 
     public java.util.List<model.DoctorProductivity> getDoctorProductivity(int doctorId) {
+        syncDoctorRowsForAllDoctorUsers();
         java.util.List<model.DoctorProductivity> list = new java.util.ArrayList<>();
         String sql;
         if (doctorId > 0) {
@@ -179,11 +195,13 @@ public class ReportDAO extends DBContext {
     }
 
     public java.util.List<model.DoctorProductivity> getAllDoctors() {
+        syncDoctorRowsForAllDoctorUsers();
         java.util.List<model.DoctorProductivity> list = new java.util.ArrayList<>();
         String sql = """
             SELECT d.doctor_id, u.full_name
             FROM doctors d
             JOIN users u ON d.user_id = u.user_id
+            WHERE u.role = 'doctor'
             ORDER BY u.full_name
         """;
         try (PreparedStatement st = connection.prepareStatement(sql)) {

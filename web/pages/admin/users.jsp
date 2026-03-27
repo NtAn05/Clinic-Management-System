@@ -362,7 +362,6 @@
                 background: #f3e5f5;
             }
 
-
             .no-data {
                 text-align: center;
                 padding: 40px;
@@ -497,13 +496,19 @@
             .btn-inline {
                 border: none;
                 border-radius: 6px;
-                padding: 0 14px;
+                min-height: 44px;
+                padding: 0 18px;
                 font-size: 13px;
                 font-weight: 600;
                 background: #f59e0b;
                 color: white;
                 cursor: pointer;
                 white-space: nowrap;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1.2;
+                align-self: stretch;
             }
 
             .btn-inline:hover {
@@ -515,6 +520,10 @@
                 font-size: 12px;
                 margin-top: 6px;
                 font-weight: 500;
+            }
+
+            .field-input-error {
+                border-color: #d32f2f !important;
             }
 
             .modal-footer {
@@ -670,6 +679,11 @@
                 <div class="alert success">
                     <i class="fas fa-check-circle"></i>
                     ${success}
+                    <c:if test="${not empty flashResendUserId}">
+                        <button type="button" class="btn-inline" style="margin-left: auto; min-height: 36px;" onclick="resendPassword(${flashResendUserId})">
+                            Gửi lại email
+                        </button>
+                    </c:if>
                 </div>
             </c:if>
 
@@ -690,7 +704,7 @@
                     <label><i class="fas fa-filter"></i> Vai trò</label>
                     <select id="userRoleFilter">
                         <option value="all" ${filterRole == 'all' ? 'selected' : ''}>-- Tất cả --</option>
-                        <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Quản trị viên</option>
+                        <option value="admin" ${filterRole == 'admin' ? 'selected' : ''}>Admin</option>
                         <option value="doctor" ${filterRole == 'doctor' ? 'selected' : ''}>Bác sĩ</option>
                         <option value="receptionist" ${filterRole == 'receptionist' ? 'selected' : ''}>Tiếp tân</option>
                         <option value="technician" ${filterRole == 'technician' ? 'selected' : ''}>Kỹ thuật viên</option>
@@ -746,7 +760,7 @@
                                         <td>${not empty user.email ? user.email : '<em>Chưa cập nhật</em>'}</td>
                                         <td>
                                             <span class="badge ${user.role.toString() == 'admin' ? 'badge-admin' : user.role.toString() == 'doctor' ? 'badge-doctor' : user.role.toString() == 'receptionist' ? 'badge-receptionist' : user.role.toString() == 'technician' ? 'badge-technician' : user.role.toString() == 'patient_manager' ? 'badge-patient-manager' : 'badge-patient'}">
-                                                ${user.role.toString() == 'admin' ? 'Quản trị viên' : user.role.toString() == 'doctor' ? 'Bác sĩ' : user.role.toString() == 'receptionist' ? 'Tiếp tân' : user.role.toString() == 'technician' ? 'Kỹ thuật viên' : user.role.toString() == 'patient_manager' ? 'Quản lý bệnh nhân' : 'Bệnh nhân'}
+                                                ${user.role.toString() == 'admin' ? 'Admin' : user.role.toString() == 'doctor' ? 'Bác sĩ' : user.role.toString() == 'receptionist' ? 'Tiếp tân' : user.role.toString() == 'technician' ? 'Kỹ thuật viên' : user.role.toString() == 'patient_manager' ? 'Quản lý bệnh nhân' : 'Bệnh nhân'}
                                             </span>
                                         </td>
                                         <td>
@@ -847,10 +861,10 @@
                 <div class="modal-header">
                     <i class="fas fa-user-plus"></i>
                     <span id="addModalTitle">Thêm tài khoản</span>
-                    <button class="modal-close" onclick="closeModal('addAccountModal')">×</button>
+                    <button type="button" class="modal-close" onclick="closeModal('addAccountModal')">×</button>
                 </div>
 
-                <form action="users" method="POST" id="addAccountForm">
+                <form action="users" method="POST" id="addAccountForm" novalidate>
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="role" id="addRoleInput">
 
@@ -863,7 +877,7 @@
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="addFullName" required maxlength="100" placeholder="Nhập họ và tên" value="${addFullName}">
+                        <input type="text" name="fullname" id="addFullName" class="${not empty addFullNameError ? 'field-input-error' : ''}" maxlength="100" placeholder="Nhập họ và tên" value="${addFullName}">
                         <c:if test="${not empty addFullNameError}">
                             <div class="field-error">${addFullNameError}</div>
                         </c:if>
@@ -871,7 +885,7 @@
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="addPhone" required maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" placeholder="Nhập số điện thoại" value="${addPhone}">
+                        <input type="tel" name="phone" id="addPhone" class="${not empty addPhoneError ? 'field-input-error' : ''}" maxlength="10" placeholder="Nhập số điện thoại" value="${addPhone}">
                         <c:if test="${not empty addPhoneError}">
                             <div class="field-error">${addPhoneError}</div>
                         </c:if>
@@ -879,7 +893,7 @@
 
                     <div class="form-group">
                         <label>Email <span style="color: red;">*</span></label>
-                        <input type="email" name="email" id="addEmail" required maxlength="100" pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" title="Email không đúng định dạng" placeholder="Nhập email" value="${addEmail}">
+                        <input type="email" name="email" id="addEmail" class="${not empty addEmailError ? 'field-input-error' : ''}" maxlength="100" placeholder="Nhập email" value="${addEmail}">
                         <c:if test="${not empty addEmailError}">
                             <div class="field-error">${addEmailError}</div>
                         </c:if>
@@ -887,7 +901,7 @@
 
                                         <div id="addRoleGroup" class="form-group">
                         <label>Vai trò <span style="color: red;">*</span></label>
-                        <select name="staffRole" id="addStaffRole">
+                        <select name="staffRole" id="addStaffRole" class="${not empty addRoleError ? 'field-input-error' : ''}">
                             <option value="">-- Chọn vai trò --</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
@@ -899,54 +913,11 @@
                         </c:if>
                     </div>
 
-                    <div id="addDoctorFieldsGroup" style="display: none;">
-                        <div class="form-group">
-                            <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
-                            <select name="doctorSpecialization" id="addDoctorSpecialization">
-                                <option value="">-- Chọn chuyên môn --</option>
-                                <option value="Da liễu dị ứng">Da liễu dị ứng</option>
-                                <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
-                                <option value="Da liễu tổng quát">Da liễu tổng quát</option>
-                                <option value="Điều trị mụn">Điều trị mụn</option>
-                            </select>
-                            <c:if test="${not empty addDoctorSpecializationError}">
-                                <div class="field-error">${addDoctorSpecializationError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Bằng cấp <span style="color: red;">*</span></label>
-                            <select name="doctorQualification" id="addDoctorQualification">
-                                <option value="">-- Chọn bằng cấp --</option>
-                                <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
-                                <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
-                                <option value="Thạc sĩ / Bác sĩ CK I / BS nội trú">Thạc sĩ / Bác sĩ CK I / BS nội trú</option>
-                            </select>
-                            <c:if test="${not empty addDoctorQualificationError}">
-                                <div class="field-error">${addDoctorQualificationError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorExperienceYears" id="addDoctorExperienceYears" min="0" max="50" value="${addDoctorExperienceYears}">
-                            <c:if test="${not empty addDoctorExperienceError}">
-                                <div class="field-error">${addDoctorExperienceError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Giá khám <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorPriceBooking" id="addDoctorPriceBooking" min="0" max="10000000" value="${addDoctorPriceBooking}">
-                            <c:if test="${not empty addDoctorPriceError}">
-                                <div class="field-error">${addDoctorPriceError}</div>
-                            </c:if>
-                        </div>
-                    </div>
-
-
                     <div class="modal-footer">
                         <button type="button" class="btn-cancel" onclick="closeModal('addAccountModal')">
                             <i class="fas fa-times"></i> Hủy
                         </button>
-                        <button type="submit" class="btn-submit">
+                        <button type="submit" class="btn-submit" id="addSubmitButton">
                             <i class="fas fa-save"></i> Tạo tài khoản
                         </button>
                     </div>
@@ -960,10 +931,10 @@
                 <div class="modal-header">
                     <i class="fas fa-pen-to-square"></i>
                     <span>Chỉnh sửa tài khoản</span>
-                    <button class="modal-close" onclick="closeModal('editAccountModal')">×</button>
+                    <button type="button" class="modal-close" onclick="closeModal('editAccountModal')">×</button>
                 </div>
 
-                <form action="users" method="POST" id="editAccountForm">
+                <form action="users" method="POST" id="editAccountForm" novalidate>
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="userId" id="editUserId" value="${editUserId}">
                     <input type="hidden" name="originalRole" id="editOriginalRoleInput" value="${editOriginalRole}">
@@ -977,12 +948,15 @@
 
                     <div class="form-group">
                         <label>Họ và tên <span style="color: red;">*</span></label>
-                        <input type="text" name="fullname" id="editFullName" required value="${editFullName}">
+                        <input type="text" name="fullname" id="editFullName" class="${not empty editFullNameError ? 'field-input-error' : ''}" value="${editFullName}">
+                        <c:if test="${not empty editFullNameError}">
+                            <div class="field-error">${editFullNameError}</div>
+                        </c:if>
                     </div>
 
                     <div class="form-group">
                         <label>Số điện thoại <span style="color: red;">*</span></label>
-                        <input type="tel" name="phone" id="editPhone" required pattern="0[0-9]{9}" title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0" value="${editPhone}">
+                        <input type="tel" name="phone" id="editPhone" class="${not empty editPhoneError ? 'field-input-error' : ''}" value="${editPhone}">
                         <c:if test="${not empty editPhoneError}">
                             <div class="field-error">${editPhoneError}</div>
                         </c:if>
@@ -991,7 +965,7 @@
                     <div class="form-group">
                         <label>Email <span style="color: red;">*</span></label>
                         <div class="input-action-row">
-                            <input type="email" name="email" id="editEmail" required pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không đúng định dạng" value="${editEmail}">
+                            <input type="email" name="email" id="editEmail" class="${not empty editEmailError ? 'field-input-error' : ''}" value="${editEmail}">
                             <button type="button" class="btn-inline" id="editResendButton" onclick="resendPasswordFromEditModal()" style="display: none;">Gửi lại email</button>
                         </div>
                         <c:if test="${not empty editEmailError}">
@@ -1001,7 +975,7 @@
 
                     <div id="editRoleGroup" class="form-group">
                         <label>Vai trò <span style="color: red;">*</span></label>
-                        <select name="role" id="editRole">
+                        <select name="role" id="editRole" class="${not empty editRoleError ? 'field-input-error' : ''}">
                             <option value="">-- Chọn vai trò --</option>
                             <option value="doctor">Bác sĩ</option>
                             <option value="receptionist">Tiếp tân</option>
@@ -1012,53 +986,11 @@
                             <div class="field-error">${editRoleError}</div>
                         </c:if>
                     </div>
-                    <div id="editDoctorFieldsGroup" style="display: none;">
-                        <div class="form-group">
-                            <label>Chuyên môn bác sĩ <span style="color: red;">*</span></label>
-                            <select name="doctorSpecialization" id="editDoctorSpecialization">
-                                <option value="">-- Chọn chuyên môn --</option>
-                                <option value="Da liễu dị ứng">Da liễu dị ứng</option>
-                                <option value="Da liễu nhiễm trùng">Da liễu nhiễm trùng</option>
-                                <option value="Da liễu tổng quát">Da liễu tổng quát</option>
-                                <option value="Điều trị mụn">Điều trị mụn</option>
-                            </select>
-                            <c:if test="${not empty editDoctorSpecializationError}">
-                                <div class="field-error">${editDoctorSpecializationError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Bằng cấp <span style="color: red;">*</span></label>
-                            <select name="doctorQualification" id="editDoctorQualification">
-                                <option value="">-- Chọn bằng cấp --</option>
-                                <option value="Giáo sư / Phó Giáo sư">Giáo sư / Phó Giáo sư</option>
-                                <option value="Tiến sĩ / Bác sĩ CK II">Tiến sĩ / Bác sĩ CK II</option>
-                                <option value="Thạc sĩ / Bác sĩ CK I / BS nội trú">Thạc sĩ / Bác sĩ CK I / BS nội trú</option>
-                            </select>
-                            <c:if test="${not empty editDoctorQualificationError}">
-                                <div class="field-error">${editDoctorQualificationError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Kinh nghiệm (năm) <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorExperienceYears" id="editDoctorExperienceYears" min="0" max="50" value="${editDoctorExperienceYears}">
-                            <c:if test="${not empty editDoctorExperienceError}">
-                                <div class="field-error">${editDoctorExperienceError}</div>
-                            </c:if>
-                        </div>
-                        <div class="form-group">
-                            <label>Giá khám <span style="color: red;">*</span></label>
-                            <input type="number" name="doctorPriceBooking" id="editDoctorPriceBooking" min="0" max="10000000" value="${editDoctorPriceBooking}">
-                            <c:if test="${not empty editDoctorPriceError}">
-                                <div class="field-error">${editDoctorPriceError}</div>
-                            </c:if>
-                        </div>
-                    </div>
-
                     <div class="modal-footer">
                         <button type="button" class="btn-cancel" onclick="closeModal('editAccountModal')">
                             <i class="fas fa-times"></i> Hủy
                         </button>
-                        <button type="submit" class="btn-submit">
+                        <button type="submit" class="btn-submit" id="editSubmitButton">
                             <i class="fas fa-save"></i> Lưu thay đổi
                         </button>
                     </div>
@@ -1069,36 +1001,6 @@
         <jsp:include page="../../common/footer.jsp" />
                         
         <script>
-            function defaultPriceByQualificationIndex(selectEl) {
-                if (!selectEl) return '';
-                switch (selectEl.selectedIndex) {
-                    case 1:
-                        return '400000';
-                    case 2:
-                        return '300000';
-                    case 3:
-                        return '200000';
-                    default:
-                        return '';
-                }
-            }
-
-            function applyDefaultDoctorPrice(selectId, priceInputId, force) {
-                const selectEl = document.getElementById(selectId);
-                const priceEl = document.getElementById(priceInputId);
-                if (!selectEl || !priceEl) {
-                    return;
-                }
-                const defaultPrice = defaultPriceByQualificationIndex(selectEl);
-                if (!defaultPrice) {
-                    return;
-                }
-                const currentPrice = (priceEl.value || '').trim();
-                if (force || currentPrice === '') {
-                    priceEl.value = defaultPrice;
-                }
-            }
-
             function normalizeRoleValue(role) {
                 return (role || '').toString().trim().toLowerCase();
             }
@@ -1107,6 +1009,7 @@
                 const modal = document.getElementById(modalId);
                 if (!modal) return;
                 modal.querySelectorAll('.field-error').forEach(el => el.remove());
+                modal.querySelectorAll('.field-input-error').forEach(el => el.classList.remove('field-input-error'));
             }
 
             function toggleEditResendButton(show) {
@@ -1123,17 +1026,12 @@
                 document.getElementById('editPhone').value = phone || '';
                 document.getElementById('editEmail').value = email || '';
                 document.getElementById('editRole').value = normalizeRoleValue(originalRole);
-                document.getElementById('editDoctorSpecialization').value = '';
-                document.getElementById('editDoctorQualification').value = '';
-                document.getElementById('editDoctorExperienceYears').value = '';
-                document.getElementById('editDoctorPriceBooking').value = '';
                 toggleEditResendButton(pendingResend === true || pendingResend === 'true');
-                toggleEditDoctorFieldsVisibility();
                 openModal('editAccountModal');
             }
 
             function trimEditFormInputs() {
-                ['editFullName', 'editPhone', 'editEmail', 'editDoctorExperienceYears', 'editDoctorPriceBooking'].forEach(id => {
+                ['editFullName', 'editPhone', 'editEmail'].forEach(id => {
                     const node = document.getElementById(id);
                     if (node && typeof node.value === 'string') {
                         node.value = node.value.trim();
@@ -1141,23 +1039,20 @@
                 });
             }
 
-            function toggleEditDoctorFieldsVisibility() {
-                const currentRole = normalizeRoleValue(document.getElementById('editRole').value);
-                const originalRole = normalizeRoleValue(document.getElementById('editOriginalRoleInput').value);
-                const group = document.getElementById('editDoctorFieldsGroup');
-                const shouldShow = currentRole === 'doctor' && originalRole !== 'doctor';
-                group.style.display = shouldShow ? 'block' : 'none';
-                if (shouldShow) {
-                    applyDefaultDoctorPrice('editDoctorQualification', 'editDoctorPriceBooking', false);
-                }
-            }
-
             function resendPasswordFromEditModal() {
                 const userId = document.getElementById('editUserId').value;
                 if (!userId) {
                     return;
                 }
-                if (!confirm('Gửi lại mật khẩu tạm cho tài khoản này?')) {
+                resendPassword(userId);
+            }
+
+            function resendPassword(userId, name) {
+                if (!userId) {
+                    return;
+                }
+                const targetName = name ? ' cho ' + name : '';
+                if (!confirm('Gửi lại mật khẩu tạm' + targetName + '?')) {
                     return;
                 }
 
@@ -1188,10 +1083,6 @@
                     document.getElementById('addFullName').value = '';
                     document.getElementById('addPhone').value = '';
                     document.getElementById('addEmail').value = '';
-                    document.getElementById('addDoctorSpecialization').value = '';
-                    document.getElementById('addDoctorQualification').value = '';
-                    document.getElementById('addDoctorExperienceYears').value = '';
-                    document.getElementById('addDoctorPriceBooking').value = '';
                     clearFieldErrors('addAccountModal');
                 }
 
@@ -1203,27 +1094,27 @@
                 }
                 document.getElementById('addRoleInput').value = staffRole.value;
                 roleGroup.style.display = 'block';
-                toggleAddDoctorFieldsVisibility();
 
                 openModal('addAccountModal');
             }
 
-            function toggleAddDoctorFieldsVisibility() {
-                const role = document.getElementById('addStaffRole').value;
-                const group = document.getElementById('addDoctorFieldsGroup');
-                group.style.display = role === 'doctor' ? 'block' : 'none';
-                if (role === 'doctor') {
-                    applyDefaultDoctorPrice('addDoctorQualification', 'addDoctorPriceBooking', false);
-                }
-            }
-
             function trimAddFormInputs() {
-                ['addFullName', 'addPhone', 'addEmail', 'addDoctorExperienceYears', 'addDoctorPriceBooking'].forEach(id => {
+                ['addFullName', 'addPhone', 'addEmail'].forEach(id => {
                     const node = document.getElementById(id);
                     if (node && typeof node.value === 'string') {
                         node.value = node.value.trim();
                     }
                 });
+            }
+
+            function lockSubmitButton(buttonId) {
+                const button = document.getElementById(buttonId);
+                if (!button || button.disabled) {
+                    return;
+                }
+                button.disabled = true;
+                button.dataset.originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
             }
 
             function openModal(modalId) {
@@ -1329,16 +1220,14 @@
                 document.getElementById('userStatusFilter').addEventListener('change', filterUsers);
                 document.getElementById('addStaffRole').addEventListener('change', function() {
                     document.getElementById('addRoleInput').value = this.value;
-                    toggleAddDoctorFieldsVisibility();
                 });
-                document.getElementById('addDoctorQualification').addEventListener('change', function() {
-                    applyDefaultDoctorPrice('addDoctorQualification', 'addDoctorPriceBooking', true);
+                document.getElementById('addAccountForm').addEventListener('submit', function() {
+                    trimAddFormInputs();
+                    lockSubmitButton('addSubmitButton');
                 });
-                document.getElementById('addAccountForm').addEventListener('submit', trimAddFormInputs);
-                document.getElementById('editAccountForm').addEventListener('submit', trimEditFormInputs);
-                document.getElementById('editRole').addEventListener('change', toggleEditDoctorFieldsVisibility);
-                document.getElementById('editDoctorQualification').addEventListener('change', function() {
-                    applyDefaultDoctorPrice('editDoctorQualification', 'editDoctorPriceBooking', true);
+                document.getElementById('editAccountForm').addEventListener('submit', function() {
+                    trimEditFormInputs();
+                    lockSubmitButton('editSubmitButton');
                 });
 
                 const shouldOpenAddModal = '${addModalOpen}' === 'true';
@@ -1349,12 +1238,6 @@
                     const addRoleValue = '${not empty addRoleValue ? addRoleValue : ""}';
                     document.getElementById('addStaffRole').value = addRoleValue;
                     document.getElementById('addRoleInput').value = addRoleValue;
-                    document.getElementById('addDoctorSpecialization').value = '${not empty addDoctorSpecialization ? addDoctorSpecialization : ""}';
-                    document.getElementById('addDoctorQualification').value = '${not empty addDoctorQualification ? addDoctorQualification : ""}';
-                    document.getElementById('addDoctorExperienceYears').value = '${not empty addDoctorExperienceYears ? addDoctorExperienceYears : ""}';
-                    document.getElementById('addDoctorPriceBooking').value = '${not empty addDoctorPriceBooking ? addDoctorPriceBooking : ""}';
-                    toggleAddDoctorFieldsVisibility();
-                    applyDefaultDoctorPrice('addDoctorQualification', 'addDoctorPriceBooking', false);
                 }
 
                 if (shouldOpenEditModal) {
@@ -1367,12 +1250,18 @@
                             '${editEmail}',
                             '${editResendAvailable}'
                     );
-                    document.getElementById('editDoctorSpecialization').value = '${not empty editDoctorSpecialization ? editDoctorSpecialization : ""}';
-                    document.getElementById('editDoctorQualification').value = '${not empty editDoctorQualification ? editDoctorQualification : ""}';
-                    document.getElementById('editDoctorExperienceYears').value = '${not empty editDoctorExperienceYears ? editDoctorExperienceYears : ""}';
-                    document.getElementById('editDoctorPriceBooking').value = '${not empty editDoctorPriceBooking ? editDoctorPriceBooking : ""}';
-                    toggleEditDoctorFieldsVisibility();
-                    applyDefaultDoctorPrice('editDoctorQualification', 'editDoctorPriceBooking', false);
+                }
+
+                const flashResendUserId = '${not empty flashResendUserId ? flashResendUserId : ""}';
+                if (!shouldOpenEditModal && flashResendUserId) {
+                    openEditModal(
+                            flashResendUserId,
+                            '${not empty flashResendRole ? flashResendRole : ""}',
+                            '${not empty flashResendFullName ? flashResendFullName : ""}',
+                            '${not empty flashResendPhone ? flashResendPhone : ""}',
+                            '${not empty flashResendEmail ? flashResendEmail : ""}',
+                            'true'
+                    );
                 }
             });
         </script>

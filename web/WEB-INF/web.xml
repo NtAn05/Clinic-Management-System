@@ -21,8 +21,8 @@
         <servlet-class>controller.AdminServiceServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>AdminDoctorServlet</servlet-name>
-        <servlet-class>controller.AdminDoctorServlet</servlet-class>
+        <servlet-name>AdminStaffServlet</servlet-name>
+        <servlet-class>controller.AdminStaffServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>AdminDoctorScheduleServlet</servlet-name>
@@ -137,8 +137,8 @@
         <url-pattern>/admin-services</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>AdminDoctorServlet</servlet-name>
-        <url-pattern>/admin-doctors</url-pattern>
+        <servlet-name>AdminStaffServlet</servlet-name>
+        <url-pattern>/admin-staffs</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>AdminDoctorScheduleServlet</servlet-name>

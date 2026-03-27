@@ -1,6 +1,7 @@
 package controller.doctor;
 
 import dal.DoctorDAO;
+import dal.DoctorScheduleDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +47,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         }
 
         DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorScheduleDAO scheduleDAO = new DoctorScheduleDAO();
         Doctor doctor = doctorDAO.getDoctorByUserId(account.getUserId());
         if (doctor == null) {
             response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
@@ -54,13 +56,14 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
 
         String mode = safeUpper(request.getParameter("mode"));
         if ("SWAP_OPTIONS".equals(mode)) {
-            writeSwapOptionsResponse(request, response, doctorDAO, doctor.getDoctorId());
+            writeSwapOptionsResponse(request, response, doctor.getDoctorId());
             return;
         }
 
         int doctorId = doctor.getDoctorId();
-        List<DoctorShift> weeklyShifts = doctorDAO.getDoctorShifts(doctorId);
-        List<ScheduleChangeRequest> recentRequests = doctorDAO.getScheduleChangeRequestsByDoctor(doctorId, 20);
+        List<DoctorShift> weeklyShifts = scheduleDAO.getDoctorShifts(doctorId);
+        DoctorScheduleDAO requestDAO = new DoctorScheduleDAO();
+        List<ScheduleChangeRequest> recentRequests = requestDAO.getScheduleChangeRequestsByDoctor(doctorId, 20);
 
         request.setAttribute("weeklyShifts", weeklyShifts);
         request.setAttribute("recentRequests", recentRequests);
@@ -84,6 +87,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         }
 
         DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorScheduleDAO scheduleDAO = new DoctorScheduleDAO();
         Doctor doctor = doctorDAO.getDoctorByUserId(account.getUserId());
         if (doctor == null) {
             response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
@@ -144,7 +148,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 dayOfWeek = normalizeDayOfWeek(workDate.toLocalDate().getDayOfWeek());
             }
         }
-        
+
         if (error == null && "UPDATE".equals(actionType)) {
             if ("ONE_DATE".equals(scopeType) && workDate == null) {
                 error = "Vui lòng chọn ngày để tìm ca bác sĩ muốn đổi.";
@@ -161,29 +165,32 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             error = "Vui lòng chọn ca gốc cần cập nhật hoặc hủy.";
         }
 
-        if (error == null && targetShiftId != null && !doctorDAO.isShiftOwnedByDoctor(targetShiftId, doctor.getDoctorId())) {
+        if (error == null && targetShiftId != null
+                && !scheduleDAO.isShiftOwnedByDoctor(targetShiftId, doctor.getDoctorId())) {
             error = "Ca gốc không thuộc lịch làm việc của bạn.";
         }
-        
+
         if (error == null && "UPDATE".equals(actionType) && targetShiftId != null) {
             if ("ONE_DATE".equals(scopeType) && workDate != null
-                    && doctorDAO.hasAppointmentsForShiftOnDate(targetShiftId, workDate)) {
+                    && scheduleDAO.hasAppointmentsForShiftOnDate(targetShiftId, workDate)) {
                 error = "Ca gốc đã có lịch hẹn trong ngày này nên không thể đổi.";
             }
             if (error == null && "WEEKLY_TEMPLATE".equals(scopeType)
-                    && doctorDAO.hasAnyAppointmentsForShift(targetShiftId)) {
+                    && scheduleDAO.hasAnyAppointmentsForShift(targetShiftId)) {
                 error = "Ca gốc đã có lịch hẹn, không thể gửi yêu cầu đổi ca dài hạn.";
             }
+        }
 
-        if (error == null && "REMOVE".equals(actionType) && "WEEKLY_TEMPLATE".equals(scopeType) && targetShiftId != null) {
-            DoctorShift currentShift = doctorDAO.getDoctorShiftById(targetShiftId);
+        if (error == null && "REMOVE".equals(actionType)
+                && "WEEKLY_TEMPLATE".equals(scopeType) && targetShiftId != null) {
+            DoctorShift currentShift = scheduleDAO.getDoctorShiftById(targetShiftId);
             if (currentShift != null) {
                 dayOfWeek = currentShift.getDayOfWeek();
             }
         }
 
         if (error == null && "UPDATE".equals(actionType)) {
-            DoctorShift swapShift = doctorDAO.getDoctorShiftById(swapShiftId);
+            DoctorShift swapShift = scheduleDAO.getDoctorShiftById(swapShiftId);
             if (swapShift == null) {
                 error = "Không tìm thấy ca bác sĩ muốn đổi.";
             } else {
@@ -193,13 +200,13 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 } else if ("ONE_DATE".equals(scopeType)) {
                     if (swapShift.getDayOfWeek() != workDateDay) {
                         error = "Ca được chọn không nằm trong ngày áp dụng.";
-                    } else if (doctorDAO.hasAppointmentsForShiftOnDate(swapShiftId, workDate)) {
+                    } else if (scheduleDAO.hasAppointmentsForShiftOnDate(swapShiftId, workDate)) {
                         error = "Ca bác sĩ muốn đổi đã có lịch hẹn trong ngày này nên không thể đổi.";
                     }
                 } else if ("WEEKLY_TEMPLATE".equals(scopeType)) {
                     if (swapShift.getDayOfWeek() != dayOfWeek) {
                         error = "Ca được chọn không nằm trong thứ áp dụng.";
-                    } else if (doctorDAO.hasAnyAppointmentsForShift(swapShiftId)) {
+                    } else if (scheduleDAO.hasAnyAppointmentsForShift(swapShiftId)) {
                         error = "Ca bác sĩ muốn đổi đã có lịch hẹn, không thể đổi dài hạn.";
                     }
                 } else {
@@ -207,14 +214,13 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 }
 
                 if (error == null) {
-                }
                     startTime = swapShift.getStartTime();
                     endTime = swapShift.getEndTime();
                     if ("ONE_DATE".equals(scopeType)) {
                         dayOfWeek = workDateDay;
                     }
                     if (targetShiftId != null) {
-                        DoctorShift currentShift = doctorDAO.getDoctorShiftById(targetShiftId);
+                        DoctorShift currentShift = scheduleDAO.getDoctorShiftById(targetShiftId);
                         if (currentShift != null) {
                             maxPatients = currentShift.getMaxPatients();
                         }
@@ -229,7 +235,8 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             return;
         }
 
-        boolean created = doctorDAO.createScheduleChangeRequest(
+        DoctorScheduleDAO requestDAO = new DoctorScheduleDAO();
+        boolean created = requestDAO.createScheduleChangeRequest(
                 doctor.getDoctorId(),
                 requestType,
                 scopeType,
@@ -247,9 +254,11 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             SystemLogService.logWithSession(session, "DOCTOR_CREATE_SCHEDULE_CHANGE_REQUEST",
                     "Bác sĩ " + doctor.getFullName() + " gửi yêu cầu đổi lịch loại "
                     + requestType + " - " + actionType + ".");
-            request.getSession().setAttribute("scheduleRequestSuccess", "Đã gửi yêu cầu đổi lịch thành công. Vui lòng chờ quản trị viên duyệt.");
+            request.getSession().setAttribute("scheduleRequestSuccess",
+                    "Đã gửi yêu cầu đổi lịch thành công. Vui lòng chờ quản trị viên duyệt.");
         } else {
-            request.getSession().setAttribute("scheduleRequestError", "Không thể tạo yêu cầu lúc này. Vui lòng thử lại.");
+            request.getSession().setAttribute("scheduleRequestError",
+                    "Không thể tạo yêu cầu lúc này. Vui lòng thử lại.");
         }
 
         response.sendRedirect(request.getContextPath() + "/doctor/schedule-request");
@@ -305,7 +314,8 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         }
     }
 
-    private void writeSwapOptionsResponse(HttpServletRequest request, HttpServletResponse response, DoctorDAO doctorDAO, int requesterDoctorId) throws IOException {
+    private void writeSwapOptionsResponse(HttpServletRequest request, HttpServletResponse response,
+            int requesterDoctorId) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         Integer dayOfWeek = parseInteger(request.getParameter("dayOfWeek"));
         if (dayOfWeek == null) {
@@ -321,7 +331,8 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             return;
         }
 
-        List<ScheduleSwapShiftOption> options = doctorDAO.getSwapShiftOptionsByDate(requesterDoctorId, dayOfWeek);
+        DoctorScheduleDAO requestDAO = new DoctorScheduleDAO();
+        List<ScheduleSwapShiftOption> options = requestDAO.getSwapShiftOptionsByDate(requesterDoctorId, dayOfWeek);
 
         try (PrintWriter out = response.getWriter()) {
             out.write("[");

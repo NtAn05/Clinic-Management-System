@@ -126,16 +126,16 @@ public class PatientAccountServlet extends HttpServlet {
         return true;
     }
 
-
     private void handleAddPatientAccount(HttpServletRequest request) throws SQLException {
         String fullName = trim(request.getParameter("fullname"));
         String phone = trim(request.getParameter("phone"));
         String email = trim(request.getParameter("email"));
+        String requestedRole = trim(request.getParameter("role"));
+        String roleStr = requestedRole.isEmpty() ? "patient" : requestedRole;
 
         UserDAO userDAO = new UserDAO();
-
         ValidationResult validationResult = adminUserValidator.validateAddUser(
-                fullName, phone, email, "patient",
+                fullName, phone, email, roleStr,
                 "", "", "", "",
                 userDAO
         );
@@ -147,11 +147,18 @@ public class PatientAccountServlet extends HttpServlet {
         }
 
         try {
+            Role targetRole = validationResult.getTargetRole();
+            if (!isPatientManageableRole(targetRole)) {
+                keepAddForm(request, fullName, phone, email);
+                request.setAttribute("error", "Chỉ được tạo tài khoản bệnh nhân tại trang này");
+                return;
+            }
+
             User newUser = new User();
             newUser.setFullName(fullName);
             newUser.setPhone(phone);
             newUser.setEmail(email);
-            newUser.setRole(Role.patient);
+            newUser.setRole(targetRole);
             newUser.setStatus(Status.active);
 
             ProvisionResult provisionResult = accountProvisionService.createAccountWithTemporaryPassword(newUser, userDAO);
@@ -165,6 +172,7 @@ public class PatientAccountServlet extends HttpServlet {
                     createdUser,
                     provisionResult.getTemporaryPassword()
             );
+
             boolean mailFailed = !deliveryResult.isMailSent();
 
             if (mailFailed) {
@@ -183,12 +191,13 @@ public class PatientAccountServlet extends HttpServlet {
         }
     }
 
-
     private void handleEditPatientAccount(HttpServletRequest request) throws SQLException {
         String userIdStr = trim(request.getParameter("userId"));
         String fullName = trim(request.getParameter("fullname"));
         String phone = trim(request.getParameter("phone"));
         String email = trim(request.getParameter("email"));
+        String requestedRole = trim(request.getParameter("role"));
+        String roleStr = requestedRole.isEmpty() ? "patient" : requestedRole;
 
         int userId = parsePositiveId(userIdStr);
         if (userId <= 0) {
@@ -206,7 +215,7 @@ public class PatientAccountServlet extends HttpServlet {
         }
 
         ValidationResult validationResult = adminUserValidator.validateEditUser(
-                existingUser, userId, fullName, phone, email, "patient",
+                existingUser, userId, fullName, phone, email, roleStr,
                 "", "", "", "",
                 userDAO, doctorDAO
         );
@@ -214,6 +223,13 @@ public class PatientAccountServlet extends HttpServlet {
         if (!validationResult.isValid()) {
             keepEditForm(request, userIdStr, fullName, phone, email);
             applyValidationResult(request, validationResult);
+            return;
+        }
+
+        Role targetRole = validationResult.getTargetRole();
+        if (!isPatientManageableRole(targetRole)) {
+            keepEditForm(request, userIdStr, fullName, phone, email);
+            request.setAttribute("error", "Tài khoản nhân sự nội bộ được quản lý ở trang riêng");
             return;
         }
 
@@ -350,6 +366,9 @@ public class PatientAccountServlet extends HttpServlet {
         }
     }
 
+    private boolean isPatientManageableRole(Role role) {
+        return role == Role.patient;
+    }
 
     private void keepAddForm(HttpServletRequest request, String fullName, String phone, String email) {
         request.setAttribute("addModalOpen", true);
@@ -357,7 +376,6 @@ public class PatientAccountServlet extends HttpServlet {
         request.setAttribute("addPhone", phone);
         request.setAttribute("addEmail", email);
     }
-
 
     private void keepEditForm(HttpServletRequest request, String userId, String fullName, String phone, String email) {
         request.setAttribute("editModalOpen", true);
@@ -512,3 +530,4 @@ public class PatientAccountServlet extends HttpServlet {
         return "Patient Account Management Servlet";
     }
 }
+

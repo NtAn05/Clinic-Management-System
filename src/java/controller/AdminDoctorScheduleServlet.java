@@ -1,6 +1,6 @@
 package controller;
 
-import dal.DoctorDAO;
+import dal.DoctorScheduleDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,15 +61,15 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
 
         String action = req.getParameter("action");
-        DoctorDAO doctorDAO = new DoctorDAO();
+        DoctorScheduleDAO scheduleDAO = new DoctorScheduleDAO();
 
         try {
             if ("add".equals(action)) {
-                handleAddShift(req, doctorDAO);
+                handleAddShift(req, scheduleDAO);
             } else if ("update".equals(action)) {
-                handleUpdateShift(req, doctorDAO);
+                handleUpdateShift(req, scheduleDAO);
             } else if ("delete".equals(action)) {
-                handleDeleteShift(req, doctorDAO);
+                handleDeleteShift(req, scheduleDAO);
             }
         } catch (Exception e) {
             String actionLabel = "xử lý";
@@ -80,6 +80,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             } else if ("delete".equals(action)) {
                 actionLabel = "xóa";
             }
+            preserveModalState(req, action);
             req.setAttribute("error", "Không thể " + actionLabel + " lịch làm việc: " + e.getMessage());
         }
 
@@ -97,9 +98,8 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     }
 
     private void loadPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        DoctorDAO doctorDAO = new DoctorDAO();
-        List<Doctor> doctors = doctorDAO.getAllDoctorsForSchedule();
-        List<Doctor> activeDoctors = doctorDAO.getActiveDoctorsForSchedule();
+        DoctorScheduleDAO scheduleDAO = new DoctorScheduleDAO();
+        List<Doctor> activeDoctors = scheduleDAO.getActiveDoctorsForSchedule();
 
         boolean isGetRequest = "GET".equalsIgnoreCase(req.getMethod());
         boolean hasActionParam = req.getParameter("action") != null && !req.getParameter("action").isBlank();
@@ -122,13 +122,13 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                 .plusWeeks(weekOffset);
         LocalDate weekEnd = weekStart.plusDays(6);
 
-        List<Doctor> filteredDoctors = doctors.stream()
+        List<Doctor> filteredDoctors = activeDoctors.stream()
                 .filter(d -> keyword.isEmpty() || containsIgnoreCase(d.getFullName(), keyword))
                 .collect(Collectors.toList());
 
         List<ScheduleViewItem> scheduleItems = new ArrayList<>();
         for (Doctor doctor : filteredDoctors) {
-            List<DoctorShift> shifts = doctorDAO.getDoctorShifts(doctor.getDoctorId());
+            List<DoctorShift> shifts = scheduleDAO.getDoctorShifts(doctor.getDoctorId());
             if (shifts == null || shifts.isEmpty()) {
                 continue;
             }
@@ -150,7 +150,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             }
         }
 
-        applyApprovedOverrides(doctorDAO, scheduleItems, filteredDoctors, weekStart, weekEnd);
+        applyApprovedOverrides(new DoctorScheduleDAO(), scheduleItems, filteredDoctors, weekStart, weekEnd);
         for (java.util.Iterator<ScheduleViewItem> iterator = scheduleItems.iterator(); iterator.hasNext();) {
             ScheduleViewItem item = iterator.next();
             if (!matchesSelectedFilters(item, selectedDay, selectedShiftType)) {
@@ -177,7 +177,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             }
         }
 
-        req.setAttribute("doctors", doctors);
+        req.setAttribute("doctors", activeDoctors);
         req.setAttribute("activeDoctors", activeDoctors);
         req.setAttribute("filteredDoctors", filteredDoctors);
         req.setAttribute("scheduleItems", scheduleItems);
@@ -189,7 +189,8 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("selectedShiftType", selectedShiftType);
         req.setAttribute("weekOffset", weekOffset);
         req.setAttribute("weekLabel", weekStart.format(DATE_FMT) + " - " + weekEnd.format(DATE_FMT));
-        req.setAttribute("pendingRequestCount", doctorDAO.countPendingScheduleChangeRequests());
+        DoctorScheduleDAO requestDAO = new DoctorScheduleDAO();
+        req.setAttribute("pendingRequestCount", requestDAO.countPendingScheduleChangeRequests());
         req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
     }
 
@@ -204,18 +205,25 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("scheduleItemsPaged", pagedItems);
         PagingHelper.expose(req, paging);
     }
+    private void handleAddShift(HttpServletRequest req, DoctorScheduleDAO scheduleDAO) throws SQLException {
+        String doctorIdRaw = trim(req.getParameter("doctorId"));
+        String dayOfWeekRaw = trim(req.getParameter("dayOfWeek"));
+        String shiftTypeRaw = trim(req.getParameter("shiftType"));
+        String maxPatientsRaw = trim(req.getParameter("maxPatients"));
 
-    private void handleAddShift(HttpServletRequest req, DoctorDAO doctorDAO) throws SQLException {
-        int doctorId = requiredInt(req.getParameter("doctorId"), "Vui lòng chọn bác sĩ");
-        int dayOfWeek = requiredInt(req.getParameter("dayOfWeek"), "Vui lòng chọn thứ");
-        ShiftTime shiftTime = resolveShiftType(req.getParameter("shiftType"));
-        int maxPatients = requiredInt(req.getParameter("maxPatients"), "Vui lòng nhập số bệnh nhân tối đa");
+        keepAddForm(req, doctorIdRaw, dayOfWeekRaw, shiftTypeRaw, maxPatientsRaw);
 
-        if (!doctorDAO.doctorExists(doctorId)) {
+        int doctorId = requiredInt(doctorIdRaw, "Vui lòng nhập bác sĩ");
+        int dayOfWeek = requiredInt(dayOfWeekRaw, "Vui lòng nhập thứ");
+        ShiftTime shiftTime = resolveShiftType(shiftTypeRaw);
+        int maxPatients = requiredInt(maxPatientsRaw, "Vui lòng nhập số bệnh nhân tối đa");
+
+
+        if (!scheduleDAO.doctorExists(doctorId)) {
             throw new IllegalArgumentException("Bác sĩ không tồn tại trong hệ thống");
         }
 
-        boolean activeDoctorExists = doctorDAO.getActiveDoctorsForSchedule().stream()
+        boolean activeDoctorExists = scheduleDAO.getActiveDoctorsForSchedule().stream()
                 .anyMatch(d -> d.getDoctorId() == doctorId);
         if (!activeDoctorExists) {
             throw new IllegalArgumentException("Chỉ có thể thêm lịch cho bác sĩ có tài khoản đang hoạt động");
@@ -223,11 +231,11 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
 
         validateShift(dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
 
-        if (doctorDAO.hasShiftConflict(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, null)) {
+        if (scheduleDAO.hasShiftConflict(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, null)) {
             throw new IllegalArgumentException("Khung giờ bị trùng với ca làm việc đã có");
         }
 
-        doctorDAO.addDoctorShift(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
+        scheduleDAO.addDoctorShift(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
         HttpSession sessionAdd = req.getSession(false);
         User userAdd = sessionAdd != null ? (User) sessionAdd.getAttribute("account") : null;
         SystemLogService.log(userAdd != null ? userAdd.getUserId() : null, "SHIFT_ADDED",
@@ -235,34 +243,42 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("success", "Đã thêm ca làm việc thành công");
     }
 
-    private void handleUpdateShift(HttpServletRequest req, DoctorDAO doctorDAO) throws SQLException {
-        int shiftId = requiredInt(req.getParameter("shiftId"), "Thiếu mã ca làm việc");
-        int doctorId = requiredInt(req.getParameter("doctorId"), "Vui lòng chọn bác sĩ");
-        int dayOfWeek = requiredInt(req.getParameter("dayOfWeek"), "Vui lòng chọn thứ");
-        ShiftTime shiftTime = resolveShiftType(req.getParameter("shiftType"));
-        int maxPatients = requiredInt(req.getParameter("maxPatients"), "Vui lòng nhập số bệnh nhân tối đa");
+    private void handleUpdateShift(HttpServletRequest req, DoctorScheduleDAO scheduleDAO) throws SQLException {
+        String shiftIdRaw = trim(req.getParameter("shiftId"));
+        String doctorIdRaw = trim(req.getParameter("doctorId"));
+        String dayOfWeekRaw = trim(req.getParameter("dayOfWeek"));
+        String shiftTypeRaw = trim(req.getParameter("shiftType"));
+        String maxPatientsRaw = trim(req.getParameter("maxPatients"));
+
+        keepEditForm(req, shiftIdRaw, doctorIdRaw, dayOfWeekRaw, shiftTypeRaw, maxPatientsRaw);
+
+        int shiftId = requiredInt(shiftIdRaw, "Thiếu mã ca làm việc");
+        int doctorId = requiredInt(doctorIdRaw, "Vui lòng chọn bác sĩ");
+        int dayOfWeek = requiredInt(dayOfWeekRaw, "Vui lòng chọn thứ");
+        ShiftTime shiftTime = resolveShiftType(shiftTypeRaw);
+        int maxPatients = requiredInt(maxPatientsRaw, "Vui lòng nhập số bệnh nhân tối đa");
 
         validateShift(dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
 
-        if (!doctorDAO.doctorExists(doctorId)) {
+        if (!scheduleDAO.doctorExists(doctorId)) {
             throw new IllegalArgumentException("Bác sĩ không tồn tại trong hệ thống");
         }
-        if (!doctorDAO.isDoctorActive(doctorId)) {
+        if (!scheduleDAO.isDoctorActive(doctorId)) {
             throw new IllegalArgumentException("Chỉ có thể cập nhật lịch cho bác sĩ đang hoạt động");
         }
 
-        if (!doctorDAO.shiftExists(shiftId)) {
+        if (!scheduleDAO.shiftExists(shiftId)) {
             throw new IllegalArgumentException("Ca làm việc không tồn tại");
         }
-        if (!doctorDAO.isShiftOwnedByDoctor(shiftId, doctorId)) {
+        if (!scheduleDAO.isShiftOwnedByDoctor(shiftId, doctorId)) {
             throw new IllegalArgumentException("Ca làm việc không thuộc bác sĩ được chọn");
         }
 
-        if (doctorDAO.hasShiftConflict(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, shiftId)) {
+        if (scheduleDAO.hasShiftConflict(doctorId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, shiftId)) {
             throw new IllegalArgumentException("Khung giờ bị trùng với ca làm việc đã có");
         }
 
-        doctorDAO.updateDoctorShift(shiftId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
+        scheduleDAO.updateDoctorShift(shiftId, dayOfWeek, shiftTime.startTime, shiftTime.endTime, maxPatients);
         HttpSession sessionUpd = req.getSession(false);
         User userUpd = sessionUpd != null ? (User) sessionUpd.getAttribute("account") : null;
         SystemLogService.log(userUpd != null ? userUpd.getUserId() : null, "SHIFT_UPDATED",
@@ -270,16 +286,16 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         req.setAttribute("success", "Đã cập nhật ca làm việc thành công");
     }
 
-    private void handleDeleteShift(HttpServletRequest req, DoctorDAO doctorDAO) throws SQLException {
+    private void handleDeleteShift(HttpServletRequest req, DoctorScheduleDAO scheduleDAO) throws SQLException {
         int shiftId = requiredInt(req.getParameter("shiftId"), "Thiếu mã ca làm việc");
-        if (!doctorDAO.shiftExists(shiftId)) {
+        if (!scheduleDAO.shiftExists(shiftId)) {
             throw new IllegalArgumentException("Ca làm việc không tồn tại");
         }
-        if (doctorDAO.hasUpcomingAppointmentsForShift(shiftId)) {
+        if (scheduleDAO.hasUpcomingAppointmentsForShift(shiftId)) {
             throw new IllegalArgumentException("Không thể xóa ca làm việc vì vẫn còn lịch hẹn hiện tại/tương lai");
         }
 
-        doctorDAO.deleteDoctorShift(shiftId);
+        scheduleDAO.deleteDoctorShift(shiftId);
         HttpSession sessionDel = req.getSession(false);
         User userDel = sessionDel != null ? (User) sessionDel.getAttribute("account") : null;
         SystemLogService.log(userDel != null ? userDel.getUserId() : null, "SHIFT_DELETED",
@@ -361,6 +377,40 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         return (day >= 0 && day <= 6) ? day : null;
     }
 
+    private void preserveModalState(HttpServletRequest req, String action) {
+        if ("add".equals(action)) {
+            keepAddForm(req,
+                    trim(req.getParameter("doctorId")),
+                    trim(req.getParameter("dayOfWeek")),
+                    trim(req.getParameter("shiftType")),
+                    trim(req.getParameter("maxPatients")));
+            req.setAttribute("addModalOpen", true);
+        } else if ("update".equals(action)) {
+            keepEditForm(req,
+                    trim(req.getParameter("shiftId")),
+                    trim(req.getParameter("doctorId")),
+                    trim(req.getParameter("dayOfWeek")),
+                    trim(req.getParameter("shiftType")),
+                    trim(req.getParameter("maxPatients")));
+            req.setAttribute("editModalOpen", true);
+        }
+    }
+
+    private void keepAddForm(HttpServletRequest req, String doctorId, String dayOfWeek, String shiftType, String maxPatients) {
+        req.setAttribute("addDoctorId", doctorId);
+        req.setAttribute("addDayOfWeek", dayOfWeek);
+        req.setAttribute("addShiftType", normalizeShiftType(shiftType));
+        req.setAttribute("addMaxPatients", maxPatients);
+    }
+
+    private void keepEditForm(HttpServletRequest req, String shiftId, String doctorId, String dayOfWeek, String shiftType, String maxPatients) {
+        req.setAttribute("editShiftIdValue", shiftId);
+        req.setAttribute("editDoctorIdValue", doctorId);
+        req.setAttribute("editDayOfWeekValue", dayOfWeek);
+        req.setAttribute("editShiftTypeValue", normalizeShiftType(shiftType));
+        req.setAttribute("editMaxPatientsValue", maxPatients);
+    }
+
     private String trim(String value) {
         return value == null ? "" : value.trim();
     }
@@ -427,14 +477,14 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
     }
 
     private void applyApprovedOverrides(
-            DoctorDAO doctorDAO,
+            DoctorScheduleDAO requestDAO,
             List<ScheduleViewItem> scheduleItems,
             List<Doctor> filteredDoctors,
             LocalDate weekStart,
             LocalDate weekEnd
     ) {
         List<ScheduleChangeRequest> approvedRequests
-                = doctorDAO.getScheduleChangeRequestsForAdmin("APPROVED", "ALL", "ALL", "");
+                = requestDAO.getScheduleChangeRequestsForAdmin("APPROVED", "ALL", "ALL", "");
         if (approvedRequests == null || approvedRequests.isEmpty()) {
             return;
         }
@@ -695,3 +745,4 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
     }
 }
+

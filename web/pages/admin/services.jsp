@@ -450,6 +450,10 @@
                 font-weight: 600;
             }
 
+            .field-input-error {
+                border-color: #dc3545 !important;
+            }
+
             .modal-footer {
                 display: flex;
                 gap: 10px;
@@ -704,7 +708,7 @@
 
                     <div class="form-group">
                         <label>Tên dịch vụ <span style="color: red;">*</span></label>
-                        <input type="text" name="name" required placeholder="Nhập tên dịch vụ" value="${addName}">
+                        <input type="text" name="name" class="${not empty addNameError ? 'field-input-error' : ''}" placeholder="Nhập tên dịch vụ" value="${addName}">
                         <c:if test="${not empty addNameError}">
                             <div class="field-error">${addNameError}</div>
                         </c:if>
@@ -712,7 +716,7 @@
 
                     <div class="form-group">
                         <label>Danh mục <span style="color: red;">*</span></label>
-                        <select name="serviceType" required>
+                        <select name="serviceType" class="${not empty addServiceTypeError ? 'field-input-error' : ''}">
                             <option value="" ${empty addServiceType ? 'selected' : ''}>-- Chọn danh mục --</option>
                             <option value="booking_fee" ${addServiceType == 'booking_fee' ? 'selected' : ''}>Khám & tư vấn</option>
                             <option value="lab" ${addServiceType == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
@@ -724,7 +728,7 @@
 
                     <div class="form-group">
                         <label>Giá (VNĐ) <span style="color: red;">*</span></label>
-                        <input type="number" name="price" min="0" required placeholder="0" value="${addPrice}">
+                        <input type="number" name="price" min="0" class="${not empty addPriceError ? 'field-input-error' : ''}" placeholder="0" value="${addPrice}">
                         <c:if test="${not empty addPriceError}">
                             <div class="field-error">${addPriceError}</div>
                         </c:if>
@@ -767,7 +771,7 @@
 
                     <div class="form-group">
                         <label>Tên dịch vụ <span style="color: red;">*</span></label>
-                        <input type="text" name="name" id="editServiceName" required placeholder="Nhập tên dịch vụ" value="${editName}">
+                        <input type="text" name="name" id="editServiceName" class="${not empty editNameError ? 'field-input-error' : ''}" placeholder="Nhập tên dịch vụ" value="${editName}">
                         <c:if test="${not empty editNameError}">
                             <div class="field-error">${editNameError}</div>
                         </c:if>
@@ -775,7 +779,7 @@
 
                     <div class="form-group">
                         <label>Danh mục <span style="color: red;">*</span></label>
-                        <select name="serviceType" id="editServiceType" required>
+                        <select name="serviceType" id="editServiceType" class="${not empty editServiceTypeError ? 'field-input-error' : ''}">
                             <option value="" ${empty editServiceType ? 'selected' : ''}>-- Chọn danh mục --</option>
                             <option value="booking_fee" ${editServiceType == 'booking_fee' ? 'selected' : ''}>Khám & tư vấn</option>
                             <option value="lab" ${editServiceType == 'lab' ? 'selected' : ''}>Kiểm tra chuyên sâu</option>
@@ -787,7 +791,7 @@
 
                     <div class="form-group">
                         <label>Giá (VNĐ) <span style="color: red;">*</span></label>
-                        <input type="number" name="price" id="editServicePrice" min="0" required placeholder="0" value="${editPrice}">
+                        <input type="number" name="price" id="editServicePrice" min="0" class="${not empty editPriceError ? 'field-input-error' : ''}" placeholder="0" value="${editPrice}">
                         <c:if test="${not empty editPriceError}">
                             <div class="field-error">${editPriceError}</div>
                         </c:if>

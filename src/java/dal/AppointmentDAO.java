@@ -113,8 +113,8 @@ public class AppointmentDAO extends DBContext {
                 + "a.appointment_time, "
                 + "a.status, "
                 + "a.symptom, "
-                + "sp.specialization, "
-                + "sp.qualification, "
+                + "d.specialization, "
+                + "sp.academic_degree AS qualification, "
                 + "d.price_booking, "
                 + "du.user_id AS doctor_user_id, "
                 + "du.full_name AS doctor_name, "
@@ -187,8 +187,8 @@ public class AppointmentDAO extends DBContext {
                 + "a.appointment_time, "
                 + "a.status, "
                 + "a.symptom, "
-                + "sp.specialization, "
-                + "sp.qualification, "
+                + "d.specialization, "
+                + "sp.academic_degree AS qualification, "
                 + "d.price_booking, "
                 + "du.user_id AS doctor_user_id, "
                 + "du.full_name AS doctor_name, "
@@ -305,7 +305,15 @@ public class AppointmentDAO extends DBContext {
 
 
 
-        String sql = "SELECT day_of_week, max_patients FROM doctor_shifts WHERE doctor_id = ?";
+        String sql = """
+            SELECT ds.day_of_week, ds.max_patients
+            FROM doctor_shifts ds
+            JOIN doctors d ON d.doctor_id = ds.doctor_id
+            JOIN users u ON u.user_id = d.user_id
+            WHERE ds.doctor_id = ?
+              AND ds.status = 'active'
+              AND u.status = 'active'
+        """;
 
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {

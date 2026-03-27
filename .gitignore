@@ -1,11 +1,21 @@
+# Build outputs
 /build/
+/dist/
 /target/
 /out/
+*.class
+*.war
+*.ear
+
+# Logs
+*.log
+
+# NetBeans local user settings (machine-specific)
+/nbproject/private/
+**/.netbeans_automatic_build
+**/.netbeans_update_resources
+
+# IDEs
 /.idea/
 /.vscode/
-/nbproject/
-/*.log
-*.class
-/build
-/dist
-/build
+*.iml

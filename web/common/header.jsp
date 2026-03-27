@@ -1,4 +1,4 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -468,7 +468,7 @@
                         <div class="admin-popup" id="adminPopup">
                             <a class="profile-item" href="${pageContext.request.contextPath}/users">Quản lý tài khoản</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/admin-services">Quản lý dịch vụ</a>
-                            <a class="profile-item" href="${pageContext.request.contextPath}/admin-doctors">Quản lý bác sĩ</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/admin-staffs">Quản lý nhân viên</a>
                         </div>
                     </div>
                 </c:if>
@@ -543,7 +543,7 @@
                 <div class="profile-menu-wrap" id="profileMenuWrap">
                     <button type="button" class="profile-trigger" id="profileTrigger">
                         <span class="profile-avatar">${fn:substring(sessionScope.account.fullName, 0, 1)}</span>
-                        <span>${sessionScope.account.fullName}</span>
+                        <span>${roleName == 'admin' ? 'Admin' : sessionScope.account.fullName}</span>
                     </button>
 
                     <div class="profile-popup" id="profilePopup">
@@ -552,7 +552,8 @@
                         <a class="profile-item" href="${pageContext.request.contextPath}/userinformationservlet">Tài khoản của tôi</a>
 
                         <c:if test="${roleName == 'patient'}">
-                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-health-dashboard">Hồ sơ khám bệnh</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-medical-records">Hồ sơ bệnh án</a>
+                            <a class="profile-item" href="${pageContext.request.contextPath}/patient-prescription">Đơn thuốc</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/historyofappointmentservlet">Thông tin đặt lịch</a>
                             <a class="profile-item" href="${pageContext.request.contextPath}/createpatientsservlet">Danh sách bệnh nhân</a>
                         </c:if>

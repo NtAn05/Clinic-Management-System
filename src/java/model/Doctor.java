@@ -4,6 +4,8 @@
  */
 package model;
 
+import java.sql.Date;
+
 /**
  *
  * @author anngu
@@ -18,11 +20,16 @@ public class Doctor {
     private int experience_years;
     private double rating ;
     private double price;
+    private String academicTitle;
+    private String professionalQualification;
+    private String gender;
+    private Date dob;
     // join từ users
     private String fullName;
     private String phone;
     private String email;
     private String status;
+    private String role;
 
     public Doctor() {
     }
@@ -114,6 +121,46 @@ public class Doctor {
         this.price = price;
     }
 
+    public String getAcademicTitle() {
+        return academicTitle;
+    }
+
+    public void setAcademicTitle(String academicTitle) {
+        this.academicTitle = academicTitle;
+    }
+
+    public String getProfessionalQualification() {
+        return professionalQualification;
+    }
+
+    public void setProfessionalQualification(String professionalQualification) {
+        this.professionalQualification = professionalQualification;
+    }
+
+    public String getAcademicDegree() {
+        return qualification;
+    }
+
+    public void setAcademicDegree(String academicDegree) {
+        this.qualification = academicDegree;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Date getDob() {
+        return dob;
+    }
+
+    public void setDob(Date dob) {
+        this.dob = dob;
+    }
+
     public String getFullName() {
         return fullName;
     }
@@ -144,6 +191,14 @@ public class Doctor {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
 }
