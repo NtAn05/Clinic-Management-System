@@ -157,8 +157,8 @@
                                 <label>Ca làm việc
                                     <select name="shiftPeriod" id="shiftPeriod">
                                         <option value="">-- Chọn ca --</option>
-                                        <option value="MORNING">Ca sáng (08:00 - 12:00)</option>
-                                        <option value="AFTERNOON">Ca chiều (13:00 - 17:00)</option>
+                                        <option value="MORNING">Ca sáng</option>
+                                        <option value="AFTERNOON">Ca chiều</option>
                                     </select>
                                 </label>
                             </div>

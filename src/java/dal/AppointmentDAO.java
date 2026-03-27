@@ -392,44 +392,111 @@ public class AppointmentDAO extends DBContext {
 
         return 0;
     }
+    
+    public void addQueueWithPriority(long appointmentId, int doctorId) {
+        String getAppointmentSql = """
+            SELECT booking_type, appointment_date
+            FROM appointments
+            WHERE appointment_id = ?
+            FOR UPDATE
+        """;
 
-    public int getNextQueuePosition(int doctorId) {
+        String findInsertPosOnlineSql = """
+            SELECT COALESCE(MAX(q.queue_position), 0) + 1 AS insert_pos
+            FROM exam_queue q
+            JOIN appointments a ON a.appointment_id = q.appointment_id
+            WHERE q.doctor_id = ?
+              AND a.appointment_date = ?
+              AND q.status IN ('waiting', 'examining')
+              AND a.booking_type = 'online'
+        """;
 
-        String sql = "SELECT COALESCE(MAX(queue_position),0) + 1 AS next_pos "
-                + "FROM exam_queue WHERE doctor_id = ?";
+        String findInsertPosWalkInSql = """
+            SELECT COALESCE(MAX(q.queue_position), 0) + 1 AS insert_pos
+            FROM exam_queue q
+            JOIN appointments a ON a.appointment_id = q.appointment_id
+            WHERE q.doctor_id = ?
+              AND a.appointment_date = ?
+              AND q.status IN ('waiting', 'examining')
+        """;
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
+        String shiftQueueSql = """
+            UPDATE exam_queue q
+            JOIN appointments a ON a.appointment_id = q.appointment_id
+            SET q.queue_position = q.queue_position + 1
+            WHERE q.doctor_id = ?
+              AND a.appointment_date = ?
+              AND q.status IN ('waiting', 'examining')
+              AND q.queue_position >= ?
+        """;
 
-            st.setInt(1, doctorId);
+        String insertQueueSql = """
+            INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status)
+            VALUES (?, ?, ?, 'waiting')
+        """;
 
-            ResultSet rs = st.executeQuery();
+        boolean originalAutoCommit = true;
+        try {
+            originalAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
 
-            if (rs.next()) {
-                return rs.getInt("next_pos");
+            String bookingType;
+            Date appointmentDate;
+            try (PreparedStatement getAppt = connection.prepareStatement(getAppointmentSql)) {
+                getAppt.setLong(1, appointmentId);
+                try (ResultSet rs = getAppt.executeQuery()) {
+                    if (!rs.next()) {
+                        connection.rollback();
+                        return;
+                    }
+                    bookingType = rs.getString("booking_type");
+                    appointmentDate = rs.getDate("appointment_date");
+                }
             }
 
+            int insertPos = 1;
+            String findInsertPosSql = "online".equalsIgnoreCase(bookingType)
+                    ? findInsertPosOnlineSql
+                    : findInsertPosWalkInSql;
+
+            try (PreparedStatement findPos = connection.prepareStatement(findInsertPosSql)) {
+                findPos.setInt(1, doctorId);
+                findPos.setDate(2, appointmentDate);
+                try (ResultSet posRs = findPos.executeQuery()) {
+                    if (posRs.next()) {
+                        insertPos = posRs.getInt("insert_pos");
+                    }
+                }
+            }
+
+            try (PreparedStatement shift = connection.prepareStatement(shiftQueueSql)) {
+                shift.setInt(1, doctorId);
+                shift.setDate(2, appointmentDate);
+                shift.setInt(3, insertPos);
+                shift.executeUpdate();
+            }
+
+            try (PreparedStatement insert = connection.prepareStatement(insertQueueSql)) {
+                insert.setLong(1, appointmentId);
+                insert.setInt(2, doctorId);
+                insert.setInt(3, insertPos);
+                insert.executeUpdate();
+            }
+
+            connection.commit();
         } catch (Exception e) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
             e.printStackTrace();
-        }
-
-        return 1;
-    }
-
-    public void addQueue(long appointmentId, int doctorId, int position) {
-
-        String sql = "INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) "
-                + "VALUES (?, ?, ?, 'waiting')";
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-
-            st.setLong(1, appointmentId);
-            st.setInt(2, doctorId);
-            st.setInt(3, position);
-
-            st.executeUpdate();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } finally {
+            try {
+                connection.setAutoCommit(originalAutoCommit);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }

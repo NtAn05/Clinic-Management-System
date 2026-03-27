@@ -96,8 +96,7 @@ public class listOfAppointment extends HttpServlet {
 
         if ( "checked_in".equalsIgnoreCase(status)) {
             int doctorId = dao.getDoctorIdByAppointment(id);
-            int position = dao.getNextQueuePosition(doctorId);
-            dao.addQueue(id, doctorId, position);
+            dao.addQueueWithPriority(id, doctorId);
         }
 
         HttpSession session = request.getSession(false);
