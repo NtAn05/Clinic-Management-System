@@ -1,11 +1,12 @@
 /build/
+/dist/
 /target/
 /out/
+
+/nbproject/private/
+
 /.idea/
 /.vscode/
-/nbproject/
-/*.log
+
 *.class
-/build
-/dist
-/build
+*.log
