@@ -4,6 +4,14 @@ html, body {
     padding: 0;
 }
 
+html {
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: linear-gradient(145deg, #eef4ff, #f9fbff 40%, #f0fdfa);
