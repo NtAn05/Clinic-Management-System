@@ -581,9 +581,9 @@
                     <c:set var="statusText" value="${request.status == 'pending' ? 'Chờ lấy mẫu' : (request.status == 'processing' ? 'Đang xét nghiệm' : (request.status == 'cancelled' ? 'Đã hủy' : 'Đã có kết quả'))}" />
                     <c:set var="statusClass" value="${request.status == 'pending' ? 'status-pending' : (request.status == 'processing' ? 'status-inprogress' : (request.status == 'cancelled' ? 'status-cancelled' : 'status-done'))}" />
 
-                    <%-- Xác định hàng active/locked dựa theo activeRequestId từ server --%>
+                    <%-- isActiveRow: phiếu đang processing; isLockedRow: pending/processing khác bị khóa khi đã có phiếu đang processing --%>
                     <c:set var="isActiveRow" value="${request.requestId == activeRequestId}" />
-                    <c:set var="isLockedRow" value="${not isActiveRow and (request.status == 'pending' or request.status == 'processing')}" />
+                    <c:set var="isLockedRow" value="${hasProcessingRequest and not isActiveRow and (request.status == 'pending' or request.status == 'processing')}" />
 
                     <c:set var="rowClass" value="queue-row${isActiveRow ? ' row-active' : ''}${isLockedRow ? ' row-locked' : ''}" />
                     <tr class="${rowClass}" data-request-id="${request.requestId}" data-notes="${fn:escapeXml(request.notes)}">

@@ -35,7 +35,6 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -78,7 +77,7 @@ public class LabRequestDAO extends DBContext {
             AND EXISTS (
                 SELECT 1
                 FROM payments pay
-                WHERE pay.appointment_id = lr.appointment_id
+                WHERE pay.lab_request_id = lr.request_id
                 AND pay.status = 'paid'
              )
         """);
@@ -92,10 +91,7 @@ public class LabRequestDAO extends DBContext {
             sql.append(" AND lr.status != 'cancelled'");
         }
 
-        if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
-            params.add(department);
-        }
+        // department filter removed: specialization column no longer exists in doctors table
 
         if (searchTerm != null && !searchTerm.isEmpty()) {
             String searchPattern = "%" + searchTerm + "%";
@@ -165,7 +161,6 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -180,13 +175,13 @@ public class LabRequestDAO extends DBContext {
             AND EXISTS (
             SELECT 1
             FROM payments pay
-            WHERE pay.appointment_id = lr.appointment_id
+            WHERE pay.lab_request_id = lr.request_id
                AND pay.status = 'paid'
             )
         """);
-        
+
         List<Object> params = new ArrayList<>();
-        
+
         if (status != null && !status.isEmpty()) {
             sql.append(" AND lr.status = ?");
             params.add(status);
@@ -194,10 +189,7 @@ public class LabRequestDAO extends DBContext {
             sql.append(" AND lr.status != 'cancelled'");
         }
 
-        if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
-            params.add(department);
-        }
+        // department filter removed: specialization column no longer exists in doctors table
 
         if (searchTerm != null && !searchTerm.isEmpty()) {
             String searchPattern = "%" + searchTerm + "%";
@@ -276,7 +268,6 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -291,22 +282,17 @@ public class LabRequestDAO extends DBContext {
             AND EXISTS (
             SELECT 1
             FROM payments pay
-              WHERE pay.appointment_id = lr.appointment_id
+              WHERE pay.lab_request_id = lr.request_id
                AND pay.status = 'paid'
             )
         """);
-        
+
         List<Object> params = new ArrayList<>();
         int paramIndex = 1;
-        
+
         if (status != null && !status.isEmpty()) {
             sql.append(" AND lr.status = ?");
             params.add(status);
-        }
-        
-        if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
-            params.add(department);
         }
         
         if (searchTerm != null && !searchTerm.isEmpty()) {
@@ -384,7 +370,6 @@ public class LabRequestDAO extends DBContext {
                 p.email AS patient_email,
                 p.gender,
                 d.doctor_id,
-                d.specialization,
                 u.full_name AS doctor_name,
                 u.phone AS doctor_phone,
                 u.email AS doctor_email,
@@ -708,20 +693,17 @@ public class LabRequestDAO extends DBContext {
      * Lấy danh sách các khoa/phòng (specializations)
      */
     public int getActiveRequestId() {
+        // Only returns a request currently being processed (processing status).
+        // Returns -1 when no request is being processed (all pending requests are free to start).
         String sql = """
             SELECT lr.request_id
             FROM lab_requests lr
-            JOIN appointments a ON lr.appointment_id = a.appointment_id
-            JOIN patients p ON a.patient_id = p.patient_id
-            JOIN doctors d ON lr.doctor_id = d.doctor_id
-            JOIN users u ON d.user_id = u.user_id
-            WHERE lr.status IN ('pending', 'processing')
+            WHERE lr.status = 'processing'
             AND EXISTS (
                 SELECT 1 FROM payments pay
-                WHERE pay.appointment_id = lr.appointment_id AND pay.status = 'paid'
+                WHERE pay.lab_request_id = lr.request_id AND pay.status = 'paid'
             )
-            ORDER BY CASE lr.status WHEN 'processing' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END ASC,
-                     lr.created_at ASC
+            ORDER BY lr.created_at ASC
             LIMIT 1
             """;
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -734,21 +716,8 @@ public class LabRequestDAO extends DBContext {
     }
 
     public List<String> getAllSpecializations() {
-        List<String> list = new ArrayList<>();
-        
-        String sql = "SELECT DISTINCT specialization FROM doctors WHERE specialization IS NOT NULL AND specialization <> '' ORDER BY specialization";
-        
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            ResultSet rs = st.executeQuery();
-            
-            while (rs.next()) {
-                list.add(rs.getString("specialization"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return list;
+        // specialization column removed from doctors table in new schema
+        return new ArrayList<>();
     }
 
     /**
@@ -781,7 +750,7 @@ public class LabRequestDAO extends DBContext {
             AND EXISTS (
             SELECT 1
              FROM payments pay
-             WHERE pay.appointment_id = lr.appointment_id
+             WHERE pay.lab_request_id = lr.request_id
              AND pay.status = 'paid'
              )
         """);
@@ -793,10 +762,7 @@ public class LabRequestDAO extends DBContext {
             params.add(status);
         }
 
-        if (department != null && !department.isEmpty()) {
-            sql.append(" AND d.specialization = ?");
-            params.add(department);
-        }
+        // department filter removed: specialization column no longer exists in doctors table
 
         if (searchTerm != null && !searchTerm.isEmpty()) {
             String searchPattern = "%" + searchTerm + "%";
@@ -874,7 +840,6 @@ public class LabRequestDAO extends DBContext {
         // Map Doctor
         Doctor doctor = new Doctor();
         doctor.setDoctorId(rs.getInt("doctor_id"));
-        doctor.setSpecialization(rs.getString("specialization"));
         doctor.setFullName(rs.getString("doctor_name"));
         doctor.setPhone(rs.getString("doctor_phone"));
         doctor.setEmail(rs.getString("doctor_email"));

@@ -125,6 +125,7 @@ public class LabQueueServlet extends HttpServlet {
         request.setAttribute("filterDepartment", department != null ? department : "");
         request.setAttribute("searchTerm", search != null ? search : "");
         request.setAttribute("activeRequestId", activeRequestId);
+        request.setAttribute("hasProcessingRequest", activeRequestId != -1);
         PagingHelper.expose(request, paging);
         
         // Forward to JSP
@@ -143,9 +144,19 @@ public class LabQueueServlet extends HttpServlet {
             int requestId = Integer.parseInt(request.getParameter("requestId"));
             String newStatus = request.getParameter("status");
 
-            if (!isCurrentActiveRequest(requestId)) {
-                response.getWriter().write("{\"success\": false, \"message\": \"Phiếu này chưa tới lượt xử lý\"}");
-                return;
+            if ("processing".equalsIgnoreCase(newStatus)) {
+                // Allow starting any pending request only when no other request is currently processing
+                int activeId = labRequestDAO.getActiveRequestId();
+                if (activeId != -1) {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Đang có phiếu xét nghiệm đang xử lý. Vui lòng hoàn thành trước.\"}");
+                    return;
+                }
+            } else {
+                // For other status transitions (e.g. completed), must be the active processing request
+                if (!isCurrentActiveRequest(requestId)) {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Phiếu này chưa tới lượt xử lý\"}");
+                    return;
+                }
             }
             
             boolean success = labRequestDAO.updateLabRequestStatus(requestId, newStatus);
@@ -194,6 +205,10 @@ public class LabQueueServlet extends HttpServlet {
                 }
                 int requestId = labRequestDAO.insertLabRequest(appointmentId, doctor.getDoctorId());
                 if (requestId > 0) {
+                    // Tạo payment record cho phiếu xét nghiệm
+                    dal.LabPaymentDAO labPaymentDAO = new dal.LabPaymentDAO();
+                    java.math.BigDecimal price = labPaymentDAO.getLabTestPrice();
+                    labPaymentDAO.createLabPayment(appointmentId, requestId, price, "cash");
                     // Ghi system log
                     util.SystemLogService.logWithSession(session, "CREATE_LAB_REQUEST",
                             "Bác sĩ " + account.getFullName() + " tạo phiếu xét nghiệm cho appointmentId=" + appointmentId
