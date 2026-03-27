@@ -20,7 +20,6 @@ public class AdminUserValidator {
     private static final int MAX_EXPERIENCE = 50;
     private static final int MIN_PRICE = 0;
     private static final int MAX_PRICE = 10_000_000;
-
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern HAS_LETTER_PATTERN = Pattern.compile(".*\\p{L}+.*");
@@ -40,7 +39,6 @@ public class AdminUserValidator {
     );
 
     public ValidationResult validateAddUser(String fullName, String phone, String email, String roleStr,
-            String specialization, String qualification, String experienceRaw, String priceRaw,
             UserDAO userDAO) throws SQLException {
 
         ValidationResult result = new ValidationResult();
@@ -55,13 +53,6 @@ public class AdminUserValidator {
         }
 
         validateUserCommonFields(result, "add", fullName, phone, email);
-
-        if (targetRole == Role.doctor) {
-            result.doctorData = validateDoctorTransitionFields(
-                    "add", specialization, qualification, experienceRaw, priceRaw
-            );
-            result.merge(result.doctorData.fieldErrors);
-        }
 
         if (!result.hasAnyError() && userDAO.isPhoneExist(phone)) {
             result.addFieldError("addPhoneError", "Số điện thoại này đã tồn tại");
@@ -78,10 +69,15 @@ public class AdminUserValidator {
         return result;
     }
 
+    public ValidationResult validateAddUser(String fullName, String phone, String email, String roleStr,
+            String specialization, String qualification, String experienceRaw, String priceRaw,
+            UserDAO userDAO) throws SQLException {
+        return validateAddUser(fullName, phone, email, roleStr, userDAO);
+    }
+
 
     public ValidationResult validateEditUser(User existingUser, int userId, String fullName, String phone,
-            String email, String roleStr, String specialization, String qualification,
-            String experienceRaw, String priceRaw, UserDAO userDAO, DoctorDAO doctorDAO) throws SQLException {
+            String email, String roleStr, UserDAO userDAO, DoctorDAO doctorDAO) throws SQLException {
 
         ValidationResult result = new ValidationResult();
 
@@ -121,18 +117,17 @@ public class AdminUserValidator {
             result.formError = "Không thể đổi vai trò bác sĩ khi vẫn còn lịch khám tương lai chưa hoàn tất";
         }
 
-        if (existingUser.getRole() != Role.doctor && targetRole == Role.doctor) {
-            result.doctorData = validateDoctorTransitionFields(
-                    "edit", specialization, qualification, experienceRaw, priceRaw
-            );
-            result.merge(result.doctorData.fieldErrors);
-        }
-
         if (result.hasAnyError() && result.formError == null) {
             result.formError = "Dữ liệu cập nhật không hợp lệ";
         }
 
         return result;
+    }
+
+    public ValidationResult validateEditUser(User existingUser, int userId, String fullName, String phone,
+            String email, String roleStr, String specialization, String qualification,
+            String experienceRaw, String priceRaw, UserDAO userDAO, DoctorDAO doctorDAO) throws SQLException {
+        return validateEditUser(existingUser, userId, fullName, phone, email, roleStr, userDAO, doctorDAO);
     }
 
 

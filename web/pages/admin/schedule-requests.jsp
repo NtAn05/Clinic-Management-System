@@ -61,6 +61,11 @@
                 display: flex;
                 align-items: center;
                 gap: 10px;
+                animation: slideIn 0.3s ease-out;
+            }
+
+            .alert.fade-out {
+                animation: slideIn 0.3s ease-out reverse forwards;
             }
 
             .alert.success {
@@ -73,6 +78,17 @@
                 background: #ffebee;
                 color: #c62828;
                 border-left: 4px solid #f44336;
+            }
+
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .toolbar {
@@ -1017,6 +1033,20 @@
                 if (event.target === modal) {
                     closeRequestModal();
                 }
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function (alert) {
+                    setTimeout(function () {
+                        alert.classList.add('fade-out');
+                        setTimeout(function () {
+                            if (alert && alert.parentNode) {
+                                alert.parentNode.removeChild(alert);
+                            }
+                        }, 300);
+                    }, 5000);
+                });
             });
         </script>
         <jsp:include page="/common/footer.jsp" />

@@ -115,8 +115,8 @@ public class DoctorDAO extends DBContext {
         try (PreparedStatement updateDoctor = connection.prepareStatement(updateDoctorSql)) {
             updateDoctor.setString(1, specialization);
             updateDoctor.setInt(2, experienceYears);
-            updateDoctor.setString(3, academicTitle);
-            updateDoctor.setString(4, professionalQualification);
+            setNullableString(updateDoctor, 3, academicTitle);
+            setNullableString(updateDoctor, 4, professionalQualification);
             updateDoctor.setInt(5, priceBooking);
             updateDoctor.setInt(6, userId);
             if (updateDoctor.executeUpdate() == 0) {
@@ -129,8 +129,8 @@ public class DoctorDAO extends DBContext {
                     insertDoctor.setInt(1, userId);
                     insertDoctor.setString(2, specialization);
                     insertDoctor.setInt(3, experienceYears);
-                    insertDoctor.setString(4, academicTitle);
-                    insertDoctor.setString(5, professionalQualification);
+                    setNullableString(insertDoctor, 4, academicTitle);
+                    setNullableString(insertDoctor, 5, professionalQualification);
                     insertDoctor.setInt(6, priceBooking);
                     insertDoctor.executeUpdate();
                 }
@@ -161,6 +161,14 @@ public class DoctorDAO extends DBContext {
                 }
             }
         }
+    }
+
+    private void setNullableString(PreparedStatement statement, int index, String value) throws SQLException {
+        if (value == null || value.isBlank()) {
+            statement.setNull(index, Types.VARCHAR);
+            return;
+        }
+        statement.setString(index, value);
     }
 
     public List<Doctor> getDoctorsForAdmin(String keyword, String specializationFilter, String qualificationFilter) {

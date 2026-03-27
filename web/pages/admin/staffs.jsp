@@ -12,7 +12,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%); min-height: 100vh; }
         .container { padding: 30px 50px; max-width: 1400px; margin: 0 auto; }
-        .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; animation: slideIn .3s ease-out; }
+        .alert.fade-out { animation: slideIn .3s ease-out reverse forwards; }
         .alert.success { background:#e8f5e9; color:#2e7d32; border-left:4px solid #4caf50; }
         .alert.error { background:#ffebee; color:#c62828; border-left:4px solid #f44336; }
         .table-container { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,.1); overflow-x: auto; }
@@ -51,13 +52,18 @@
         .page-link:hover { background:#f5f5f5; }
         .page-link.active { background:#0061ff; color:#fff; border-color:#0061ff; pointer-events:none; }
         .page-link.disabled { opacity:.5; pointer-events:none; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         @media (max-width: 992px) { .container{padding:20px;} .toolbar,.form-grid{grid-template-columns:1fr;} .input-action-row{flex-direction:column;} }
     </style>
 </head>
 <body>
 <jsp:include page="/common/header.jsp" />
 <div class="container">
-    <c:if test="${not empty success}"><div class="alert success"><i class="fas fa-check-circle"></i>${success}</div></c:if>
+    <c:if test="${not empty success}"><div class="alert success"><i class="fas fa-check-circle"></i>${success}<c:if test="${not empty flashResendUserId}"><button type="button" class="btn-inline" style="margin-left:auto; min-height:36px;" onclick="resendPassword(${flashResendUserId})">Gửi lại email</button></c:if></div></c:if>
+    <c:if test="${not empty notice}"><div class="alert success"><i class="fas fa-circle-info"></i>${notice}</div></c:if>
     <c:if test="${not empty error and not addModalOpen and not editModalOpen}"><div class="alert error"><i class="fas fa-exclamation-circle"></i>${error}</div></c:if>
 
     <div class="table-container">
@@ -90,8 +96,8 @@
                 </select>
             </div>
             <div class="toolbar-buttons">
-                <button class="btn-search" type="submit">Tìm</button>
-                <a class="btn-reset" href="${pageContext.request.contextPath}/admin-staffs">Đặt lại</a>
+                <button class="btn-search" type="submit"><i class="fas fa-search"></i> Tìm</button>
+                <a class="btn-reset" href="${pageContext.request.contextPath}/admin-staffs"><i class="fas fa-undo"></i> Đặt lại</a>
             </div>
         </form>
 
@@ -218,7 +224,13 @@
 <div id="addStaffModal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><span>Thêm nhân viên</span><button class="modal-close" type="button" onclick="closeAddModal()">×</button></div>
-        <form method="POST" action="${pageContext.request.contextPath}/admin-staffs" novalidate>
+        <form id="addStaffForm" method="POST" action="${pageContext.request.contextPath}/admin-staffs" novalidate onsubmit="return submitStaffForm('add')">
+            <c:if test="${not empty error and addModalOpen}">
+                <div class="alert error" style="margin-bottom: 12px;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    ${error}
+                </div>
+            </c:if>
             <input type="hidden" name="action" value="add">
             <div class="form-grid">
                 <div class="form-group form-full"><label>Họ tên *</label><input type="text" name="fullName" class="${not empty addFullNameError ? 'field-input-error' : ''}" value="${addFullName}"><c:if test="${not empty addFullNameError}"><div class="field-error">${addFullNameError}</div></c:if></div>
@@ -242,7 +254,13 @@
 <div id="editStaffModal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><span>Chỉnh sửa nhân viên</span><button class="modal-close" type="button" onclick="closeEditModal()">×</button></div>
-        <form method="POST" action="${pageContext.request.contextPath}/admin-staffs" novalidate>
+        <form id="editStaffForm" method="POST" action="${pageContext.request.contextPath}/admin-staffs" novalidate onsubmit="return submitStaffForm('edit')">
+            <c:if test="${not empty error and editModalOpen}">
+                <div class="alert error" style="margin-bottom: 12px;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    ${error}
+                </div>
+            </c:if>
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="userId" id="editUserId" value="${editUserId}">
             <div class="form-grid">
@@ -270,18 +288,25 @@
 <script>
 function formatStatusDisplay(v){return (v||'').toLowerCase()==='active'?'Hoạt động':'Khóa'}
 function isDoctorRole(v){return (v||'').trim()==='doctor'}
+function ensureClientFieldError(prefix, fieldName, message){const input=document.getElementById(prefix+fieldName);if(!input)return;input.classList.add('field-input-error');const group=input.closest('.form-group');if(!group)return;let error=group.querySelector('.field-error.client-error[data-error-for="'+fieldName+'"]');if(!error){error=document.createElement('div');error.className='field-error client-error';error.dataset.errorFor=fieldName;group.appendChild(error)}error.textContent=message}
+function clearClientFieldError(prefix, fieldName){const input=document.getElementById(prefix+fieldName);if(input)input.classList.remove('field-input-error');const group=input?input.closest('.form-group'):null;if(!group)return;group.querySelectorAll('.field-error.client-error[data-error-for="'+fieldName+'"]').forEach(function(el){el.remove()})}
+function validateProfessionalQualificationRule(prefix){const role=(document.getElementById(prefix+'Role')?.value||'').trim();const qualification=(document.getElementById(prefix+'Qualification')?.value||'').trim();const professionalQualification=(document.getElementById(prefix+'ProfessionalQualification')?.value||'').trim();if(isDoctorRole(role)&&qualification==='bachelor'&&!professionalQualification){ensureClientFieldError(prefix,'ProfessionalQualification','Bác sĩ có bằng cấp cử nhân bắt buộc phải có trình độ hành nghề');return false}clearClientFieldError(prefix,'ProfessionalQualification');return true}
 function getSuggestedPrice(prefix){const qualification=(document.getElementById(prefix+'Qualification')?.value||'').trim();const academicTitle=(document.getElementById(prefix+'AcademicTitle')?.value||'').trim();const professionalQualification=(document.getElementById(prefix+'ProfessionalQualification')?.value||'').trim();if(academicTitle==='professor'||academicTitle==='associate_professor')return '400000';if(qualification==='doctorate'||professionalQualification==='specialist_level_2')return '300000';if(qualification==='master'||professionalQualification==='specialist_level_1'||professionalQualification==='resident_doctor')return '200000';return ''}
 function applySuggestedPrice(prefix,force){const roleInput=document.getElementById(prefix+'Role');const priceInput=document.getElementById(prefix+'PriceBooking');if(!roleInput||!priceInput||!isDoctorRole(roleInput.value))return;const suggested=getSuggestedPrice(prefix);if(!suggested)return;if(force||!(priceInput.value||'').trim())priceInput.value=suggested}
-function bindPriceRules(prefix){['Qualification','AcademicTitle','ProfessionalQualification'].forEach(function(suffix){const el=document.getElementById(prefix+suffix);if(el)el.addEventListener('change',function(){applySuggestedPrice(prefix,true)})})}
-function toggleDoctorOnlyFields(prefix){const show=isDoctorRole(document.getElementById(prefix+'Role').value);['SpecializationGroup','AcademicTitleGroup','ProfessionalQualificationGroup','ExperienceGroup','RatingGroup','PriceGroup'].forEach(s=>{const el=document.getElementById(prefix+s);if(el)el.style.display=show?'block':'none'});if(show)applySuggestedPrice(prefix,false)}
-function clearFieldErrors(modalId){const modal=document.getElementById(modalId);if(!modal)return;modal.querySelectorAll('.field-error').forEach(el=>el.remove());modal.querySelectorAll('.field-input-error').forEach(el=>el.classList.remove('field-input-error'))}
+function bindPriceRules(prefix){['Qualification','AcademicTitle','ProfessionalQualification'].forEach(function(suffix){const el=document.getElementById(prefix+suffix);if(el)el.addEventListener('change',function(){applySuggestedPrice(prefix,true);validateProfessionalQualificationRule(prefix)})})}
+function toggleDoctorOnlyFields(prefix){const show=isDoctorRole(document.getElementById(prefix+'Role').value);['SpecializationGroup','AcademicTitleGroup','ProfessionalQualificationGroup','ExperienceGroup','RatingGroup','PriceGroup'].forEach(s=>{const el=document.getElementById(prefix+s);if(el)el.style.display=show?'block':'none'});if(show)applySuggestedPrice(prefix,false);validateProfessionalQualificationRule(prefix)}
+function clearFieldErrors(modalId){const modal=document.getElementById(modalId);if(!modal)return;modal.querySelectorAll('.field-error.client-error').forEach(el=>el.remove());modal.querySelectorAll('.field-input-error').forEach(function(el){if(el.closest('.form-group')?.querySelector('.field-error'))return;el.classList.remove('field-input-error')})}
+function toggleEditResendButton(show){const button=document.getElementById('editResendButton');if(button)button.style.display=show?'inline-flex':'none'}
+function submitStaffForm(prefix){if(!validateProfessionalQualificationRule(prefix))return false;const modal=document.getElementById(prefix==='add'?'addStaffModal':'editStaffModal');if(modal)modal.style.display='none';return true}
+function resetAddModal(){const form=document.getElementById('addStaffForm');if(form)form.reset();clearFieldErrors('addStaffModal');toggleDoctorOnlyFields('add')}
 function openAddModal(){clearFieldErrors('addStaffModal');document.getElementById('addStaffModal').style.display='block';toggleDoctorOnlyFields('add')}
-function closeAddModal(){document.getElementById('addStaffModal').style.display='none'}
+function closeAddModal(){resetAddModal();document.getElementById('addStaffModal').style.display='none'}
 function closeEditModal(){document.getElementById('editStaffModal').style.display='none'}
-function resendPasswordFromEditModal(){const userId=document.getElementById('editUserId').value;if(!userId||!confirm('Gửi lại mật khẩu tạm qua email cho bác sĩ này?'))return;const form=document.createElement('form');form.method='POST';form.action='${pageContext.request.contextPath}/admin-staffs';form.innerHTML='<input type="hidden" name="action" value="resendPassword"><input type="hidden" name="userId" value="'+userId+'">';document.body.appendChild(form);form.submit()}
-function openEditModal(btn){clearFieldErrors('editStaffModal');document.getElementById('editUserId').value=btn.dataset.userId||'';document.getElementById('editFullName').value=btn.dataset.fullName||'';document.getElementById('editPhone').value=btn.dataset.phone||'';document.getElementById('editEmail').value=btn.dataset.email||'';document.getElementById('editStatus').value=formatStatusDisplay(btn.dataset.status);document.getElementById('editRole').value=btn.dataset.role||'';document.getElementById('editQualification').value=btn.dataset.qualification||'';document.getElementById('editGender').value=btn.dataset.gender||'';document.getElementById('editDob').value=btn.dataset.dob||'';document.getElementById('editSpecialization').value=btn.dataset.specialization||'';document.getElementById('editAcademicTitle').value=btn.dataset.academicTitle||'';document.getElementById('editProfessionalQualification').value=btn.dataset.professionalQualification||'';document.getElementById('editExperienceYears').value=(btn.dataset.experience&&btn.dataset.experience!=='0')?btn.dataset.experience:'';document.getElementById('editRating').value=btn.dataset.rating||'0.0';document.getElementById('editPriceBooking').value=parseInt(btn.dataset.priceBooking||'0',10)||'';document.getElementById('editResendButton').dataset.pendingResend=btn.dataset.pendingResend||'false';document.getElementById('editStaffModal').style.display='block';toggleDoctorOnlyFields('edit')}
+function resendPassword(userId){if(!userId||!confirm('Gửi lại mật khẩu tạm qua email cho nhân viên này?'))return;const form=document.createElement('form');form.method='POST';form.action='${pageContext.request.contextPath}/admin-staffs';form.innerHTML='<input type="hidden" name="action" value="resendPassword"><input type="hidden" name="userId" value="'+userId+'">';document.body.appendChild(form);form.submit()}
+function resendPasswordFromEditModal(){const userId=document.getElementById('editUserId').value;if(!userId)return;resendPassword(userId)}
+function openEditModal(btn){clearFieldErrors('editStaffModal');document.getElementById('editUserId').value=btn.dataset.userId||'';document.getElementById('editFullName').value=btn.dataset.fullName||'';document.getElementById('editPhone').value=btn.dataset.phone||'';document.getElementById('editEmail').value=btn.dataset.email||'';document.getElementById('editStatus').value=formatStatusDisplay(btn.dataset.status);document.getElementById('editRole').value=btn.dataset.role||'';document.getElementById('editQualification').value=btn.dataset.qualification||'';document.getElementById('editGender').value=btn.dataset.gender||'';document.getElementById('editDob').value=btn.dataset.dob||'';document.getElementById('editSpecialization').value=btn.dataset.specialization||'';document.getElementById('editAcademicTitle').value=btn.dataset.academicTitle||'';document.getElementById('editProfessionalQualification').value=btn.dataset.professionalQualification||'';document.getElementById('editExperienceYears').value=(btn.dataset.experience&&btn.dataset.experience!=='0')?btn.dataset.experience:'';document.getElementById('editRating').value=btn.dataset.rating||'0.0';document.getElementById('editPriceBooking').value=parseInt(btn.dataset.priceBooking||'0',10)||'';toggleEditResendButton(btn.dataset.pendingResend===true||btn.dataset.pendingResend==='true');document.getElementById('editStaffModal').style.display='block';toggleDoctorOnlyFields('edit')}
 window.onclick=function(event){if(event.target===document.getElementById('addStaffModal'))closeAddModal();if(event.target===document.getElementById('editStaffModal'))closeEditModal()}
-document.addEventListener('DOMContentLoaded',function(){const addRole=document.getElementById('addRole');const editRole=document.getElementById('editRole');if(addRole)addRole.addEventListener('change',function(){toggleDoctorOnlyFields('add')});if(editRole)editRole.addEventListener('change',function(){toggleDoctorOnlyFields('edit')});bindPriceRules('add');bindPriceRules('edit');toggleDoctorOnlyFields('add');toggleDoctorOnlyFields('edit');<c:if test="${addModalOpen}">openAddModal();</c:if><c:if test="${editModalOpen}">document.getElementById('editStaffModal').style.display='block';document.getElementById('editUserId').value='${fn:escapeXml(editUserId)}';document.getElementById('editFullName').value='${fn:escapeXml(editFullName)}';document.getElementById('editPhone').value='${fn:escapeXml(editPhone)}';document.getElementById('editEmail').value='${fn:escapeXml(editEmail)}';document.getElementById('editStatus').value=formatStatusDisplay('${fn:escapeXml(editStatus)}');document.getElementById('editRole').value='${fn:escapeXml(editRole)}';document.getElementById('editQualification').value='${fn:escapeXml(editQualification)}';document.getElementById('editGender').value='${fn:escapeXml(editGender)}';document.getElementById('editDob').value='${fn:escapeXml(editDob)}';document.getElementById('editSpecialization').value='${fn:escapeXml(editSpecialization)}';document.getElementById('editAcademicTitle').value='${fn:escapeXml(editAcademicTitle)}';document.getElementById('editProfessionalQualification').value='${fn:escapeXml(editProfessionalQualification)}';document.getElementById('editExperienceYears').value=('${fn:escapeXml(editExperience)}'&&'${fn:escapeXml(editExperience)}'!=='0')?'${fn:escapeXml(editExperience)}':'';document.getElementById('editRating').value='${fn:escapeXml(editRating)}';document.getElementById('editPriceBooking').value=parseInt('${fn:escapeXml(editPrice)}'||'0',10)||'';toggleDoctorOnlyFields('edit');</c:if>});
+document.addEventListener('DOMContentLoaded',function(){const alerts=document.querySelectorAll('.alert');alerts.forEach(function(alert){setTimeout(function(){alert.classList.add('fade-out');setTimeout(function(){if(alert&&alert.parentNode)alert.parentNode.removeChild(alert)},300)},5000)});const addRole=document.getElementById('addRole');const editRole=document.getElementById('editRole');if(addRole)addRole.addEventListener('change',function(){toggleDoctorOnlyFields('add')});if(editRole)editRole.addEventListener('change',function(){toggleDoctorOnlyFields('edit')});bindPriceRules('add');bindPriceRules('edit');toggleDoctorOnlyFields('add');toggleDoctorOnlyFields('edit');toggleEditResendButton(false);<c:if test="${addModalOpen}">openAddModal();</c:if><c:if test="${editModalOpen}">document.getElementById('editStaffModal').style.display='block';document.getElementById('editUserId').value='${fn:escapeXml(editUserId)}';document.getElementById('editFullName').value='${fn:escapeXml(editFullName)}';document.getElementById('editPhone').value='${fn:escapeXml(editPhone)}';document.getElementById('editEmail').value='${fn:escapeXml(editEmail)}';document.getElementById('editStatus').value=formatStatusDisplay('${fn:escapeXml(editStatus)}');document.getElementById('editRole').value='${fn:escapeXml(editRole)}';document.getElementById('editQualification').value='${fn:escapeXml(editQualification)}';document.getElementById('editGender').value='${fn:escapeXml(editGender)}';document.getElementById('editDob').value='${fn:escapeXml(editDob)}';document.getElementById('editSpecialization').value='${fn:escapeXml(editSpecialization)}';document.getElementById('editAcademicTitle').value='${fn:escapeXml(editAcademicTitle)}';document.getElementById('editProfessionalQualification').value='${fn:escapeXml(editProfessionalQualification)}';document.getElementById('editExperienceYears').value=('${fn:escapeXml(editExperience)}'&&'${fn:escapeXml(editExperience)}'!=='0')?'${fn:escapeXml(editExperience)}':'';document.getElementById('editRating').value='${fn:escapeXml(editRating)}';document.getElementById('editPriceBooking').value=parseInt('${fn:escapeXml(editPrice)}'||'0',10)||'';toggleEditResendButton('${editResendAvailable}'==='true');toggleDoctorOnlyFields('edit');document.querySelector('#editStaffModal .modal-content')?.scrollTo({top:0,behavior:'instant'});</c:if>});
 </script>
 </body>
 </html>

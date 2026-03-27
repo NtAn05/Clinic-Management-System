@@ -31,6 +31,7 @@ public class AdminStaffServlet extends HttpServlet {
 
     private static final String VIEW_PATH = "/pages/admin/staffs.jsp";
     private static final String SUCCESS_FLASH_KEY = "adminStaffSuccess";
+    private static final String RESEND_USER_FLASH_KEY = "adminStaffResendUserId";
     private static final String SESSION_PENDING_RESEND_KEY = "adminStaffPendingResendPasswordIds";
     private static final int PAGE_SIZE = 10;
     private static final int MIN_EXPERIENCE = 0;
@@ -148,6 +149,7 @@ public class AdminStaffServlet extends HttpServlet {
         if (success.isEmpty()) {
             success = trim(req.getParameter("success"));
         }
+        String notice = trim(req.getParameter("notice"));
 
         List<Doctor> staffs = doctorDAO.getStaffsForAdmin(keyword, role, academicDegree);
         applyPaging(req, staffs, requestedPage);
@@ -164,6 +166,12 @@ public class AdminStaffServlet extends HttpServlet {
         if (!success.isEmpty()) {
             req.setAttribute("success", success);
         }
+        exposeFlashResendUserId(req);
+        if (!notice.isEmpty()) {
+            req.setAttribute("notice", notice);
+        }
+
+        prepareEditModalFromQuery(req, doctorDAO);
 
         req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
     }
@@ -260,10 +268,12 @@ public class AdminStaffServlet extends HttpServlet {
         );
         if (!deliveryResult.isMailSent()) {
             markPendingResend(req, createdUser.getUserId());
+            setFlashResendUserId(req, createdUser.getUserId());
             req.setAttribute("success", "Thêm nhân viên thành công nhưng gửi email thất bại. Vui lòng thử gửi lại.");
             req.setAttribute("addStaffMailFailed", true);
         } else {
             clearPendingResend(req, createdUser.getUserId());
+            clearFlashResendUserId(req);
         }
 
         HttpSession sessionLog = req.getSession(false);
@@ -388,7 +398,7 @@ public class AdminStaffServlet extends HttpServlet {
             req.setAttribute("editModalOpen", true);
             return false;
         }
-        if (!isDoctorRole(staff.getRole())) {
+        if (false && !isDoctorRole(staff.getRole())) {
             req.setAttribute("error", "Chỉ bác sĩ mới hỗ trợ gửi lại mật khẩu ở trang này");
             req.setAttribute("editModalOpen", true);
             return false;
@@ -424,10 +434,11 @@ public class AdminStaffServlet extends HttpServlet {
         }
 
         clearPendingResend(req, targetUser.getUserId());
+        clearFlashResendUserId(req);
         HttpSession sessionLog = req.getSession(false);
         User userLog = sessionLog != null ? (User) sessionLog.getAttribute("account") : null;
-        SystemLogService.log(userLog != null ? userLog.getUserId() : null, "DOCTOR_RESEND_PASSWORD",
-                "Gui lai mat khau tam cho bac si: userId=" + userId + ", email=" + staff.getEmail());
+        SystemLogService.log(userLog != null ? userLog.getUserId() : null, "STAFF_RESEND_PASSWORD",
+                "Gui lai mat khau tam cho nhan vien: userId=" + userId + ", email=" + staff.getEmail());
         return true;
     }
 
@@ -595,7 +606,19 @@ public class AdminStaffServlet extends HttpServlet {
         }
         req.setAttribute("editStatus", staff.getStatus());
         req.setAttribute("editRating", staff.getRating());
-        req.setAttribute("editResendAvailable", isPendingResend(req, staff.getUserId()) && isDoctorRole(staff.getRole()));
+        req.setAttribute("editResendAvailable", isPendingResend(req, staff.getUserId()));
+    }
+
+    private void exposeFlashResendUserId(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object flash = session.getAttribute(RESEND_USER_FLASH_KEY);
+        if (flash != null) {
+            req.setAttribute("flashResendUserId", flash);
+            session.removeAttribute(RESEND_USER_FLASH_KEY);
+        }
     }
 
     private void keepEditOriginalFields(HttpServletRequest req, Doctor staff) {
@@ -614,6 +637,42 @@ public class AdminStaffServlet extends HttpServlet {
         req.setAttribute("editOriginalProfessionalQualification", staff.getProfessionalQualification());
         req.setAttribute("editOriginalExperience", staff.getExperience_years());
         req.setAttribute("editOriginalPrice", staff.getPrice());
+    }
+
+    private void prepareEditModalFromQuery(HttpServletRequest req, DoctorDAO doctorDAO) {
+        if (Boolean.TRUE.equals(req.getAttribute("editModalOpen")) || !"GET".equalsIgnoreCase(req.getMethod())) {
+            return;
+        }
+
+        int editUserId = parsePositiveInt(req.getParameter("editUserId"));
+        if (editUserId <= 0) {
+            Object flashResendUserId = req.getAttribute("flashResendUserId");
+            editUserId = parsePositiveInt(flashResendUserId != null ? String.valueOf(flashResendUserId) : "");
+        }
+        if (editUserId <= 0) {
+            return;
+        }
+
+        Doctor staff = doctorDAO.getStaffByUserIdForAdmin(editUserId);
+        if (staff == null) {
+            return;
+        }
+
+        String prefillFullName = trim(req.getParameter("prefillFullName"));
+        String prefillPhone = trim(req.getParameter("prefillPhone"));
+        String prefillEmail = trim(req.getParameter("prefillEmail"));
+        String prefillRole = trim(req.getParameter("prefillRole"));
+
+        keepEditForm(req, String.valueOf(staff.getUserId()),
+                prefillFullName.isEmpty() ? staff.getFullName() : prefillFullName,
+                prefillPhone.isEmpty() ? staff.getPhone() : prefillPhone,
+                prefillEmail.isEmpty() ? staff.getEmail() : prefillEmail,
+                prefillRole.isEmpty() ? staff.getRole() : prefillRole,
+                staff.getAcademicDegree(), staff.getGender(), formatDate(staff.getDob()),
+                staff.getSpecialization(), staff.getAcademicTitle(), staff.getProfessionalQualification(),
+                String.valueOf(staff.getExperience_years()), String.valueOf((int) staff.getPrice()));
+        keepEditReadonlyFields(req, staff);
+        keepEditOriginalFields(req, staff);
     }
 
     private boolean isValidPhone(String phone) {
@@ -736,6 +795,19 @@ public class AdminStaffServlet extends HttpServlet {
         return getPendingResendSet(req).contains(userId);
     }
 
+    private void setFlashResendUserId(HttpServletRequest req, int userId) {
+        if (userId > 0) {
+            req.getSession().setAttribute(RESEND_USER_FLASH_KEY, userId);
+        }
+    }
+
+    private void clearFlashResendUserId(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            session.removeAttribute(RESEND_USER_FLASH_KEY);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private Set<Integer> getPendingResendSet(HttpServletRequest req) {
         HttpSession session = req.getSession();
@@ -750,4 +822,3 @@ public class AdminStaffServlet extends HttpServlet {
         return value == null ? "" : value.trim();
     }
 }
-
