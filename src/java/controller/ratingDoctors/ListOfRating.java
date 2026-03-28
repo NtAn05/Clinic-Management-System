@@ -64,34 +64,48 @@ public class ListOfRating extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         HttpSession session = request.getSession();
         User u = (User) session.getAttribute("account");
+
         String doc = request.getParameter("btnDoctorID");
+        if (doc == null) {
+            doc = request.getParameter("doctorId");
+        }
+        if (doc == null) {
+            doc = request.getParameter("id");
+        }
+
+        if (doc == null || doc.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/listofdoctorservlet");
+            return;
+        }
+
         String appointmentId = request.getParameter("appointmentId");
         int doctorId = Integer.parseInt(doc);
+
         DoctorDAO doctorDAO = new DoctorDAO();
         RatingDAO ratingDAO = new RatingDAO();
         Doctor doctor = doctorDAO.getDoctorById(doc);
-        
+
         List<Rating_review> questions = ratingDAO.getQuestions();
         for (Rating_review q : questions) {
             if (q.getId() != 5) {
                 double avg = ratingDAO.getAverageRating(q.getId(), doctorId);
                 int total = ratingDAO.getTotalReview(q.getId(), doctorId);
-
                 q.setAvgRating(avg);
                 q.setTotalReviews(total);
             }
         }
+
         List<Rating_note> notes = ratingDAO.getNotesByDoctor(doctorId);
 
         request.setAttribute("doctor", doctor);
         request.setAttribute("questions", questions);
         request.setAttribute("u", u);
         request.setAttribute("appointmentID", appointmentId);
-
         request.setAttribute("notes", notes);
-        
+
         request.getRequestDispatcher("/pages/rating/ListRatingOfDoctor/ListOfRating.jsp")
                 .forward(request, response);
     }
