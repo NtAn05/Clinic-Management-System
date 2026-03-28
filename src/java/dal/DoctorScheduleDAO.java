@@ -17,6 +17,12 @@ import model.ScheduleSwapShiftOption;
 
 public class DoctorScheduleDAO extends DBContext {
 
+    private String lastReviewError;
+
+    public String getLastReviewError() {
+        return lastReviewError;
+    }
+
     // Lay danh sach ca lam viec dang active cua mot bac si.
     public List<DoctorShift> getDoctorShifts(int doctorId) {
         List<DoctorShift> list = new ArrayList<>();
@@ -280,6 +286,141 @@ public class DoctorScheduleDAO extends DBContext {
         return false;
     }
 
+    // Lay thong tin ca theo hieu luc tam thoi (neu co) tai mot ngay cu the.
+    public EffectiveShiftState getEffectiveShiftStateForDate(int shiftId, Date workDate) {
+        DoctorShift baseShift = getDoctorShiftById(shiftId);
+        if (baseShift == null || workDate == null) {
+            return null;
+        }
+
+        String sql = """
+            SELECT effective_day_of_week, effective_start_time, effective_end_time
+            FROM (
+                SELECT r.requested_at AS req_at,
+                       i.day_of_week AS effective_day_of_week,
+                       i.start_time AS effective_start_time,
+                       i.end_time AS effective_end_time
+                FROM schedule_change_requests r
+                JOIN schedule_change_request_items i ON r.request_id = i.request_id
+                WHERE r.status = 'APPROVED'
+                  AND r.request_type = 'TEMPORARY'
+                  AND r.scope_type = 'ONE_DATE'
+                  AND i.action_type = 'UPDATE'
+                  AND i.work_date = ?
+                  AND i.target_shift_id = ?
+
+                UNION ALL
+
+                SELECT r.requested_at AS req_at,
+                       s_old.day_of_week AS effective_day_of_week,
+                       s_old.start_time AS effective_start_time,
+                       s_old.end_time AS effective_end_time
+                FROM schedule_change_requests r
+                JOIN schedule_change_request_items i ON r.request_id = i.request_id
+                JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
+                JOIN doctor_shifts s_new ON s_new.shift_id = (
+                    SELECT s2.shift_id
+                    FROM doctor_shifts s2
+                    WHERE s2.day_of_week = i.day_of_week
+                      AND s2.start_time = i.start_time
+                      AND s2.end_time = i.end_time
+                      AND s2.doctor_id <> r.doctor_id
+                    ORDER BY s2.shift_id
+                    LIMIT 1
+                )
+                WHERE r.status = 'APPROVED'
+                  AND r.request_type = 'TEMPORARY'
+                  AND r.scope_type = 'ONE_DATE'
+                  AND i.action_type = 'UPDATE'
+                  AND i.work_date = ?
+                  AND s_new.shift_id = ?
+            ) x
+            ORDER BY req_at DESC
+            LIMIT 1
+        """;
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setDate(1, workDate);
+            st.setInt(2, shiftId);
+            st.setDate(3, workDate);
+            st.setInt(4, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return new EffectiveShiftState(
+                            rs.getInt("effective_day_of_week"),
+                            rs.getTime("effective_start_time").toLocalTime(),
+                            rs.getTime("effective_end_time").toLocalTime()
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return new EffectiveShiftState(
+                baseShift.getDayOfWeek(),
+                baseShift.getStartTime(),
+                baseShift.getEndTime()
+        );
+    }
+
+    // Tim shift active theo bac si + thu + khung gio.
+    public Integer findActiveShiftIdByDoctorDayAndTime(int doctorId, int dayOfWeek, LocalTime startTime, LocalTime endTime) {
+        String sql = """
+            SELECT shift_id
+            FROM doctor_shifts
+            WHERE doctor_id = ?
+              AND day_of_week = ?
+              AND start_time = ?
+              AND end_time = ?
+              AND status = 'active'
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            st.setInt(2, dayOfWeek);
+            st.setTime(3, Time.valueOf(startTime));
+            st.setTime(4, Time.valueOf(endTime));
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("shift_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // Kiem tra bac si co lich hen trong khung gio cu the cua mot ngay hay khong.
+    public boolean hasAppointmentsForDoctorInTimeWindow(int doctorId, Date workDate, LocalTime startTime, LocalTime endTime) {
+        if (workDate == null || startTime == null || endTime == null || !startTime.isBefore(endTime)) {
+            return false;
+        }
+        String sql = """
+            SELECT 1
+            FROM appointments
+            WHERE doctor_id = ?
+              AND appointment_date = ?
+              AND appointment_time >= ?
+              AND appointment_time < ?
+              AND status <> 'cancelled'
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, doctorId);
+            st.setDate(2, workDate);
+            st.setTime(3, Time.valueOf(startTime));
+            st.setTime(4, Time.valueOf(endTime));
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     // Cap nhat lai thong tin thu va khung gio cua ca lam viec.
     public void updateDoctorShift(int shiftId, int dayOfWeek, LocalTime startTime, LocalTime endTime, int maxPatients) throws SQLException {
         String sql = """
@@ -471,7 +612,7 @@ public class DoctorScheduleDAO extends DBContext {
                    u_new.full_name AS new_doctor_name,
                    CASE
                        WHEN i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
-                       THEN DATE_ADD(i.work_date, INTERVAL (s_old.day_of_week - i.day_of_week) DAY)
+                       THEN DATE_ADD(i.work_date, INTERVAL ((s_old.day_of_week - i.day_of_week + 7) % 7) DAY)
                        ELSE NULL
                    END AS old_work_date
             FROM schedule_change_requests r
@@ -573,6 +714,7 @@ public class DoctorScheduleDAO extends DBContext {
 
     // Duyet hoac tu choi request va ap dung thay doi neu can.
     public boolean reviewScheduleChangeRequest(int requestId, String decision, String adminNote) {
+        lastReviewError = null;
         String normalizedDecision = decision == null ? "" : decision.trim().toUpperCase();
         boolean shouldApply = "APPROVED".equals(normalizedDecision);
         String reviewSql = """
@@ -589,11 +731,21 @@ public class DoctorScheduleDAO extends DBContext {
             PendingScheduleReview request = getPendingScheduleReviewForUpdate(requestId);
             if (request == null) {
                 connection.rollback();
+                lastReviewError = "Đơn đã được xử lý trước đó";
+                return false;
+            }
+
+            if (shouldApply && isRequestSuperseded(request)) {
+                String note = "Ca #" + request.targetShiftId + " đã bị thay đổi bởi yêu cầu khác đã được duyệt.";
+                applyAutoRejectWithNote(request.requestId, note);
+                connection.commit();
+                lastReviewError = note;
                 return false;
             }
 
             if (shouldApply && !applyApprovedScheduleRequest(request)) {
                 connection.rollback();
+                lastReviewError = "Không thể duyệt đơn vì dữ liệu ca làm việc đã thay đổi";
                 return false;
             }
 
@@ -620,6 +772,7 @@ public class DoctorScheduleDAO extends DBContext {
                 ex.printStackTrace();
             }
             e.printStackTrace();
+            lastReviewError = "Lỗi khi xử lý duyệt đơn.";
             return false;
         } finally {
             try {
@@ -627,6 +780,43 @@ public class DoctorScheduleDAO extends DBContext {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private boolean isRequestSuperseded(PendingScheduleReview request) throws SQLException {
+        if (request == null || request.targetShiftId == null || request.requestedAt == null) {
+            return false;
+        }
+        String sql = """
+            SELECT 1
+            FROM schedule_change_requests r2
+            JOIN schedule_change_request_items i2 ON r2.request_id = i2.request_id
+            WHERE r2.status = 'APPROVED'
+              AND i2.target_shift_id = ?
+              AND r2.requested_at > ?
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, request.targetShiftId);
+            st.setTimestamp(2, request.requestedAt);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private void applyAutoRejectWithNote(int requestId, String note) throws SQLException {
+        String sql = """
+            UPDATE schedule_change_requests
+            SET status = 'REJECTED',
+                admin_note = ?
+            WHERE request_id = ?
+              AND status = 'PENDING'
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setString(1, note);
+            st.setInt(2, requestId);
+            st.executeUpdate();
         }
     }
 
@@ -746,6 +936,34 @@ public class DoctorScheduleDAO extends DBContext {
         }
     }
 
+    public boolean hasTemporaryUpdateRequestForShiftOnDate(int targetShiftId, Date workDate) {
+        if (targetShiftId <= 0 || workDate == null) {
+            return false;
+        }
+        String sql = """
+            SELECT 1
+            FROM schedule_change_requests r
+            JOIN schedule_change_request_items i ON r.request_id = i.request_id
+            WHERE i.action_type = 'UPDATE'
+              AND i.target_shift_id = ?
+              AND i.work_date = ?
+              AND r.scope_type = 'ONE_DATE'
+              AND r.request_type = 'TEMPORARY'
+              AND r.status IN ('PENDING', 'APPROVED')
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, targetShiftId);
+            st.setDate(2, workDate);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     // Chuyen du lieu mot dong result set thanh DoctorShift.
     private DoctorShift mapDoctorShift(ResultSet rs) throws SQLException {
         DoctorShift s = new DoctorShift();
@@ -839,6 +1057,7 @@ public class DoctorScheduleDAO extends DBContext {
     private PendingScheduleReview getPendingScheduleReviewForUpdate(int requestId) throws SQLException {
         String sql = """
             SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
+                   r.requested_at,
                    i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
                    i.start_time, i.end_time, i.max_patients
             FROM schedule_change_requests r
@@ -860,6 +1079,7 @@ public class DoctorScheduleDAO extends DBContext {
                 review.doctorId = rs.getInt("doctor_id");
                 review.requestType = rs.getString("request_type");
                 review.scopeType = rs.getString("scope_type");
+                review.requestedAt = rs.getTimestamp("requested_at");
                 review.actionType = rs.getString("action_type");
 
                 int targetShiftId = rs.getInt("target_shift_id");
@@ -1049,6 +1269,7 @@ public class DoctorScheduleDAO extends DBContext {
         private int doctorId;
         private String requestType;
         private String scopeType;
+        private java.sql.Timestamp requestedAt;
         private String actionType;
         private Integer targetShiftId;
         private Date workDate;
@@ -1056,5 +1277,30 @@ public class DoctorScheduleDAO extends DBContext {
         private LocalTime startTime;
         private LocalTime endTime;
         private Integer maxPatients;
+    }
+
+    public static class EffectiveShiftState {
+
+        private final int dayOfWeek;
+        private final LocalTime startTime;
+        private final LocalTime endTime;
+
+        public EffectiveShiftState(int dayOfWeek, LocalTime startTime, LocalTime endTime) {
+            this.dayOfWeek = dayOfWeek;
+            this.startTime = startTime;
+            this.endTime = endTime;
+        }
+
+        public int getDayOfWeek() {
+            return dayOfWeek;
+        }
+
+        public LocalTime getStartTime() {
+            return startTime;
+        }
+
+        public LocalTime getEndTime() {
+            return endTime;
+        }
     }
 }

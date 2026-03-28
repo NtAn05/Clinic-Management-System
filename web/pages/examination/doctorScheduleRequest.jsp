@@ -336,9 +336,8 @@
                     return new Date(date.getTime() - tzOffset).toISOString().slice(0, 10);
                 }
 
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                oneDateInput.min = toDateInputValue(tomorrow);
+                const today = new Date();
+                oneDateInput.min = toDateInputValue(today);
 
                 function toggleGroup(group, input, visible) {
                     group.classList.toggle('hidden', !visible);

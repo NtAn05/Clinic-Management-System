@@ -102,7 +102,11 @@ public class AdminScheduleRequestServlet extends HttpServlet {
 
         boolean reviewed = requestDAO.reviewScheduleChangeRequest(requestId, decision, adminNote);
         if (!reviewed) {
-            session.setAttribute("scheduleReviewError", "Không thể xử lý đơn. Đơn có thể đã được duyệt trước đó.");
+            String reviewError = requestDAO.getLastReviewError();
+            if (reviewError == null || reviewError.isBlank()) {
+                reviewError = "Không thể xử lý đơn. Đơn đã được duyệt trước đó";
+            }
+            session.setAttribute("scheduleReviewError", reviewError);
             return;
         }
 
