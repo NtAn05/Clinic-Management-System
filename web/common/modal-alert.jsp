@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page pageEncoding="UTF-8" %>
 <%-- Modal Alert & Confirm - dùng thay thế alert() và confirm() mặc định --%>
 <style>
   .modal-overlay {
@@ -45,9 +45,22 @@
   }
   .modal-box .modal-icon-wrap.success { background: #dcfce7; color: #16a34a; }
   .modal-box .modal-icon-wrap.error   { background: #fee2e2; color: #dc2626; }
-  .modal-box .modal-icon-wrap.warning{ background: #fef3c7; color: #d97706; }
-  .modal-box .modal-icon-wrap.info   { background: #dbeafe; color: #2563eb; }
-  .modal-box .modal-icon-wrap.confirm{ background: #e0e7ff; color: #4f46e5; }
+  .modal-box .modal-icon-wrap.warning { background: #fef3c7; color: #d97706; }
+  .modal-box .modal-icon-wrap.info    { background: #dbeafe; color: #2563eb; }
+  .modal-box .modal-icon-wrap.confirm { background: #e0e7ff; color: #4f46e5; }
+  #customConfirmOverlay .modal-icon-wrap.confirm {
+    margin: 24px auto 12px;
+  }
+  #customConfirmOverlay .modal-icon-wrap.confirm i {
+    display: block;
+    line-height: 1;
+  }
+  #customConfirmTitle {
+    display: none;
+  }
+  #customConfirmOverlay .modal-body {
+    padding-top: 0;
+  }
   .modal-box .modal-body {
     padding: 8px 24px 24px;
     text-align: center;
@@ -113,7 +126,8 @@
     background: #15803d;
     transform: translateY(-1px);
   }
-  /* Prompt modal – textarea */
+
+  /* Prompt modal - textarea */
   #customPromptOverlay .modal-box {
     max-width: 480px;
   }
@@ -138,7 +152,7 @@
   }
   #promptTextarea:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   }
   #promptCharCount {
     font-size: 11px;
@@ -205,7 +219,7 @@
         <i class="fas fa-times"></i> <span id="customConfirmCancelLabel">Hủy</span>
       </button>
       <button type="button" id="customConfirmOkBtn" class="btn-modal btn-modal-primary">
-        <i class="fas fa-check"></i> <span id="customConfirmOkLabel">Xác nhận</span>
+        <i class="fas fa-check"></i> <span id="customConfirmOkLabel">Đồng ý</span>
       </button>
     </div>
   </div>
@@ -214,13 +228,13 @@
 <script charset="UTF-8">
 (function() {
   var T = {
-    close: '\u0110\u00f3ng',
-    confirm: '\u0058\u00e1\u0063 \u006e\u0068\u1ead\u006e',
-    cancel: '\u0048\u1ee7\u0079',
-    success: '\u0054\u0068\u00e0\u006e\u0068 \u0063\u00f4\u006e\u0067',
-    error: '\u004c\u1ed7\u0069',
-    warning: '\u0043\u1ea3\u006e\u0068 \u0062\u00e1\u006f',
-    info: '\u0054\u0068\u00f4\u006e\u0067 \u0062\u00e1\u006f'
+    close: 'Đóng',
+    confirm: 'Đồng ý',
+    cancel: 'Hủy',
+    success: 'Thành công',
+    error: 'Lỗi',
+    warning: 'Cảnh báo',
+    info: 'Thông báo'
   };
 
   var alertOverlay = document.getElementById('customAlertOverlay');
@@ -240,7 +254,7 @@
   var confirmOkLabel = document.getElementById('customConfirmOkLabel');
 
   if (alertOkLabel) alertOkLabel.textContent = T.close;
-  if (confirmTitleEl) confirmTitleEl.textContent = T.confirm;
+  if (confirmTitleEl) confirmTitleEl.textContent = '';
   if (confirmCancelLabel) confirmCancelLabel.textContent = T.cancel;
   if (confirmOkLabel) confirmOkLabel.textContent = T.confirm;
 
@@ -255,6 +269,7 @@
       alertCloseCallback = null;
     }
   }
+
   function closeConfirm() {
     confirmOverlay.classList.remove('is-open');
     document.body.style.overflow = '';
@@ -265,14 +280,17 @@
   alertOverlay.addEventListener('click', function(e) {
     if (e.target === alertOverlay) closeAlert();
   });
+
   confirmCancelBtn.addEventListener('click', function() {
     if (typeof confirmCallback === 'function') confirmCallback(false);
     closeConfirm();
   });
+
   confirmOkBtn.addEventListener('click', function() {
     if (typeof confirmCallback === 'function') confirmCallback(true);
     closeConfirm();
   });
+
   confirmOverlay.addEventListener('click', function(e) {
     if (e.target === confirmOverlay) {
       if (typeof confirmCallback === 'function') confirmCallback(false);
@@ -293,13 +311,20 @@
   window.showAlert = function(message, type, onClose) {
     type = type || 'info';
     alertCloseCallback = typeof onClose === 'function' ? onClose : null;
-    var titles = { success: T.success, error: T.error, warning: T.warning, info: T.info };
+
+    var titles = {
+      success: T.success,
+      error: T.error,
+      warning: T.warning,
+      info: T.info
+    };
     var icons = {
       success: 'fa-check-circle',
       error: 'fa-exclamation-circle',
       warning: 'fa-exclamation-triangle',
       info: 'fa-info-circle'
     };
+
     alertTitle.textContent = titles[type] || titles.info;
     alertMessage.textContent = message;
     alertIconWrap.className = 'modal-icon-wrap ' + type;
@@ -369,15 +394,17 @@
   });
 
   // showPrompt(title, message, defaultValue, onSubmit)
-  // onSubmit(value) — value is null if cancelled
+  // onSubmit(value) - value is null if cancelled
   window.showPrompt = function(title, message, defaultValue, onSubmit) {
     promptTitleEl.textContent = title || 'Ghi chú';
     promptMessageEl.textContent = message || '';
     promptTextarea.value = defaultValue || '';
+
     var len = promptTextarea.value.length;
     promptCharCount.textContent = len + ' / 500';
     promptCharCount.classList.toggle('over-limit', len > 500);
     promptOkBtn.disabled = len > 500;
+
     promptCallback = typeof onSubmit === 'function' ? onSubmit : null;
     document.body.style.overflow = 'hidden';
     promptOverlay.classList.add('is-open');

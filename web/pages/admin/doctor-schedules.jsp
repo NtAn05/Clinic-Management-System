@@ -640,7 +640,7 @@
                                                             onclick="openEditModal(this)">
                                                         <i class="fas fa-pen-to-square"></i>
                                                     </button>
-                                                    <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules" onsubmit="return confirm('Bạn có chắc muốn xóa ca làm việc này?');">
+                                                    <form method="POST" action="${pageContext.request.contextPath}/admin-doctor-schedules">
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="shiftId" value="${item.shiftId}">
                                                         <input type="hidden" name="filterKeyword" value="${keyword}">
@@ -648,7 +648,7 @@
                                                         <input type="hidden" name="filterShiftType" value="${selectedShiftType}">
                                                         <input type="hidden" name="filterWeekOffset" value="${weekOffset}">
                                                         <input type="hidden" name="filterPage" value="${currentPage}">
-                                                        <button class="icon-btn delete" type="submit" title="Xóa"><i class="fas fa-trash"></i></button>
+                                                        <button class="icon-btn delete" type="button" title="Xóa" onclick="confirmDeleteShift(this)"><i class="fas fa-trash"></i></button>
                                                     </form>
                                                 </div>
                                             </td>
@@ -852,6 +852,7 @@
         </div>
 
         <jsp:include page="../../common/footer.jsp" />
+        <jsp:include page="../../common/modal-alert.jsp" />
                     
         <script>
             function submitFilterForm() {
@@ -895,6 +896,19 @@
 
             function closeEditModal() {
                 document.getElementById("editModal").style.display = "none";
+            }
+
+            function confirmDeleteShift(button) {
+                var form = button ? button.closest("form") : null;
+                if (!form) return;
+                var message = "Bạn có chắc muốn xóa ca làm việc này?";
+                if (typeof showConfirm === "function") {
+                    showConfirm(message, function() { form.submit(); });
+                    return;
+                }
+                if (confirm(message)) {
+                    form.submit();
+                }
             }
 
             window.onclick = function (event) {

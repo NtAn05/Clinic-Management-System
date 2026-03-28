@@ -999,6 +999,7 @@
         </div>
 
         <jsp:include page="../../common/footer.jsp" />
+        <jsp:include page="../../common/modal-alert.jsp" />
                         
         <script>
             function normalizeRoleValue(role) {
@@ -1052,28 +1053,36 @@
                     return;
                 }
                 const targetName = name ? ' cho ' + name : '';
-                if (!confirm('Gửi lại mật khẩu tạm' + targetName + '?')) {
+                const message = 'Gửi lại mật khẩu tạm' + targetName + '?';
+                const submitResendForm = function() {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'users';
+
+                    const actionInput = document.createElement('input');
+                    actionInput.type = 'hidden';
+                    actionInput.name = 'action';
+                    actionInput.value = 'resendPassword';
+
+                    const userIdInput = document.createElement('input');
+                    userIdInput.type = 'hidden';
+                    userIdInput.name = 'userId';
+                    userIdInput.value = userId;
+
+                    form.appendChild(actionInput);
+                    form.appendChild(userIdInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                };
+
+                if (typeof showConfirm === 'function') {
+                    showConfirm(message, submitResendForm);
                     return;
                 }
-
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'users';
-
-                const actionInput = document.createElement('input');
-                actionInput.type = 'hidden';
-                actionInput.name = 'action';
-                actionInput.value = 'resendPassword';
-
-                const userIdInput = document.createElement('input');
-                userIdInput.type = 'hidden';
-                userIdInput.name = 'userId';
-                userIdInput.value = userId;
-
-                form.appendChild(actionInput);
-                form.appendChild(userIdInput);
-                document.body.appendChild(form);
-                form.submit();
+                if (!confirm(message)) {
+                    return;
+                }
+                submitResendForm();
             }
 
             function openAddModal(preserveData = false) {
@@ -1135,7 +1144,8 @@
             }
 
             function toggleStatus(userId, name) {
-                if (confirm('Thay đổi trạng thái của ' + name + '?')) {
+                const message = 'Thay đổi trạng thái của ' + name + '?';
+                const submitToggleForm = function() {
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = 'users';
@@ -1154,6 +1164,14 @@
                     form.appendChild(userIdInput);
                     document.body.appendChild(form);
                     form.submit();
+                };
+
+                if (typeof showConfirm === 'function') {
+                    showConfirm(message, submitToggleForm);
+                    return;
+                }
+                if (confirm(message)) {
+                    submitToggleForm();
                 }
             }
 

@@ -585,13 +585,13 @@
                                                 <button class="btn-action btn-edit" onclick="openEditModal(${service.serviceId}, &quot;${service.name}&quot;, &quot;${service.serviceType}&quot;, &quot;<fmt:formatNumber value='${service.price}' type='number' groupingUsed='false' maxFractionDigits='0'/>&quot;)" title="Chỉnh sửa">
                                                     <i class="fas fa-pen-to-square"></i>
                                                 </button>
-                                                <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?');">
+                                                <form method="POST" action="${pageContext.request.contextPath}/admin-services" style="display: inline;">
                                                     <input type="hidden" name="action" value="delete">
                                                     <input type="hidden" name="serviceId" value="${service.serviceId}">
                                                     <input type="hidden" name="filterSearch" value="${searchKeyword}">
                                                     <input type="hidden" name="filterCategory" value="${filterCategory}">
                                                     <input type="hidden" name="filterPage" value="${currentPage}">
-                                                    <button type="submit" class="btn-action btn-delete" title="Xóa">
+                                                    <button type="button" class="btn-action btn-delete" title="Xóa" onclick="confirmDeleteService(this)">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
@@ -810,11 +810,25 @@
         </div>
 
         <jsp:include page="../../common/footer.jsp" />
+        <jsp:include page="../../common/modal-alert.jsp" />
                 
         <script>
             // Mở modal thêm
             function openAddModal() {
                 document.getElementById('addModal').style.display = 'block';
+            }
+
+            function confirmDeleteService(button) {
+                const form = button ? button.closest('form') : null;
+                if (!form) return;
+                const message = 'Bạn chắc chắn muốn xóa dịch vụ này?';
+                if (typeof showConfirm === 'function') {
+                    showConfirm(message, function() { form.submit(); });
+                    return;
+                }
+                if (confirm(message)) {
+                    form.submit();
+                }
             }
 
             // Đóng modal thêm
