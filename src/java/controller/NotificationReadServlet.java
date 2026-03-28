@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 
-@WebServlet(name = "NotificationReadServlet", urlPatterns = {"/notifications/read-all"})
+@WebServlet(name = "NotificationReadServlet", urlPatterns = {"/notifications/read-all", "/notifications/read-item"})
 public class NotificationReadServlet extends HttpServlet {
 
     @Override
@@ -27,8 +27,20 @@ public class NotificationReadServlet extends HttpServlet {
 
         User account = (User) session.getAttribute("account");
         NotificationDAO notificationDAO = new NotificationDAO();
-        int updatedRows = notificationDAO.markAllAsRead(account.getUserId());
+        String notificationIdRaw = request.getParameter("notificationId");
+        if (notificationIdRaw != null && !notificationIdRaw.isBlank()) {
+            try {
+                long notificationId = Long.parseLong(notificationIdRaw);
+                boolean updated = notificationDAO.markAsRead(notificationId, account.getUserId());
+                response.getWriter().write("{\"success\":" + updated + "}");
+            } catch (NumberFormatException ex) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"success\":false,\"message\":\"notificationId không hợp lệ\"}");
+            }
+            return;
+        }
 
+        int updatedRows = notificationDAO.markAllAsRead(account.getUserId());
         response.getWriter().write("{\"success\":true,\"updated\":" + updatedRows + "}");
     }
 }

@@ -348,9 +348,9 @@ public class LabQueueServlet extends HttpServlet {
         }
         String patientName = requestInfo.getPatient() != null && requestInfo.getPatient().getFullName() != null
                 ? requestInfo.getPatient().getFullName().trim() : "bệnh nhân";
-        String message = "Kết quả xét nghiệm của " + patientName + " đã sẵn sàng. Vui lòng truy cập hồ sơ khám để xem chi tiết.";
+        String message = "Xét nghiệm đã xong cho " + patientName + ". Bạn hãy đến bác sĩ vừa yêu cầu xét nghiệm để khám và xem kết quả xét nghiệm.";
         if ("lab_result_sent".equals(type)) {
-            message = "Kết quả xét nghiệm cho " + patientName + " đã được gửi. Vui lòng kiểm tra trong hồ sơ khám.";
+            message = "Xét nghiệm đã xong cho " + patientName + ". Bạn hãy đến bác sĩ vừa yêu cầu xét nghiệm để khám và xem kết quả xét nghiệm.";
         }
 
         NotificationDAO notificationDAO = new NotificationDAO();

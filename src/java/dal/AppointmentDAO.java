@@ -5,6 +5,7 @@
 package dal;
 
 import java.sql.Date;
+import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,13 +25,16 @@ public class AppointmentDAO extends DBContext {
 
     
     public boolean addAppointment(Appointment a) {
+        return addAppointmentAndReturnId(a) > 0;
+    }
 
+    public long addAppointmentAndReturnId(Appointment a) {
         String sql = "INSERT INTO appointments "
                 + "(patient_id, doctor_id, shift_id, booking_type, "
                 + "appointment_date, appointment_time, status, symptom) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
+        try (PreparedStatement st = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             st.setLong(1, a.getPatientId());
             st.setInt(2, a.getDoctorId());
@@ -41,14 +45,25 @@ public class AppointmentDAO extends DBContext {
             st.setString(7, a.getStatus());
             st.setString(8, a.getSymptom());
 
-            return st.executeUpdate() > 0;
+            int affected = st.executeUpdate();
+            if (affected <= 0) {
+                return -1;
+            }
+
+            try (ResultSet rs = st.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+            return -1;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return false;
+        return -1;
     }
+
 
     public long addPatient(Patient p) {
         String sql = "INSERT INTO patients (user_id, full_name, phone, dob, email, gender) "

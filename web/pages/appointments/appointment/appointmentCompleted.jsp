@@ -1,4 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -41,6 +42,7 @@
                     </div>
                     <div class="card-boxs">
                         <h3>Cảm ơn đã đặt lịch hẹn</h3>
+                         <c:set var="displayPatientName" value="${not empty requestScope.bookedPatientName ? requestScope.bookedPatientName : param.patientName}" />
 
                         <div class="success-wrapper">
                             <div class="success-icon-box">
@@ -52,6 +54,10 @@
 
                         <label style="color: red">Cuộc hẹn của bạn đã được đặt thành công !!!</label>
                         <br>
+                        <c:if test="${not empty displayPatientName}">
+                            <label style="color: red">Bệnh nhân: ${displayPatientName}</label>
+                            <br>
+                        </c:if>
                         <label style="color: red">Vui lòng đến cơ sở khám đúng thời gian</label>
 
                         <div class="actions">
