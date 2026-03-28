@@ -505,7 +505,7 @@ public class AppointmentDAO extends DBContext {
             JOIN appointments a ON a.appointment_id = q.appointment_id
             WHERE q.doctor_id = ?
               AND a.appointment_date = ?
-              AND q.status IN ('waiting', 'examining')
+              AND q.status IN ('waiting', 'waiting_return', 'in_lab', 'examining')
               AND a.booking_type = 'online'
         """;
 
@@ -515,7 +515,7 @@ public class AppointmentDAO extends DBContext {
             JOIN appointments a ON a.appointment_id = q.appointment_id
             WHERE q.doctor_id = ?
               AND a.appointment_date = ?
-              AND q.status IN ('waiting', 'examining')
+              AND q.status IN ('waiting', 'waiting_return', 'in_lab', 'examining')
         """;
 
         String shiftQueueSql = """
@@ -524,7 +524,7 @@ public class AppointmentDAO extends DBContext {
             SET q.queue_position = q.queue_position + 1
             WHERE q.doctor_id = ?
               AND a.appointment_date = ?
-              AND q.status IN ('waiting', 'examining')
+              AND q.status IN ('waiting', 'waiting_return', 'in_lab', 'examining')
               AND q.queue_position >= ?
         """;
 

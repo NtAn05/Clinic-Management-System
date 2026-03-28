@@ -715,9 +715,9 @@ public class DoctorDAO extends DBContext {
             JOIN appointments a ON q.appointment_id = a.appointment_id
             JOIN patients p ON a.patient_id = p.patient_id
             WHERE q.doctor_id = ?
-               AND q.status = 'waiting'
+               AND q.status IN ('waiting_return', 'waiting')
                AND a.appointment_date = CURRENT_DATE
-            ORDER BY q.queue_position
+            ORDER BY CASE WHEN q.status = 'waiting_return' THEN 0 ELSE 1 END, q.queue_position
             LIMIT 1
         """;
 
@@ -774,7 +774,15 @@ public class DoctorDAO extends DBContext {
         JOIN appointments a ON q.appointment_id = a.appointment_id
         JOIN patients p ON a.patient_id = p.patient_id
         WHERE q.doctor_id = ?
-        ORDER BY q.queue_position
+        ORDER BY
+        CASE
+            WHEN q.status = 'waiting_return' THEN 0
+            WHEN q.status = 'examining' THEN 1
+            WHEN q.status = 'waiting' THEN 2
+            WHEN q.status = 'in_lab' THEN 3
+            ELSE 4
+        END,
+        q.queue_position
     """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -802,7 +810,7 @@ public class DoctorDAO extends DBContext {
         String sql = """
         SELECT 
             COUNT(*) AS total,
-            SUM(CASE WHEN q.status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
+            SUM(CASE WHEN q.status IN ('waiting', 'waiting_return') THEN 1 ELSE 0 END) AS waiting,
             SUM(CASE WHEN q.status = 'examining' THEN 1 ELSE 0 END) AS examining,
             SUM(CASE WHEN q.status = 'done' THEN 1 ELSE 0 END) AS done
             FROM exam_queue q
@@ -858,7 +866,7 @@ public class DoctorDAO extends DBContext {
         boolean hasKeywordFilter = keyword != null && !keyword.isBlank();
 
         if (hasActiveFilter) {
-            sql.append(" AND LOWER(q.status) IN ('waiting', 'examining') ");
+            sql.append(" AND LOWER(q.status) IN ('waiting', 'waiting_return', 'in_lab', 'examining') ");
         } else if ("done".equalsIgnoreCase(status) || "completed".equalsIgnoreCase(status)) {
             sql.append(" AND LOWER(q.status) IN ('done', 'completed') ");
         } else if (hasStatusFilter) {
@@ -932,7 +940,7 @@ public class DoctorDAO extends DBContext {
         boolean hasKeywordFilter = keyword != null && !keyword.isBlank();
 
         if (hasActiveFilter) {
-            sql.append(" AND LOWER(q.status) IN ('waiting', 'examining') ");
+            sql.append(" AND LOWER(q.status) IN ('waiting', 'waiting_return', 'in_lab', 'examining') ");
         } else if ("done".equalsIgnoreCase(status) || "completed".equalsIgnoreCase(status)) {
             sql.append(" AND LOWER(q.status) IN ('done', 'completed') ");
         } else if (hasStatusFilter) {
@@ -943,7 +951,18 @@ public class DoctorDAO extends DBContext {
             sql.append(" AND p.full_name LIKE ? ");
         }
 
-        sql.append(" ORDER BY q.queue_position LIMIT ? OFFSET ? ");
+        sql.append("""
+            ORDER BY
+                CASE
+                    WHEN q.status = 'waiting_return' THEN 0
+                    WHEN q.status = 'examining' THEN 1
+                    WHEN q.status = 'waiting' THEN 2
+                    WHEN q.status = 'in_lab' THEN 3
+                    ELSE 4
+                END,
+                q.queue_position
+            LIMIT ? OFFSET ?
+        """);
 
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             int index = 1;
@@ -1189,7 +1208,7 @@ public class DoctorDAO extends DBContext {
 
     public int saveMedicalRecordAndCreateLabRequests(long appointmentId, int doctorId, String symptoms, String diagnosis, String notes, int requestCount) {
         String insertLabSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', NOW())";
-        String deleteQueueSql = "DELETE FROM exam_queue WHERE appointment_id = ?";
+        String moveToLabQueueSql = "UPDATE exam_queue SET status = 'in_lab' WHERE appointment_id = ?";
         int safeRequestCount = Math.max(1, requestCount);
         
         try {
@@ -1214,7 +1233,7 @@ public class DoctorDAO extends DBContext {
                 createdCount++;
             }
 
-            deleteAppointmentFromExamQueueTx(appointmentId, deleteQueueSql);
+            moveAppointmentToLabQueueTx(appointmentId, moveToLabQueueSql);
 
             connection.commit();
             return createdCount;
@@ -1313,10 +1332,12 @@ public class DoctorDAO extends DBContext {
         }
     }
 
-    private void deleteAppointmentFromExamQueueTx(long appointmentId, String deleteQueueSql) throws SQLException {
-        try (PreparedStatement del = connection.prepareStatement(deleteQueueSql)) {
-            del.setLong(1, appointmentId);
-            del.executeUpdate();
+    private void moveAppointmentToLabQueueTx(long appointmentId, String moveToLabQueueSql) throws SQLException {
+        try (PreparedStatement moveQueue = connection.prepareStatement(moveToLabQueueSql)) {
+            moveQueue.setLong(1, appointmentId);
+            if (moveQueue.executeUpdate() == 0) {
+                throw new SQLException("Appointment is not in exam_queue");
+            }
         }
     }
 

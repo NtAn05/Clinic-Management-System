@@ -400,7 +400,7 @@ public class LabRequestDAO extends DBContext {
     /**
      * Tạo phiếu chỉ định xét nghiệm (bác sĩ). Trả về requestId nếu thành công, 0 nếu thất bại.
      * Cho phép nhiều phiếu xét nghiệm cho cùng một appointment (ví dụ: bệnh khác, chỉ định thêm).
-     * Xóa bệnh nhân khỏi exam_queue (DELETE) để họ chuyển sang luồng chờ xác nhận thanh toán xét nghiệm.
+     * Chuyển trạng thái bệnh nhân trong exam_queue sang in_lab để tạm rời hàng chờ khám.
      */
     public int insertLabRequest(long appointmentId, int doctorId) {
         String insertSql = "INSERT INTO lab_requests (appointment_id, doctor_id, status, created_at) VALUES (?, ?, 'pending', ?)";
@@ -415,11 +415,11 @@ public class LabRequestDAO extends DBContext {
             ResultSet keys = st.getGeneratedKeys();
             if (keys.next()) {
                 int requestId = keys.getInt(1);
-                // Chuyển bệnh nhân ra khỏi hàng chờ khám để sang luồng lễ tân xác nhận payment lab
-                String deleteQueue = "DELETE FROM exam_queue WHERE appointment_id = ?";
-                try (PreparedStatement del = connection.prepareStatement(deleteQueue)) {
-                    del.setLong(1, appointmentId);
-                    del.executeUpdate();
+                // Chuyển bệnh nhân sang trạng thái đang đi xét nghiệm
+                String updateQueue = "UPDATE exam_queue SET status = 'in_lab' WHERE appointment_id = ?";
+                try (PreparedStatement upQueue = connection.prepareStatement(updateQueue)) {
+                    upQueue.setLong(1, appointmentId);
+                    upQueue.executeUpdate();
                 }
                 return requestId;
             }
@@ -580,7 +580,7 @@ public class LabRequestDAO extends DBContext {
 
     /**
      * Gửi kết quả xét nghiệm: lưu lab_result, đổi trạng thái lab_request -> completed,
-     * đổi trạng thái appointment -> waiting, đưa bệnh nhân trở lại danh sách chờ khám (exam_queue).
+     * đổi trạng thái appointment -> waiting, đưa bệnh nhân trở lại hàng chờ ưu tiên (waiting_return).
      */
     public boolean sendLabResult(int requestId, Integer technicianId, String resultFile, String notes) {
         try {
@@ -647,13 +647,13 @@ public class LabRequestDAO extends DBContext {
                 st.executeUpdate();
             }
 
-            // 5) Đưa vào exam_queue (chờ khám): INSERT hoặc UPDATE status = 'waiting'
+            // Đưa vào exam_queue: nếu đã tồn tại thì đổi sang waiting_return (ưu tiên quay lại), nếu chưa có thì INSERT waiting_return
             String checkQueue = "SELECT queue_id FROM exam_queue WHERE appointment_id = ?";
             try (PreparedStatement checkSt = connection.prepareStatement(checkQueue)) {
                 checkSt.setLong(1, appointmentId);
                 ResultSet rs = checkSt.executeQuery();
                 if (rs.next()) {
-                    try (PreparedStatement up = connection.prepareStatement("UPDATE exam_queue SET status = 'waiting' WHERE appointment_id = ?")) {
+                    try (PreparedStatement up = connection.prepareStatement("UPDATE exam_queue SET status = 'waiting_return' WHERE appointment_id = ?")) {
                         up.setLong(1, appointmentId);
                         up.executeUpdate();
                     }
@@ -666,7 +666,7 @@ public class LabRequestDAO extends DBContext {
                         ResultSet maxRs = maxSt.executeQuery();
                         if (maxRs.next()) nextPos = maxRs.getInt("np");
                     }
-                    try (PreparedStatement ins = connection.prepareStatement("INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) VALUES (?, ?, ?, 'waiting')")) {
+                    try (PreparedStatement ins = connection.prepareStatement("INSERT INTO exam_queue (appointment_id, doctor_id, queue_position, status) VALUES (?, ?, ?, 'waiting_return')")) {
                         ins.setLong(1, appointmentId);
                         ins.setInt(2, doctorId);
                         ins.setInt(3, nextPos);
