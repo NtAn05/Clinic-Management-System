@@ -1122,8 +1122,6 @@
                     return;
                 }
                 button.disabled = true;
-                button.dataset.originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
             }
 
             function openModal(modalId) {
