@@ -518,7 +518,10 @@
                                     </c:when>
                                     <c:otherwise>
                                         <c:forEach var="n" items="${headerNotifications}">
-                                            <div class="notification-item ${!n.read ? 'unread' : ''}">
+                                            <div class="notification-item ${!n.read ? 'unread' : ''}"
+                                                 data-notification-id="${n.notificationId}"
+                                                 data-notification-type="${n.notificationType}"
+                                                 data-event-ref="${n.eventRef}">
                                                 <div class="notif-icon">
                                                     <i class="fas fa-notes-medical"></i>
                                                 </div>
@@ -629,15 +632,92 @@
             });
         }
 
-        var unreadItems = document.querySelectorAll('.notification-item.unread');
-        unreadItems.forEach(function (item) {
-            item.addEventListener('click', function () {
-                if (markAllReadBtn) {
-                    markAllReadBtn.click();
-                }
-            });
-        });
+         function extractAppointmentId(eventRef) {
+            if (!eventRef) {
+                return null;
+            }
+            var match = eventRef.match(/appointment:(\d+)/);
+            return match ? match[1] : null;
+        }
 
+        function buildNotificationLink(item) {
+            if (!item) {
+                return null;
+            }
+            var type = item.dataset.notificationType || '';
+            var eventRef = item.dataset.eventRef || '';
+            var contextPath = '${pageContext.request.contextPath}';
+
+            if (type === 'appointment_booked') {
+                var bookedAppointmentId = extractAppointmentId(eventRef);
+                if (bookedAppointmentId) {
+                    return contextPath + '/historyofappointmentservlet?appointmentId=' + encodeURIComponent(bookedAppointmentId);
+                }
+                return contextPath + '/historyofappointmentservlet';
+            }
+
+            if (type === 'examination_completed') {
+                var appointmentId = extractAppointmentId(eventRef);
+                if (appointmentId) {
+                    return contextPath + '/patient-health-dashboard?appointmentId=' + encodeURIComponent(appointmentId) + '&tab=record';
+                }
+            }
+
+            return null;
+        }
+
+        function markNotificationAsRead(item) {
+            if (!item || !item.classList.contains('unread')) {
+                return Promise.resolve();
+            }
+            var notificationId = item.dataset.notificationId;
+            if (!notificationId) {
+                item.classList.remove('unread');
+                return Promise.resolve();
+            }
+            return fetch('${pageContext.request.contextPath}/notifications/read-item', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                },
+                body: 'notificationId=' + encodeURIComponent(notificationId)
+            }).then(function () {
+                item.classList.remove('unread');
+                updateBadgeCount();
+            }).catch(function () {
+                item.classList.remove('unread');
+                updateBadgeCount();
+            });
+        }
+
+        function updateBadgeCount() {
+            if (!badge) {
+                return;
+            }
+            var unreadCount = document.querySelectorAll('.notification-item.unread').length;
+            if (unreadCount <= 0) {
+                badge.remove();
+                badge = null;
+                return;
+            }
+            badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        }
+
+        var notificationItems = document.querySelectorAll('.notification-item');
+        notificationItems.forEach(function (item) {
+            var link = buildNotificationLink(item);
+            if (link) {
+                item.style.cursor = 'pointer';
+            }
+            item.addEventListener('click', function () {
+                markNotificationAsRead(item).finally(function () {
+                    if (link) {
+                        window.location.href = link;
+                    }
+                });
+                   });
+        });
         if (markAllReadBtn) {
             markAllReadBtn.addEventListener('click', function (event) {
                 event.stopPropagation();
@@ -652,6 +732,7 @@
                 }).then(function () {
                     if (badge) {
                         badge.remove();
+                         badge = null;
                     }
                     document.querySelectorAll('.notification-item.unread').forEach(function (item) {
                         item.classList.remove('unread');
