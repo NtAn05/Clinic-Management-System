@@ -392,10 +392,26 @@
         flex-shrink: 0;
     }
 
-    .site-header .notif-content {
+     .site-header .notif-content {
         flex: 1;
+        min-width: 0;
     }
 
+    .site-header .notification-delete {
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        cursor: pointer;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    .site-header .notification-delete:hover {
+        background: #fee2e2;
+        color: #dc2626;
+    }
     .site-header .notification-title {
         font-weight: 600;
         color: #334155;
@@ -517,7 +533,7 @@
                                         </div>
                                     </c:when>
                                     <c:otherwise>
-                                        <c:forEach var="n" items="${headerNotifications}">
+                                      <c:forEach var="n" items="${headerNotifications}" end="4">
                                             <div class="notification-item ${!n.read ? 'unread' : ''}"
                                                  data-notification-id="${n.notificationId}"
                                                  data-notification-type="${n.notificationType}"
@@ -532,6 +548,9 @@
                                                         <i class="far fa-clock"></i> <c:out value="${n.createdAt}"/>
                                                     </div>
                                                 </div>
+                                                <button type="button" class="notification-delete" title="Xóa thông báo" aria-label="Xóa thông báo">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
                                             </div>
                                         </c:forEach>
                                     </c:otherwise>
@@ -704,19 +723,64 @@
             badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
         }
 
+        function ensureEmptyState() {
+            var body = document.querySelector('.notif-body');
+            if (!body) {
+                return;
+            }
+            if (body.querySelectorAll('.notification-item').length > 0) {
+                return;
+            }
+            body.innerHTML = '<div class="notification-empty"><i class="fas fa-box-open" style="font-size: 24px; color: #cbd5e1; margin-bottom: 8px; display: block;"></i>Chưa có thông báo mới.</div>';
+        }
+
         var notificationItems = document.querySelectorAll('.notification-item');
         notificationItems.forEach(function (item) {
             var link = buildNotificationLink(item);
             if (link) {
                 item.style.cursor = 'pointer';
             }
-            item.addEventListener('click', function () {
+            var deleteBtn = item.querySelector('.notification-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (typeof event.stopImmediatePropagation === 'function') {
+                        event.stopImmediatePropagation();
+                    }
+                    var notificationId = item.dataset.notificationId;
+                    if (!notificationId) {
+                        item.remove();
+                        updateBadgeCount();
+                        ensureEmptyState();
+                        return;
+                    }
+                    fetch('${pageContext.request.contextPath}/notifications/delete-item', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                        },
+                        body: 'notificationId=' + encodeURIComponent(notificationId)
+                    }).then(function () {
+                        item.remove();
+                        updateBadgeCount();
+                        ensureEmptyState();
+                    }).catch(function () {
+                        // Không làm gián đoạn trải nghiệm khi xóa thất bại
+                    });
+                });
+            }
+            item.addEventListener('click', function (event) {
+                if (event.target && event.target.closest && event.target.closest('.notification-delete')) {
+                    return;
+                }
                 markNotificationAsRead(item).finally(function () {
                     if (link) {
                         window.location.href = link;
                     }
                 });
-                   });
+            });
         });
         if (markAllReadBtn) {
             markAllReadBtn.addEventListener('click', function (event) {

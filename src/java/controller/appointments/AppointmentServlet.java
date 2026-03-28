@@ -33,7 +33,14 @@ public class AppointmentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession();
 
+        User user = (User) session.getAttribute("account");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return;
+        }
         String doctorID = request.getParameter("doctor");
         String patientID = request.getParameter("patientid");
         if (doctorID == null || doctorID.isEmpty()) {
@@ -44,7 +51,6 @@ public class AppointmentServlet extends HttpServlet {
             patientID = pid != null ? pid.toString() : null;
         }
 
-        
         int patientId = Integer.parseInt(patientID);
         int doctorId = Integer.parseInt(doctorID);
 

@@ -67,6 +67,10 @@ public class ListOfRating extends HttpServlet {
 
         HttpSession session = request.getSession();
         User u = (User) session.getAttribute("account");
+        if (u == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
+            return;
+        }
 
         String doc = request.getParameter("btnDoctorID");
         if (doc == null) {
@@ -102,7 +106,7 @@ public class ListOfRating extends HttpServlet {
 
         request.setAttribute("doctor", doctor);
         request.setAttribute("questions", questions);
-        request.setAttribute("u", u);
+        request.setAttribute("user", u);
         request.setAttribute("appointmentID", appointmentId);
         request.setAttribute("notes", notes);
 
