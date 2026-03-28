@@ -306,16 +306,63 @@
                     <label for="actionFilter">Loại hành động</label>
                     <select id="actionFilter" name="actionFilter">
                         <option value="">Tất cả</option>
-                        <option value="LOGIN_SUCCESS" ${"LOGIN_SUCCESS" == actionFilter ? "selected" : ""}>Đăng nhập</option>
-                        <option value="CREATE_USER" ${"CREATE_USER" == actionFilter ? "selected" : ""}>Tạo tài khoản</option>
-                        <option value="UPDATE_USER" ${"UPDATE_USER" == actionFilter ? "selected" : ""}>Cập nhật tài khoản</option>
-                        <option value="TOGGLE_USER_STATUS" ${"TOGGLE_USER_STATUS" == actionFilter ? "selected" : ""}>Khóa/Mở khóa tài khoản</option>
-                        <option value="CREATE_LAB_REQUEST" ${"CREATE_LAB_REQUEST" == actionFilter ? "selected" : ""}>Tạo phiếu xét nghiệm</option>
-                        <option value="CANCEL_APPOINTMENT" ${"CANCEL_APPOINTMENT" == actionFilter ? "selected" : ""}>Hủy lịch hẹn</option>
-                        <option value="CHECKIN_APPOINTMENT" ${"CHECKIN_APPOINTMENT" == actionFilter ? "selected" : ""}>Check-in lịch hẹn</option>
-                        <option value="UPDATE_APPOINTMENT_STATUS" ${"UPDATE_APPOINTMENT_STATUS" == actionFilter ? "selected" : ""}>Cập nhật trạng thái lịch hẹn</option>
-                        <option value="VIEW_TECH_DASHBOARD_STATS" ${"VIEW_TECH_DASHBOARD_STATS" == actionFilter ? "selected" : ""}>Xem thống kê kỹ thuật viên</option>
-                        <option value="VIEW_DOCTOR_DASHBOARD" ${"VIEW_DOCTOR_DASHBOARD" == actionFilter ? "selected" : ""}>Xem dashboard bác sĩ</option>
+                        <optgroup label="--- Xác thực & Tài khoản ---">
+                            <option value="LOGIN_SUCCESS" ${"LOGIN_SUCCESS" == actionFilter ? "selected" : ""}>Đăng nhập</option>
+                            <option value="LOGOUT" ${"LOGOUT" == actionFilter ? "selected" : ""}>Đăng xuất</option>
+                            <option value="REGISTER_SUCCESS" ${"REGISTER_SUCCESS" == actionFilter ? "selected" : ""}>Đăng ký tài khoản</option>
+                            <option value="PASSWORD_RESET" ${"PASSWORD_RESET" == actionFilter ? "selected" : ""}>Đặt lại mật khẩu</option>
+                            <option value="PASSWORD_CHANGED" ${"PASSWORD_CHANGED" == actionFilter ? "selected" : ""}>Đổi mật khẩu</option>
+                            <option value="PROFILE_UPDATED" ${"PROFILE_UPDATED" == actionFilter ? "selected" : ""}>Cập nhật hồ sơ cá nhân</option>
+                        </optgroup>
+                        <optgroup label="--- Quản lý nhân viên ---">
+                            <option value="CREATE_USER" ${"CREATE_USER" == actionFilter ? "selected" : ""}>Tạo tài khoản nhân viên</option>
+                            <option value="UPDATE_USER" ${"UPDATE_USER" == actionFilter ? "selected" : ""}>Cập nhật tài khoản nhân viên</option>
+                            <option value="TOGGLE_USER_STATUS" ${"TOGGLE_USER_STATUS" == actionFilter ? "selected" : ""}>Khóa/Mở khóa tài khoản nhân viên</option>
+                            <option value="RESEND_USER_PASSWORD" ${"RESEND_USER_PASSWORD" == actionFilter ? "selected" : ""}>Gửi lại mật khẩu nhân viên</option>
+                            <option value="STAFF_ADDED" ${"STAFF_ADDED" == actionFilter ? "selected" : ""}>Thêm nhân viên</option>
+                            <option value="STAFF_UPDATED" ${"STAFF_UPDATED" == actionFilter ? "selected" : ""}>Cập nhật nhân viên</option>
+                            <option value="STAFF_RESEND_PASSWORD" ${"STAFF_RESEND_PASSWORD" == actionFilter ? "selected" : ""}>Gửi lại mật khẩu nhân viên (staff)</option>
+                        </optgroup>
+                        <optgroup label="--- Quản lý bệnh nhân ---">
+                            <option value="CREATE_PATIENT_ACCOUNT" ${"CREATE_PATIENT_ACCOUNT" == actionFilter ? "selected" : ""}>Tạo tài khoản bệnh nhân</option>
+                            <option value="UPDATE_PATIENT_ACCOUNT" ${"UPDATE_PATIENT_ACCOUNT" == actionFilter ? "selected" : ""}>Cập nhật tài khoản bệnh nhân</option>
+                            <option value="TOGGLE_PATIENT_ACCOUNT_STATUS" ${"TOGGLE_PATIENT_ACCOUNT_STATUS" == actionFilter ? "selected" : ""}>Khóa/Mở khóa tài khoản bệnh nhân</option>
+                            <option value="RESEND_PATIENT_ACCOUNT_PASSWORD" ${"RESEND_PATIENT_ACCOUNT_PASSWORD" == actionFilter ? "selected" : ""}>Gửi lại mật khẩu bệnh nhân</option>
+                        </optgroup>
+                        <optgroup label="--- Lịch làm việc ---">
+                            <option value="SHIFT_ADDED" ${"SHIFT_ADDED" == actionFilter ? "selected" : ""}>Thêm ca làm việc</option>
+                            <option value="SHIFT_UPDATED" ${"SHIFT_UPDATED" == actionFilter ? "selected" : ""}>Cập nhật ca làm việc</option>
+                            <option value="SHIFT_DELETED" ${"SHIFT_DELETED" == actionFilter ? "selected" : ""}>Xóa ca làm việc</option>
+                            <option value="DOCTOR_CREATE_SCHEDULE_CHANGE_REQUEST" ${"DOCTOR_CREATE_SCHEDULE_CHANGE_REQUEST" == actionFilter ? "selected" : ""}>Yêu cầu đổi ca (bác sĩ)</option>
+                        </optgroup>
+                        <optgroup label="--- Lịch hẹn ---">
+                            <option value="APPOINTMENT_BOOKED" ${"APPOINTMENT_BOOKED" == actionFilter ? "selected" : ""}>Đặt lịch hẹn</option>
+                            <option value="APPOINTMENT_PAYMENT_INIT" ${"APPOINTMENT_PAYMENT_INIT" == actionFilter ? "selected" : ""}>Khởi tạo thanh toán lịch hẹn</option>
+                            <option value="APPOINTMENT_STATUS_UPDATED" ${"APPOINTMENT_STATUS_UPDATED" == actionFilter ? "selected" : ""}>Cập nhật trạng thái lịch hẹn</option>
+                            <option value="CHECKIN_APPOINTMENT" ${"CHECKIN_APPOINTMENT" == actionFilter ? "selected" : ""}>Check-in lịch hẹn</option>
+                            <option value="CANCEL_APPOINTMENT" ${"CANCEL_APPOINTMENT" == actionFilter ? "selected" : ""}>Hủy lịch hẹn</option>
+                        </optgroup>
+                        <optgroup label="--- Khám bệnh & Hồ sơ y tế ---">
+                            <option value="EXAM_FINISHED" ${"EXAM_FINISHED" == actionFilter ? "selected" : ""}>Hoàn thành khám bệnh</option>
+                            <option value="PRESCRIPTION_SAVED" ${"PRESCRIPTION_SAVED" == actionFilter ? "selected" : ""}>Lưu đơn thuốc</option>
+                            <option value="MEDICAL_RECORD_SAVED" ${"MEDICAL_RECORD_SAVED" == actionFilter ? "selected" : ""}>Lưu hồ sơ bệnh án</option>
+                            <option value="DOCTOR_REVIEWED" ${"DOCTOR_REVIEWED" == actionFilter ? "selected" : ""}>Đánh giá bác sĩ</option>
+                        </optgroup>
+                        <optgroup label="--- Xét nghiệm ---">
+                            <option value="LAB_REQUEST_CREATED" ${"LAB_REQUEST_CREATED" == actionFilter ? "selected" : ""}>Tạo yêu cầu xét nghiệm (bác sĩ)</option>
+                            <option value="CREATE_LAB_REQUEST" ${"CREATE_LAB_REQUEST" == actionFilter ? "selected" : ""}>Tạo phiếu xét nghiệm</option>
+                            <option value="UPLOAD_LAB_RESULT" ${"UPLOAD_LAB_RESULT" == actionFilter ? "selected" : ""}>Tải kết quả xét nghiệm</option>
+                            <option value="LAB_PAYMENT_CONFIRMED" ${"LAB_PAYMENT_CONFIRMED" == actionFilter ? "selected" : ""}>Xác nhận thanh toán xét nghiệm</option>
+                        </optgroup>
+                        <optgroup label="--- Dịch vụ ---">
+                            <option value="SERVICE_ADDED" ${"SERVICE_ADDED" == actionFilter ? "selected" : ""}>Thêm dịch vụ</option>
+                            <option value="SERVICE_UPDATED" ${"SERVICE_UPDATED" == actionFilter ? "selected" : ""}>Cập nhật dịch vụ</option>
+                            <option value="SERVICE_DELETED" ${"SERVICE_DELETED" == actionFilter ? "selected" : ""}>Xóa dịch vụ</option>
+                        </optgroup>
+                        <optgroup label="--- Khác ---">
+                            <option value="VIEW_TECH_DASHBOARD_STATS" ${"VIEW_TECH_DASHBOARD_STATS" == actionFilter ? "selected" : ""}>Xem thống kê kỹ thuật viên</option>
+                            <option value="VIEW_DOCTOR_DASHBOARD" ${"VIEW_DOCTOR_DASHBOARD" == actionFilter ? "selected" : ""}>Xem dashboard bác sĩ</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div class="filter-group">

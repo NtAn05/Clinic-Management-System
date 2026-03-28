@@ -96,33 +96,27 @@ public class LabQueueServlet extends HttpServlet {
         
         // Get filter parameters
         String status = request.getParameter("status");
-        String department = request.getParameter("department");
         String search = request.getParameter("search");
 
         // Count total records for pagination
-        int totalRecords = labRequestDAO.countLabRequestsWithFilter(status, department, null, search);
+        int totalRecords = labRequestDAO.countLabRequestsWithFilter(status, null, null, search);
         int requestedPage = PagingHelper.parsePage(request, "page", 1);
         PagingHelper.PagingMeta paging = PagingHelper.build(requestedPage, totalRecords, PAGE_SIZE, true);
 
         // Get lab requests with filters and pagination
         List<LabRequest> labRequests = labRequestDAO.getLabRequestsWithFilterAndPagination(
-            status, department, null, search, paging.getCurrentPage(), PAGE_SIZE
+            status, null, null, search, paging.getCurrentPage(), PAGE_SIZE
         );
 
         // Get statistics
-        int[] stats = labRequestDAO.getLabRequestStatisticsWithFilter(status, department, search);
-
-        // Get all specializations for filter dropdown
-        List<String> specializations = labRequestDAO.getAllSpecializations();
+        int[] stats = labRequestDAO.getLabRequestStatisticsWithFilter(status, null, search);
 
         // Set attributes for JSP
         int activeRequestId = labRequestDAO.getActiveRequestId();
 
         request.setAttribute("labRequests", labRequests);
         request.setAttribute("stats", stats);
-        request.setAttribute("specializations", specializations);
         request.setAttribute("filterStatus", status != null ? status : "");
-        request.setAttribute("filterDepartment", department != null ? department : "");
         request.setAttribute("searchTerm", search != null ? search : "");
         request.setAttribute("activeRequestId", activeRequestId);
         request.setAttribute("hasProcessingRequest", activeRequestId != -1);

@@ -495,12 +495,13 @@
           <input type="hidden" name="page" value="1" />
           <div class="filters">
             <div class="field-group">
-              <label class="field-label">Khoa / Phòng gửi</label>
-              <select class="select" name="department" id="filterDepartment">
+              <label class="field-label">Trạng thái</label>
+              <select class="select" name="status" id="filterStatus">
                 <option value="">Tất cả</option>
-                <c:forEach var="spec" items="${specializations}">
-                  <option value="${spec}" ${filterDepartment == spec ? 'selected' : ''}>${spec}</option>
-                </c:forEach>
+                <option value="pending" ${"pending" == filterStatus ? 'selected' : ''}>Chờ lấy mẫu</option>
+                <option value="processing" ${"processing" == filterStatus ? 'selected' : ''}>Đang xét nghiệm</option>
+                <option value="completed" ${"completed" == filterStatus ? 'selected' : ''}>Đã có kết quả</option>
+                <option value="cancelled" ${"cancelled" == filterStatus ? 'selected' : ''}>Đã hủy</option>
               </select>
             </div>
 
@@ -549,7 +550,6 @@
                 <th>Mã phiếu</th>
                 <th>Bệnh nhân</th>
                 <th>Tuổi / Giới</th>
-                <th>Khoa gửi</th>
                 <th>Triệu chứng</th>
 
                 <th>Trạng thái</th>
@@ -603,7 +603,6 @@
                         <span class="text-muted">${patientCode}</span>
                       </td>
                       <td onclick="${clickNav}" style="${clickStyle}">${age} / ${genderText}</td>
-                      <td onclick="${clickNav}" style="${clickStyle}">${request.doctor.specialization}</td>
                       <td onclick="${clickNav}" style="${clickStyle}">${request.appointment.symptom != null ? request.appointment.symptom : '-'}</td>
 
                       <td onclick="${clickNav}" style="${clickStyle}">
@@ -657,9 +656,6 @@
             <c:set var="queryParams" value="" />
             <c:if test="${not empty filterStatus}">
               <c:set var="queryParams" value="${queryParams}status=${filterStatus}&" />
-            </c:if>
-            <c:if test="${not empty filterDepartment}">
-              <c:set var="queryParams" value="${queryParams}department=${filterDepartment}&" />
             </c:if>
             <c:if test="${not empty searchTerm}">
               <c:set var="queryParams" value="${queryParams}search=${searchTerm}&" />
@@ -1013,32 +1009,24 @@
     }
 
     // Filter change handlers
-    document.getElementById('filterDepartment').addEventListener('change', () => {
+    document.getElementById('filterStatus').addEventListener('change', () => {
       document.getElementById('filterForm').submit();
     });
-    
-    // Search handlers
+
+    // Search with debounce
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
+    let searchTimer = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
         document.getElementById('filterForm').submit();
-      }
-    });
-    
-    // Auto-submit when search is cleared
-    searchInput.addEventListener('input', (e) => {
-      if (!e.target.value.trim()) {
-        document.getElementById('filterForm').submit();
-      }
+      }, 400);
     });
 
     // Clear all filters button
     document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-      // Reset all filter fields
-      document.getElementById('filterDepartment').value = '';
+      document.getElementById('filterStatus').value = '';
       document.getElementById('searchInput').value = '';
-      
-      // Redirect to base URL without parameters
       window.location.href = '${pageContext.request.contextPath}/lab-queue';
     });
   </script>
