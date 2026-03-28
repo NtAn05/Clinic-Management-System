@@ -155,6 +155,16 @@ public class NotificationDAO extends DBContext {
         }
         return false;
     }
-
+public boolean deleteNotification(long notificationId, int userId) {
+        String sql = "DELETE FROM in_app_notifications WHERE notification_id = ? AND user_id = ?";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setLong(1, notificationId);
+            st.setInt(2, userId);
+            return st.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Không thể xóa thông báo", ex);
+        }
+        return false;
+    }
 
 }

@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 
-@WebServlet(name = "NotificationReadServlet", urlPatterns = {"/notifications/read-all", "/notifications/read-item"})
+@WebServlet(name = "NotificationReadServlet", urlPatterns = {"/notifications/read-all", "/notifications/read-item", "/notifications/delete-item"})
 public class NotificationReadServlet extends HttpServlet {
 
     @Override
@@ -27,12 +27,18 @@ public class NotificationReadServlet extends HttpServlet {
 
         User account = (User) session.getAttribute("account");
         NotificationDAO notificationDAO = new NotificationDAO();
+        String servletPath = request.getServletPath();
         String notificationIdRaw = request.getParameter("notificationId");
         if (notificationIdRaw != null && !notificationIdRaw.isBlank()) {
             try {
                 long notificationId = Long.parseLong(notificationIdRaw);
-                boolean updated = notificationDAO.markAsRead(notificationId, account.getUserId());
-                response.getWriter().write("{\"success\":" + updated + "}");
+                if ("/notifications/delete-item".equals(servletPath)) {
+                    boolean deleted = notificationDAO.deleteNotification(notificationId, account.getUserId());
+                    response.getWriter().write("{\"success\":" + deleted + "}");
+                } else {
+                    boolean updated = notificationDAO.markAsRead(notificationId, account.getUserId());
+                    response.getWriter().write("{\"success\":" + updated + "}");
+                }
             } catch (NumberFormatException ex) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write("{\"success\":false,\"message\":\"notificationId không hợp lệ\"}");
@@ -44,3 +50,4 @@ public class NotificationReadServlet extends HttpServlet {
         response.getWriter().write("{\"success\":true,\"updated\":" + updatedRows + "}");
     }
 }
+

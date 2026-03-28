@@ -233,6 +233,10 @@
         <url-pattern>/notifications/read-item</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
+        <servlet-name>NotificationReadServlet</servlet-name>
+        <url-pattern>/notifications/delete-item</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
         <servlet-name>PatientAccountServlet</servlet-name>
         <url-pattern>/patient-accounts</url-pattern>
     </servlet-mapping>
