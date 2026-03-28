@@ -110,6 +110,19 @@ public class AppointmentServlet extends HttpServlet {
 
         PatientPortalDAO daos = new PatientPortalDAO();
         Patient patient = daos.getPatientsByPatientID(patientId);
+        AppointmentDAO dao = new AppointmentDAO();
+        if (!dao.isDoctorWorkingInSlot(doctorId, sqlDate, localTime)) {
+            List<LocalDate> availableDates = dao.getAvailableDates(doctorId);
+            request.setAttribute("doctor", doctor);
+            request.setAttribute("patient", patient);
+            request.setAttribute("dates", availableDates);
+            request.setAttribute("bookingError",
+                    "Ca khám đã chọn không còn khả dụng do bác sĩ đã đổi lịch tạm thời. Vui lòng chọn ca khác.");
+            request.getRequestDispatcher("/pages/appointments/appointment/appointmentCheck.jsp")
+                    .forward(request, response);
+            return;
+        }
+
         Appointment appointment;
         if (user.getRole().toString().equals("receptionist")) {
             appointment = new Appointment(patientId, doctorId, 1, "walk_in", sqlDate, sqlTime, "booked", note);

@@ -318,15 +318,18 @@ public class DoctorScheduleDAO extends DBContext {
                 FROM schedule_change_requests r
                 JOIN schedule_change_request_items i ON r.request_id = i.request_id
                 JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
-                JOIN doctor_shifts s_new ON s_new.shift_id = (
-                    SELECT s2.shift_id
-                    FROM doctor_shifts s2
-                    WHERE s2.day_of_week = i.day_of_week
-                      AND s2.start_time = i.start_time
-                      AND s2.end_time = i.end_time
-                      AND s2.doctor_id <> r.doctor_id
-                    ORDER BY s2.shift_id
-                    LIMIT 1
+                JOIN doctor_shifts s_new ON s_new.shift_id = COALESCE(
+                    i.swap_shift_id,
+                    (
+                        SELECT s2.shift_id
+                        FROM doctor_shifts s2
+                        WHERE s2.day_of_week = i.day_of_week
+                          AND s2.start_time = i.start_time
+                          AND s2.end_time = i.end_time
+                          AND s2.doctor_id <> r.doctor_id
+                        ORDER BY s2.shift_id
+                        LIMIT 1
+                    )
                 )
                 WHERE r.status = 'APPROVED'
                   AND r.request_type = 'TEMPORARY'
@@ -557,7 +560,7 @@ public class DoctorScheduleDAO extends DBContext {
         String sql = """
             SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
                    r.reason, r.status, r.requested_at, r.admin_note,
-                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
+                   i.action_type, i.target_shift_id, i.swap_shift_id, i.work_date, i.day_of_week,
                    i.start_time, i.end_time, i.max_patients
             FROM schedule_change_requests r
             LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
@@ -602,7 +605,7 @@ public class DoctorScheduleDAO extends DBContext {
         StringBuilder sql = new StringBuilder("""
             SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
                    r.reason, r.status, r.requested_at, r.admin_note,
-                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
+                   i.action_type, i.target_shift_id, i.swap_shift_id, i.work_date, i.day_of_week,
                    i.start_time, i.end_time, i.max_patients,
                    u.full_name AS doctor_name,
                    u_old.full_name AS old_doctor_name,
@@ -622,16 +625,19 @@ public class DoctorScheduleDAO extends DBContext {
             LEFT JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
             LEFT JOIN doctors d_old ON s_old.doctor_id = d_old.doctor_id
             LEFT JOIN users u_old ON d_old.user_id = u_old.user_id
-            LEFT JOIN doctor_shifts s_new ON s_new.shift_id = (
-                SELECT s2.shift_id
-                FROM doctor_shifts s2
-                WHERE i.action_type = 'UPDATE'
-                  AND s2.day_of_week = i.day_of_week
-                  AND s2.start_time = i.start_time
-                  AND s2.end_time = i.end_time
-                  AND s2.doctor_id <> r.doctor_id
-                ORDER BY s2.shift_id
-                LIMIT 1
+            LEFT JOIN doctor_shifts s_new ON s_new.shift_id = COALESCE(
+                i.swap_shift_id,
+                (
+                    SELECT s2.shift_id
+                    FROM doctor_shifts s2
+                    WHERE i.action_type = 'UPDATE'
+                      AND s2.day_of_week = i.day_of_week
+                      AND s2.start_time = i.start_time
+                      AND s2.end_time = i.end_time
+                      AND s2.doctor_id <> r.doctor_id
+                    ORDER BY s2.shift_id
+                    LIMIT 1
+                )
             )
             LEFT JOIN doctors d_new ON s_new.doctor_id = d_new.doctor_id
             LEFT JOIN users u_new ON d_new.user_id = u_new.user_id
@@ -828,6 +834,7 @@ public class DoctorScheduleDAO extends DBContext {
             String reason,
             String actionType,
             Integer targetShiftId,
+            Integer swapShiftId,
             Date workDate,
             Integer dayOfWeek,
             LocalTime startTime,
@@ -842,8 +849,8 @@ public class DoctorScheduleDAO extends DBContext {
 
         String insertItemSql = """
             INSERT INTO schedule_change_request_items
-            (request_id, action_type, target_shift_id, work_date, day_of_week, start_time, end_time, max_patients)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (request_id, action_type, target_shift_id, swap_shift_id, work_date, day_of_week, start_time, end_time, max_patients)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         boolean originalAutoCommit = true;
@@ -881,34 +888,40 @@ public class DoctorScheduleDAO extends DBContext {
                     insertItem.setInt(3, targetShiftId);
                 }
 
-                if (workDate == null) {
-                    insertItem.setNull(4, Types.DATE);
+                if (swapShiftId == null) {
+                    insertItem.setNull(4, Types.INTEGER);
                 } else {
-                    insertItem.setDate(4, workDate);
+                    insertItem.setInt(4, swapShiftId);
+                }
+
+                if (workDate == null) {
+                    insertItem.setNull(5, Types.DATE);
+                } else {
+                    insertItem.setDate(5, workDate);
                 }
 
                 if (dayOfWeek == null) {
-                    insertItem.setNull(5, Types.TINYINT);
+                    insertItem.setNull(6, Types.TINYINT);
                 } else {
-                    insertItem.setInt(5, dayOfWeek);
+                    insertItem.setInt(6, dayOfWeek);
                 }
 
                 if (startTime == null) {
-                    insertItem.setNull(6, Types.TIME);
+                    insertItem.setNull(7, Types.TIME);
                 } else {
-                    insertItem.setTime(6, Time.valueOf(startTime));
+                    insertItem.setTime(7, Time.valueOf(startTime));
                 }
 
                 if (endTime == null) {
-                    insertItem.setNull(7, Types.TIME);
+                    insertItem.setNull(8, Types.TIME);
                 } else {
-                    insertItem.setTime(7, Time.valueOf(endTime));
+                    insertItem.setTime(8, Time.valueOf(endTime));
                 }
 
                 if (maxPatients == null) {
-                    insertItem.setNull(8, Types.INTEGER);
+                    insertItem.setNull(9, Types.INTEGER);
                 } else {
-                    insertItem.setInt(8, maxPatients);
+                    insertItem.setInt(9, maxPatients);
                 }
 
                 if (insertItem.executeUpdate() == 0) {
@@ -1033,6 +1046,8 @@ public class DoctorScheduleDAO extends DBContext {
 
         int targetShiftId = rs.getInt("target_shift_id");
         request.setTargetShiftId(rs.wasNull() ? null : targetShiftId);
+        int swapShiftId = rs.getInt("swap_shift_id");
+        request.setSwapShiftId(rs.wasNull() ? null : swapShiftId);
 
         request.setWorkDate(rs.getDate("work_date"));
         int dayOfWeek = rs.getInt("day_of_week");
@@ -1058,7 +1073,7 @@ public class DoctorScheduleDAO extends DBContext {
         String sql = """
             SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
                    r.requested_at,
-                   i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
+                   i.action_type, i.target_shift_id, i.swap_shift_id, i.work_date, i.day_of_week,
                    i.start_time, i.end_time, i.max_patients
             FROM schedule_change_requests r
             LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
@@ -1084,6 +1099,8 @@ public class DoctorScheduleDAO extends DBContext {
 
                 int targetShiftId = rs.getInt("target_shift_id");
                 review.targetShiftId = rs.wasNull() ? null : targetShiftId;
+                int swapShiftId = rs.getInt("swap_shift_id");
+                review.swapShiftId = rs.wasNull() ? null : swapShiftId;
 
                 review.workDate = rs.getDate("work_date");
                 int dayOfWeek = rs.getInt("day_of_week");
@@ -1166,7 +1183,7 @@ public class DoctorScheduleDAO extends DBContext {
         }
 
         DoctorShift counterpart = findCounterpartShiftForSwap(
-                request.doctorId, request.targetShiftId, request.dayOfWeek, request.startTime, request.endTime
+                request.doctorId, request.targetShiftId, request.swapShiftId, request.dayOfWeek, request.startTime, request.endTime
         );
 
         int requesterMaxPatients = request.maxPatients != null ? request.maxPatients : requesterShift.getMaxPatients();
@@ -1214,8 +1231,17 @@ public class DoctorScheduleDAO extends DBContext {
     }
 
     // Tim ca doi ung cua bac si khac khi xu ly doi ca.
-    private DoctorShift findCounterpartShiftForSwap(int requesterDoctorId, int requesterShiftId, int dayOfWeek,
+    private DoctorShift findCounterpartShiftForSwap(int requesterDoctorId, int requesterShiftId, Integer swapShiftId, int dayOfWeek,
             LocalTime startTime, LocalTime endTime) throws SQLException {
+        if (swapShiftId != null) {
+            DoctorShift explicitSwapShift = getDoctorShiftByIdForUpdate(swapShiftId);
+            if (explicitSwapShift == null
+                    || explicitSwapShift.getDoctorId() == requesterDoctorId
+                    || explicitSwapShift.getShiftId() == requesterShiftId) {
+                return null;
+            }
+            return explicitSwapShift;
+        }
         String sql = """
             SELECT shift_id, doctor_id, day_of_week, start_time, end_time, max_patients
             FROM doctor_shifts
@@ -1272,6 +1298,7 @@ public class DoctorScheduleDAO extends DBContext {
         private java.sql.Timestamp requestedAt;
         private String actionType;
         private Integer targetShiftId;
+        private Integer swapShiftId;
         private Date workDate;
         private Integer dayOfWeek;
         private LocalTime startTime;
