@@ -109,6 +109,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         Integer swapShiftId = parseInteger(request.getParameter("swapShiftId"));
         Date workDate = parseDate(request.getParameter("workDate"));
         String shiftPeriod = safeUpper(request.getParameter("shiftPeriod"));
+        Integer removeShiftId = null;
 
         LocalTime startTime = null;
         LocalTime endTime = null;
@@ -146,7 +147,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 error = "Vui lòng chọn ca cần hủy (sáng/chiều).";
             } else if (workDate != null) {
                 dayOfWeek = normalizeDayOfWeek(workDate.toLocalDate().getDayOfWeek());
-                Integer removeShiftId = scheduleDAO.findActiveShiftIdByDoctorDayAndTime(
+                removeShiftId = scheduleDAO.findActiveShiftIdByDoctorDayAndTime(
                         doctor.getDoctorId(),
                         dayOfWeek,
                         startTime,
@@ -190,6 +191,16 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 if (scheduleDAO.hasAnyAppointmentsForShift(targetShiftId)) {
                     error = "Không thể hủy ca đã có lịch hẹn.";
                 }
+            }
+        }
+
+        if (error == null && "ONE_DATE".equals(scopeType) && workDate != null) {
+            if ("UPDATE".equals(actionType) && targetShiftId != null
+                    && scheduleDAO.hasApprovedTemporaryUpdateRequestForShiftOnDate(targetShiftId, workDate)) {
+                error = "Ca gốc đã có đơn đổi lịch tạm thời được duyệt, không thể gửi thêm yêu cầu cho ca này.";
+            } else if ("REMOVE".equals(actionType) && removeShiftId != null
+                    && scheduleDAO.hasApprovedTemporaryUpdateRequestForShiftOnDate(removeShiftId, workDate)) {
+                error = "Ca này đã có đơn đổi lịch tạm thời được duyệt, không thể gửi thêm yêu cầu cho ca này.";
             }
         }
 
@@ -241,6 +252,8 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                         error = "Ca được chọn không nằm trong ngày áp dụng.";
                     } else if (hasShiftStarted(workDate.toLocalDate(), swapEffectiveStart)) {
                         error = "Chỉ được đổi ca trước giờ bắt đầu ca.";
+                    } else if (scheduleDAO.hasApprovedTemporaryUpdateRequestForShiftOnDate(swapShift.getShiftId(), workDate)) {
+                        error = "Ca muốn đổi đã có đơn đổi lịch tạm thời được duyệt, không thể gửi thêm yêu cầu cho ca này.";
                     } else {
                         DoctorScheduleDAO.EffectiveShiftState currentEffectiveForSwap = (currentShift == null || workDate == null)
                                 ? null
@@ -295,6 +308,7 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 reason,
                 actionType,
                 targetShiftId,
+                swapShiftId,
                 workDate,
                 dayOfWeek,
                 startTime,

@@ -17,6 +17,8 @@ import model.ScheduleSwapShiftOption;
 
 public class DoctorScheduleDAO extends DBContext {
 
+    private static final String SWAP_SHIFT_META_PREFIX = "[[SWAP_SHIFT_ID:";
+    private static final String SWAP_SHIFT_META_SUFFIX = "]]";
     private String lastReviewError;
 
     public String getLastReviewError() {
@@ -26,6 +28,7 @@ public class DoctorScheduleDAO extends DBContext {
     // Lay danh sach ca lam viec dang active cua mot bac si.
     public List<DoctorShift> getDoctorShifts(int doctorId) {
         List<DoctorShift> list = new ArrayList<>();
+
 
         String sql = """
             SELECT shift_id, doctor_id, day_of_week,
@@ -51,8 +54,8 @@ public class DoctorScheduleDAO extends DBContext {
 
     // Lay tat ca bac si de hien thi tren man hinh sap lich.
     public List<Doctor> getAllDoctorsForSchedule() {
-        syncDoctorRowsForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
+        syncDoctorRowsForAllDoctorUsers();
         String sql = """
             SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
             FROM doctors d
@@ -79,8 +82,8 @@ public class DoctorScheduleDAO extends DBContext {
 
     // Lay danh sach bac si dang active de lap lich.
     public List<Doctor> getActiveDoctorsForSchedule() {
-        syncDoctorRowsForAllDoctorUsers();
         List<Doctor> list = new ArrayList<>();
+        syncDoctorRowsForAllDoctorUsers();
         String sql = """
             SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
             FROM doctors d
@@ -689,6 +692,13 @@ public class DoctorScheduleDAO extends DBContext {
                 }
 
                 request.setNewDoctorName(rs.getString("new_doctor_name"));
+                Integer counterpartShiftId = extractCounterpartShiftId(rs.getString("reason"));
+                if (counterpartShiftId != null) {
+                    String preferredDoctorName = getDoctorNameByShiftId(counterpartShiftId);
+                    if (preferredDoctorName != null && !preferredDoctorName.isBlank()) {
+                        request.setNewDoctorName(preferredDoctorName);
+                    }
+                }
                 request.setOldWorkDate(rs.getDate("old_work_date"));
                 list.add(request);
             }
@@ -828,12 +838,14 @@ public class DoctorScheduleDAO extends DBContext {
             String reason,
             String actionType,
             Integer targetShiftId,
+            Integer counterpartShiftId,
             Date workDate,
             Integer dayOfWeek,
             LocalTime startTime,
             LocalTime endTime,
             Integer maxPatients
     ) {
+        String requestReason = appendCounterpartShiftMeta(reason, actionType, counterpartShiftId);
         String insertRequestSql = """
             INSERT INTO schedule_change_requests
             (doctor_id, request_type, scope_type, reason, status, requested_at)
@@ -856,7 +868,7 @@ public class DoctorScheduleDAO extends DBContext {
                 insertRequest.setInt(1, doctorId);
                 insertRequest.setString(2, requestType);
                 insertRequest.setString(3, scopeType);
-                insertRequest.setString(4, reason);
+                insertRequest.setString(4, requestReason);
                 if (insertRequest.executeUpdate() == 0) {
                     connection.rollback();
                     return false;
@@ -881,34 +893,35 @@ public class DoctorScheduleDAO extends DBContext {
                     insertItem.setInt(3, targetShiftId);
                 }
 
+                int index = 4;
                 if (workDate == null) {
-                    insertItem.setNull(4, Types.DATE);
+                    insertItem.setNull(index++, Types.DATE);
                 } else {
-                    insertItem.setDate(4, workDate);
+                    insertItem.setDate(index++, workDate);
                 }
 
                 if (dayOfWeek == null) {
-                    insertItem.setNull(5, Types.TINYINT);
+                    insertItem.setNull(index++, Types.TINYINT);
                 } else {
-                    insertItem.setInt(5, dayOfWeek);
+                    insertItem.setInt(index++, dayOfWeek);
                 }
 
                 if (startTime == null) {
-                    insertItem.setNull(6, Types.TIME);
+                    insertItem.setNull(index++, Types.TIME);
                 } else {
-                    insertItem.setTime(6, Time.valueOf(startTime));
+                    insertItem.setTime(index++, Time.valueOf(startTime));
                 }
 
                 if (endTime == null) {
-                    insertItem.setNull(7, Types.TIME);
+                    insertItem.setNull(index++, Types.TIME);
                 } else {
-                    insertItem.setTime(7, Time.valueOf(endTime));
+                    insertItem.setTime(index++, Time.valueOf(endTime));
                 }
 
                 if (maxPatients == null) {
-                    insertItem.setNull(8, Types.INTEGER);
+                    insertItem.setNull(index++, Types.INTEGER);
                 } else {
-                    insertItem.setInt(8, maxPatients);
+                    insertItem.setInt(index++, maxPatients);
                 }
 
                 if (insertItem.executeUpdate() == 0) {
@@ -936,7 +949,7 @@ public class DoctorScheduleDAO extends DBContext {
         }
     }
 
-    public boolean hasTemporaryUpdateRequestForShiftOnDate(int targetShiftId, Date workDate) {
+    public boolean hasApprovedTemporaryUpdateRequestForShiftOnDate(int targetShiftId, Date workDate) {
         if (targetShiftId <= 0 || workDate == null) {
             return false;
         }
@@ -949,7 +962,7 @@ public class DoctorScheduleDAO extends DBContext {
               AND i.work_date = ?
               AND r.scope_type = 'ONE_DATE'
               AND r.request_type = 'TEMPORARY'
-              AND r.status IN ('PENDING', 'APPROVED')
+              AND r.status = 'APPROVED'
             LIMIT 1
         """;
         try (PreparedStatement st = connection.prepareStatement(sql)) {
@@ -1025,7 +1038,7 @@ public class DoctorScheduleDAO extends DBContext {
         request.setDoctorId(rs.getInt("doctor_id"));
         request.setRequestType(rs.getString("request_type"));
         request.setScopeType(rs.getString("scope_type"));
-        request.setReason(rs.getString("reason"));
+        request.setReason(stripCounterpartShiftMeta(rs.getString("reason")));
         request.setStatus(rs.getString("status"));
         request.setRequestedAt(rs.getTimestamp("requested_at"));
         request.setAdminNote(rs.getString("admin_note"));
@@ -1057,7 +1070,7 @@ public class DoctorScheduleDAO extends DBContext {
     private PendingScheduleReview getPendingScheduleReviewForUpdate(int requestId) throws SQLException {
         String sql = """
             SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
-                   r.requested_at,
+                   r.reason, r.requested_at,
                    i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
                    i.start_time, i.end_time, i.max_patients
             FROM schedule_change_requests r
@@ -1079,6 +1092,7 @@ public class DoctorScheduleDAO extends DBContext {
                 review.doctorId = rs.getInt("doctor_id");
                 review.requestType = rs.getString("request_type");
                 review.scopeType = rs.getString("scope_type");
+                review.reason = rs.getString("reason");
                 review.requestedAt = rs.getTimestamp("requested_at");
                 review.actionType = rs.getString("action_type");
 
@@ -1165,9 +1179,23 @@ public class DoctorScheduleDAO extends DBContext {
             return false;
         }
 
-        DoctorShift counterpart = findCounterpartShiftForSwap(
-                request.doctorId, request.targetShiftId, request.dayOfWeek, request.startTime, request.endTime
-        );
+        Integer preferredCounterpartShiftId = extractCounterpartShiftId(request.reason);
+        DoctorShift counterpart;
+        if (preferredCounterpartShiftId != null) {
+            counterpart = getDoctorShiftByIdForUpdate(preferredCounterpartShiftId);
+            if (counterpart == null || counterpart.getDoctorId() == request.doctorId) {
+                return false;
+            }
+            if (counterpart.getDayOfWeek() != request.dayOfWeek
+                    || !counterpart.getStartTime().equals(request.startTime)
+                    || !counterpart.getEndTime().equals(request.endTime)) {
+                return false;
+            }
+        } else {
+            counterpart = findCounterpartShiftForSwap(
+                    request.doctorId, request.targetShiftId, request.dayOfWeek, request.startTime, request.endTime
+            );
+        }
 
         int requesterMaxPatients = request.maxPatients != null ? request.maxPatients : requesterShift.getMaxPatients();
         if (!updateShiftById(
@@ -1269,6 +1297,7 @@ public class DoctorScheduleDAO extends DBContext {
         private int doctorId;
         private String requestType;
         private String scopeType;
+        private String reason;
         private java.sql.Timestamp requestedAt;
         private String actionType;
         private Integer targetShiftId;
@@ -1277,6 +1306,77 @@ public class DoctorScheduleDAO extends DBContext {
         private LocalTime startTime;
         private LocalTime endTime;
         private Integer maxPatients;
+    }
+
+    private String appendCounterpartShiftMeta(String reason, String actionType, Integer counterpartShiftId) {
+        String cleanedReason = stripCounterpartShiftMeta(reason);
+        if (!"UPDATE".equalsIgnoreCase(actionType) || counterpartShiftId == null) {
+            return cleanedReason;
+        }
+        String meta = SWAP_SHIFT_META_PREFIX + counterpartShiftId + SWAP_SHIFT_META_SUFFIX;
+        if (cleanedReason == null || cleanedReason.isBlank()) {
+            return meta;
+        }
+        return cleanedReason + "\n" + meta;
+    }
+
+    private Integer extractCounterpartShiftId(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return null;
+        }
+        int start = reason.lastIndexOf(SWAP_SHIFT_META_PREFIX);
+        if (start < 0) {
+            return null;
+        }
+        int valueStart = start + SWAP_SHIFT_META_PREFIX.length();
+        int end = reason.indexOf(SWAP_SHIFT_META_SUFFIX, valueStart);
+        if (end < 0) {
+            return null;
+        }
+        String value = reason.substring(valueStart, end).trim();
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private String stripCounterpartShiftMeta(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return reason;
+        }
+        int start = reason.lastIndexOf(SWAP_SHIFT_META_PREFIX);
+        if (start < 0) {
+            return reason;
+        }
+        int end = reason.indexOf(SWAP_SHIFT_META_SUFFIX, start + SWAP_SHIFT_META_PREFIX.length());
+        if (end < 0) {
+            return reason;
+        }
+        String cleaned = (reason.substring(0, start) + reason.substring(end + SWAP_SHIFT_META_SUFFIX.length())).trim();
+        return cleaned;
+    }
+
+    private String getDoctorNameByShiftId(int shiftId) {
+        String sql = """
+            SELECT u.full_name
+            FROM doctor_shifts s
+            JOIN doctors d ON s.doctor_id = d.doctor_id
+            JOIN users u ON d.user_id = u.user_id
+            WHERE s.shift_id = ?
+            LIMIT 1
+        """;
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("full_name");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static class EffectiveShiftState {

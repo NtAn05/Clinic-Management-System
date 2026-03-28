@@ -1,4 +1,4 @@
-<%-- 
+﻿<%-- 
     Document   : appointmentSecond
     Created on : Feb 3, 2026, 2:00:08 PM
     Author     : Admin
@@ -6,7 +6,7 @@
 
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
     <head>
@@ -104,6 +104,7 @@
                                                name="appointment_date"
                                                id="date${s.index}"
                                                value="${d}"
+                                               data-periods="${availablePeriodsByDate[d.toString()]}"
                                                ${s.index == 0 ? "checked" : ""}>
 
                                         <label for="date${s.index}" class="slot">
@@ -183,14 +184,65 @@
 
             </div>
         </div>
-        <script>
+                <script>
             function confirmSubmit() {
-                return confirm("Bạn đã chắc chắn đúng và đủ thông tin chưa?\n\
-Vui lòng kiểm tra kĩ các thông tin trước khi thanh toán.");
-
+                return confirm("Bạn đã chắc chắn đúng và đủ thông tin chưa?\nVui lòng kiểm tra kĩ các thông tin trước khi thanh toán.");
             }
+
+            (function () {
+                var morningInput = document.getElementById('morning');
+                var afternoonInput = document.getElementById('afternoon');
+                if (!morningInput || !afternoonInput) {
+                    return;
+                }
+
+                function updateAvailablePeriods() {
+                    var selectedDateInput = document.querySelector('input[name="appointment_date"]:checked');
+                    var periodsRaw = selectedDateInput ? (selectedDateInput.getAttribute('data-periods') || '') : '';
+                    var periods = periodsRaw.split(',').map(function (p) {
+                        return p.trim();
+                    }).filter(function (p) {
+                        return p.length > 0;
+                    });
+
+                    var hasMorning = periods.indexOf('MORNING') >= 0;
+                    var hasAfternoon = periods.indexOf('AFTERNOON') >= 0;
+
+                    morningInput.disabled = !hasMorning;
+                    afternoonInput.disabled = !hasAfternoon;
+
+                    var morningLabel = document.querySelector('label[for="morning"]');
+                    var afternoonLabel = document.querySelector('label[for="afternoon"]');
+                    if (morningLabel) {
+                        morningLabel.style.display = hasMorning ? '' : 'none';
+                    }
+                    if (afternoonLabel) {
+                        afternoonLabel.style.display = hasAfternoon ? '' : 'none';
+                    }
+
+                    if (morningInput.checked && morningInput.disabled) {
+                        morningInput.checked = false;
+                    }
+                    if (afternoonInput.checked && afternoonInput.disabled) {
+                        afternoonInput.checked = false;
+                    }
+                    if (!morningInput.checked && !afternoonInput.checked) {
+                        if (hasMorning) {
+                            morningInput.checked = true;
+                        } else if (hasAfternoon) {
+                            afternoonInput.checked = true;
+                        }
+                    }
+                }
+
+                document.querySelectorAll('input[name="appointment_date"]').forEach(function (input) {
+                    input.addEventListener('change', updateAvailablePeriods);
+                });
+                updateAvailablePeriods();
+            })();
         </script>
         <jsp:include page="/common/footer.jsp" />
 
     </body>
 </html>
+

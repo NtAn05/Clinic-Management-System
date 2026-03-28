@@ -16,6 +16,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import model.Appointment;
 import model.Doctor;
 import model.Patient;
@@ -59,10 +60,12 @@ public class AppointmentServlet extends HttpServlet {
         }
 
         List<LocalDate> availableDates = dao.getAvailableDates(doctorId);
+        Map<String, String> availablePeriodsByDate = dao.getAvailablePeriodCsvByDates(doctorId, availableDates);
 
         request.setAttribute("doctor", doctor);
         request.setAttribute("patient", p);
         request.setAttribute("dates", availableDates);
+        request.setAttribute("availablePeriodsByDate", availablePeriodsByDate);
 
         request.getRequestDispatcher("/pages/appointments/appointment/appointmentCheck.jsp")
                 .forward(request, response);

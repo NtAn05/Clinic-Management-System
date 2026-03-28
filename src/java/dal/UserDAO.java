@@ -17,11 +17,9 @@ public class UserDAO extends DBContext {
         String sql = "SELECT user_id, full_name, phone, email, role, status "
                 + "FROM users "
                 + "WHERE email = ? AND password_hash = ?";
-
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setString(1, email);
             st.setString(2, password);
-
             ResultSet rs = st.executeQuery();
             if (rs.next()) {
                 User u = new User();
