@@ -295,7 +295,6 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 reason,
                 actionType,
                 targetShiftId,
-                swapShiftId,
                 workDate,
                 dayOfWeek,
                 startTime,
