@@ -392,18 +392,15 @@ public class AppointmentDAO extends DBContext {
             FROM schedule_change_requests r
             JOIN schedule_change_request_items i ON r.request_id = i.request_id
             LEFT JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
-            LEFT JOIN doctor_shifts s_new ON s_new.shift_id = COALESCE(
-                i.swap_shift_id,
-                (
-                    SELECT s2.shift_id
-                    FROM doctor_shifts s2
-                    WHERE s2.day_of_week = i.day_of_week
-                      AND s2.start_time = i.start_time
-                      AND s2.end_time = i.end_time
-                      AND s2.doctor_id <> r.doctor_id
-                    ORDER BY s2.shift_id
-                    LIMIT 1
-                )
+            LEFT JOIN doctor_shifts s_new ON s_new.shift_id = (
+                SELECT s2.shift_id
+                FROM doctor_shifts s2
+                WHERE s2.day_of_week = i.day_of_week
+                  AND s2.start_time = i.start_time
+                  AND s2.end_time = i.end_time
+                  AND s2.doctor_id <> r.doctor_id
+                ORDER BY s2.shift_id
+                LIMIT 1
             )
             WHERE r.status = 'APPROVED'
               AND r.request_type = 'TEMPORARY'
@@ -454,132 +451,6 @@ public class AppointmentDAO extends DBContext {
             this.workDate = workDate;
             this.delta = delta;
         }
-    }
-
-    public boolean isDoctorWorkingInSlot(int doctorId, Date workDate, LocalTime appointmentTime) {
-        if (doctorId <= 0 || workDate == null || appointmentTime == null) {
-            return false;
-        }
-
-        String period = appointmentTime.isBefore(LocalTime.NOON) ? "MORNING" : "AFTERNOON";
-        int dayOfWeek = workDate.toLocalDate().getDayOfWeek().getValue() % 7;
-
-        int baseShiftCount = countBaseShiftsForPeriod(doctorId, dayOfWeek, period);
-        int temporaryDelta = getTemporarySwapDeltaForPeriod(doctorId, workDate, period);
-        return baseShiftCount + temporaryDelta > 0;
-    }
-
-    private int countBaseShiftsForPeriod(int doctorId, int dayOfWeek, String period) {
-        String sql = """
-            SELECT COUNT(*)
-            FROM doctor_shifts ds
-            JOIN doctors d ON d.doctor_id = ds.doctor_id
-            JOIN users u ON u.user_id = d.user_id
-            WHERE ds.doctor_id = ?
-              AND ds.day_of_week = ?
-              AND ds.status = 'active'
-              AND u.status = 'active'
-              AND (
-                    (? = 'MORNING' AND ds.start_time < '12:00:00')
-                 OR (? = 'AFTERNOON' AND ds.start_time >= '12:00:00')
-              )
-        """;
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, doctorId);
-            st.setInt(2, dayOfWeek);
-            st.setString(3, period);
-            st.setString(4, period);
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    private int getTemporarySwapDeltaForPeriod(int doctorId, Date workDate, String period) {
-        int delta = 0;
-        String sql = """
-            SELECT r.doctor_id AS requester_doctor_id,
-                   i.work_date AS new_work_date,
-                   CASE
-                       WHEN i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
-                       THEN DATE_ADD(i.work_date, INTERVAL ((s_old.day_of_week - i.day_of_week + 7) % 7) DAY)
-                       ELSE NULL
-                   END AS old_work_date,
-                   s_new.doctor_id AS counterpart_doctor_id,
-                   CASE WHEN s_old.start_time < '12:00:00' THEN 'MORNING' ELSE 'AFTERNOON' END AS old_period,
-                   CASE WHEN i.start_time < '12:00:00' THEN 'MORNING' ELSE 'AFTERNOON' END AS new_period
-            FROM schedule_change_requests r
-            JOIN schedule_change_request_items i ON r.request_id = i.request_id
-            LEFT JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
-            LEFT JOIN doctor_shifts s_new ON s_new.shift_id = COALESCE(
-                i.swap_shift_id,
-                (
-                    SELECT s2.shift_id
-                    FROM doctor_shifts s2
-                    WHERE s2.day_of_week = i.day_of_week
-                      AND s2.start_time = i.start_time
-                      AND s2.end_time = i.end_time
-                      AND s2.doctor_id <> r.doctor_id
-                    ORDER BY s2.shift_id
-                    LIMIT 1
-                )
-            )
-            WHERE r.status = 'APPROVED'
-              AND r.request_type = 'TEMPORARY'
-              AND r.scope_type = 'ONE_DATE'
-              AND i.action_type = 'UPDATE'
-              AND (i.work_date = ? OR (
-                    i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
-                    AND DATE_ADD(i.work_date, INTERVAL ((s_old.day_of_week - i.day_of_week + 7) % 7) DAY) = ?
-              ))
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setDate(1, workDate);
-            st.setDate(2, workDate);
-            try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    int requesterId = rs.getInt("requester_doctor_id");
-                    Date newWorkDate = rs.getDate("new_work_date");
-                    Date oldWorkDate = rs.getDate("old_work_date");
-                    int counterpartId = rs.getInt("counterpart_doctor_id");
-                    boolean hasCounterpart = !rs.wasNull();
-                    String oldPeriod = rs.getString("old_period");
-                    String newPeriod = rs.getString("new_period");
-
-                    if (newWorkDate == null || oldWorkDate == null) {
-                        continue;
-                    }
-
-                    if (requesterId == doctorId) {
-                        if (workDate.equals(oldWorkDate) && period.equalsIgnoreCase(oldPeriod)) {
-                            delta -= 1;
-                        }
-                        if (workDate.equals(newWorkDate) && period.equalsIgnoreCase(newPeriod)) {
-                            delta += 1;
-                        }
-                    }
-
-                    if (hasCounterpart && counterpartId == doctorId) {
-                        if (workDate.equals(newWorkDate) && period.equalsIgnoreCase(newPeriod)) {
-                            delta -= 1;
-                        }
-                        if (workDate.equals(oldWorkDate) && period.equalsIgnoreCase(oldPeriod)) {
-                            delta += 1;
-                        }
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return delta;
     }
 
     public int countPatients(int doctorId, Date date) {

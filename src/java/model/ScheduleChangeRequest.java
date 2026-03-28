@@ -25,7 +25,6 @@ public class ScheduleChangeRequest {
 
     private String actionType;
     private Integer targetShiftId;
-    private Integer swapShiftId;
     private Date workDate;
     private Integer dayOfWeek;
     private LocalTime startTime;
@@ -141,14 +140,6 @@ public class ScheduleChangeRequest {
 
     public void setTargetShiftId(Integer targetShiftId) {
         this.targetShiftId = targetShiftId;
-    }
-
-    public Integer getSwapShiftId() {
-        return swapShiftId;
-    }
-
-    public void setSwapShiftId(Integer swapShiftId) {
-        this.swapShiftId = swapShiftId;
     }
 
     public Date getWorkDate() {
