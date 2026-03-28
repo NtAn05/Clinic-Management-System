@@ -73,6 +73,10 @@ public class AppointmentPaymentServlet extends HttpServlet {
                 AppointmentDAO dao = new AppointmentDAO();
                 Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
                 long createdAppointmentId = dao.addAppointmentAndReturnId(appointment);
+                request.setAttribute("patient",pendingPatient.getPatientId() );
+                request.setAttribute("doctorID",appointment.getDoctorId());
+                
+
                 Integer logUserId = (pendingPatient != null && pendingPatient.getUserId() != null) ? pendingPatient.getUserId() : null;
                 String patientName = (pendingPatient != null) ? pendingPatient.getFullName() : "unknown";
                 request.setAttribute("bookedPatientName", patientName);

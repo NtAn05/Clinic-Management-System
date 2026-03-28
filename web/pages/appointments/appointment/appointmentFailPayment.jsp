@@ -56,25 +56,25 @@
                             Vui lòng kiểm tra lại thông tin hoặc thử lại sau.
                         </p>
 
-                        <div class="actions">
-                            <a href="javascript:history.back()" class="btn-outline">
-                                Quay lại
-                            </a>
+                        <a class="btn-edit"
+                           href="${pageContext.request.contextPath}/appointmentservlet?doctor=${doctorID}&patientid=${patient}">
+                            Chọn
+                        </a>
 
-                            <a href="${pageContext.request.contextPath}/index.jsp"
-                               class="btn-primary">
-                                Về trang chủ
-                            </a>
-                        </div>
-
+                        <a href="${pageContext.request.contextPath}/index.jsp"
+                           class="btn-primary">
+                            Về trang chủ
+                        </a>
                     </div>
 
                 </div>
 
             </div>
+
         </div>
+    </div>
 
-        <jsp:include page="/common/footer.jsp" />
+    <jsp:include page="/common/footer.jsp" />
 
-    </body>
+</body>
 </html>

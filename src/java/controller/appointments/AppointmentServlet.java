@@ -57,6 +57,8 @@ public class AppointmentServlet extends HttpServlet {
         AppointmentDAO dao = new AppointmentDAO();
         PatientPortalDAO daos = new PatientPortalDAO();
         DoctorDAO doctordao = new DoctorDAO();
+        
+        
         Patient p = daos.getPatientsByPatientID(patientId);
         Doctor doctor = doctordao.getDoctorById(doctorID);
         if (doctor == null) {
@@ -110,6 +112,8 @@ public class AppointmentServlet extends HttpServlet {
 
         PatientPortalDAO daos = new PatientPortalDAO();
         Patient patient = daos.getPatientsByPatientID(patientId);
+        
+        
         Appointment appointment;
         if (user.getRole().toString().equals("receptionist")) {
             appointment = new Appointment(patientId, doctorId, 1, "walk_in", sqlDate, sqlTime, "booked", note);
