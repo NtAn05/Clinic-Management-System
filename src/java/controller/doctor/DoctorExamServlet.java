@@ -294,7 +294,7 @@ public class DoctorExamServlet extends HttpServlet {
 
         if ("finish".equalsIgnoreCase(action)) {
             boolean finished = doctorDAO.saveMedicalRecordAndFinishExamination(appointmentId, symptoms, diagnosis, notes);
-            if (!finished) {
+             if (!finished) {
                 response.sendRedirect(request.getContextPath() + "/doctor/exam?appointmentId=" + appointmentId + "&error=saveFailed");
                 return;
             }
@@ -305,7 +305,7 @@ public class DoctorExamServlet extends HttpServlet {
             notificationDAO.createNotificationForAppointment(
                     appointmentId,
                     "Khám bệnh đã hoàn tất",
-                    "Đã hoàn tất buổi khám cho " + patientName + ". Vui lòng vào hồ sơ để xem kết quả và chỉ định điều trị.",
+                    "Đã khám xong cho bệnh nhân " + patientName + ". Nhấn vào thông báo để xem hồ sơ bệnh án vừa hoàn tất.",
                     "examination_completed",
                     "appointment:" + appointmentId + ":exam_done"
             );

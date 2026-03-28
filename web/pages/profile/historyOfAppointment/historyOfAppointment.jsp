@@ -13,6 +13,12 @@
         <title>Các cuộc hẹn</title>
         <link rel="stylesheet"
               href="${pageContext.request.contextPath}/pages/profile/historyOfAppointment/historyOfAppointment.css">
+        <style>
+            .appointment-card.highlight-appointment {
+                border: 2px solid #2563eb;
+                box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+            }
+        </style>
     </head>
     <body>
 
@@ -54,7 +60,7 @@
 
                     <div class="appointment-card"
                          onclick="openModal(this)"
-
+                         data-appointment-id="${a.appointmentId}"
                          data-name="${a.fullName}"
                          data-phone="${a.phone}"
                          data-email="${a.email}"
@@ -206,7 +212,27 @@
 
             }
             window.onload = function () {
-                filterStatus('booked');
+                 const highlightedId = '${highlightedAppointmentId}';
+                if (highlightedId && highlightedId !== 'null') {
+                    let found = false;
+                    document.querySelectorAll(".appointment-card").forEach(card => {
+                        if (card.dataset.appointmentId === highlightedId) {
+                            found = true;
+                            card.style.display = "flex";
+                            card.classList.add("highlight-appointment");
+                            card.scrollIntoView({behavior: "smooth", block: "center"});
+                            openModal(card);
+                        } else {
+                            card.style.display = "none";
+                            card.classList.remove("highlight-appointment");
+                        }
+                    });
+                    if (!found) {
+                        filterStatus('booked');
+                    }
+                } else {
+                    filterStatus('booked');
+                }
             };
         </script>
 

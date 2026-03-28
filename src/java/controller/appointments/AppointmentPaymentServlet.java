@@ -5,6 +5,7 @@
 package controller.appointments;
 
 import dal.AppointmentDAO;
+import dal.DoctorDAO;
 import dal.NotificationDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.Appointment;
+import model.Doctor;
 import model.Patient;
 import util.SystemLogService;
 
@@ -67,12 +69,16 @@ public class AppointmentPaymentServlet extends HttpServlet {
         if ("00".equals(code) && "PAID".equals(status)) {
             HttpSession session = request.getSession();
             Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
-            if (appointment != null) {
+             if (appointment != null) {
                 AppointmentDAO dao = new AppointmentDAO();
                 Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
-                dao.addAppointment(appointment);
+                long createdAppointmentId = dao.addAppointmentAndReturnId(appointment);
                 Integer logUserId = (pendingPatient != null && pendingPatient.getUserId() != null) ? pendingPatient.getUserId() : null;
                 String patientName = (pendingPatient != null) ? pendingPatient.getFullName() : "unknown";
+                request.setAttribute("bookedPatientName", patientName);
+                Doctor doctorInfo = new DoctorDAO().getDoctorById(String.valueOf(appointment.getDoctorId()));
+                String doctorName = (doctorInfo != null && doctorInfo.getFullName() != null && !doctorInfo.getFullName().isBlank())
+                        ? doctorInfo.getFullName().trim() : ("Bác sĩ #" + appointment.getDoctorId());
                 SystemLogService.log(logUserId, "APPOINTMENT_BOOKED",
                         "Đặt lịch và thanh toán thành công: patientName=" + patientName
                         + ", doctorId=" + appointment.getDoctorId()
@@ -83,9 +89,9 @@ public class AppointmentPaymentServlet extends HttpServlet {
                     notificationDAO.createNotification(
                             pendingPatient.getUserId(),
                             "Đặt lịch thành công",
-                            "Bạn đã đặt lịch khám thành công. Vui lòng đến đúng giờ hẹn để được phục vụ tốt nhất.",
+                            "Đặt lịch thành công cho bệnh nhân " + patientName + " với " + doctorName + ". Nhấn vào để mở đúng lịch sử cuộc hẹn vừa đặt.",
                             "appointment_booked",
-                            "appointment:booking_success"
+                            "appointment:" + createdAppointmentId + ":booking_success:" + doctorName
                     );
                 }
                 session.removeAttribute("pendingAppointment");

@@ -76,7 +76,20 @@ public class HistoryOfAppointmentServlet extends HttpServlet {
 
         List<AppointmentDetail> list
                 = dao.getAppointmentsByPatientUserId(user.getUserId());
+ Long highlightedAppointmentId = null;
+        String appointmentIdRaw = request.getParameter("appointmentId");
+        if (appointmentIdRaw != null && !appointmentIdRaw.isBlank()) {
+            try {
+                long value = Long.parseLong(appointmentIdRaw);
+                if (value > 0) {
+                    highlightedAppointmentId = value;
+                }
+            } catch (NumberFormatException ex) {
+                highlightedAppointmentId = null;
+            }
+        }
 
+        request.setAttribute("highlightedAppointmentId", highlightedAppointmentId);
         request.setAttribute("appointmentList", list);
 
         request.getRequestDispatcher(
