@@ -140,7 +140,8 @@
                         <p><strong>Họ tên:</strong> <span id="mName"></span></p>
                         <p><strong>SĐT:</strong> <span id="mPhone"></span></p>
                         <p><strong>Email:</strong> <span id="mEmail"></span></p>
-
+                        
+                        
                         <hr>
 
                         <h3>Thông tin cuộc hẹn</h3>
@@ -164,77 +165,86 @@
 
 
         <script>
-            function openModal(card) {
+    let currentStatus = "booked";
+    let currentName = "all";
 
-                document.getElementById("modal").style.display = "flex";
+    function openModal(card) {
+        document.getElementById("modal").style.display = "flex";
 
-                document.getElementById("mName").innerText = card.dataset.name;
-                document.getElementById("mPhone").innerText = card.dataset.phone;
-                document.getElementById("mEmail").innerText = card.dataset.email;
-                document.getElementById("mDate").innerText = card.dataset.date;
-                document.getElementById("mTime").innerText = card.dataset.time;
-                document.getElementById("mDoctor").innerText = card.dataset.doctor;
-                document.getElementById("mSymptom").innerText = card.dataset.symptom;
-                document.getElementById("mPrice").innerText = card.dataset.price;
+        document.getElementById("mName").innerText = card.dataset.name;
+        document.getElementById("mPhone").innerText = card.dataset.phone;
+        document.getElementById("mEmail").innerText = card.dataset.email;
+        document.getElementById("mDate").innerText = card.dataset.date;
+        document.getElementById("mTime").innerText = card.dataset.time;
+        document.getElementById("mDoctor").innerText = card.dataset.doctor;
+        document.getElementById("mSymptom").innerText = card.dataset.symptom;
+        document.getElementById("mPrice").innerText = card.dataset.price;
+    }
+
+    function closeModal() {
+        document.getElementById("modal").style.display = "none";
+    }
+
+    function filterStatus(status) {
+        currentStatus = status;
+        applyFilter();
+    }
+
+    function filterByName() {
+        currentName = document.getElementById("nameSelect").value;
+        applyFilter();
+    }
+
+    function applyFilter() {
+        let cards = document.querySelectorAll(".appointment-card");
+
+        cards.forEach(card => {
+            let cardStatus = card.dataset.status;
+            let cardName = card.dataset.name;
+
+            let matchStatus = (currentStatus === "all" || cardStatus === currentStatus);
+            let matchName = (currentName === "all" || cardName === currentName);
+
+            if (matchStatus && matchName) {
+                card.style.display = "flex";
+            } else {
+                card.style.display = "none";
             }
+        });
+    }
 
-            function closeModal() {
-                document.getElementById("modal").style.display = "none";
-            }
-            function filterStatus(status) {
+    window.onload = function () {
+        const highlightedId = '${highlightedAppointmentId}';
 
-                let cards = document.querySelectorAll(".appointment-card");
+        if (highlightedId && highlightedId !== 'null') {
+            let found = false;
 
-                cards.forEach(card => {
+            document.querySelectorAll(".appointment-card").forEach(card => {
+                if (card.dataset.appointmentId === highlightedId) {
+                    found = true;
 
-                    let cardStatus = card.dataset.status;
+                    currentStatus = "all";
+                    currentName = "all";
 
-                    if (status === "all" || cardStatus === status) {
-                        card.style.display = "flex";
-                    } else {
-                        card.style.display = "none";
-                    }
+                    card.style.display = "flex";
+                    card.classList.add("highlight-appointment");
 
-                });
-
-            }
-            function filterByName() {
-                let selectedName = document.getElementById("nameSelect").value;
-                let cards = document.querySelectorAll(".appointment-card");
-                cards.forEach(card => {
-                    let name = card.dataset.name;
-                    if (selectedName === "all" || name === selectedName) {
-                        card.style.display = "flex";
-                    } else {
-                        card.style.display = "none";
-                    }
-                });
-
-            }
-            window.onload = function () {
-                 const highlightedId = '${highlightedAppointmentId}';
-                if (highlightedId && highlightedId !== 'null') {
-                    let found = false;
-                    document.querySelectorAll(".appointment-card").forEach(card => {
-                        if (card.dataset.appointmentId === highlightedId) {
-                            found = true;
-                            card.style.display = "flex";
-                            card.classList.add("highlight-appointment");
-                            card.scrollIntoView({behavior: "smooth", block: "center"});
-                            openModal(card);
-                        } else {
-                            card.style.display = "none";
-                            card.classList.remove("highlight-appointment");
-                        }
-                    });
-                    if (!found) {
-                        filterStatus('booked');
-                    }
+                    card.scrollIntoView({behavior: "smooth", block: "center"});
+                    openModal(card);
                 } else {
-                    filterStatus('booked');
+                    card.style.display = "none";
+                    card.classList.remove("highlight-appointment");
                 }
-            };
-        </script>
+            });
+
+            if (!found) {
+                applyFilter();
+            }
+        } else {
+            applyFilter(); 
+        }
+    };
+</script>
 
     </body>
 </html>

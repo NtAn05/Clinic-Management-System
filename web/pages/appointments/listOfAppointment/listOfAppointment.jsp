@@ -66,8 +66,7 @@
 
             <div class="stats">
 
-                <span class="badge blue">${list.size()} cuộc</span>
-
+                <span class="badge blue" id="appointmentCount">${list.size()} cuộc</span>
             </div>
 
 
@@ -149,17 +148,17 @@
         </div>
 
         <script>
-
             const dateFilter = document.getElementById("dateFilter");
-            window.onload = function () {
-                const dateFilter = document.getElementById("dateFilter");
-                dateFilter.value = "today"; 
-                filterTable();            
-            };
-            dateFilter.addEventListener("change", filterTable);
             const statusFilter = document.getElementById("statusFilter");
             const searchBox = document.getElementById("searchBox");
 
+            window.onload = function () {
+                statusFilter.value = "booked";
+                dateFilter.value = "today";
+                filterTable();
+            };
+
+            dateFilter.addEventListener("change", filterTable);
             statusFilter.addEventListener("change", filterTable);
             searchBox.addEventListener("keyup", filterTable);
 
@@ -213,15 +212,28 @@
                     row.style.display = show ? "" : "none";
 
                 });
+                updateCount();
 
             }
 
             function clearFilter() {
-
-                statusFilter.value = "today";
+                statusFilter.value = "booked";
+                dateFilter.value = "today";
                 searchBox.value = "";
-                filterTable();
 
+                filterTable();
+            }
+            function updateCount() {
+                let rows = document.querySelectorAll("#appointmentTable tbody tr");
+                let count = 0;
+
+                rows.forEach(row => {
+                    if (row.style.display !== "none") {
+                        count++;
+                    }
+                });
+
+                document.getElementById("appointmentCount").innerText = count + " cuộc";
             }
         </script>
         <jsp:include page="/common/footer.jsp" />

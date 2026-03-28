@@ -65,19 +65,18 @@
                                         <strong>${n.userName}</strong>
                                         <p>${n.note}</p>
                                     </div>
-
-                                    <c:if test="${u.userId == n.user_id}">
+                                    
+                                    <c:if test="${user.userId == n.user_id || roleName == 'admin'}">
                                         <div class="note-actions">
-                                            <form method="get" action="${pageContext.request.contextPath}/ratingdoctorservlet">
-                                                <input type="hidden" name="appointmentId" value="${n.appointment_id}">
-                                                <input type="hidden" name="id" value="${doctor.doctorId}"> 
-                                                <button class="btn-edit">Sửa</button>
-                                            </form>
-                                        </div>
-                                    </c:if>
 
-                                    <c:if test="${sessionScope.roleName == 'admin' || u.userId == n.user_id}">
-                                        <div class="note-actions">
+                                            <c:if test="${user.userId == n.user_id}">
+                                                <form method="get" action="${pageContext.request.contextPath}/ratingdoctorservlet">
+                                                    <input type="hidden" name="appointmentId" value="${n.appointment_id}">
+                                                    <input type="hidden" name="id" value="${doctor.doctorId}"> 
+                                                    <button class="btn-edit">Sửa</button>
+                                                </form>
+                                            </c:if>
+
                                             <form method="post" action="${pageContext.request.contextPath}/listofrating"
                                                   onsubmit="return confirm('Bạn chắc chắn muốn xóa?')">
                                                 <input type="hidden" name="appointmentId" value="${n.appointment_id}">
@@ -85,6 +84,7 @@
                                                 <input type="hidden" name="action" value="delete">
                                                 <button class="btn-delete">Xóa</button>
                                             </form>
+
                                         </div>
                                     </c:if>
                                 </div>

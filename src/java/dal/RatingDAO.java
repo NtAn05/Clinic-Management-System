@@ -147,35 +147,27 @@ public class RatingDAO extends DBContext {
 
     public List<Rating_note> getNotesByDoctor(int doctorId) {
         List<Rating_note> list = new ArrayList<>();
-
-        String sql = "SELECT u.full_name, r.note, r.appointment_id "
+        String sql = "SELECT u.full_name, r.note, r.appointment_id, r.users_id "
                 + "FROM review_answers r "
                 + "JOIN users u ON r.users_id = u.user_id "
                 + "WHERE r.doctor_id = ? "
                 + "AND r.question_id = 5 "
                 + "AND r.note IS NOT NULL AND r.note <> '' "
                 + "ORDER BY r.id DESC";
-
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
             ps.setInt(1, doctorId);
-
             ResultSet rs = ps.executeQuery();
-
             while (rs.next()) {
                 Rating_note n = new Rating_note();
-
                 n.setUserName(rs.getString("full_name"));
                 n.setNote(rs.getString("note"));
                 n.setAppointment_id(rs.getInt("appointment_id"));
-
+                n.setUser_id(rs.getInt("users_id")); // ← THÊM DÒNG NÀY
                 list.add(n);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return list;
     }
 
