@@ -942,7 +942,7 @@
                 if (!base || isNaN(newDay) || isNaN(oldDay)) {
                     return mapApplyDate('', oldDayOfWeek);
                 }
-                const diff = oldDay - newDay;
+                const diff = (oldDay - newDay + 7) % 7;
                 const oldDate = new Date(base);
                 oldDate.setDate(oldDate.getDate() + diff);
                 return formatDateDdMmYyyy(oldDate);

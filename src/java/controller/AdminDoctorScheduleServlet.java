@@ -498,7 +498,24 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             }
         }
 
+        List<ScheduleChangeRequest> permanentRequests = new ArrayList<>();
+        List<ScheduleChangeRequest> temporaryRequests = new ArrayList<>();
         for (ScheduleChangeRequest request : approvedRequests) {
+            String requestType = request.getRequestType() == null ? "" : request.getRequestType().trim().toUpperCase(Locale.ROOT);
+            String scopeType = request.getScopeType() == null ? "" : request.getScopeType().trim().toUpperCase(Locale.ROOT);
+            boolean temporary = "TEMPORARY".equals(requestType) || "ONE_DATE".equals(scopeType);
+            if (temporary) {
+                temporaryRequests.add(request);
+            } else {
+                permanentRequests.add(request);
+            }
+        }
+
+        List<ScheduleChangeRequest> orderedRequests = new ArrayList<>(permanentRequests.size() + temporaryRequests.size());
+        orderedRequests.addAll(permanentRequests);
+        orderedRequests.addAll(temporaryRequests);
+
+        for (ScheduleChangeRequest request : orderedRequests) {
             String requestType = request.getRequestType() == null ? "" : request.getRequestType().trim().toUpperCase(Locale.ROOT);
             String scopeType = request.getScopeType() == null ? "" : request.getScopeType().trim().toUpperCase(Locale.ROOT);
             boolean temporary = "TEMPORARY".equals(requestType) || "ONE_DATE".equals(scopeType);
@@ -550,14 +567,59 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             }
 
             if ("UPDATE".equals(actionType)) {
+                Integer counterpartDoctorId = findDoctorIdByName(doctorIdByName, request.getNewDoctorName());
+                Doctor counterpart = counterpartDoctorId == null ? null : doctorById.get(counterpartDoctorId);
+
+                if (!temporary) {
+                    LocalDate effectiveFrom = request.getRequestedAt() == null
+                            ? LocalDate.MIN
+                            : request.getRequestedAt().toLocalDateTime().toLocalDate().plusDays(1);
+                    if (oldDate.isBefore(effectiveFrom) || newDate.isBefore(effectiveFrom)) {
+                        continue;
+                    }
+
+                    boolean requesterHasBooked = requestDAO.hasAppointmentsForDoctorInTimeWindow(
+                            request.getDoctorId(),
+                            java.sql.Date.valueOf(oldDate),
+                            request.getOldStartTime(),
+                            request.getOldEndTime()
+                    );
+                    boolean counterpartHasBooked = counterpartDoctorId != null
+                            && requestDAO.hasAppointmentsForDoctorInTimeWindow(
+                                    counterpartDoctorId,
+                                    java.sql.Date.valueOf(newDate),
+                                    request.getStartTime(),
+                                    request.getEndTime()
+                            );
+
+                    if (requesterHasBooked || counterpartHasBooked) {
+                        if (!newShiftCode.isEmpty()) {
+                            removeShift(scheduleItems, request.getDoctorId(), newDate, newShiftCode);
+                        }
+                        if (!oldShiftCode.isEmpty()) {
+                            addOverlayShift(scheduleItems, requester, oldDate,
+                                    request.getOldStartTime(), request.getOldEndTime(), request.getMaxPatients(), false);
+                        }
+
+                        if (counterpart != null) {
+                            if (!oldShiftCode.isEmpty()) {
+                                removeShift(scheduleItems, counterpartDoctorId, oldDate, oldShiftCode);
+                            }
+                            if (!newShiftCode.isEmpty()) {
+                                addOverlayShift(scheduleItems, counterpart, newDate,
+                                        request.getStartTime(), request.getEndTime(), request.getMaxPatients(), false);
+                            }
+                        }
+                        continue;
+                    }
+                }
+
                 if (!oldShiftCode.isEmpty()) {
                     removeShift(scheduleItems, request.getDoctorId(), oldDate, oldShiftCode);
                 }
                 addOverlayShift(scheduleItems, requester, newDate,
                         request.getStartTime(), request.getEndTime(), request.getMaxPatients(), temporary);
 
-                Integer counterpartDoctorId = findDoctorIdByName(doctorIdByName, request.getNewDoctorName());
-                Doctor counterpart = counterpartDoctorId == null ? null : doctorById.get(counterpartDoctorId);
                 if (counterpart != null) {
                     if (!newShiftCode.isEmpty()) {
                         removeShift(scheduleItems, counterpartDoctorId, newDate, newShiftCode);

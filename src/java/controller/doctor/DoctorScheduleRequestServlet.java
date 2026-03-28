@@ -12,8 +12,10 @@ import java.io.PrintWriter;
 import java.sql.Date;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import model.Doctor;
@@ -122,14 +124,12 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             error = "Vui lòng chọn ngày áp dụng cho yêu cầu tạm thời.";
         }
         if (error == null && "ONE_DATE".equals(scopeType) && workDate != null
-                && !workDate.toLocalDate().isAfter(LocalDate.now())) {
-            error = "Ngày áp dụng phải từ ngày mai trở đi.";
+                && workDate.toLocalDate().isBefore(LocalDate.now())) {
+            error = "Chỉ áp dụng từ ngày hôm nay trở đi.";
         }
-
-        if (error == null && "WEEKLY_TEMPLATE".equals(scopeType)
-                && ("ADD".equals(actionType) || "UPDATE".equals(actionType))
-                && dayOfWeek == null) {
-            error = "Vui lòng chọn thứ áp dụng cho yêu cầu thay đổi lịch tuần.";
+        if (error == null && "ONE_DATE".equals(scopeType) && "UPDATE".equals(actionType) && workDate != null
+                && workDate.toLocalDate().isAfter(LocalDate.now().plusWeeks(2))) {
+            error = "Chỉ đổi được ca trong tối đa 2 tuần tới.";
         }
 
         if (error == null && "ADD".equals(actionType)) {
@@ -146,6 +146,16 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 error = "Vui lòng chọn ca cần hủy (sáng/chiều).";
             } else if (workDate != null) {
                 dayOfWeek = normalizeDayOfWeek(workDate.toLocalDate().getDayOfWeek());
+                Integer removeShiftId = scheduleDAO.findActiveShiftIdByDoctorDayAndTime(
+                        doctor.getDoctorId(),
+                        dayOfWeek,
+                        startTime,
+                        endTime
+                );
+                if (removeShiftId != null
+                        && scheduleDAO.hasAppointmentsForShiftOnDate(removeShiftId, workDate)) {
+                    error = "Không thể hủy ca đã có lịch hẹn.";
+                }
             }
         }
 
@@ -165,28 +175,51 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
             error = "Vui lòng chọn ca gốc cần cập nhật hoặc hủy.";
         }
 
-        if (error == null && targetShiftId != null
-                && !scheduleDAO.isShiftOwnedByDoctor(targetShiftId, doctor.getDoctorId())) {
-            error = "Ca gốc không thuộc lịch làm việc của bạn.";
-        }
-
-        if (error == null && "UPDATE".equals(actionType) && targetShiftId != null) {
-            if ("ONE_DATE".equals(scopeType) && workDate != null
-                    && scheduleDAO.hasAppointmentsForShiftOnDate(targetShiftId, workDate)) {
-                error = "Ca gốc đã có lịch hẹn trong ngày này nên không thể đổi.";
-            }
-            if (error == null && "WEEKLY_TEMPLATE".equals(scopeType)
-                    && scheduleDAO.hasAnyAppointmentsForShift(targetShiftId)) {
-                error = "Ca gốc đã có lịch hẹn, không thể gửi yêu cầu đổi ca dài hạn.";
+        DoctorShift currentShift = null;
+        if (error == null && targetShiftId != null) {
+            currentShift = scheduleDAO.getDoctorShiftById(targetShiftId);
+            if (currentShift == null || currentShift.getDoctorId() != doctor.getDoctorId()) {
+                error = "Ca gốc không thuộc lịch làm việc của bạn.";
             }
         }
 
         if (error == null && "REMOVE".equals(actionType)
                 && "WEEKLY_TEMPLATE".equals(scopeType) && targetShiftId != null) {
-            DoctorShift currentShift = scheduleDAO.getDoctorShiftById(targetShiftId);
             if (currentShift != null) {
                 dayOfWeek = currentShift.getDayOfWeek();
+                if (scheduleDAO.hasAnyAppointmentsForShift(targetShiftId)) {
+                    error = "Không thể hủy ca đã có lịch hẹn.";
+                }
             }
+        }
+
+        if (error == null && "ONE_DATE".equals(scopeType) && workDate != null
+                && currentShift != null && ("UPDATE".equals(actionType) || "REMOVE".equals(actionType))) {
+            int workDateDay = normalizeDayOfWeek(workDate.toLocalDate().getDayOfWeek());
+            DoctorScheduleDAO.EffectiveShiftState currentEffective = scheduleDAO.getEffectiveShiftStateForDate(
+                    currentShift.getShiftId(),
+                    workDate
+            );
+            int currentEffectiveDay = currentEffective != null ? currentEffective.getDayOfWeek() : currentShift.getDayOfWeek();
+            LocalTime currentEffectiveStart = currentEffective != null ? currentEffective.getStartTime() : currentShift.getStartTime();
+            LocalDate sourceShiftDate = resolveShiftDateForOneDateRequest(
+                    workDate.toLocalDate(),
+                    workDateDay,
+                    currentEffectiveDay
+            );
+            if (error == null && "UPDATE".equals(actionType)
+                    && sourceShiftDate.isAfter(LocalDate.now().plusWeeks(2))) {
+                error = "Chỉ được đổi ca trong tối đa 2 tuần tới.";
+            }
+            if (hasShiftStarted(sourceShiftDate, currentEffectiveStart)) {
+                error = "Chỉ được đổi/hủy ca trước giờ bắt đầu ca gốc.";
+            }
+        }
+
+        if (error == null && "ONE_DATE".equals(scopeType) && workDate != null
+                && "REMOVE".equals(actionType) && startTime != null
+                && hasShiftStarted(workDate.toLocalDate(), startTime)) {
+            error = "Chỉ được đổi/hủy ca trước giờ bắt đầu ca gốc.";
         }
 
         if (error == null && "UPDATE".equals(actionType)) {
@@ -198,16 +231,36 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 if (swapShift.getDoctorId() == doctor.getDoctorId()) {
                     error = "Bạn chỉ có thể chọn ca của bác sĩ khác.";
                 } else if ("ONE_DATE".equals(scopeType)) {
-                    if (swapShift.getDayOfWeek() != workDateDay) {
+                    DoctorScheduleDAO.EffectiveShiftState swapEffective = scheduleDAO.getEffectiveShiftStateForDate(
+                            swapShift.getShiftId(),
+                            workDate
+                    );
+                    int swapEffectiveDay = swapEffective != null ? swapEffective.getDayOfWeek() : swapShift.getDayOfWeek();
+                    LocalTime swapEffectiveStart = swapEffective != null ? swapEffective.getStartTime() : swapShift.getStartTime();
+                    if (swapEffectiveDay != workDateDay) {
                         error = "Ca được chọn không nằm trong ngày áp dụng.";
-                    } else if (scheduleDAO.hasAppointmentsForShiftOnDate(swapShiftId, workDate)) {
-                        error = "Ca bác sĩ muốn đổi đã có lịch hẹn trong ngày này nên không thể đổi.";
+                    } else if (hasShiftStarted(workDate.toLocalDate(), swapEffectiveStart)) {
+                        error = "Chỉ được đổi ca trước giờ bắt đầu ca.";
+                    } else {
+                        DoctorScheduleDAO.EffectiveShiftState currentEffectiveForSwap = (currentShift == null || workDate == null)
+                                ? null
+                                : scheduleDAO.getEffectiveShiftStateForDate(currentShift.getShiftId(), workDate);
+                        LocalDate sourceShiftDate = resolveShiftDateForOneDateRequest(
+                                workDate.toLocalDate(),
+                                workDateDay,
+                                currentEffectiveForSwap != null ? currentEffectiveForSwap.getDayOfWeek()
+                                        : (currentShift != null ? currentShift.getDayOfWeek() : workDateDay)
+                        );
+                        boolean sourceHasAppointment = targetShiftId != null
+                                && scheduleDAO.hasAppointmentsForShiftOnDate(targetShiftId, Date.valueOf(sourceShiftDate));
+                        boolean swapHasAppointment = scheduleDAO.hasAppointmentsForShiftOnDate(swapShiftId, workDate);
+                        if (sourceHasAppointment || swapHasAppointment) {
+                            error = "Không thể đổi ca tạm thời nếu 1 trong 2 ca đã có lịch hẹn";
+                        }
                     }
                 } else if ("WEEKLY_TEMPLATE".equals(scopeType)) {
                     if (swapShift.getDayOfWeek() != dayOfWeek) {
                         error = "Ca được chọn không nằm trong thứ áp dụng.";
-                    } else if (scheduleDAO.hasAnyAppointmentsForShift(swapShiftId)) {
-                        error = "Ca bác sĩ muốn đổi đã có lịch hẹn, không thể đổi dài hạn.";
                     }
                 } else {
                     error = "Phạm vi đổi ca không hợp lệ.";
@@ -220,7 +273,6 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                         dayOfWeek = workDateDay;
                     }
                     if (targetShiftId != null) {
-                        DoctorShift currentShift = scheduleDAO.getDoctorShiftById(targetShiftId);
                         if (currentShift != null) {
                             maxPatients = currentShift.getMaxPatients();
                         }
@@ -317,9 +369,9 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
     private void writeSwapOptionsResponse(HttpServletRequest request, HttpServletResponse response,
             int requesterDoctorId) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
+        Date workDate = parseDate(request.getParameter("workDate"));
         Integer dayOfWeek = parseInteger(request.getParameter("dayOfWeek"));
         if (dayOfWeek == null) {
-            Date workDate = parseDate(request.getParameter("workDate"));
             if (workDate != null) {
                 dayOfWeek = normalizeDayOfWeek(workDate.toLocalDate().getDayOfWeek());
             }
@@ -332,7 +384,25 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
         }
 
         DoctorScheduleDAO requestDAO = new DoctorScheduleDAO();
-        List<ScheduleSwapShiftOption> options = requestDAO.getSwapShiftOptionsByDate(requesterDoctorId, dayOfWeek);
+        List<ScheduleSwapShiftOption> options;
+        if (workDate != null) {
+            Map<Integer, ScheduleSwapShiftOption> optionByShiftId = new LinkedHashMap<>();
+            for (int d = 0; d <= 6; d++) {
+                List<ScheduleSwapShiftOption> dayOptions = requestDAO.getSwapShiftOptionsByDate(requesterDoctorId, d);
+                for (ScheduleSwapShiftOption option : dayOptions) {
+                    DoctorScheduleDAO.EffectiveShiftState state = requestDAO.getEffectiveShiftStateForDate(option.getShiftId(), workDate);
+                    if (state != null && state.getDayOfWeek() == dayOfWeek) {
+                        option.setDayOfWeek(state.getDayOfWeek());
+                        option.setStartTime(state.getStartTime());
+                        option.setEndTime(state.getEndTime());
+                        optionByShiftId.putIfAbsent(option.getShiftId(), option);
+                    }
+                }
+            }
+            options = List.copyOf(optionByShiftId.values());
+        } else {
+            options = requestDAO.getSwapShiftOptionsByDate(requesterDoctorId, dayOfWeek);
+        }
 
         try (PrintWriter out = response.getWriter()) {
             out.write("[");
@@ -354,6 +424,19 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
 
     private int normalizeDayOfWeek(DayOfWeek dayOfWeek) {
         return dayOfWeek == DayOfWeek.SUNDAY ? 0 : dayOfWeek.getValue();
+    }
+
+    private boolean hasShiftStarted(LocalDate workDate, LocalTime shiftStartTime) {
+        if (workDate == null || shiftStartTime == null) {
+            return false;
+        }
+        LocalDateTime shiftStart = LocalDateTime.of(workDate, shiftStartTime);
+        return !LocalDateTime.now().isBefore(shiftStart);
+    }
+
+    private LocalDate resolveShiftDateForOneDateRequest(LocalDate selectedDate, int selectedDayOfWeek, int shiftDayOfWeek) {
+        int dayOffset = (shiftDayOfWeek - selectedDayOfWeek + 7) % 7;
+        return selectedDate.plusDays(dayOffset);
     }
 
     private String getDayLabel(int dayOfWeek) {
@@ -387,3 +470,9 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                 .replace("\r", "\\r");
     }
 }
+
+
+
+
+
+
