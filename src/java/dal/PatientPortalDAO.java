@@ -397,7 +397,7 @@ public class PatientPortalDAO extends DBContext {
         }
     }
 
-    public int addPatient(Patient patient) {
+    public long addPatient(Patient patient) {
 
         String sql = "INSERT INTO patients (user_id, full_name, phone, dob, email, gender) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -427,7 +427,7 @@ public class PatientPortalDAO extends DBContext {
 
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) {
-                return rs.getInt(1);
+                return rs.getLong(1);
             }
 
         } catch (Exception e) {

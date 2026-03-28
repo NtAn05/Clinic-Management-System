@@ -122,16 +122,14 @@ public class PatientsServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-
         User user = (User) session.getAttribute("account");
 
         if (user == null) {
             response.sendRedirect(request.getContextPath() + "/pages/auth/login.jsp");
             return;
         }
-        String userID = request.getParameter("userID");
-        int useId = Integer.parseInt(userID);
 
+        String userID = request.getParameter("userID");
         String patientID = request.getParameter("patientID");
         String DoctorID = request.getParameter("DoctorID");
         String sdt = request.getParameter("sdt").trim();
@@ -139,6 +137,8 @@ public class PatientsServlet extends HttpServlet {
         String email = request.getParameter("email").trim();
         String gender = request.getParameter("gender");
         String dateofbirth = request.getParameter("dateofbirth");
+
+        int useId = Integer.parseInt(userID);
 
         LocalDate localDate = null;
         Date birthDate = null;
@@ -154,24 +154,20 @@ public class PatientsServlet extends HttpServlet {
         String errorName = "";
         String errorEmail = "";
         String errorDOB = "";
-
         boolean valid = true;
 
         if (!checkPhone(sdt)) {
             errorPhone = "Phone must form 0xxx xxx xxx (10 numbers)";
             valid = false;
         }
-
         if (!checkEmail(email)) {
             errorEmail = "abc@xxx.com";
             valid = false;
         }
-
         if (!checkName(name)) {
             errorName = "Name not null";
             valid = false;
         }
-
         if (!checkDOB(localDate)) {
             errorDOB = "Date of birth must be between 1980 and today";
             valid = false;
@@ -179,18 +175,28 @@ public class PatientsServlet extends HttpServlet {
 
         PatientPortalDAO dao = new PatientPortalDAO();
         request.setAttribute("DoctorID", DoctorID);
+
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-        patient.setPatientId(-1);
-        int newPatientId;
+
+        if (patientID != null && !patientID.isEmpty()) {
+            try {
+                patient.setPatientId(Long.parseLong(patientID));
+            } catch (NumberFormatException e) {
+                patient.setPatientId(-1L);
+            }
+        } else {
+            patient.setPatientId(-1L);
+        }
+
         if (valid) {
-
             if ("edit".equals(submit)) {
-                dao.editPatient(patientID, patient);
+                if (patientID != null && !patientID.isEmpty()) {
+                    dao.editPatient(patientID, patient);
+                }
             } else {
-                newPatientId = dao.addPatient(patient);
+                long newPatientId = dao.addPatient(patient);
 
-                if ("receptionist".equals(user.getRole().toString())) {
-
+                if ("receptionist".equals(user.getRole())) {
                     response.sendRedirect(request.getContextPath()
                             + "/appointmentservlet?doctor=" + DoctorID
                             + "&patientid=" + newPatientId);
@@ -198,13 +204,14 @@ public class PatientsServlet extends HttpServlet {
                 }
             }
             response.sendRedirect(request.getContextPath() + "/createpatientsservlet?DoctorID=" + DoctorID);
+
         } else {
+            // Trả lại form với lỗi, giữ nguyên patientId để JSP biết đang edit hay tạo mới
             request.setAttribute("errorPhone", errorPhone);
             request.setAttribute("errorEmail", errorEmail);
             request.setAttribute("errorName", errorName);
             request.setAttribute("errorDOB", errorDOB);
             request.setAttribute("patient", patient);
-
             request.setAttribute("dob", request.getParameter("dateofbirth"));
 
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
