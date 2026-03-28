@@ -1207,12 +1207,11 @@ public class DoctorDAO extends DBContext {
                     connection.rollback();
                     return 0;
                 }
+                if (!ensureLabPaymentPendingTx(appointmentId, requestId)) {
+                    connection.rollback();
+                    return 0;
+                }
                 createdCount++;
-            }
-
-            if (!ensureLabPaymentPendingTx(appointmentId)) {
-                connection.rollback();
-                return 0;
             }
 
             deleteAppointmentFromExamQueueTx(appointmentId, deleteQueueSql);
@@ -1325,10 +1324,10 @@ public class DoctorDAO extends DBContext {
      * Táº¡o payment pending cho xÃ©t nghiá»‡m ngay khi bÃ¡c sÄ© chá»‰ Ä‘á»‹nh.
      * Náº¿u payment Ä‘Ã£ tá»“n táº¡i cho appointment nÃ y thÃ¬ giá»¯ nguyÃªn vÃ  coi nhÆ° thÃ nh cÃ´ng.
      */
-    private boolean ensureLabPaymentPendingTx(long appointmentId) throws SQLException {
-        String checkPaymentSql = "SELECT payment_id FROM payments WHERE appointment_id = ? LIMIT 1";
+    private boolean ensureLabPaymentPendingTx(long appointmentId, int labRequestId) throws SQLException {
+        String checkPaymentSql = "SELECT payment_id FROM payments WHERE lab_request_id = ? LIMIT 1";
         try (PreparedStatement check = connection.prepareStatement(checkPaymentSql)) {
-            check.setLong(1, appointmentId);
+            check.setInt(1, labRequestId);
             try (ResultSet rs = check.executeQuery()) {
                 if (rs.next()) {
                     return true;
@@ -1346,10 +1345,11 @@ public class DoctorDAO extends DBContext {
             }
         }
 
-        String insertPaymentSql = "INSERT INTO payments (appointment_id, amount, method, status, created_at) VALUES (?, ?, 'cash', 'pending', NOW())";
+        String insertPaymentSql = "INSERT INTO payments (appointment_id, lab_request_id, amount, method, status, created_at) VALUES (?, ?, ?, 'cash', 'pending', NOW())";
         try (PreparedStatement ins = connection.prepareStatement(insertPaymentSql)) {
             ins.setLong(1, appointmentId);
-            ins.setBigDecimal(2, labPrice);
+            ins.setInt(2, labRequestId);
+            ins.setBigDecimal(3, labPrice);
             return ins.executeUpdate() > 0;
         }
     }

@@ -19,7 +19,7 @@ CREATE TABLE users (
    email VARCHAR(100) NULL,
    image_url VARCHAR(255) NULL,
    password_hash VARCHAR(255) NOT NULL,
-   role ENUM('patient','doctor','receptionist','technician','admin') NOT NULL,
+   role ENUM('patient','doctor','receptionist','technician','admin','patient_manager') NOT NULL,
    status ENUM('active','inactive') DEFAULT 'active',
    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -51,15 +51,35 @@ CREATE TABLE doctors (
    doctor_id INT AUTO_INCREMENT PRIMARY KEY,
    user_id INT NOT NULL,
    specialization VARCHAR(100) NOT NULL,
-   qualification VARCHAR(255),
-   experience_years INT,
+   experience_years INT NULL,
+   academic_title ENUM('professor','associate_professor') NULL,
+   professional_qualification ENUM('resident_doctor','specialist_level_1','specialist_level_2') NULL,
    rating DECIMAL(2,1) DEFAULT 0.0,
    price_booking DECIMAL(10,2) DEFAULT 0,
+   CONSTRAINT fk_doctors_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+       ON UPDATE CASCADE ON DELETE RESTRICT,
+   CONSTRAINT uq_doctors_user UNIQUE (user_id),
+   CONSTRAINT chk_doctors_experience CHECK (experience_years IS NULL OR experience_years BETWEEN 0 AND 60)
+);
+
+CREATE INDEX idx_doctors_specialization ON doctors (specialization);
+CREATE INDEX idx_doctors_prof_qualification ON doctors (professional_qualification);
+
+CREATE TABLE staff_profiles (
+   staff_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+   user_id INT NOT NULL,
+   academic_degree ENUM('bachelor','master','doctorate') NULL,
    dob DATE NULL,
    gender ENUM('male','female','other') NULL,
-   CONSTRAINT fk_doctors_user FOREIGN KEY (user_id) REFERENCES users(user_id)
-       ON UPDATE CASCADE ON DELETE RESTRICT
+   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+   CONSTRAINT uq_staff_profiles_user UNIQUE (user_id),
+   CONSTRAINT fk_staff_profiles_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+       ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+CREATE INDEX idx_staff_profiles_academic_degree ON staff_profiles (academic_degree);
+CREATE INDEX idx_staff_profiles_gender ON staff_profiles (gender);
 
 CREATE TABLE doctor_shifts (
    shift_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -152,12 +172,14 @@ CREATE TABLE appointments (
 CREATE TABLE payments (
    payment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
    appointment_id BIGINT NOT NULL,
+   lab_request_id INT NULL,
    amount DECIMAL(12,2) NOT NULL,
    method ENUM('cash','online') NOT NULL,
    transaction_id VARCHAR(255),
    status ENUM('pending','paid','failed') NOT NULL,
    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-   FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id)
+   CONSTRAINT fk_payments_appointment FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id)
+       ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- =========================================================
@@ -234,6 +256,10 @@ CREATE TABLE lab_results (
    FOREIGN KEY (technician_id) REFERENCES users(user_id)
 );
 
+ALTER TABLE payments
+ADD CONSTRAINT fk_payments_lab_request FOREIGN KEY (lab_request_id) REFERENCES lab_requests(request_id)
+    ON UPDATE CASCADE ON DELETE SET NULL;
+
 -- =========================================================
 -- 10) SYSTEM
 -- =========================================================
@@ -287,37 +313,72 @@ CREATE TABLE review_answers (
     FOREIGN KEY (question_id) REFERENCES rating_questions(id)
 );
 
+
+DROP TRIGGER IF EXISTS trg_staff_profiles_bi_role_guard;
+DELIMITER //
+CREATE TRIGGER trg_staff_profiles_bi_role_guard
+BEFORE INSERT ON staff_profiles
+FOR EACH ROW
+BEGIN
+   DECLARE v_role VARCHAR(30);
+   SELECT role INTO v_role FROM users WHERE user_id = NEW.user_id;
+
+   IF v_role IS NULL THEN
+       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid user_id for staff_profiles';
+   END IF;
+
+   IF v_role NOT IN ('doctor', 'receptionist', 'technician', 'patient_manager') THEN
+       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Only internal staff roles can have staff_profiles';
+   END IF;
+END//
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS trg_staff_profiles_bu_role_guard;
+DELIMITER //
+CREATE TRIGGER trg_staff_profiles_bu_role_guard
+BEFORE UPDATE ON staff_profiles
+FOR EACH ROW
+BEGIN
+   DECLARE v_role VARCHAR(30);
+   SELECT role INTO v_role FROM users WHERE user_id = NEW.user_id;
+
+   IF v_role IS NULL THEN
+       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid user_id for staff_profiles';
+   END IF;
+
+   IF v_role NOT IN ('doctor', 'receptionist', 'technician', 'patient_manager') THEN
+       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Only internal staff roles can have staff_profiles';
+   END IF;
+END//
+DELIMITER ;
+
+DROP VIEW IF EXISTS vw_doctors_admin;
+CREATE VIEW vw_doctors_admin AS
+SELECT
+   d.doctor_id,
+   d.user_id,
+   u.full_name,
+   u.phone,
+   u.email,
+   u.status AS user_status,
+   d.specialization,
+   d.experience_years,
+   d.academic_title,
+   d.professional_qualification,
+   sp.academic_degree,
+   sp.dob,
+   sp.gender,
+   d.price_booking,
+   d.rating
+FROM doctors d
+JOIN users u ON u.user_id = d.user_id
+LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id
+WHERE u.role = 'doctor';
+
 -- =========================================================
--- 13) ALTER ROLE
+-- SAMPLE DATA
 -- =========================================================
-ALTER TABLE users
-MODIFY COLUMN role ENUM(
-    'patient',
-    'doctor',
-    'receptionist',
-    'technician',
-    'admin',
-    'patient_manager'
-) NOT NULL;
 
-
-ALTER TABLE doctors
-DROP COLUMN specialization,
-DROP COLUMN qualification,
-DROP COLUMN experience_years;
-
-ALTER TABLE payments
-ADD COLUMN lab_request_id INT NULL,
-ADD CONSTRAINT fk_payments_lab_request FOREIGN KEY (lab_request_id) REFERENCES lab_requests(request_id);
-
-
-
--- =========================================================
--- SAMPLE DATA — adjusted for new schema
--- Changes vs dbase.sql:
---   - doctors: removed specialization, qualification, experience_years columns
---   - review_answers: added appointment_id and note columns
--- =========================================================
 
 USE clinic_management;
 
@@ -363,18 +424,47 @@ INSERT INTO patients (patient_id, user_id, full_name, phone, dob, address, email
 (12,NULL,'Doan Thi Yen','0911000012','1970-05-19','Da Nang','yen.doan@clinic.local','female');
 
 -- =========================================================
--- DOCTORS  (specialization / qualification / experience_years removed)
+-- DOCTORS
 -- =========================================================
-INSERT INTO doctors (doctor_id, user_id, rating, price_booking, dob, gender) VALUES
-(1,4,4.8,200000,'1985-06-20','male'),
-(2,5,4.6,200000,'1988-03-14','female'),
-(3,6,4.7,300000,'1989-09-01','male'),
-(4,7,4.5,300000,'1984-11-23','male'),
-(5,11,4.4,200000,'1990-12-12','female'),
-(6,12,4.6,400000,'1987-02-02','female'),
-(7,13,4.3,200000,'1992-05-10','female'),
-(8,14,4.2,200000,'1993-07-21','male'),
-(9,15,4.9,300000,'1980-01-15','male');
+INSERT INTO doctors (doctor_id, user_id, specialization, experience_years, academic_title, professional_qualification, rating, price_booking) VALUES
+(1,4,'Điều trị mụn',11,NULL,'specialist_level_1',4.8,200000),
+(2,5,'Da liễu tổng quát',9,NULL,'specialist_level_1',4.6,200000),
+(3,6,'Da liễu nhiễm trùng',8,NULL,'specialist_level_2',4.7,300000),
+(4,7,'Da liễu dị ứng',12,NULL,'specialist_level_2',4.5,300000),
+(5,11,'Da liễu dị ứng',7,NULL,'resident_doctor',4.4,200000),
+(6,12,'Da liễu tổng quát',10,'associate_professor',NULL,4.6,400000),
+(7,13,'Da liễu tổng quát',6,NULL,'specialist_level_1',4.3,200000),
+(8,14,'Điều trị mụn',5,NULL,'resident_doctor',4.2,200000),
+(9,15,'Da liễu nhiễm trùng',14,NULL,'specialist_level_2',4.9,300000);
+
+INSERT INTO staff_profiles (user_id, academic_degree, dob, gender) VALUES
+(4,'master','1985-06-20','male'),
+(5,'master','1988-03-14','female'),
+(6,'doctorate','1989-09-01','male'),
+(7,'doctorate','1984-11-23','male'),
+(11,'master','1990-12-12','female'),
+(12,NULL,'1987-02-02','female'),
+(13,'master','1992-05-10','female'),
+(14,'master','1993-07-21','male'),
+(15,'doctorate','1980-01-15','male');
+
+INSERT INTO staff_profiles (user_id, academic_degree, dob, gender)
+SELECT u.user_id, 'bachelor', '1994-08-15', 'female'
+FROM users u
+WHERE u.role = 'receptionist'
+  AND NOT EXISTS (SELECT 1 FROM staff_profiles sp WHERE sp.user_id = u.user_id);
+
+INSERT INTO staff_profiles (user_id, academic_degree, dob, gender)
+SELECT u.user_id, 'bachelor', '1992-03-10', 'male'
+FROM users u
+WHERE u.role = 'technician'
+  AND NOT EXISTS (SELECT 1 FROM staff_profiles sp WHERE sp.user_id = u.user_id);
+
+INSERT INTO staff_profiles (user_id, academic_degree, dob, gender)
+SELECT u.user_id, 'bachelor', '1990-11-20', 'female'
+FROM users u
+WHERE u.role = 'patient_manager'
+  AND NOT EXISTS (SELECT 1 FROM staff_profiles sp WHERE sp.user_id = u.user_id);
 
 -- =========================================================
 -- DOCTOR SHIFTS
@@ -452,22 +542,22 @@ INSERT INTO appointments (appointment_id, patient_id, doctor_id, shift_id, booki
 -- =========================================================
 -- PAYMENTS
 -- =========================================================
-INSERT INTO payments (appointment_id, amount, method, transaction_id, status, created_at) VALUES
-(1,250000,'online','TXN-0001','paid','2026-02-28 09:01:00'),
-(2,250000,'online','TXN-0002','paid','2026-03-07 08:51:00'),
-(3,210000,'online','TXN-0003','paid','2026-03-01 10:21:00'),
-(4,210000,'online','TXN-0004','pending','2026-03-08 11:01:00'),
-(5,220000,'cash',NULL,'paid','2026-03-04 08:12:00'),
-(6,220000,'online','TXN-0006','pending','2026-03-09 14:16:00'),
-(7,260000,'online','TXN-0007','paid','2026-03-03 09:31:00'),
-(8,260000,'online','TXN-0008','paid','2026-03-10 16:01:00'),
-(9,210000,'online','TXN-0009','failed','2026-03-06 07:31:00'),
-(10,200000,'online','TXN-0010','paid','2026-03-01 13:02:00'),
-(11,200000,'online','TXN-0011','pending','2026-03-15 10:01:00'),
-(12,230000,'cash',NULL,'paid','2026-03-04 08:05:00'),
-(13,230000,'online','TXN-0013','paid','2026-03-06 12:01:00'),
-(14,250000,'online','TXN-0014','paid','2026-03-04 09:11:00'),
-(15,220000,'online','TXN-0015','paid','2026-03-04 10:01:00');
+INSERT INTO payments (appointment_id, lab_request_id, amount, method, transaction_id, status, created_at) VALUES
+(1,NULL,250000,'online','TXN-0001','paid','2026-02-28 09:01:00'),
+(2,NULL,250000,'online','TXN-0002','paid','2026-03-07 08:51:00'),
+(3,NULL,210000,'online','TXN-0003','paid','2026-03-01 10:21:00'),
+(4,NULL,210000,'online','TXN-0004','pending','2026-03-08 11:01:00'),
+(5,NULL,220000,'cash',NULL,'paid','2026-03-04 08:12:00'),
+(6,NULL,220000,'online','TXN-0006','pending','2026-03-09 14:16:00'),
+(7,NULL,260000,'online','TXN-0007','paid','2026-03-03 09:31:00'),
+(8,NULL,260000,'online','TXN-0008','paid','2026-03-10 16:01:00'),
+(9,NULL,210000,'online','TXN-0009','failed','2026-03-06 07:31:00'),
+(10,NULL,200000,'online','TXN-0010','paid','2026-03-01 13:02:00'),
+(11,NULL,200000,'online','TXN-0011','pending','2026-03-15 10:01:00'),
+(12,NULL,230000,'cash',NULL,'paid','2026-03-04 08:05:00'),
+(13,NULL,230000,'online','TXN-0013','paid','2026-03-06 12:01:00'),
+(14,NULL,250000,'online','TXN-0014','paid','2026-03-04 09:11:00'),
+(15,NULL,220000,'online','TXN-0015','paid','2026-03-04 10:01:00');
 
 -- =========================================================
 -- MEDICAL RECORDS
@@ -618,7 +708,8 @@ INSERT INTO rating_questions (question_text) VALUES
 ('Thái độ của bác sĩ có thân thiện không?'),
 ('Bác sĩ giải thích bệnh có dễ hiểu không?'),
 ('Bác sĩ có lắng nghe bệnh nhân không?'),
-('Thời gian khám có hợp lý không?');
+('Thời gian khám có hợp lý không?'),
+('Nhận xét về bác sĩ (note):');
 
 -- review_answers now includes appointment_id and note columns
 INSERT INTO review_answers (question_id, rating, users_id, doctor_id, appointment_id, note) VALUES
@@ -819,3 +910,4 @@ ALTER TABLE lab_requests AUTO_INCREMENT = 3000;
 ALTER TABLE schedule_change_requests AUTO_INCREMENT = 2000;
 ALTER TABLE schedule_change_request_items AUTO_INCREMENT = 5000;
 ALTER TABLE doctor_shift_overrides AUTO_INCREMENT = 5000;
+
