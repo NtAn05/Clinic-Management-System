@@ -122,13 +122,15 @@ CREATE TABLE schedule_change_request_items (
    request_id BIGINT UNSIGNED NOT NULL,
    action_type ENUM('ADD','UPDATE','REMOVE') NOT NULL,
    target_shift_id INT NULL,
+   swap_shift_id INT NULL,
    work_date DATE NULL,
    day_of_week TINYINT NULL,
    start_time TIME NULL,
    end_time TIME NULL,
    max_patients INT NULL,
    FOREIGN KEY (request_id) REFERENCES schedule_change_requests(request_id),
-   FOREIGN KEY (target_shift_id) REFERENCES doctor_shifts(shift_id)
+   FOREIGN KEY (target_shift_id) REFERENCES doctor_shifts(shift_id),
+   FOREIGN KEY (swap_shift_id) REFERENCES doctor_shifts(shift_id)
 );
 
 CREATE TABLE doctor_shift_overrides (
@@ -910,4 +912,3 @@ ALTER TABLE lab_requests AUTO_INCREMENT = 3000;
 ALTER TABLE schedule_change_requests AUTO_INCREMENT = 2000;
 ALTER TABLE schedule_change_request_items AUTO_INCREMENT = 5000;
 ALTER TABLE doctor_shift_overrides AUTO_INCREMENT = 5000;
-

@@ -90,6 +90,12 @@
 
                             </div>
 
+                            <c:if test="${not empty bookingError}">
+                                <div style="margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #fee2e2; color: #991b1b;">
+                                    ${bookingError}
+                                </div>
+                            </c:if>
+
                             <!-- NGÀY + CA KHÁM -->
                             <div class="card-box">
                                 <h3>Chọn ngày và ca khám</h3>
