@@ -1818,6 +1818,17 @@ public class DoctorDAO extends DBContext {
 
         return list;
     }
+         public void toggleUserStatusById(int userId) throws SQLException {
+         String sql = "UPDATE users SET status = CASE WHEN status = 'active' THEN 'inactive' ELSE 'active' END WHERE user_id = ?";
+
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, userId);
+            st.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
  public java.util.List<java.util.Map<String, Object>> getTopRatedDoctors(int limit) {
         java.util.List<java.util.Map<String, Object>> list = new java.util.ArrayList<>();
         String sql = "SELECT d.doctor_id, u.full_name, d.specialization, " +
@@ -1825,6 +1836,9 @@ public class DoctorDAO extends DBContext {
                      "FROM doctors d JOIN users u ON d.user_id = u.user_id " +
                      "LEFT JOIN staff_profiles sp ON sp.user_id = d.user_id " +
                      "WHERE u.status = 'active' ORDER BY d.rating DESC LIMIT ?";
+        if (connection == null) {
+            return list;
+        }
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
@@ -1840,7 +1854,7 @@ public class DoctorDAO extends DBContext {
                     list.add(doc);
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return list;

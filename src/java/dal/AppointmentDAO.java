@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +26,8 @@ import model.Patient;
  */
 public class AppointmentDAO extends DBContext {
 
+    private static final String SWAP_SHIFT_META_PREFIX = "[[SWAP_SHIFT_ID:";
+    private static final String SWAP_SHIFT_META_SUFFIX = "]]";
     
     public boolean addAppointment(Appointment a) {
         return addAppointmentAndReturnId(a) > 0;
@@ -317,7 +320,6 @@ public class AppointmentDAO extends DBContext {
     }
     public List<LocalDate> getAvailableDates(int doctorId) {
         List<LocalDate> list = new ArrayList<>();
-
         String sql = """
             SELECT ds.day_of_week, ds.max_patients
             FROM doctor_shifts ds
@@ -331,63 +333,136 @@ public class AppointmentDAO extends DBContext {
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setInt(1, doctorId);
             ResultSet rs = st.executeQuery();
-
-            Map<Integer, Integer> shiftCountByDay = new HashMap<>();
             Map<Integer, Integer> capacityByDay = new HashMap<>();
-
             while (rs.next()) {
                 int day = rs.getInt("day_of_week");
                 int maxPatients = rs.getInt("max_patients");
-                shiftCountByDay.merge(day, 1, Integer::sum);
                 capacityByDay.merge(day, maxPatients, Integer::sum);
             }
 
             LocalDate today = LocalDate.now();
-            LocalDate endDate = today.plusDays(29);
-            List<TemporarySwapEffect> effects = getApprovedTemporarySwapEffects(
-                    doctorId,
-                    Date.valueOf(today),
-                    Date.valueOf(endDate)
-            );
+            List<LocalDate> windowDates = new ArrayList<>();
+            for (int i = 0; i < 30; i++) {
+                windowDates.add(today.plusDays(i));
+            }
+            Map<LocalDate, Map<String, Integer>> countsByDate = buildEffectivePeriodCountsByDate(doctorId, windowDates);
 
-            int i = 0;
-            while (list.size() < 7 && i < 30) {
-                LocalDate date = today.plusDays(i);
-                int dayOfWeek = date.getDayOfWeek().getValue() % 7; // CN = 0
-
-                int shiftCount = shiftCountByDay.getOrDefault(dayOfWeek, 0);
-                for (TemporarySwapEffect effect : effects) {
-                    if (date.equals(effect.workDate)) {
-                        shiftCount += effect.delta;
-                    }
+            for (LocalDate date : windowDates) {
+                if (list.size() >= 7) {
+                    break;
                 }
-
-                if (shiftCount > 0) {
-                    int booked = countPatients(doctorId, Date.valueOf(date));
-                    int maxPatients = Math.max(1, capacityByDay.getOrDefault(dayOfWeek, 20));
-                    if (booked < maxPatients) {
-                        list.add(date);
-                    }
+                Map<String, Integer> periods = countsByDate.getOrDefault(date, Map.of());
+                int shiftCount = periods.getOrDefault("MORNING", 0) + periods.getOrDefault("AFTERNOON", 0);
+                if (shiftCount <= 0) {
+                    continue;
                 }
-                i++;
+                int dayOfWeek = date.getDayOfWeek().getValue() % 7;
+                int booked = countPatients(doctorId, Date.valueOf(date));
+                int maxPatients = Math.max(1, capacityByDay.getOrDefault(dayOfWeek, 20));
+                if (booked < maxPatients) {
+                    list.add(date);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return list;
     }
 
-    private List<TemporarySwapEffect> getApprovedTemporarySwapEffects(int doctorId, Date fromDate, Date toDate) {
-        List<TemporarySwapEffect> effects = new ArrayList<>();
+    public Map<String, String> getAvailablePeriodCsvByDates(int doctorId, List<LocalDate> dates) {
+        Map<String, String> result = new HashMap<>();
+        if (dates == null || dates.isEmpty()) {
+            return result;
+        }
+        Map<LocalDate, Map<String, Integer>> countsByDate = buildEffectivePeriodCountsByDate(doctorId, dates);
+        for (LocalDate date : dates) {
+            Map<String, Integer> periodCounts = countsByDate.getOrDefault(date, Map.of());
+            List<String> periods = new ArrayList<>();
+            if (periodCounts.getOrDefault("MORNING", 0) > 0) {
+                periods.add("MORNING");
+            }
+            if (periodCounts.getOrDefault("AFTERNOON", 0) > 0) {
+                periods.add("AFTERNOON");
+            }
+            result.put(date.toString(), String.join(",", periods));
+        }
+        return result;
+    }
+
+    private Map<LocalDate, Map<String, Integer>> buildEffectivePeriodCountsByDate(int doctorId, List<LocalDate> dates) {
+        Map<LocalDate, Map<String, Integer>> countsByDate = new HashMap<>();
+        if (dates == null || dates.isEmpty()) {
+            return countsByDate;
+        }
+
+        Map<Integer, Map<String, Integer>> baseCountsByDay = new HashMap<>();
+        String baseSql = """
+            SELECT day_of_week, start_time
+            FROM doctor_shifts
+            WHERE doctor_id = ?
+              AND status = 'active'
+        """;
+        try (PreparedStatement st = connection.prepareStatement(baseSql)) {
+            st.setInt(1, doctorId);
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    int day = rs.getInt("day_of_week");
+                    String period = toShiftPeriod(rs.getTime("start_time"));
+                    if (period == null) {
+                        continue;
+                    }
+                    baseCountsByDay.computeIfAbsent(day, k -> new HashMap<>())
+                            .merge(period, 1, Integer::sum);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return countsByDate;
+        }
+
+        LocalDate minDate = dates.get(0);
+        LocalDate maxDate = dates.get(0);
+        for (LocalDate date : dates) {
+            if (date.isBefore(minDate)) {
+                minDate = date;
+            }
+            if (date.isAfter(maxDate)) {
+                maxDate = date;
+            }
+            int dayOfWeek = date.getDayOfWeek().getValue() % 7;
+            Map<String, Integer> dayCounts = baseCountsByDay.getOrDefault(dayOfWeek, Map.of());
+            Map<String, Integer> copy = new HashMap<>();
+            copy.put("MORNING", dayCounts.getOrDefault("MORNING", 0));
+            copy.put("AFTERNOON", dayCounts.getOrDefault("AFTERNOON", 0));
+            countsByDate.put(date, copy);
+        }
+
+        applyApprovedTemporaryEffects(doctorId, countsByDate, Date.valueOf(minDate), Date.valueOf(maxDate));
+        return countsByDate;
+    }
+
+    private void applyApprovedTemporaryEffects(
+            int doctorId,
+            Map<LocalDate, Map<String, Integer>> countsByDate,
+            Date fromDate,
+            Date toDate
+    ) {
+        if (countsByDate.isEmpty()) {
+            return;
+        }
+        Map<Integer, Integer> doctorIdByShiftId = new HashMap<>();
         String sql = """
             SELECT r.doctor_id AS requester_doctor_id,
-                   i.work_date AS new_work_date,
-                   CASE
-                       WHEN i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
-                       THEN DATE_ADD(i.work_date, INTERVAL ((s_old.day_of_week - i.day_of_week + 7) % 7) DAY)
-                       ELSE NULL
-                   END AS old_work_date,
+                   r.reason AS request_reason,
+                   i.action_type,
+                   i.work_date,
+                   i.day_of_week,
+                   i.start_time,
+                   i.end_time,
+                   i.target_shift_id,
+                   s_old.day_of_week AS old_day_of_week,
+                   s_old.start_time AS old_start_time,
+                   s_old.end_time AS old_end_time,
                    s_new.doctor_id AS counterpart_doctor_id
             FROM schedule_change_requests r
             JOIN schedule_change_request_items i ON r.request_id = i.request_id
@@ -405,7 +480,6 @@ public class AppointmentDAO extends DBContext {
             WHERE r.status = 'APPROVED'
               AND r.request_type = 'TEMPORARY'
               AND r.scope_type = 'ONE_DATE'
-              AND i.action_type = 'UPDATE'
               AND i.work_date BETWEEN ? AND ?
             ORDER BY r.requested_at ASC
         """;
@@ -416,46 +490,149 @@ public class AppointmentDAO extends DBContext {
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
                     int requesterId = rs.getInt("requester_doctor_id");
-                    Date newWorkDate = rs.getDate("new_work_date");
-                    Date oldWorkDate = rs.getDate("old_work_date");
-                    int counterpartId = rs.getInt("counterpart_doctor_id");
-                    boolean hasCounterpart = !rs.wasNull();
-
-                    if (newWorkDate == null || oldWorkDate == null) {
+                    String requestReason = rs.getString("request_reason");
+                    String actionType = rs.getString("action_type");
+                    Date workDateSql = rs.getDate("work_date");
+                    if (actionType == null || workDateSql == null) {
                         continue;
                     }
+                    LocalDate workDate = workDateSql.toLocalDate();
+                    Integer counterpartId = resolveCounterpartDoctorId(rs, requestReason, doctorIdByShiftId);
 
-                    if (requesterId == doctorId) {
-                        effects.add(new TemporarySwapEffect(oldWorkDate.toLocalDate(), -1));
-                        effects.add(new TemporarySwapEffect(newWorkDate.toLocalDate(), +1));
-                    }
+                    String newPeriod = toShiftPeriod(rs.getTime("start_time"));
+                    String oldPeriod = toShiftPeriod(rs.getTime("old_start_time"));
+                    LocalDate oldDate = resolveOldDate(workDate, rs.getInt("day_of_week"), rs, "old_day_of_week");
 
-                    if (hasCounterpart && counterpartId == doctorId) {
-                        effects.add(new TemporarySwapEffect(newWorkDate.toLocalDate(), -1));
-                        effects.add(new TemporarySwapEffect(oldWorkDate.toLocalDate(), +1));
+                    String normalizedAction = actionType.trim().toUpperCase();
+                    switch (normalizedAction) {
+                        case "ADD":
+                            if (requesterId == doctorId) {
+                                applyPeriodDelta(countsByDate, workDate, newPeriod, +1);
+                            }
+                            break;
+                        case "REMOVE":
+                            if (requesterId == doctorId) {
+                                String removePeriod = newPeriod != null ? newPeriod : oldPeriod;
+                                applyPeriodDelta(countsByDate, workDate, removePeriod, -1);
+                            }
+                            break;
+                        case "UPDATE":
+                            if (oldDate == null) {
+                                oldDate = workDate;
+                            }
+                            if (requesterId == doctorId) {
+                                applyPeriodDelta(countsByDate, oldDate, oldPeriod, -1);
+                                applyPeriodDelta(countsByDate, workDate, newPeriod, +1);
+                            }
+                            if (counterpartId != null && counterpartId == doctorId) {
+                                applyPeriodDelta(countsByDate, workDate, newPeriod, -1);
+                                applyPeriodDelta(countsByDate, oldDate, oldPeriod, +1);
+                            }
+                            break;
+                        default:
+                            break;
                     }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        return effects;
     }
 
-    private static class TemporarySwapEffect {
-        private final LocalDate workDate;
-        private final int delta;
-
-        private TemporarySwapEffect(LocalDate workDate, int delta) {
-            this.workDate = workDate;
-            this.delta = delta;
+    private Integer resolveCounterpartDoctorId(ResultSet rs, String requestReason, Map<Integer, Integer> doctorIdByShiftId)
+            throws SQLException {
+        Integer counterpartId = null;
+        Integer counterpartShiftId = extractCounterpartShiftId(requestReason);
+        if (counterpartShiftId != null) {
+            counterpartId = doctorIdByShiftId.get(counterpartShiftId);
+            if (counterpartId == null) {
+                counterpartId = getDoctorIdByShiftId(counterpartShiftId);
+                if (counterpartId != null) {
+                    doctorIdByShiftId.put(counterpartShiftId, counterpartId);
+                }
+            }
         }
+        // Do not fallback to inferred counterpart by day/time because it can be ambiguous
+        // and create ghost shifts on wrong dates.
+        return counterpartId;
+    }
+
+    private void applyPeriodDelta(Map<LocalDate, Map<String, Integer>> countsByDate, LocalDate date, String period, int delta) {
+        if (date == null || period == null || delta == 0) {
+            return;
+        }
+        Map<String, Integer> periods = countsByDate.get(date);
+        if (periods == null) {
+            return;
+        }
+        int next = periods.getOrDefault(period, 0) + delta;
+        periods.put(period, Math.max(0, next));
+    }
+
+    private LocalDate resolveOldDate(LocalDate workDate, int newDayOfWeek, ResultSet rs, String oldDayColumn) throws SQLException {
+        int oldDay = rs.getInt(oldDayColumn);
+        if (rs.wasNull() || workDate == null || newDayOfWeek < 0 || newDayOfWeek > 6) {
+            return workDate;
+        }
+        // Keep consistent with one-date request creation logic:
+        // source shift date is resolved as the same day or next matching day after workDate.
+        int offset = (oldDay - newDayOfWeek + 7) % 7;
+        return workDate.plusDays(offset);
+    }
+
+    private String toShiftPeriod(Time startTime) {
+        if (startTime == null) {
+            return null;
+        }
+        int hour = startTime.toLocalTime().getHour();
+        return hour < 12 ? "MORNING" : "AFTERNOON";
+    }
+
+    private Integer extractCounterpartShiftId(String reason) {
+        if (reason == null || reason.isBlank()) {
+            return null;
+        }
+        int start = reason.lastIndexOf(SWAP_SHIFT_META_PREFIX);
+        if (start < 0) {
+            return null;
+        }
+        int valueStart = start + SWAP_SHIFT_META_PREFIX.length();
+        int end = reason.indexOf(SWAP_SHIFT_META_SUFFIX, valueStart);
+        if (end < 0) {
+            return null;
+        }
+        String value = reason.substring(valueStart, end).trim();
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private Integer getDoctorIdByShiftId(int shiftId) {
+        String sql = "SELECT doctor_id FROM doctor_shifts WHERE shift_id = ? LIMIT 1";
+        try (PreparedStatement st = connection.prepareStatement(sql)) {
+            st.setInt(1, shiftId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("doctor_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public int countPatients(int doctorId, Date date) {
 
-        String sql = "SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND appointment_date = ?";
+        String sql = """
+            SELECT COUNT(*)
+            FROM appointments
+            WHERE doctor_id = ?
+              AND appointment_date = ?
+              AND status <> 'cancelled'
+        """;
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
 

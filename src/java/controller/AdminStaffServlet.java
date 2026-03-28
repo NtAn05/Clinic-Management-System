@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +23,7 @@ import model.Status;
 import model.User;
 import util.AccountProvisionService;
 import util.AccountProvisionService.ProvisionResult;
+import util.PendingResendStore;
 import util.PagingHelper;
 import util.SystemLogService;
 
@@ -32,7 +32,7 @@ public class AdminStaffServlet extends HttpServlet {
     private static final String VIEW_PATH = "/pages/admin/staffs.jsp";
     private static final String SUCCESS_FLASH_KEY = "adminStaffSuccess";
     private static final String RESEND_USER_FLASH_KEY = "adminStaffResendUserId";
-    private static final String SESSION_PENDING_RESEND_KEY = "adminStaffPendingResendPasswordIds";
+    private static final String APP_PENDING_RESEND_KEY = "adminStaffPendingResendPasswordIds";
     private static final int PAGE_SIZE = 10;
     private static final int MIN_EXPERIENCE = 0;
     private static final int MAX_EXPERIENCE = 50;
@@ -755,8 +755,8 @@ public class AdminStaffServlet extends HttpServlet {
 
     private Map<Integer, Boolean> buildPendingResendMap(HttpServletRequest req, List<Doctor> staffs) {
         Map<Integer, Boolean> map = new HashMap<>();
-        Set<Integer> pendingIds = getPendingResendSet(req);
-        if (staffs == null || pendingIds.isEmpty()) {
+        Set<Integer> pendingIds = getPendingResendSet(req, false);
+        if (staffs == null || pendingIds == null || pendingIds.isEmpty()) {
             return map;
         }
         for (Doctor staff : staffs) {
@@ -771,28 +771,25 @@ public class AdminStaffServlet extends HttpServlet {
         if (userId <= 0) {
             return;
         }
-        HttpSession session = req.getSession();
-        Set<Integer> pendingIds = getPendingResendSet(req);
-        pendingIds.add(userId);
-        session.setAttribute(SESSION_PENDING_RESEND_KEY, pendingIds);
+        Set<Integer> pendingIds = getPendingResendSet(req, true);
+        if (pendingIds != null) {
+            pendingIds.add(userId);
+        }
     }
 
     private void clearPendingResend(HttpServletRequest req, int userId) {
         if (userId <= 0) {
             return;
         }
-        HttpSession session = req.getSession(false);
-        if (session == null) {
-            return;
-        }
-        Set<Integer> pendingIds = getPendingResendSet(req);
-        if (pendingIds.remove(userId)) {
-            session.setAttribute(SESSION_PENDING_RESEND_KEY, pendingIds);
+        Set<Integer> pendingIds = getPendingResendSet(req, false);
+        if (pendingIds != null) {
+            pendingIds.remove(userId);
         }
     }
 
     private boolean isPendingResend(HttpServletRequest req, int userId) {
-        return getPendingResendSet(req).contains(userId);
+        Set<Integer> pendingIds = getPendingResendSet(req, false);
+        return pendingIds != null && pendingIds.contains(userId);
     }
 
     private void setFlashResendUserId(HttpServletRequest req, int userId) {
@@ -808,14 +805,8 @@ public class AdminStaffServlet extends HttpServlet {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Set<Integer> getPendingResendSet(HttpServletRequest req) {
-        HttpSession session = req.getSession();
-        Object stored = session.getAttribute(SESSION_PENDING_RESEND_KEY);
-        if (stored instanceof Set<?>) {
-            return new HashSet<>((Set<Integer>) stored);
-        }
-        return new HashSet<>();
+    private Set<Integer> getPendingResendSet(HttpServletRequest req, boolean create) {
+        return PendingResendStore.getSet(req.getServletContext(), APP_PENDING_RESEND_KEY, create);
     }
 
     private String trim(String value) {

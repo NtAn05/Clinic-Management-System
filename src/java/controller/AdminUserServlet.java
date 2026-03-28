@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +23,7 @@ import util.AccountProvisionService;
 import util.AccountProvisionService.ProvisionResult;
 import util.AdminUserValidator;
 import util.AdminUserValidator.ValidationResult;
+import util.PendingResendStore;
 import util.PagingHelper;
 import util.SystemLogService;
 
@@ -32,7 +32,7 @@ public class AdminUserServlet extends HttpServlet {
     private static final int PAGE_SIZE = 10;
     private static final String SUCCESS_FLASH_KEY = "adminUserSuccess";
     private static final String RESEND_USER_FLASH_KEY = "adminUserResendUserId";
-    private static final String SESSION_PENDING_RESEND_KEY = "adminUserPendingResendPasswordIds";
+    private static final String APP_PENDING_RESEND_KEY = "adminUserPendingResendPasswordIds";
     private final AccountProvisionService accountProvisionService = new AccountProvisionService();
     private final AdminUserValidator adminUserValidator = new AdminUserValidator();
 
@@ -590,25 +590,8 @@ public class AdminUserServlet extends HttpServlet {
         return map;
     }
 
-    @SuppressWarnings("unchecked")
     private Set<Integer> getPendingResendSet(HttpServletRequest request, boolean create) {
-        HttpSession session = request.getSession(create);
-        if (session == null) {
-            return null;
-        }
-
-        Object value = session.getAttribute(SESSION_PENDING_RESEND_KEY);
-        if (value instanceof Set) {
-            return (Set<Integer>) value;
-        }
-
-        if (!create) {
-            return null;
-        }
-
-        Set<Integer> set = new HashSet<>();
-        session.setAttribute(SESSION_PENDING_RESEND_KEY, set);
-        return set;
+        return PendingResendStore.getSet(request.getServletContext(), APP_PENDING_RESEND_KEY, create);
     }
 
     private void markPendingResend(HttpServletRequest request, int userId) {

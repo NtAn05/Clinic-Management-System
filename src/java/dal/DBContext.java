@@ -44,4 +44,15 @@ public class DBContext {
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    public static void main(String[] args) {
+    System.out.println("=== TEST DB CONNECTION ===");
+
+    DBContext db = new DBContext();
+
+    if (db.connection != null) {
+        System.out.println("✅ Kết nối thành công!");
+    } else {
+        System.out.println("❌ Kết nối thất bại!");
+    }
+}
 }
