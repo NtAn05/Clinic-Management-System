@@ -251,6 +251,7 @@
     </c:if>
 
     <jsp:include page="../../common/footer.jsp" />
+    <jsp:include page="../../common/modal-alert.jsp" />
     <script>
         const canManagePatients = '${canManagePatients}' === 'true';
 
@@ -301,24 +302,42 @@
         function resendPasswordFromEditModal() {
             const userId = document.getElementById('editUserId').value;
             if (!userId) return;
-            if (!confirm('Gửi lại mật khẩu tạm qua email cho tài khoản này?')) return;
+            const message = 'Gửi lại mật khẩu tạm qua email cho tài khoản này?';
+            const submitResendForm = function() {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'patient-accounts';
+                form.innerHTML = '<input type="hidden" name="action" value="resendPassword"><input type="hidden" name="userId" value="' + userId + '">';
+                document.body.appendChild(form);
+                form.submit();
+            };
 
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'patient-accounts';
-            form.innerHTML = '<input type="hidden" name="action" value="resendPassword"><input type="hidden" name="userId" value="' + userId + '">';
-            document.body.appendChild(form);
-            form.submit();
+            if (typeof showConfirm === 'function') {
+                showConfirm(message, submitResendForm);
+                return;
+            }
+            if (!confirm(message)) return;
+            submitResendForm();
         }
 
         function toggleStatus(userId, name) {
-            if (!canManagePatients || !confirm('Thay đổi trạng thái của ' + name + '?')) return;
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'patient-accounts';
-            form.innerHTML = '<input type="hidden" name="action" value="toggleStatus"><input type="hidden" name="userId" value="' + userId + '">';
-            document.body.appendChild(form);
-            form.submit();
+            if (!canManagePatients) return;
+            const message = 'Thay đổi trạng thái của ' + name + '?';
+            const submitToggleForm = function() {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'patient-accounts';
+                form.innerHTML = '<input type="hidden" name="action" value="toggleStatus"><input type="hidden" name="userId" value="' + userId + '">';
+                document.body.appendChild(form);
+                form.submit();
+            };
+
+            if (typeof showConfirm === 'function') {
+                showConfirm(message, submitToggleForm);
+                return;
+            }
+            if (!confirm(message)) return;
+            submitToggleForm();
         }
 
         function openModal(modalId) { document.getElementById(modalId).style.display = 'block'; }
