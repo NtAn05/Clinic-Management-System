@@ -3,7 +3,6 @@
     Created on : Feb 3, 2026, 2:00:08 PM
     Author     : Admin
 --%>
-
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
@@ -74,7 +73,9 @@
 
                                 <div>
                                     <label>Ngày sinh</label>
-                                    <p>${patient.getDob()}</p>
+                                    <p>
+                                        <fmt:formatDate value="${patient.dob}" pattern="dd/MM/yyyy"/>
+                                    </p>
                                 </div>
 
                                 <div>
@@ -108,7 +109,7 @@
                                                ${s.index == 0 ? "checked" : ""}>
 
                                         <label for="date${s.index}" class="slot">
-                                            <strong>${d}</strong>
+                                            <strong>${displayDates[d.toString()]}</strong>
                                         </label>
 
                                     </c:forEach>
@@ -184,7 +185,7 @@
 
             </div>
         </div>
-                <script>
+        <script>
             function confirmSubmit() {
                 return confirm("Bạn đã chắc chắn đúng và đủ thông tin chưa?\nVui lòng kiểm tra kĩ các thông tin trước khi thanh toán.");
             }

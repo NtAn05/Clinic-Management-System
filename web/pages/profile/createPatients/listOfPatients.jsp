@@ -1,6 +1,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -64,41 +64,41 @@
                                     </td>
 
                                     <td class="patient-dob">
-                                        ${p.dob}
-                                    </td>
+                            <fmt:formatDate value="${p.dob}" pattern="dd/MM/yyyy"/>
+                            </td>
 
-                                    <td class="patient-gender">
-                                        ${p.gender}
-                                    </td>
+                            <td class="patient-gender">
+                                ${p.gender}
+                            </td>
 
-                                    <td class="patient-phone">
-                                        ${p.phone}
-                                    </td>
+                            <td class="patient-phone">
+                                ${p.phone}
+                            </td>
 
-                                    <td class="patient-action">
+                            <td class="patient-action">
 
-                                        <a class="btn-edit"
-                                           href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=edit&id=${p.patientId}">
-                                            Sửa
-                                        </a>
+                                <a class="btn-edit"
+                                   href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=edit&id=${p.patientId}">
+                                    Sửa
+                                </a>
 
-                                    </td>
-                                    <c:if test="${DoctorID != null}">
-                                        <td class="patient-action">
+                            </td>
+                            <c:if test="${DoctorID != null}">
+                                <td class="patient-action">
 
-                                            <a class="btn-edit"
-                                               href="${pageContext.request.contextPath}/appointmentservlet?doctor=${DoctorID}&patientid=${p.patientId}">
-                                                Chọn
-                                            </a>
+                                    <a class="btn-edit"
+                                       href="${pageContext.request.contextPath}/appointmentservlet?doctor=${DoctorID}&patientid=${p.patientId}">
+                                        Chọn
+                                    </a>
 
-                                        </td>
-                                    </c:if>
+                                </td>
+                            </c:if>
 
 
 
-                                </tr>
+                            </tr>
 
-                            </c:forEach>
+                        </c:forEach>
 
                         </tbody>
 

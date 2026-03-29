@@ -15,6 +15,8 @@ import jakarta.servlet.http.HttpSession;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import model.Appointment;
@@ -58,8 +60,7 @@ public class AppointmentServlet extends HttpServlet {
         AppointmentDAO dao = new AppointmentDAO();
         PatientPortalDAO daos = new PatientPortalDAO();
         DoctorDAO doctordao = new DoctorDAO();
-        
-        
+
         Patient p = daos.getPatientsByPatientID(patientId);
         Doctor doctor = doctordao.getDoctorById(doctorID);
         if (doctor == null) {
@@ -69,7 +70,14 @@ public class AppointmentServlet extends HttpServlet {
 
         List<LocalDate> availableDates = dao.getAvailableDates(doctorId);
         Map<String, String> availablePeriodsByDate = dao.getAvailablePeriodCsvByDates(doctorId, availableDates);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+        Map<String, String> displayDates = new HashMap<>();
+        for (LocalDate d : availableDates) {
+            displayDates.put(d.toString(), d.format(formatter));
+        }
+
+        request.setAttribute("displayDates", displayDates);
         request.setAttribute("doctor", doctor);
         request.setAttribute("patient", p);
         request.setAttribute("dates", availableDates);
@@ -115,8 +123,7 @@ public class AppointmentServlet extends HttpServlet {
 
         PatientPortalDAO daos = new PatientPortalDAO();
         Patient patient = daos.getPatientsByPatientID(patientId);
-        
-        
+
         Appointment appointment;
         if (user.getRole().toString().equals("receptionist")) {
             appointment = new Appointment(patientId, doctorId, 1, "walk_in", sqlDate, sqlTime, "booked", note);
