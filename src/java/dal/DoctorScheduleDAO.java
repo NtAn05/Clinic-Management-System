@@ -300,6 +300,7 @@ public class DoctorScheduleDAO extends DBContext {
             SELECT effective_day_of_week, effective_start_time, effective_end_time
             FROM (
                 SELECT r.requested_at AS req_at,
+                       i.work_date AS effective_work_date,
                        i.day_of_week AS effective_day_of_week,
                        i.start_time AS effective_start_time,
                        i.end_time AS effective_end_time
@@ -309,12 +310,18 @@ public class DoctorScheduleDAO extends DBContext {
                   AND r.request_type = 'TEMPORARY'
                   AND r.scope_type = 'ONE_DATE'
                   AND i.action_type = 'UPDATE'
-                  AND i.work_date = ?
                   AND i.target_shift_id = ?
 
                 UNION ALL
 
                 SELECT r.requested_at AS req_at,
+                       DATE_ADD(
+                           i.work_date,
+                           INTERVAL (
+                               (CASE WHEN s_old.day_of_week = 0 THEN 7 ELSE s_old.day_of_week END)
+                               - (CASE WHEN i.day_of_week = 0 THEN 7 ELSE i.day_of_week END)
+                           ) DAY
+                       ) AS effective_work_date,
                        s_old.day_of_week AS effective_day_of_week,
                        s_old.start_time AS effective_start_time,
                        s_old.end_time AS effective_end_time
@@ -335,18 +342,17 @@ public class DoctorScheduleDAO extends DBContext {
                   AND r.request_type = 'TEMPORARY'
                   AND r.scope_type = 'ONE_DATE'
                   AND i.action_type = 'UPDATE'
-                  AND i.work_date = ?
                   AND s_new.shift_id = ?
             ) x
+            WHERE effective_work_date = ?
             ORDER BY req_at DESC
             LIMIT 1
         """;
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setDate(1, workDate);
+            st.setInt(1, shiftId);
             st.setInt(2, shiftId);
             st.setDate(3, workDate);
-            st.setInt(4, shiftId);
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
                     return new EffectiveShiftState(
@@ -615,7 +621,13 @@ public class DoctorScheduleDAO extends DBContext {
                    u_new.full_name AS new_doctor_name,
                    CASE
                        WHEN i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
-                       THEN DATE_ADD(i.work_date, INTERVAL ((s_old.day_of_week - i.day_of_week + 7) % 7) DAY)
+                       THEN DATE_ADD(
+                           i.work_date,
+                           INTERVAL (
+                               (CASE WHEN s_old.day_of_week = 0 THEN 7 ELSE s_old.day_of_week END)
+                               - (CASE WHEN i.day_of_week = 0 THEN 7 ELSE i.day_of_week END)
+                           ) DAY
+                       )
                        ELSE NULL
                    END AS old_work_date
             FROM schedule_change_requests r

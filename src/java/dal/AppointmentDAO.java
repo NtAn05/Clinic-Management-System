@@ -28,6 +28,21 @@ public class AppointmentDAO extends DBContext {
 
     private static final String SWAP_SHIFT_META_PREFIX = "[[SWAP_SHIFT_ID:";
     private static final String SWAP_SHIFT_META_SUFFIX = "]]";
+
+    private static final class TemporaryEffectRow {
+
+        private long requestId;
+        private java.sql.Timestamp requestedAt;
+        private int requesterId;
+        private Integer counterpartId;
+        private Integer targetShiftId;
+        private Integer counterpartShiftId;
+        private String actionType;
+        private LocalDate workDate;
+        private LocalDate oldDate;
+        private String newPeriod;
+        private String oldPeriod;
+    }
     
     public boolean addAppointment(Appointment a) {
         return addAppointmentAndReturnId(a) > 0;
@@ -452,7 +467,9 @@ public class AppointmentDAO extends DBContext {
         }
         Map<Integer, Integer> doctorIdByShiftId = new HashMap<>();
         String sql = """
-            SELECT r.doctor_id AS requester_doctor_id,
+            SELECT r.request_id,
+                   r.requested_at,
+                   r.doctor_id AS requester_doctor_id,
                    r.reason AS request_reason,
                    i.action_type,
                    i.work_date,
@@ -480,53 +497,104 @@ public class AppointmentDAO extends DBContext {
             WHERE r.status = 'APPROVED'
               AND r.request_type = 'TEMPORARY'
               AND r.scope_type = 'ONE_DATE'
-              AND i.work_date BETWEEN ? AND ?
+              AND (
+                  i.work_date BETWEEN ? AND ?
+                  OR (
+                      s_old.day_of_week IS NOT NULL
+                      AND i.day_of_week IS NOT NULL
+                      AND DATE_ADD(
+                          i.work_date,
+                          INTERVAL (
+                              (CASE WHEN s_old.day_of_week = 0 THEN 7 ELSE s_old.day_of_week END)
+                              - (CASE WHEN i.day_of_week = 0 THEN 7 ELSE i.day_of_week END)
+                          ) DAY
+                      ) BETWEEN ? AND ?
+                  )
+              )
             ORDER BY r.requested_at ASC
         """;
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
             st.setDate(1, fromDate);
             st.setDate(2, toDate);
+            st.setDate(3, fromDate);
+            st.setDate(4, toDate);
             try (ResultSet rs = st.executeQuery()) {
+                List<TemporaryEffectRow> rows = new ArrayList<>();
+                Map<String, TemporaryEffectRow> latestRequesterRowByShiftDate = new HashMap<>();
+                Map<String, TemporaryEffectRow> latestCounterpartRowByShiftDate = new HashMap<>();
+
                 while (rs.next()) {
-                    int requesterId = rs.getInt("requester_doctor_id");
                     String requestReason = rs.getString("request_reason");
                     String actionType = rs.getString("action_type");
                     Date workDateSql = rs.getDate("work_date");
                     if (actionType == null || workDateSql == null) {
                         continue;
                     }
-                    LocalDate workDate = workDateSql.toLocalDate();
-                    Integer counterpartId = resolveCounterpartDoctorId(rs, requestReason, doctorIdByShiftId);
 
-                    String newPeriod = toShiftPeriod(rs.getTime("start_time"));
-                    String oldPeriod = toShiftPeriod(rs.getTime("old_start_time"));
-                    LocalDate oldDate = resolveOldDate(workDate, rs.getInt("day_of_week"), rs, "old_day_of_week");
+                    TemporaryEffectRow row = new TemporaryEffectRow();
+                    row.requestId = rs.getLong("request_id");
+                    row.requestedAt = rs.getTimestamp("requested_at");
+                    row.requesterId = rs.getInt("requester_doctor_id");
+                    row.targetShiftId = (Integer) rs.getObject("target_shift_id");
+                    row.counterpartShiftId = extractCounterpartShiftId(requestReason);
+                    row.counterpartId = resolveCounterpartDoctorId(rs, requestReason, doctorIdByShiftId);
+                    row.actionType = actionType.trim().toUpperCase();
+                    row.workDate = workDateSql.toLocalDate();
+                    row.newPeriod = toShiftPeriod(rs.getTime("start_time"));
+                    row.oldPeriod = toShiftPeriod(rs.getTime("old_start_time"));
+                    row.oldDate = resolveOldDate(row.workDate, rs.getInt("day_of_week"), rs, "old_day_of_week");
+                    if (row.oldDate == null) {
+                        row.oldDate = row.workDate;
+                    }
 
-                    String normalizedAction = actionType.trim().toUpperCase();
-                    switch (normalizedAction) {
+                    rows.add(row);
+
+                    if ("UPDATE".equals(row.actionType)) {
+                        if (row.targetShiftId != null) {
+                            String requesterKey = row.targetShiftId + "|" + row.workDate;
+                            TemporaryEffectRow existingRequester = latestRequesterRowByShiftDate.get(requesterKey);
+                            if (isLaterTemporaryRow(row, existingRequester)) {
+                                latestRequesterRowByShiftDate.put(requesterKey, row);
+                            }
+                        }
+                        if (row.counterpartShiftId != null) {
+                            String counterpartKey = row.counterpartShiftId + "|" + row.workDate;
+                            TemporaryEffectRow existingCounterpart = latestCounterpartRowByShiftDate.get(counterpartKey);
+                            if (isLaterTemporaryRow(row, existingCounterpart)) {
+                                latestCounterpartRowByShiftDate.put(counterpartKey, row);
+                            }
+                        }
+                    }
+                }
+
+                for (TemporaryEffectRow row : rows) {
+                    switch (row.actionType) {
                         case "ADD":
-                            if (requesterId == doctorId) {
-                                applyPeriodDelta(countsByDate, workDate, newPeriod, +1);
+                            if (row.requesterId == doctorId) {
+                                applyPeriodDelta(countsByDate, row.workDate, row.newPeriod, +1);
                             }
                             break;
                         case "REMOVE":
-                            if (requesterId == doctorId) {
-                                String removePeriod = newPeriod != null ? newPeriod : oldPeriod;
-                                applyPeriodDelta(countsByDate, workDate, removePeriod, -1);
+                            if (row.requesterId == doctorId) {
+                                String removePeriod = row.newPeriod != null ? row.newPeriod : row.oldPeriod;
+                                applyPeriodDelta(countsByDate, row.workDate, removePeriod, -1);
                             }
                             break;
                         case "UPDATE":
-                            if (oldDate == null) {
-                                oldDate = workDate;
+                            if (row.requesterId == doctorId && row.targetShiftId != null) {
+                                String requesterKey = row.targetShiftId + "|" + row.workDate;
+                                if (row == latestRequesterRowByShiftDate.get(requesterKey)) {
+                                    applyPeriodDelta(countsByDate, row.oldDate, row.oldPeriod, -1);
+                                    applyPeriodDelta(countsByDate, row.workDate, row.newPeriod, +1);
+                                }
                             }
-                            if (requesterId == doctorId) {
-                                applyPeriodDelta(countsByDate, oldDate, oldPeriod, -1);
-                                applyPeriodDelta(countsByDate, workDate, newPeriod, +1);
-                            }
-                            if (counterpartId != null && counterpartId == doctorId) {
-                                applyPeriodDelta(countsByDate, workDate, newPeriod, -1);
-                                applyPeriodDelta(countsByDate, oldDate, oldPeriod, +1);
+                            if (row.counterpartId != null && row.counterpartId == doctorId && row.counterpartShiftId != null) {
+                                String counterpartKey = row.counterpartShiftId + "|" + row.workDate;
+                                if (row == latestCounterpartRowByShiftDate.get(counterpartKey)) {
+                                    applyPeriodDelta(countsByDate, row.workDate, row.newPeriod, -1);
+                                    applyPeriodDelta(countsByDate, row.oldDate, row.oldPeriod, +1);
+                                }
                             }
                             break;
                         default:
@@ -557,6 +625,26 @@ public class AppointmentDAO extends DBContext {
         return counterpartId;
     }
 
+    private boolean isLaterTemporaryRow(TemporaryEffectRow candidate, TemporaryEffectRow existing) {
+        if (candidate == null) {
+            return false;
+        }
+        if (existing == null) {
+            return true;
+        }
+        if (candidate.requestedAt != null && existing.requestedAt != null) {
+            int compare = candidate.requestedAt.compareTo(existing.requestedAt);
+            if (compare != 0) {
+                return compare > 0;
+            }
+        } else if (candidate.requestedAt != null) {
+            return true;
+        } else if (existing.requestedAt != null) {
+            return false;
+        }
+        return candidate.requestId > existing.requestId;
+    }
+
     private void applyPeriodDelta(Map<LocalDate, Map<String, Integer>> countsByDate, LocalDate date, String period, int delta) {
         if (date == null || period == null || delta == 0) {
             return;
@@ -574,9 +662,9 @@ public class AppointmentDAO extends DBContext {
         if (rs.wasNull() || workDate == null || newDayOfWeek < 0 || newDayOfWeek > 6) {
             return workDate;
         }
-        // Keep consistent with one-date request creation logic:
-        // source shift date is resolved as the same day or next matching day after workDate.
-        int offset = (oldDay - newDayOfWeek + 7) % 7;
+        int normalizedOldDay = oldDay == 0 ? 7 : oldDay;
+        int normalizedNewDay = newDayOfWeek == 0 ? 7 : newDayOfWeek;
+        int offset = normalizedOldDay - normalizedNewDay;
         return workDate.plusDays(offset);
     }
 

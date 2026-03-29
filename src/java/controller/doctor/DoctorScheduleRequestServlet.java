@@ -449,7 +449,9 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
     }
 
     private LocalDate resolveShiftDateForOneDateRequest(LocalDate selectedDate, int selectedDayOfWeek, int shiftDayOfWeek) {
-        int dayOffset = (shiftDayOfWeek - selectedDayOfWeek + 7) % 7;
+        int normalizedSelectedDay = selectedDayOfWeek == 0 ? 7 : selectedDayOfWeek;
+        int normalizedShiftDay = shiftDayOfWeek == 0 ? 7 : shiftDayOfWeek;
+        int dayOffset = normalizedShiftDay - normalizedSelectedDay;
         return selectedDate.plusDays(dayOffset);
     }
 
