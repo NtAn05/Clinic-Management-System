@@ -998,8 +998,6 @@ public class DoctorDAO extends DBContext {
         return list;
     }
 
-    // XÃ¡c thá»±c appointment cÃ³ náº±m trong queue cá»§a chÃ­nh bÃ¡c sÄ© hay khÃ´ng.
-    // Join exam_queue/appointments/patients vÃ  lá»c theo doctor_id + appointment_id.
     public DoctorQueueItem getQueueItemByAppointment(int doctorId, long appointmentId) {
         String sql = """
             SELECT
