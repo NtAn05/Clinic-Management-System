@@ -55,7 +55,12 @@
                             Giao dịch của bạn không thành công. <br>
                             Vui lòng kiểm tra lại thông tin hoặc thử lại sau.
                         </p>
-
+                      
+                        <a class="actions"
+                           href="${pageContext.request.contextPath}/appointmentservlet?doctor=${doctorID}&patientid=${patientID}">
+                            Đăng kí lại 
+                        </a>
+                        
                         <a href="${pageContext.request.contextPath}/index.jsp"
                            class="btn-primary">
                             Về trang chủ
@@ -67,9 +72,9 @@
             </div>
 
         </div>
-    </div>
 
-    <jsp:include page="/common/footer.jsp" />
 
-</body>
+        <jsp:include page="/common/footer.jsp" />
+
+    </body>
 </html>

@@ -188,7 +188,8 @@ public class AppointmentServlet extends HttpServlet {
                 } catch (NumberFormatException e) {
                     throw new Exception("Giá tiền không đúng định dạng: " + priceStr);
                 }
-
+                session.removeAttribute("pendingAppointment");
+                session.removeAttribute("pendingPatient");
                 session.setAttribute("pendingPatient", patient);
                 session.setAttribute("pendingAppointment", appointment);
                 SystemLogService.log(user.getUserId(), "APPOINTMENT_PAYMENT_INIT",
@@ -201,7 +202,7 @@ public class AppointmentServlet extends HttpServlet {
                         .amount(amount)
                         .description(patient.getFullName() + "")
                         .returnUrl("http://localhost:8080/PhongKhamDaLieu/appointmentpaymentservlet")
-                        .cancelUrl("http://localhost:8080/PhongKhamDaLieu/pages/appointments/appointment/appointmentFailPayment.jsp")
+                        .cancelUrl(BASE_URL + "/appointmentpaymentservlet?code=cancel&status=CANCELLED")
                         .build();
 
                 CreatePaymentLinkResponse result = payOS.paymentRequests().create(paymentRequest);

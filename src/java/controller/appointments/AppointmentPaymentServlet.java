@@ -65,27 +65,28 @@ public class AppointmentPaymentServlet extends HttpServlet {
             throws ServletException, IOException {
         String code = request.getParameter("code");
         String status = request.getParameter("status");
+        AppointmentDAO dao = new AppointmentDAO();
+        HttpSession session = request.getSession();
+        Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
+
+        Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
+        long patientId = pendingPatient.getPatientId();
+        long doctorId = appointment.getDoctorId();
+        request.setAttribute("patientID", patientId);
+        request.setAttribute("doctorID", doctorId);
 
         if ("00".equals(code) && "PAID".equals(status)) {
-            HttpSession session = request.getSession();
-            Appointment appointment = (Appointment) session.getAttribute("pendingAppointment");
-             if (appointment != null) {
-                AppointmentDAO dao = new AppointmentDAO();
-                Patient pendingPatient = (Patient) session.getAttribute("pendingPatient");
+            if (appointment != null) {
                 long createdAppointmentId = dao.addAppointmentAndReturnId(appointment);
-                request.setAttribute("patient",pendingPatient.getPatientId() );
-                request.setAttribute("doctorID",appointment.getDoctorId());
-                
 
                 Integer logUserId = (pendingPatient != null && pendingPatient.getUserId() != null) ? pendingPatient.getUserId() : null;
                 String patientName = (pendingPatient != null) ? pendingPatient.getFullName() : "unknown";
                 request.setAttribute("bookedPatientName", patientName);
                 Doctor doctorInfo = new DoctorDAO().getDoctorById(String.valueOf(appointment.getDoctorId()));
-                
-                
+
                 String doctorName = (doctorInfo != null && doctorInfo.getFullName() != null && !doctorInfo.getFullName().isBlank())
                         ? doctorInfo.getFullName().trim() : ("Bác sĩ #" + appointment.getDoctorId());
-               
+
                 SystemLogService.log(logUserId, "APPOINTMENT_BOOKED",
                         "Đặt lịch và thanh toán thành công: patientName=" + patientName
                         + ", doctorId=" + appointment.getDoctorId()
@@ -101,14 +102,16 @@ public class AppointmentPaymentServlet extends HttpServlet {
                             "appointment:" + createdAppointmentId + ":booking_success:" + doctorName
                     );
                 }
-                session.removeAttribute("pendingAppointment");
-                session.removeAttribute("pendingPatient");
+              
             }
-
+            session.removeAttribute("pendingAppointment");
+            session.removeAttribute("pendingPatient");
             request.setAttribute("message", "Đặt lịch và thanh toán thành công!");
             request.getRequestDispatcher("/pages/appointments/appointment/appointmentCompleted.jsp")
                     .forward(request, response);
         } else {
+            request.setAttribute("patientID", pendingPatient.getPatientId());
+            request.setAttribute("doctorID", appointment.getDoctorId());
             request.setAttribute("message", "Thanh toán thất bại hoặc đã huỷ!");
             request.getRequestDispatcher("/pages/appointments/appointment/appointmentFailPayment.jsp")
                     .forward(request, response);
