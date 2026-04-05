@@ -151,18 +151,68 @@
 
         <c:if test="${totalPages > 1}">
             <div class="pagination-wrapper">
+                <c:set var="maxVisiblePages" value="6" />
+                <c:set var="startPage" value="1" />
+                <c:set var="endPage" value="${totalPages}" />
+                <c:if test="${totalPages > maxVisiblePages}">
+                    <c:set var="startPage" value="${currentPage - 2}" />
+                    <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                    <c:if test="${startPage < 1}">
+                        <c:set var="startPage" value="1" />
+                        <c:set var="endPage" value="${maxVisiblePages}" />
+                    </c:if>
+                    <c:if test="${endPage > totalPages}">
+                        <c:set var="endPage" value="${totalPages}" />
+                        <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                    </c:if>
+                </c:if>
+                <c:url var="prevUrl" value="patient-accounts">
+                    <c:param name="action" value="${currentAction}" />
+                    <c:param name="keyword" value="${searchKeyword}" />
+                    <c:param name="status" value="${filterStatus}" />
+                    <c:param name="page" value="${currentPage - 1}" />
+                </c:url>
+                <c:url var="nextUrl" value="patient-accounts">
+                    <c:param name="action" value="${currentAction}" />
+                    <c:param name="keyword" value="${searchKeyword}" />
+                    <c:param name="status" value="${filterStatus}" />
+                    <c:param name="page" value="${currentPage + 1}" />
+                </c:url>
                 <c:choose>
                     <c:when test="${currentPage > 1}">
-                        <a class="page-link" href="patient-accounts?action=${currentAction}&keyword=${searchKeyword}&status=${filterStatus}&page=${currentPage - 1}">‹ Trước</a>
+                        <a class="page-link" href="${prevUrl}">‹ Trước</a>
                     </c:when>
                     <c:otherwise><span class="page-link disabled">‹ Trước</span></c:otherwise>
                 </c:choose>
-                <c:forEach var="i" begin="1" end="${totalPages}">
-                    <a class="page-link ${i == currentPage ? 'active' : ''}" href="patient-accounts?action=${currentAction}&keyword=${searchKeyword}&status=${filterStatus}&page=${i}">${i}</a>
+
+                <c:if test="${startPage > 1}">
+                    <span class="page-link disabled">...</span>
+                </c:if>
+
+                <c:forEach var="i" begin="${startPage}" end="${endPage}">
+                    <c:url var="pageUrl" value="patient-accounts">
+                        <c:param name="action" value="${currentAction}" />
+                        <c:param name="keyword" value="${searchKeyword}" />
+                        <c:param name="status" value="${filterStatus}" />
+                        <c:param name="page" value="${i}" />
+                    </c:url>
+                    <c:choose>
+                        <c:when test="${i == currentPage}">
+                            <span class="page-link active">${i}</span>
+                        </c:when>
+                        <c:otherwise>
+                            <a class="page-link" href="${pageUrl}">${i}</a>
+                        </c:otherwise>
+                    </c:choose>
                 </c:forEach>
+
+                <c:if test="${endPage < totalPages}">
+                    <span class="page-link disabled">...</span>
+                </c:if>
+
                 <c:choose>
                     <c:when test="${currentPage < totalPages}">
-                        <a class="page-link" href="patient-accounts?action=${currentAction}&keyword=${searchKeyword}&status=${filterStatus}&page=${currentPage + 1}">Sau ›</a>
+                        <a class="page-link" href="${nextUrl}">Sau ›</a>
                     </c:when>
                     <c:otherwise><span class="page-link disabled">Sau ›</span></c:otherwise>
                 </c:choose>

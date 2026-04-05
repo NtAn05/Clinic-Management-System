@@ -18,6 +18,7 @@ import util.SystemLogService;
 public class AdminScheduleRequestServlet extends HttpServlet {
 
     private static final String VIEW_PATH = "/pages/admin/schedule-requests.jsp";
+    private static final int PAGE_SIZE = 10;
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession session = req.getSession(false);
@@ -38,12 +39,13 @@ public class AdminScheduleRequestServlet extends HttpServlet {
         String requestTypeFilter = normalizeRequestTypeFilter(req.getParameter("requestType"));
         String actionTypeFilter = normalizeActionTypeFilter(req.getParameter("actionType"));
         String keyword = trimOrEmpty(req.getParameter("keyword"));
+        int page = parseInt(req.getParameter("page"), 1);
 
         try {
             if ("review".equalsIgnoreCase(action)) {
                 handleReview(req);
                 resp.sendRedirect(req.getContextPath() + "/admin-schedule-requests"
-                        + buildFilterQuery(statusFilter, requestTypeFilter, actionTypeFilter, keyword));
+                        + buildFilterQuery(statusFilter, requestTypeFilter, actionTypeFilter, keyword, page));
                 return;
             }
 
@@ -52,7 +54,7 @@ public class AdminScheduleRequestServlet extends HttpServlet {
             session.setAttribute("scheduleReviewError",
                     "Lỗi xử lý yêu cầu đổi lịch: " + e.getMessage());
             resp.sendRedirect(req.getContextPath() + "/admin-schedule-requests"
-                    + buildFilterQuery(statusFilter, requestTypeFilter, actionTypeFilter, keyword));
+                    + buildFilterQuery(statusFilter, requestTypeFilter, actionTypeFilter, keyword, page));
         }
     }
 
@@ -77,13 +79,27 @@ public class AdminScheduleRequestServlet extends HttpServlet {
                 statusFilter, requestTypeFilter, actionTypeFilter, keyword
         );
         int pendingCount = requestDAO.countPendingScheduleChangeRequests();
+        List<ScheduleChangeRequest> safeRequests = requests != null ? requests : List.of();
+        int currentPage = parseInt(req.getParameter("page"), 1);
+        int totalRecords = safeRequests.size();
+        int totalPages = calculateTotalPages(totalRecords, PAGE_SIZE);
+
+        if (totalPages == 0) {
+            currentPage = 1;
+        } else if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
 
         req.setAttribute("statusFilter", statusFilter);
         req.setAttribute("requestTypeFilter", requestTypeFilter);
         req.setAttribute("actionTypeFilter", actionTypeFilter);
         req.setAttribute("keyword", keyword);
-        req.setAttribute("requests", requests);
+        req.setAttribute("requests", paginate(safeRequests, currentPage, PAGE_SIZE));
         req.setAttribute("pendingCount", pendingCount);
+        req.setAttribute("currentPage", currentPage);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("totalRecords", totalRecords);
+        req.setAttribute("pageSize", PAGE_SIZE);
         req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
     }
 
@@ -165,11 +181,33 @@ public class AdminScheduleRequestServlet extends HttpServlet {
         return "ALL";
     }
 
-    private String buildFilterQuery(String statusFilter, String requestTypeFilter, String actionTypeFilter, String keyword) {
+    private int calculateTotalPages(int totalRecords, int pageSize) {
+        if (totalRecords <= 0 || pageSize <= 0) {
+            return 0;
+        }
+        return (int) Math.ceil((double) totalRecords / pageSize);
+    }
+
+    private <T> List<T> paginate(List<T> data, int page, int pageSize) {
+        if (data == null || data.isEmpty()) {
+            return List.of();
+        }
+
+        int from = (page - 1) * pageSize;
+        if (from < 0 || from >= data.size()) {
+            return List.of();
+        }
+
+        int to = Math.min(from + pageSize, data.size());
+        return data.subList(from, to);
+    }
+
+    private String buildFilterQuery(String statusFilter, String requestTypeFilter, String actionTypeFilter, String keyword, int page) {
         StringBuilder query = new StringBuilder("?status=").append(encode(statusFilter));
         query.append("&requestType=").append(encode(requestTypeFilter));
         query.append("&actionType=").append(encode(actionTypeFilter));
         query.append("&keyword=").append(encode(keyword));
+        query.append("&page=").append(Math.max(page, 1));
         return query.toString();
     }
 

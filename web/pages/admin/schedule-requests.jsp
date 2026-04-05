@@ -340,6 +340,47 @@
                 color: #999;
             }
 
+            .pagination-wrapper {
+                margin-top: 16px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .page-link {
+                min-width: 34px;
+                padding: 8px 12px;
+                border: 1px solid #dcdcdc;
+                border-radius: 6px;
+                background: #fff;
+                color: #333;
+                text-decoration: none;
+                font-weight: 600;
+                text-align: center;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .page-link:hover {
+                background: #f5f5f5;
+            }
+
+            .page-link.active {
+                background: #0061ff;
+                color: #fff;
+                border-color: #0061ff;
+                pointer-events: none;
+            }
+
+            .page-link.disabled {
+                opacity: .5;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+
             .modal {
                 display: none;
                 position: fixed;
@@ -736,6 +777,7 @@
                                                         <input type="hidden" name="requestType" value="${requestTypeFilter}">
                                                         <input type="hidden" name="actionType" value="${actionTypeFilter}">
                                                         <input type="hidden" name="keyword" value="${keyword}">
+                                                        <input type="hidden" name="page" value="${currentPage}">
                                                         <div class="action-row">
                                                             <button
                                                                 class="btn-action btn-view"
@@ -814,6 +856,85 @@
                     </tbody>
                 </table>
             </div>
+
+            <c:if test="${totalPages > 1}">
+                <div class="pagination-wrapper">
+                    <c:set var="maxVisiblePages" value="6" />
+                    <c:set var="startPage" value="1" />
+                    <c:set var="endPage" value="${totalPages}" />
+                    <c:if test="${totalPages > maxVisiblePages}">
+                        <c:set var="startPage" value="${currentPage - 2}" />
+                        <c:set var="endPage" value="${startPage + maxVisiblePages - 1}" />
+                        <c:if test="${startPage < 1}">
+                            <c:set var="startPage" value="1" />
+                            <c:set var="endPage" value="${maxVisiblePages}" />
+                        </c:if>
+                        <c:if test="${endPage > totalPages}">
+                            <c:set var="endPage" value="${totalPages}" />
+                            <c:set var="startPage" value="${totalPages - maxVisiblePages + 1}" />
+                        </c:if>
+                    </c:if>
+
+                    <c:url var="prevUrl" value="/admin-schedule-requests">
+                        <c:param name="keyword" value="${keyword}" />
+                        <c:param name="requestType" value="${requestTypeFilter}" />
+                        <c:param name="actionType" value="${actionTypeFilter}" />
+                        <c:param name="status" value="${statusFilter}" />
+                        <c:param name="page" value="${currentPage - 1}" />
+                    </c:url>
+                    <c:url var="nextUrl" value="/admin-schedule-requests">
+                        <c:param name="keyword" value="${keyword}" />
+                        <c:param name="requestType" value="${requestTypeFilter}" />
+                        <c:param name="actionType" value="${actionTypeFilter}" />
+                        <c:param name="status" value="${statusFilter}" />
+                        <c:param name="page" value="${currentPage + 1}" />
+                    </c:url>
+
+                    <c:choose>
+                        <c:when test="${currentPage > 1}">
+                            <a class="page-link" href="${prevUrl}">‹ Trước</a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="page-link disabled">‹ Trước</span>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <c:if test="${startPage > 1}">
+                        <span class="page-link disabled">...</span>
+                    </c:if>
+
+                    <c:forEach var="i" begin="${startPage}" end="${endPage}">
+                        <c:url var="pageUrl" value="/admin-schedule-requests">
+                            <c:param name="keyword" value="${keyword}" />
+                            <c:param name="requestType" value="${requestTypeFilter}" />
+                            <c:param name="actionType" value="${actionTypeFilter}" />
+                            <c:param name="status" value="${statusFilter}" />
+                            <c:param name="page" value="${i}" />
+                        </c:url>
+                        <c:choose>
+                            <c:when test="${i == currentPage}">
+                                <span class="page-link active">${i}</span>
+                            </c:when>
+                            <c:otherwise>
+                                <a class="page-link" href="${pageUrl}">${i}</a>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:forEach>
+
+                    <c:if test="${endPage < totalPages}">
+                        <span class="page-link disabled">...</span>
+                    </c:if>
+
+                    <c:choose>
+                        <c:when test="${currentPage < totalPages}">
+                            <a class="page-link" href="${nextUrl}">Sau ›</a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="page-link disabled">Sau ›</span>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </c:if>
 
             <div id="viewRequestModal" class="modal">
                 <div class="modal-content">
