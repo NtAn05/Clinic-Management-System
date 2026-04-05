@@ -2,26 +2,28 @@
 
 /* PAGE */
 .page {
-    width: 900px;
+    width: 100%;
+    max-width: 960px;
     margin: 0 auto;
-   
+    padding: 24px 16px;
+    box-sizing: border-box;
 }
 
 .content {
     padding: 24px;
 
-    padding-left: 150px; 
 }
 
 .card-box {
     width: 100%;
-    width: 900px;
-    flex-shrink: 0;
+    max-width: 860px;   
+    margin: 0 auto;   
     background: #ffffff;
     border: 1px solid #e2ebff;
     border-radius: 16px;
     padding: 22px;
     box-shadow: 0 12px 24px rgba(15, 44, 110, 0.08);
+    box-sizing: border-box;
 }
 
 /* TITLE */
@@ -35,7 +37,11 @@
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px 16px;
+    gap: 16px;
+}
+
+.form-grid > div {
+    min-width: 0;  
 }
 
 /* LABEL */
@@ -51,11 +57,11 @@
 .form-grid input,
 .form-grid select {
     width: 100%;
-    padding: 9px 11px;
+    padding: 10px;
     border: 1px solid #cfe0ff;
     border-radius: 10px;
-    font-size: 14px;
-    transition: all 0.2s ease;
+
+    box-sizing: border-box; 
 }
 
 /* FOCUS */
@@ -76,6 +82,9 @@
 /* ACTION BUTTONS */
 .actions {
     margin-top: 18px;
+    max-width: 860px;   
+    margin-left: auto;
+    margin-right: auto;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
@@ -122,4 +131,6 @@
     font-style: italic;
 }
 
-
+* {
+    box-sizing: border-box;
+}

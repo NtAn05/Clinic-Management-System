@@ -50,8 +50,8 @@ public class PatientsServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         String patientID = request.getParameter("id");
-        String btnDoctorID = request.getParameter("btnDoctorID");  
-        String paramDoctorID = request.getParameter("DoctorID"); 
+        String btnDoctorID = request.getParameter("btnDoctorID");
+        String paramDoctorID = request.getParameter("DoctorID");
 
         String resolvedDoctorID = (btnDoctorID != null) ? btnDoctorID : paramDoctorID;
 
@@ -63,16 +63,18 @@ public class PatientsServlet extends HttpServlet {
             Patient p = dao.getPatientsByPatientID(patientId);
 
             request.setAttribute("patient", p);
-            request.setAttribute("DoctorID", resolvedDoctorID); 
+            request.setAttribute("DoctorID", resolvedDoctorID);
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
             return;
         }
-        
+
         // tạo bệnh nhân
         if ("create".equals(action)) {
+            Patient emptyPatient = new Patient();
+            emptyPatient.setPatientId(-1L);
             request.setAttribute("DoctorID", resolvedDoctorID);
-            request.setAttribute("patient", new Patient()); // object rỗng tránh null pointer trong JSP
+            request.setAttribute("patient", emptyPatient);
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
             return;
@@ -147,23 +149,20 @@ public class PatientsServlet extends HttpServlet {
         request.setAttribute("DoctorID", DoctorID);
 
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-        
+
         // lấy id bệnh nhân 
         if (patientID != null && !patientID.isEmpty()) {
-            try {
-                patient.setPatientId(Long.parseLong(patientID));
-            } catch (NumberFormatException e) {
-                patient.setPatientId(-1L);
-            }
+            long pid = Long.parseLong(patientID);
+            patient.setPatientId(pid == 0 ? -1 : pid);
         } else {
-            patient.setPatientId(-1L);
+            patient.setPatientId(-1);
         }
 
         if (valid) {
             // sửa 
             if ("edit".equals(submit)) {
-                if (patientID != null && !patientID.isEmpty()) {
-                    dao.editPatient(patientID, patient);
+                if (patient.getPatientId() > 0) {
+                    dao.editPatient(String.valueOf(patient.getPatientId()), patient);
                     response.sendRedirect(request.getContextPath()
                             + "/createpatientsservlet?DoctorID=" + DoctorID);
                     return;

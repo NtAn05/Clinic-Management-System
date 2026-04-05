@@ -6,8 +6,8 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>Create Patient</title>
-        <link rel="stylesheet"
-              href="<c:url value='/pages/appointments/appointment/appointment.css'/>">
+      <link rel="stylesheet"
+      href="${pageContext.request.contextPath}/pages/profile/createPatients/createPatients.css">
     </head>
     <body>
 
