@@ -11,6 +11,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +45,7 @@ public class AppointmentDAO extends DBContext {
         private String newPeriod;
         private String oldPeriod;
     }
-    
+
     public boolean addAppointment(Appointment a) {
         return addAppointmentAndReturnId(a) > 0;
     }
@@ -83,7 +85,6 @@ public class AppointmentDAO extends DBContext {
 
         return -1;
     }
-
 
     public long addPatient(Patient p) {
         String sql = "INSERT INTO patients (user_id, full_name, phone, dob, email, gender) "
@@ -333,21 +334,25 @@ public class AppointmentDAO extends DBContext {
 
         return -1;
     }
+
     public List<LocalDate> getAvailableDates(int doctorId) {
         List<LocalDate> list = new ArrayList<>();
+
         String sql = """
-            SELECT ds.day_of_week, ds.max_patients
-            FROM doctor_shifts ds
-            JOIN doctors d ON d.doctor_id = ds.doctor_id
-            JOIN users u ON u.user_id = d.user_id
-            WHERE ds.doctor_id = ?
-              AND ds.status = 'active'
-              AND u.status = 'active'
-        """;
+        SELECT ds.day_of_week, ds.max_patients
+        FROM doctor_shifts ds
+        JOIN doctors d ON d.doctor_id = ds.doctor_id
+        JOIN users u ON u.user_id = d.user_id
+        WHERE ds.doctor_id = ?
+          AND ds.status = 'active'
+          AND u.status = 'active'
+    """;
 
         try (PreparedStatement st = connection.prepareStatement(sql)) {
+
             st.setInt(1, doctorId);
             ResultSet rs = st.executeQuery();
+
             Map<Integer, Integer> capacityByDay = new HashMap<>();
             while (rs.next()) {
                 int day = rs.getInt("day_of_week");
@@ -356,31 +361,56 @@ public class AppointmentDAO extends DBContext {
             }
 
             LocalDate today = LocalDate.now();
+            LocalTime now = LocalTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+            LocalTime cutoff = LocalTime.of(17, 0); 
+
             List<LocalDate> windowDates = new ArrayList<>();
             for (int i = 0; i < 30; i++) {
                 windowDates.add(today.plusDays(i));
             }
-            Map<LocalDate, Map<String, Integer>> countsByDate = buildEffectivePeriodCountsByDate(doctorId, windowDates);
+
+            Map<LocalDate, Map<String, Integer>> countsByDate
+                    = buildEffectivePeriodCountsByDate(doctorId, windowDates);
 
             for (LocalDate date : windowDates) {
-                if (list.size() >= 7) {
-                    break;
+
+                boolean validDate = now.isAfter(cutoff)
+                        ? date.isAfter(today) 
+                        : !date.isBefore(today);       
+
+                if (!validDate) {
+                    continue;
                 }
-                Map<String, Integer> periods = countsByDate.getOrDefault(date, Map.of());
-                int shiftCount = periods.getOrDefault("MORNING", 0) + periods.getOrDefault("AFTERNOON", 0);
+
+                Map<String, Integer> periods
+                        = countsByDate.getOrDefault(date, Map.of());
+
+                int shiftCount = periods.getOrDefault("MORNING", 0)
+                        + periods.getOrDefault("AFTERNOON", 0);
+
                 if (shiftCount <= 0) {
                     continue;
                 }
+
                 int dayOfWeek = date.getDayOfWeek().getValue() % 7;
+
                 int booked = countPatients(doctorId, Date.valueOf(date));
-                int maxPatients = Math.max(1, capacityByDay.getOrDefault(dayOfWeek, 20));
+                int maxPatients = Math.max(1,
+                        capacityByDay.getOrDefault(dayOfWeek, 20));
+
                 if (booked < maxPatients) {
                     list.add(date);
+
+                    if (list.size() >= 7) {
+                        break;
+                    }
                 }
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return list;
     }
 
@@ -755,7 +785,7 @@ public class AppointmentDAO extends DBContext {
 
         return 0;
     }
-    
+
     public void addQueueWithPriority(long appointmentId, int doctorId) {
         String getAppointmentSql = """
             SELECT booking_type, appointment_date

@@ -91,7 +91,6 @@ public class listOfAppointment extends HttpServlet {
 
         AppointmentDAO dao = new AppointmentDAO();
 
-
         dao.updateStatus(id, status);
 
         if ( "checked_in".equalsIgnoreCase(status)) {

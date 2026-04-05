@@ -26,11 +26,11 @@
                         Danh sách bệnh nhân của ${sessionScope.account.fullName}
                     </h2>
 
-                    <a href="${pageContext.request.contextPath}/pages/profile/createPatients/createPatients.jsp"
+
+                    <a href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=create"
                        class="btn-add-patiaent">
                         +
                     </a>
-
                 </div>
                 <div class="patient-filter">
                     <input type="text" id="searchPatient"
@@ -64,41 +64,41 @@
                                     </td>
 
                                     <td class="patient-dob">
-                            <fmt:formatDate value="${p.dob}" pattern="dd/MM/yyyy"/>
-                            </td>
+                                        <fmt:formatDate value="${p.dob}" pattern="dd/MM/yyyy"/>
+                                    </td>
 
-                            <td class="patient-gender">
-                                ${p.gender}
-                            </td>
+                                    <td class="patient-gender">
+                                        ${p.gender}
+                                    </td>
 
-                            <td class="patient-phone">
-                                ${p.phone}
-                            </td>
+                                    <td class="patient-phone">
+                                        ${p.phone}
+                                    </td>
 
-                            <td class="patient-action">
+                                    <td class="patient-action">
 
-                                <a class="btn-edit"
-                                   href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=edit&id=${p.patientId}">
-                                    Sửa
-                                </a>
+                                        <a class="btn-edit"
+                                           href="${pageContext.request.contextPath}/createpatientsservlet?DoctorID=${DoctorID}&action=edit&id=${p.patientId}">
+                                            Sửa
+                                        </a>
 
-                            </td>
-                            <c:if test="${DoctorID != null}">
-                                <td class="patient-action">
+                                    </td>
+                                    <c:if test="${DoctorID != null}">
+                                        <td class="patient-action">
 
-                                    <a class="btn-edit"
-                                       href="${pageContext.request.contextPath}/appointmentservlet?doctor=${DoctorID}&patientid=${p.patientId}">
-                                        Chọn
-                                    </a>
+                                            <a class="btn-edit"
+                                               href="${pageContext.request.contextPath}/appointmentservlet?doctor=${DoctorID}&patientid=${p.patientId}">
+                                                Chọn
+                                            </a>
 
-                                </td>
-                            </c:if>
+                                        </td>
+                                    </c:if>
 
 
 
-                            </tr>
+                                </tr>
 
-                        </c:forEach>
+                            </c:forEach>
 
                         </tbody>
 

@@ -595,3 +595,21 @@ textarea {
 .line.done {
     background: #22c55e;
 }
+
+ .error-time-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #fff3f3;
+        border: 1px solid #f5c2c2;
+        border-left: 4px solid #e74c3c;
+        border-radius: 6px;
+        padding: 10px 16px;
+        margin: 10px 0;
+        font-size: 14px;
+        color: #c0392b;
+    }
+
+    .error-time-icon {
+        font-size: 16px;
+    }

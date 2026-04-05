@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -46,6 +45,7 @@ public class AppointmentServlet extends HttpServlet {
         }
         String doctorID = request.getParameter("doctor");
         String patientID = request.getParameter("patientid");
+
         if (doctorID == null || doctorID.isEmpty()) {
             doctorID = (String) request.getAttribute("doctor");
         }
@@ -120,6 +120,51 @@ public class AppointmentServlet extends HttpServlet {
         LocalTime localTime = LocalTime.parse(timeStr);
         java.sql.Time sqlTime = java.sql.Time.valueOf(localTime);
         String submit = request.getParameter("btnSubmit");
+
+        LocalDate appointmentDate = sqlDate.toLocalDate();
+        LocalDate today = LocalDate.now();
+
+        if (appointmentDate.equals(today)) {
+            LocalTime now = LocalTime.now();
+            LocalTime endMorning = LocalTime.of(11, 30);
+            LocalTime endAfternoon = LocalTime.of(16, 30);
+
+            String errorTime = null;
+
+            if (localTime.equals(LocalTime.of(7, 0)) && now.isAfter(endMorning)) {
+                errorTime = "Ca sáng hôm nay đã kết thúc, vui lòng chọn ca chiều hoặc ngày khác.";
+            } else if (localTime.equals(LocalTime.of(13, 0)) && now.isAfter(endAfternoon)) {
+                errorTime = "Ca chiều hôm nay đã kết thúc, vui lòng chọn ngày khác.";
+            }
+
+            if (errorTime != null) {
+                PatientPortalDAO daoPa = new PatientPortalDAO();
+                AppointmentDAO daoApp = new AppointmentDAO();
+
+                Patient patient = daoPa.getPatientsByPatientID(patientId);
+                List<LocalDate> availableDates = daoApp.getAvailableDates(doctorId);
+                Map<String, String> availablePeriodsByDate
+                        = daoApp.getAvailablePeriodCsvByDates(doctorId, availableDates);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                Map<String, String> displayDates = new HashMap<>();
+                for (LocalDate d : availableDates) {
+                    displayDates.put(d.toString(), d.format(formatter));
+                }
+
+                request.setAttribute("errorTime", errorTime);
+                request.setAttribute("doctor", doctor);
+                request.setAttribute("patient", patient);
+                request.setAttribute("note", note);
+                request.setAttribute("dates", availableDates);
+                request.setAttribute("availablePeriodsByDate", availablePeriodsByDate);
+                request.setAttribute("displayDates", displayDates);
+
+                request.getRequestDispatcher("/pages/appointments/appointment/appointmentCheck.jsp")
+                        .forward(request, response);
+                return;
+            }
+        }
 
         PatientPortalDAO daos = new PatientPortalDAO();
         Patient patient = daos.getPatientsByPatientID(patientId);

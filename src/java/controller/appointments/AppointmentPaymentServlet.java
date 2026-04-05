@@ -81,8 +81,11 @@ public class AppointmentPaymentServlet extends HttpServlet {
                 String patientName = (pendingPatient != null) ? pendingPatient.getFullName() : "unknown";
                 request.setAttribute("bookedPatientName", patientName);
                 Doctor doctorInfo = new DoctorDAO().getDoctorById(String.valueOf(appointment.getDoctorId()));
+                
+                
                 String doctorName = (doctorInfo != null && doctorInfo.getFullName() != null && !doctorInfo.getFullName().isBlank())
                         ? doctorInfo.getFullName().trim() : ("Bác sĩ #" + appointment.getDoctorId());
+               
                 SystemLogService.log(logUserId, "APPOINTMENT_BOOKED",
                         "Đặt lịch và thanh toán thành công: patientName=" + patientName
                         + ", doctorId=" + appointment.getDoctorId()

@@ -90,7 +90,12 @@
                                 <textarea name="note" class="note-box" placeholder="Nhập triệu chứng bệnh ..." required></textarea>
 
                             </div>
-
+                            <c:if test="${not empty errorTime}">
+                                <div class="error-time-box">
+                                    <span class="error-time-icon">⏰</span>
+                                    <span class="error-time-msg">${errorTime}</span>
+                                </div>
+                            </c:if> 
                             <!-- NGÀY + CA KHÁM -->
                             <div class="card-box">
                                 <h3>Chọn ngày và ca khám</h3>

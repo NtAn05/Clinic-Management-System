@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package createPatients;
 
 import dal.PatientPortalDAO;
@@ -18,26 +14,12 @@ import java.util.List;
 import model.Patient;
 import model.User;
 
-/**
- *
- * @author Admin
- */
 public class PatientsServlet extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
@@ -50,15 +32,6 @@ public class PatientsServlet extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -77,46 +50,43 @@ public class PatientsServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         String patientID = request.getParameter("id");
-        String DoctorID = request.getParameter("btnDoctorID");
-        String DoctorId = request.getParameter("DoctorID");
+        String btnDoctorID = request.getParameter("btnDoctorID");  
+        String paramDoctorID = request.getParameter("DoctorID"); 
+
+        String resolvedDoctorID = (btnDoctorID != null) ? btnDoctorID : paramDoctorID;
 
         PatientPortalDAO dao = new PatientPortalDAO();
 
+        // lấy dữ liệu để sửa
         if ("edit".equals(action) && patientID != null) {
-
             int patientId = Integer.parseInt(patientID);
-
             Patient p = dao.getPatientsByPatientID(patientId);
 
             request.setAttribute("patient", p);
-            request.setAttribute("DoctorID", DoctorId);
-
+            request.setAttribute("DoctorID", resolvedDoctorID); 
             request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
                     .forward(request, response);
             return;
         }
-        request.setAttribute("DoctorID", DoctorId);
-
-        if (DoctorID != null) {
-            request.setAttribute("DoctorID", DoctorID);
+        
+        // tạo bệnh nhân
+        if ("create".equals(action)) {
+            request.setAttribute("DoctorID", resolvedDoctorID);
+            request.setAttribute("patient", new Patient()); // object rỗng tránh null pointer trong JSP
+            request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
+                    .forward(request, response);
+            return;
         }
 
-        List<Patient> list = dao.getPatientsByUserId(account.getUserId());
+        request.setAttribute("DoctorID", resolvedDoctorID); // ✅ set một lần duy nhất
 
+        List<Patient> list = dao.getPatientsByUserId(account.getUserId());
         request.setAttribute("patientList", list);
 
         request.getRequestDispatcher("/pages/profile/createPatients/listOfPatients.jsp")
                 .forward(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -132,9 +102,9 @@ public class PatientsServlet extends HttpServlet {
         String userID = request.getParameter("userID");
         String patientID = request.getParameter("patientID");
         String DoctorID = request.getParameter("DoctorID");
-        String sdt = request.getParameter("sdt").trim();
-        String name = request.getParameter("name").trim();
-        String email = request.getParameter("email").trim();
+        String sdt = request.getParameter("sdt");
+        String name = request.getParameter("name");
+        String email = request.getParameter("email");
         String gender = request.getParameter("gender");
         String dateofbirth = request.getParameter("dateofbirth");
 
@@ -177,7 +147,8 @@ public class PatientsServlet extends HttpServlet {
         request.setAttribute("DoctorID", DoctorID);
 
         Patient patient = new Patient(useId, name, sdt, birthDate, email, gender);
-
+        
+        // lấy id bệnh nhân 
         if (patientID != null && !patientID.isEmpty()) {
             try {
                 patient.setPatientId(Long.parseLong(patientID));
@@ -189,11 +160,16 @@ public class PatientsServlet extends HttpServlet {
         }
 
         if (valid) {
+            // sửa 
             if ("edit".equals(submit)) {
                 if (patientID != null && !patientID.isEmpty()) {
                     dao.editPatient(patientID, patient);
+                    response.sendRedirect(request.getContextPath()
+                            + "/createpatientsservlet?DoctorID=" + DoctorID);
+                    return;
                 }
             } else {
+                // tạo
                 long newPatientId = dao.addPatient(patient);
 
                 if ("receptionist".equals(user.getRole())) {
@@ -202,38 +178,39 @@ public class PatientsServlet extends HttpServlet {
                             + "&patientid=" + newPatientId);
                     return;
                 }
+                response.sendRedirect(request.getContextPath()
+                        + "/createpatientsservlet?DoctorID=" + DoctorID);
+                return;
             }
-            response.sendRedirect(request.getContextPath() + "/createpatientsservlet?DoctorID=" + DoctorID);
-
-        } else {
-            // Trả lại form với lỗi, giữ nguyên patientId để JSP biết đang edit hay tạo mới
-            request.setAttribute("errorPhone", errorPhone);
-            request.setAttribute("errorEmail", errorEmail);
-            request.setAttribute("errorName", errorName);
-            request.setAttribute("errorDOB", errorDOB);
-            request.setAttribute("patient", patient);
-            request.setAttribute("dob", request.getParameter("dateofbirth"));
-
-            request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
-                    .forward(request, response);
         }
+
+        request.setAttribute("errorPhone", errorPhone);
+        request.setAttribute("errorEmail", errorEmail);
+        request.setAttribute("errorName", errorName);
+        request.setAttribute("errorDOB", errorDOB);
+        request.setAttribute("patient", patient);
+        request.setAttribute("DoctorID", DoctorID);
+        request.setAttribute("dob", request.getParameter("dateofbirth"));
+
+        request.getRequestDispatcher("/pages/profile/createPatients/createPatients.jsp")
+                .forward(request, response);
     }
 
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
+    }
 
     private boolean checkPhone(String sdt) {
         if (sdt == null || sdt.trim().isEmpty()) {
-            return true; // cho phép null
+            return true;
         }
         return sdt.matches("^0\\d{9}$");
     }
 
     private boolean checkEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
-            return true; // cho phép null
+            return true;
         }
         return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
@@ -251,8 +228,6 @@ public class PatientsServlet extends HttpServlet {
         }
         LocalDate minDate = LocalDate.of(1980, 1, 1);
         LocalDate today = LocalDate.now();
-
         return (dob.compareTo(minDate) >= 0) && (dob.compareTo(today) <= 0);
     }
-
 }

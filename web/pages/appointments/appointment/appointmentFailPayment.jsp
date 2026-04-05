@@ -56,11 +56,6 @@
                             Vui lòng kiểm tra lại thông tin hoặc thử lại sau.
                         </p>
 
-                        <a class="actions"
-                           href="${pageContext.request.contextPath}/appointmentservlet?doctor=${doctorID}&patientid=${patient}">
-                            Chọn 
-                        </a>
-
                         <a href="${pageContext.request.contextPath}/index.jsp"
                            class="btn-primary">
                             Về trang chủ

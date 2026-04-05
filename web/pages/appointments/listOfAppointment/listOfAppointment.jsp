@@ -124,16 +124,17 @@
                             <td>
                                 <jsp:useBean id="now" class="java.util.Date" />
                                 <fmt:formatDate value="${now}" pattern="yyyy-MM-dd" var="today"/>
+                                <fmt:formatDate value="${now}" pattern="HH:mm" var="currentTime"/>
+
                                 <c:if test="${a.status eq 'booked' and a.appointmentDate eq today}">
-                                    <form action="listofappointment" method="post">
-
-                                        <input type="hidden" name="id" value="${a.appointmentId}">
-
-                                        <input type="hidden" name="status" class="status-select" value="checked_in">
-
-                                        <button class="btn-update">Check in</button>
-
-                                    </form>
+                                    <c:if test="${(a.appointmentTime eq '07:00:00' and currentTime ge '07:00' and currentTime le '11:30')
+                                                  or (a.appointmentTime eq '13:00:00' and currentTime ge '13:00' and currentTime le '16:30')}">
+                                          <form action="listofappointment" method="post">
+                                              <input type="hidden" name="id"     value="${a.appointmentId}">
+                                              <input type="hidden" name="status" value="checked_in">
+                                              <button class="btn-update">Check in</button>
+                                          </form>
+                                    </c:if>
                                 </c:if>
                             </td>
 
