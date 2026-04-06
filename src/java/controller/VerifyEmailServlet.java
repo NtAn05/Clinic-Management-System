@@ -2,6 +2,7 @@ package controller;
 
 import dal.UserDAO;
 import java.io.IOException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.Map;
@@ -69,14 +70,23 @@ public class VerifyEmailServlet extends HttpServlet {
             return;
         }
 
-        if (submittedOtp == null || !submittedOtp.equals(storedOtp)) {
+      if (submittedOtp == null || !submittedOtp.equals(storedOtp)) {
             request.setAttribute("error", "Mã OTP Gmail không đúng.");
             request.getRequestDispatcher("/pages/auth/verify-email.jsp").forward(request, response);
             return;
         }
 
-      try {
+        try {
             UserDAO dao = new UserDAO();
+
+            
+            if (dao.isEmailExist(pendingData.get("email"))) {
+                request.setAttribute("error", "Email đã tồn tại trong hệ thống. Vui lòng dùng email khác.");
+                request.getRequestDispatcher("/pages/auth/register.jsp").forward(request, response);
+                RegisterServlet.clearPendingRegister(session);
+                return;
+            }
+
             dao.registerUser(
                     pendingData.get("fullName"),
                     pendingData.get("phone"),
@@ -91,6 +101,11 @@ public class VerifyEmailServlet extends HttpServlet {
             RegisterServlet.clearPendingRegister(session);
             response.sendRedirect(request.getContextPath() + "/login?registered=true");
 
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // DB có unique constraint thì chặn luôn trường hợp race-condition tạo trùng email/sđt.
+            request.setAttribute("error", "Email hoặc số điện thoại đã tồn tại. Vui lòng kiểm tra lại.");
+            request.getRequestDispatcher("/pages/auth/register.jsp").forward(request, response);
+            RegisterServlet.clearPendingRegister(session);
         } catch (Exception e) {
             e.printStackTrace(); 
             request.setAttribute("error", "Lỗi CSDL: " + e.getMessage()); 
