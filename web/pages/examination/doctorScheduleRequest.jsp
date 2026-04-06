@@ -264,6 +264,14 @@
                                                     </c:if>
                                                 </c:when>
                                                 <c:otherwise>
+                                                    <c:set var="displayStartTime" value="${item.startTime}" />
+                                                    <c:set var="displayEndTime" value="${item.endTime}" />
+                                                    <c:if test="${empty displayStartTime}">
+                                                        <c:set var="displayStartTime" value="${item.oldStartTime}" />
+                                                    </c:if>
+                                                    <c:if test="${empty displayEndTime}">
+                                                        <c:set var="displayEndTime" value="${item.oldEndTime}" />
+                                                    </c:if>
                                                     <c:choose>
                                                         <c:when test="${not empty item.workDate}">
                                                             <fmt:formatDate value="${item.workDate}" pattern="dd/MM/yyyy" />
@@ -279,9 +287,20 @@
                                                                 <c:otherwise>Thứ 7</c:otherwise>
                                                             </c:choose>
                                                         </c:when>
+                                                        <c:when test="${not empty item.oldDayOfWeek}">
+                                                            <c:choose>
+                                                                <c:when test="${item.oldDayOfWeek == 0}">Chủ nhật</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 1}">Thứ 2</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 2}">Thứ 3</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 3}">Thứ 4</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 4}">Thứ 5</c:when>
+                                                                <c:when test="${item.oldDayOfWeek == 5}">Thứ 6</c:when>
+                                                                <c:otherwise>Thứ 7</c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
                                                         <c:otherwise>-</c:otherwise>
                                                     </c:choose>
-                                                    - ${item.startTime} - ${item.endTime}
+                                                    - ${displayStartTime} - ${displayEndTime}
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>

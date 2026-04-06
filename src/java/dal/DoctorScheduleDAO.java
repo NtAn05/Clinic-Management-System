@@ -539,9 +539,38 @@ public class DoctorScheduleDAO extends DBContext {
             SELECT r.request_id, r.doctor_id, r.request_type, r.scope_type,
                    r.reason, r.status, r.requested_at, r.admin_note,
                    i.action_type, i.target_shift_id, i.work_date, i.day_of_week,
-                   i.start_time, i.end_time, i.max_patients
-            FROM schedule_change_requests r
-            LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
+                   i.start_time, i.end_time, i.max_patients,
+                               s_old.day_of_week AS old_day_of_week,
+                               s_old.start_time AS old_start_time,
+                               s_old.end_time AS old_end_time,
+                               u_new.full_name AS new_doctor_name,
+                               CASE
+                                   WHEN i.work_date IS NOT NULL AND s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
+                                   THEN DATE_ADD(
+                                       i.work_date,
+                                       INTERVAL (
+                                           (CASE WHEN s_old.day_of_week = 0 THEN 7 ELSE s_old.day_of_week END)
+                                           - (CASE WHEN i.day_of_week = 0 THEN 7 ELSE i.day_of_week END)
+                                       ) DAY
+                                   )
+                                   ELSE NULL
+                               END AS old_work_date
+                        FROM schedule_change_requests r
+                        LEFT JOIN schedule_change_request_items i ON r.request_id = i.request_id
+                        LEFT JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
+                        LEFT JOIN doctor_shifts s_new ON s_new.shift_id = (
+                            SELECT s2.shift_id
+                            FROM doctor_shifts s2
+                            WHERE i.action_type = 'UPDATE'
+                              AND s2.day_of_week = i.day_of_week
+                              AND s2.start_time = i.start_time
+                              AND s2.end_time = i.end_time
+                              AND s2.doctor_id <> r.doctor_id
+                            ORDER BY s2.shift_id
+                            LIMIT 1
+                        )
+                        LEFT JOIN doctors d_new ON s_new.doctor_id = d_new.doctor_id
+                        LEFT JOIN users u_new ON d_new.user_id = u_new.user_id
             WHERE r.doctor_id = ?
             ORDER BY r.requested_at DESC
             LIMIT ?
@@ -553,7 +582,32 @@ public class DoctorScheduleDAO extends DBContext {
             ResultSet rs = st.executeQuery();
 
             while (rs.next()) {
-                list.add(mapScheduleChangeRequestBasic(rs));
+                ScheduleChangeRequest request = mapScheduleChangeRequestBasic(rs);
+
+                int oldDayOfWeek = rs.getInt("old_day_of_week");
+                request.setOldDayOfWeek(rs.wasNull() ? null : oldDayOfWeek);
+
+                Time oldStartTime = rs.getTime("old_start_time");
+                if (oldStartTime != null) {
+                    request.setOldStartTime(oldStartTime.toLocalTime());
+                }
+
+                Time oldEndTime = rs.getTime("old_end_time");
+                if (oldEndTime != null) {
+                    request.setOldEndTime(oldEndTime.toLocalTime());
+                }
+
+                request.setNewDoctorName(rs.getString("new_doctor_name"));
+                Integer counterpartShiftId = extractCounterpartShiftId(rs.getString("reason"));
+                if (counterpartShiftId != null) {
+                    String preferredDoctorName = getDoctorNameByShiftId(counterpartShiftId);
+                    if (preferredDoctorName != null && !preferredDoctorName.isBlank()) {
+                        request.setNewDoctorName(preferredDoctorName);
+                    }
+                }
+                request.setOldWorkDate(rs.getDate("old_work_date"));
+
+                list.add(request);
             }
         } catch (SQLException e) {
             e.printStackTrace();
