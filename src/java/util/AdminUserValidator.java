@@ -43,16 +43,14 @@ public class AdminUserValidator {
 
         ValidationResult result = new ValidationResult();
 
+        validateUserCommonFields(result, "add", fullName, phone, email);
+
         Role targetRole = parseRole(roleStr);
         result.targetRole = targetRole;
 
         if (targetRole == null || targetRole == Role.admin) {
             result.addFieldError("addRoleError", "Vai trò không hợp lệ");
-            result.formError = "Vai trò không hợp lệ";
-            return result;
         }
-
-        validateUserCommonFields(result, "add", fullName, phone, email);
 
         if (!result.hasAnyError() && userDAO.isPhoneExist(phone)) {
             result.addFieldError("addPhoneError", "Số điện thoại này đã tồn tại");
@@ -81,22 +79,16 @@ public class AdminUserValidator {
 
         ValidationResult result = new ValidationResult();
 
+        validateUserCommonFields(result, "edit", fullName, phone, email);
+
         Role targetRole = parseRole(roleStr);
         result.targetRole = targetRole;
 
         if (targetRole == null) {
             result.addFieldError("editRoleError", "Vai trò không hợp lệ");
-            result.formError = "Vai trò không hợp lệ";
-            return result;
-        }
-
-        if (!isAllowedEditableRoleTransition(existingUser.getRole(), targetRole)) {
+        } else if (!isAllowedEditableRoleTransition(existingUser.getRole(), targetRole)) {
             result.addFieldError("editRoleError", "Vai trò không hợp lệ");
-            result.formError = "Vai trò không hợp lệ";
-            return result;
         }
-
-        validateUserCommonFields(result, "edit", fullName, phone, email);
 
         if (!result.hasAnyError()) {
             User phoneOwner = userDAO.getUserByPhone(phone);
