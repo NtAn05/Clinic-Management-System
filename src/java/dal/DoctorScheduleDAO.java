@@ -1,5 +1,6 @@
 package dal;
 
+import java.sql.Timestamp;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -1100,7 +1101,10 @@ public class DoctorScheduleDAO extends DBContext {
         request.setScopeType(rs.getString("scope_type"));
         request.setReason(stripCounterpartShiftMeta(rs.getString("reason")));
         request.setStatus(rs.getString("status"));
-        request.setRequestedAt(rs.getTimestamp("requested_at"));
+        String requestedAtRaw = rs.getString("requested_at");
+        if (requestedAtRaw != null && !requestedAtRaw.isBlank()) {
+            request.setRequestedAt(Timestamp.valueOf(requestedAtRaw));
+        }
         request.setAdminNote(rs.getString("admin_note"));
         request.setActionType(rs.getString("action_type"));
 

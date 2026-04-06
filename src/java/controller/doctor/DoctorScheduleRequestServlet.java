@@ -153,8 +153,9 @@ public class DoctorScheduleRequestServlet extends HttpServlet {
                         startTime,
                         endTime
                 );
-                if (removeShiftId != null
-                        && scheduleDAO.hasAppointmentsForShiftOnDate(removeShiftId, workDate)) {
+                if (removeShiftId == null) {
+                    error = "Bạn không có ca làm việc vào ngày áp dụng đã chọn.";
+                } else if (scheduleDAO.hasAppointmentsForShiftOnDate(removeShiftId, workDate)) {
                     error = "Không thể hủy ca đã có lịch hẹn.";
                 }
             }
