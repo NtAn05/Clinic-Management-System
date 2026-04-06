@@ -52,34 +52,6 @@ public class DoctorScheduleDAO extends DBContext {
         return list;
     }
 
-    // Lay tat ca bac si de hien thi tren man hinh sap lich.
-    public List<Doctor> getAllDoctorsForSchedule() {
-        List<Doctor> list = new ArrayList<>();
-        syncDoctorRowsForAllDoctorUsers();
-        String sql = """
-            SELECT d.doctor_id, d.user_id, d.specialization, u.full_name
-            FROM doctors d
-            JOIN users u ON d.user_id = u.user_id
-            WHERE u.role = 'doctor'
-            ORDER BY u.full_name
-        """;
-
-        try (PreparedStatement st = connection.prepareStatement(sql); ResultSet rs = st.executeQuery()) {
-            while (rs.next()) {
-                Doctor d = new Doctor();
-                d.setDoctorId(rs.getInt("doctor_id"));
-                d.setUserId(rs.getInt("user_id"));
-                d.setSpecialization(rs.getString("specialization"));
-                d.setFullName(rs.getString("full_name"));
-                list.add(d);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
     // Lay danh sach bac si dang active de lap lich.
     public List<Doctor> getActiveDoctorsForSchedule() {
         List<Doctor> list = new ArrayList<>();
@@ -961,25 +933,47 @@ public class DoctorScheduleDAO extends DBContext {
         }
     }
 
-    public boolean hasApprovedTemporaryUpdateRequestForShiftOnDate(int targetShiftId, Date workDate) {
-        if (targetShiftId <= 0 || workDate == null) {
+    public boolean hasApprovedTemporaryParticipationForShiftOnDate(int shiftId, Date workDate) {
+        if (shiftId <= 0 || workDate == null) {
             return false;
         }
         String sql = """
             SELECT 1
-            FROM schedule_change_requests r
-            JOIN schedule_change_request_items i ON r.request_id = i.request_id
-            WHERE i.action_type = 'UPDATE'
-              AND i.target_shift_id = ?
-              AND i.work_date = ?
-              AND r.scope_type = 'ONE_DATE'
-              AND r.request_type = 'TEMPORARY'
-              AND r.status = 'APPROVED'
+            FROM (
+                SELECT i.target_shift_id AS requester_shift_id,
+                       (
+                           SELECT s2.shift_id
+                           FROM doctor_shifts s2
+                           WHERE s2.day_of_week = i.day_of_week
+                             AND s2.start_time = i.start_time
+                             AND s2.end_time = i.end_time
+                             AND s2.doctor_id <> r.doctor_id
+                           ORDER BY s2.shift_id
+                           LIMIT 1
+                       ) AS counterpart_shift_id,
+                       i.work_date AS new_work_date,
+                       CASE
+                           WHEN s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
+                           THEN DATE_ADD(i.work_date, INTERVAL ((s_old.day_of_week - i.day_of_week + 7) % 7) DAY)
+                           ELSE NULL
+                       END AS old_work_date
+                FROM schedule_change_requests r
+                JOIN schedule_change_request_items i ON r.request_id = i.request_id
+                LEFT JOIN doctor_shifts s_old ON i.target_shift_id = s_old.shift_id
+                WHERE i.action_type = 'UPDATE'
+                  AND r.scope_type = 'ONE_DATE'
+                  AND r.request_type = 'TEMPORARY'
+                  AND r.status = 'APPROVED'
+            ) x
+            WHERE (x.requester_shift_id = ? OR x.counterpart_shift_id = ?)
+              AND (? = x.new_work_date OR ? = x.old_work_date)
             LIMIT 1
         """;
         try (PreparedStatement st = connection.prepareStatement(sql)) {
-            st.setInt(1, targetShiftId);
-            st.setDate(2, workDate);
+            st.setInt(1, shiftId);
+            st.setInt(2, shiftId);
+            st.setDate(3, workDate);
+            st.setDate(4, workDate);
             try (ResultSet rs = st.executeQuery()) {
                 return rs.next();
             }

@@ -163,7 +163,11 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         applyApprovedOverrides(new DoctorScheduleDAO(), scheduleItems, filteredDoctors, weekStart, weekEnd);
         for (java.util.Iterator<ScheduleViewItem> iterator = scheduleItems.iterator(); iterator.hasNext();) {
             ScheduleViewItem item = iterator.next();
-            if (!matchesSelectedFilters(item, selectedDay, selectedShiftType)) {
+            LocalDate workDate = item.getWorkDate();
+            boolean outsideCurrentWeek = workDate == null
+                    || workDate.isBefore(weekStart)
+                    || workDate.isAfter(weekEnd);
+            if (outsideCurrentWeek || !matchesSelectedFilters(item, selectedDay, selectedShiftType)) {
                 iterator.remove();
             }
         }
@@ -604,9 +608,6 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                     continue;
                 }
                 newDate = request.getWorkDate().toLocalDate();
-                if (newDate.isBefore(weekStart) || newDate.isAfter(weekEnd)) {
-                    continue;
-                }
                 oldDate = request.getOldWorkDate() != null ? request.getOldWorkDate().toLocalDate() : newDate;
             } else {
                 if (request.getDayOfWeek() == null) {
@@ -621,6 +622,12 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                 continue;
             }
 
+            boolean newDateInWeek = !newDate.isBefore(weekStart) && !newDate.isAfter(weekEnd);
+            boolean oldDateInWeek = !oldDate.isBefore(weekStart) && !oldDate.isAfter(weekEnd);
+            if (temporary && !newDateInWeek && !oldDateInWeek) {
+                continue;
+            }
+
             Doctor requester = doctorById.get(request.getDoctorId());
             if (requester == null) {
                 continue;
@@ -631,15 +638,19 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             String newShiftCode = getShiftCode(request.getStartTime(), request.getEndTime());
             String oldShiftCode = getShiftCode(request.getOldStartTime(), request.getOldEndTime());
             if ("ADD".equals(actionType)) {
-                removeShift(scheduleItems, request.getDoctorId(), newDate, newShiftCode);
-                addOverlayShift(scheduleItems, requester, newDate,
-                        request.getStartTime(), request.getEndTime(), request.getMaxPatients(), temporary);
+                if (newDateInWeek) {
+                    removeShift(scheduleItems, request.getDoctorId(), newDate, newShiftCode);
+                    addOverlayShift(scheduleItems, requester, newDate,
+                            request.getStartTime(), request.getEndTime(), request.getMaxPatients(), temporary);
+                }
                 continue;
             }
 
             if ("REMOVE".equals(actionType)) {
                 String removeShiftCode = !oldShiftCode.isEmpty() ? oldShiftCode : newShiftCode;
-                removeShift(scheduleItems, request.getDoctorId(), newDate, removeShiftCode);
+                if (newDateInWeek) {
+                    removeShift(scheduleItems, request.getDoctorId(), newDate, removeShiftCode);
+                }
                 continue;
             }
 
@@ -691,17 +702,19 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                     }
                 }
 
-                if (!oldShiftCode.isEmpty()) {
+                if (oldDateInWeek && !oldShiftCode.isEmpty()) {
                     removeShift(scheduleItems, request.getDoctorId(), oldDate, oldShiftCode);
                 }
-                addOverlayShift(scheduleItems, requester, newDate,
-                        request.getStartTime(), request.getEndTime(), request.getMaxPatients(), temporary);
+                if (newDateInWeek) {
+                    addOverlayShift(scheduleItems, requester, newDate,
+                            request.getStartTime(), request.getEndTime(), request.getMaxPatients(), temporary);
+                }
 
                 if (counterpart != null) {
-                    if (!newShiftCode.isEmpty()) {
+                    if (newDateInWeek && !newShiftCode.isEmpty()) {
                         removeShift(scheduleItems, counterpartDoctorId, newDate, newShiftCode);
                     }
-                    if (!oldShiftCode.isEmpty()) {
+                    if (oldDateInWeek && !oldShiftCode.isEmpty()) {
                         addOverlayShift(scheduleItems, counterpart, oldDate,
                                 request.getOldStartTime(), request.getOldEndTime(), request.getMaxPatients(), temporary);
                     }
