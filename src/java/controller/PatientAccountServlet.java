@@ -10,7 +10,9 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,7 @@ public class PatientAccountServlet extends HttpServlet {
     private static final int PAGE_SIZE = 10;
     private static final String VIEW_PATH = "/pages/admin/patient-accounts.jsp";
     private static final String APP_PENDING_RESEND_KEY = "patientAccountPendingResendPasswordIds";
+    private static final String FORM_FLASH_KEY = "patientAccountFormFlash";
 
     private final AccountProvisionService accountProvisionService = new AccountProvisionService();
     private final AdminUserValidator adminUserValidator = new AdminUserValidator();
@@ -63,25 +66,29 @@ public class PatientAccountServlet extends HttpServlet {
                         return;
                     }
                     handleAddPatientAccount(request);
-                    break;
+                    redirectWithFlashState(request, response);
+                    return;
                 case "edit":
                     if (!requirePatientManager(canManagePatients, response)) {
                         return;
                     }
                     handleEditPatientAccount(request);
-                    break;
+                    redirectWithFlashState(request, response);
+                    return;
                 case "resendPassword":
                     if (!requirePatientManager(canManagePatients, response)) {
                         return;
                     }
                     handleResendPassword(request);
-                    break;
+                    redirectWithFlashState(request, response);
+                    return;
                 case "toggleStatus":
                     if (!requirePatientManager(canManagePatients, response)) {
                         return;
                     }
                     handleToggleStatus(request);
-                    break;
+                    redirectWithFlashState(request, response);
+                    return;
                 case "search":
                     loadPatients(request, request.getParameter("keyword"), request.getParameter("status"), "search");
                     forward(request, response);
@@ -97,6 +104,11 @@ public class PatientAccountServlet extends HttpServlet {
             }
         } catch (SQLException e) {
             request.setAttribute("error", "Lỗi cơ sở dữ liệu: " + e.getMessage());
+        }
+
+        if ("POST".equalsIgnoreCase(request.getMethod())) {
+            redirectWithFlashState(request, response);
+            return;
         }
 
         String keyword = request.getParameter("keyword");
@@ -317,6 +329,8 @@ public class PatientAccountServlet extends HttpServlet {
         String safeKeyword = keyword == null ? "" : keyword.trim();
         String safeStatus = (statusStr == null || statusStr.isBlank()) ? "all" : statusStr;
 
+        consumeFormFlash(request);
+
         UserDAO userDAO = new UserDAO();
         List<User> users = safeKeyword.isEmpty()
                 ? userDAO.getUsersByRole(Role.patient)
@@ -388,6 +402,78 @@ public class PatientAccountServlet extends HttpServlet {
 
     private void forward(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.getRequestDispatcher(VIEW_PATH).forward(request, response);
+    }
+
+    private void redirectWithFlashState(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        flashCurrentFormState(request);
+        response.sendRedirect(buildRedirectUrl(request));
+    }
+
+    private String buildRedirectUrl(HttpServletRequest request) {
+        StringBuilder url = new StringBuilder(request.getContextPath()).append("/patient-accounts");
+        appendQueryParam(url, "keyword", trim(request.getParameter("keyword")));
+        appendQueryParam(url, "status", trim(request.getParameter("status")));
+        appendQueryParam(url, "page", trim(request.getParameter("page")));
+        return url.toString();
+    }
+
+    private void appendQueryParam(StringBuilder url, String key, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        url.append(url.indexOf("?") >= 0 ? "&" : "?")
+                .append(key)
+                .append("=")
+                .append(java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    private void flashCurrentFormState(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Map<String, Object> flash = new LinkedHashMap<>();
+        Enumeration<String> attributeNames = request.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String name = attributeNames.nextElement();
+            if (shouldFlashAttribute(name)) {
+                flash.put(name, request.getAttribute(name));
+            }
+        }
+        session.setAttribute(FORM_FLASH_KEY, flash);
+    }
+
+    private void consumeFormFlash(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object flash = session.getAttribute(FORM_FLASH_KEY);
+        if (!(flash instanceof Map<?, ?>)) {
+            return;
+        }
+        Map<?, ?> flashMap = (Map<?, ?>) flash;
+        for (Map.Entry<?, ?> entry : flashMap.entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String) {
+                request.setAttribute((String) key, entry.getValue());
+            }
+        }
+        session.removeAttribute(FORM_FLASH_KEY);
+    }
+
+    private boolean shouldFlashAttribute(String name) {
+        String key = trim(name);
+        return key.equals("error")
+                || key.equals("success")
+                || key.equals("addModalOpen")
+                || key.equals("editModalOpen")
+                || key.equals("resendModalOpen")
+                || key.equals("resendModalUserId")
+                || key.equals("resendModalFullName")
+                || key.equals("resendModalPhone")
+                || key.equals("resendModalEmail")
+                || key.equals("resendModalStatus")
+                || key.equals("editResendAvailable")
+                || key.startsWith("add")
+                || key.startsWith("edit");
     }
 
     private int parsePage(String pageParam, int defaultValue) {

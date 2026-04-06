@@ -13,7 +13,9 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +35,7 @@ public class AdminStaffServlet extends HttpServlet {
     private static final String SUCCESS_FLASH_KEY = "adminStaffSuccess";
     private static final String RESEND_USER_FLASH_KEY = "adminStaffResendUserId";
     private static final String APP_PENDING_RESEND_KEY = "adminStaffPendingResendPasswordIds";
+    private static final String FORM_FLASH_KEY = "adminStaffFormFlash";
     private static final int PAGE_SIZE = 10;
     private static final int MIN_EXPERIENCE = 0;
     private static final int MAX_EXPERIENCE = 50;
@@ -101,21 +104,31 @@ public class AdminStaffServlet extends HttpServlet {
                     redirectSuccess(resp, req, successMessage);
                     return;
                 }
+                redirectWithFlashState(resp, req);
+                return;
             } else if ("resendPassword".equals(action) && "POST".equalsIgnoreCase(req.getMethod())) {
                 if (handleResendPassword(req)) {
                     redirectSuccess(resp, req, "Đã gửi lại mật khẩu tạm qua email.");
                     return;
                 }
+                redirectWithFlashState(resp, req);
+                return;
             } else if ("edit".equals(action) && "POST".equalsIgnoreCase(req.getMethod())) {
                 if (handleEdit(req)) {
                     redirectSuccess(resp, req, "Cập nhật nhân viên thành công.");
                     return;
                 }
+                redirectWithFlashState(resp, req);
+                return;
             }
 
             loadPage(req, resp);
         } catch (Exception e) {
             req.setAttribute("error", "Lỗi xử lý quản lý nhân viên: " + e.getMessage());
+            if ("POST".equalsIgnoreCase(req.getMethod())) {
+                redirectWithFlashState(resp, req);
+                return;
+            }
             loadPage(req, resp);
         }
     }
@@ -170,6 +183,7 @@ public class AdminStaffServlet extends HttpServlet {
         if (!notice.isEmpty()) {
             req.setAttribute("notice", notice);
         }
+        consumeFormFlash(req);
 
         prepareEditModalFromQuery(req, doctorDAO);
 
@@ -742,6 +756,57 @@ public class AdminStaffServlet extends HttpServlet {
     private void redirectSuccess(HttpServletResponse resp, HttpServletRequest req, String message) throws IOException {
         req.getSession().setAttribute(SUCCESS_FLASH_KEY, message);
         resp.sendRedirect(req.getContextPath() + "/admin-staffs");
+    }
+
+    private void redirectWithFlashState(HttpServletResponse resp, HttpServletRequest req) throws IOException {
+        flashCurrentFormState(req);
+        resp.sendRedirect(req.getContextPath() + "/admin-staffs");
+    }
+
+    private void flashCurrentFormState(HttpServletRequest req) {
+        HttpSession session = req.getSession();
+        Map<String, Object> flash = new LinkedHashMap<>();
+        Enumeration<String> attributeNames = req.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String name = attributeNames.nextElement();
+            if (shouldFlashAttribute(name)) {
+                flash.put(name, req.getAttribute(name));
+            }
+        }
+        session.setAttribute(FORM_FLASH_KEY, flash);
+    }
+
+    private void consumeFormFlash(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object flash = session.getAttribute(FORM_FLASH_KEY);
+        if (!(flash instanceof Map<?, ?>)) {
+            return;
+        }
+        Map<?, ?> flashMap = (Map<?, ?>) flash;
+        for (Map.Entry<?, ?> entry : flashMap.entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String) {
+                req.setAttribute((String) key, entry.getValue());
+            }
+        }
+        session.removeAttribute(FORM_FLASH_KEY);
+    }
+
+    private boolean shouldFlashAttribute(String name) {
+        String key = trim(name);
+        return key.equals("error")
+                || key.equals("notice")
+                || key.equals("success")
+                || key.equals("addModalOpen")
+                || key.equals("editModalOpen")
+                || key.equals("editResendAvailable")
+                || key.equals("flashResendUserId")
+                || key.equals("addStaffMailFailed")
+                || key.startsWith("add")
+                || key.startsWith("edit");
     }
 
     private int parsePositiveInt(String value) {

@@ -16,6 +16,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ import util.SystemLogService;
 public class AdminDoctorScheduleServlet extends HttpServlet {
 
     private static final String VIEW_PATH = "/pages/admin/doctor-schedules.jsp";
+    private static final String FORM_FLASH_KEY = "adminDoctorScheduleFormFlash";
     private static final List<Integer> DAY_ORDER = Arrays.asList(1, 2, 3, 4, 5, 6, 0);
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy", new Locale("vi", "VN"));
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
@@ -71,6 +73,10 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             } else if ("delete".equals(action)) {
                 handleDeleteShift(req, scheduleDAO);
             }
+            if ("POST".equalsIgnoreCase(req.getMethod())) {
+                redirectWithFlashState(req, resp);
+                return;
+            }
         } catch (Exception e) {
             String actionLabel = "xử lý";
             if ("add".equals(action)) {
@@ -82,6 +88,8 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             }
             preserveModalState(req, action);
             req.setAttribute("error", "Không thể " + actionLabel + " lịch làm việc: " + e.getMessage());
+            redirectWithFlashState(req, resp);
+            return;
         }
 
         loadPage(req, resp);
@@ -116,6 +124,8 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         if (selectedShiftType.isEmpty() && isGetRequest && !hasActionParam) {
             selectedShiftType = normalizeShiftType(req.getParameter("shiftType"));
         }
+
+        consumeFormFlash(req);
 
         LocalDate weekStart = LocalDate.now()
                 .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -420,6 +430,73 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             return first;
         }
         return second;
+    }
+
+    private void redirectWithFlashState(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        flashCurrentFormState(req);
+        resp.sendRedirect(buildRedirectUrl(req));
+    }
+
+    private String buildRedirectUrl(HttpServletRequest req) {
+        StringBuilder url = new StringBuilder(req.getContextPath()).append("/admin-doctor-schedules");
+        appendQueryParam(url, "keyword", trim(req.getParameter("filterKeyword")));
+        appendQueryParam(url, "dayOfWeek", trim(req.getParameter("filterDayOfWeek")));
+        appendQueryParam(url, "shiftType", trim(req.getParameter("filterShiftType")));
+        appendQueryParam(url, "weekOffset", trim(req.getParameter("filterWeekOffset")));
+        appendQueryParam(url, "page", trim(req.getParameter("filterPage")));
+        return url.toString();
+    }
+
+    private void appendQueryParam(StringBuilder url, String key, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        url.append(url.indexOf("?") >= 0 ? "&" : "?")
+                .append(key)
+                .append("=")
+                .append(java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    private void flashCurrentFormState(HttpServletRequest req) {
+        HttpSession session = req.getSession();
+        Map<String, Object> flash = new LinkedHashMap<>();
+        Enumeration<String> attributeNames = req.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String name = attributeNames.nextElement();
+            if (shouldFlashAttribute(name)) {
+                flash.put(name, req.getAttribute(name));
+            }
+        }
+        session.setAttribute(FORM_FLASH_KEY, flash);
+    }
+
+    private void consumeFormFlash(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object flash = session.getAttribute(FORM_FLASH_KEY);
+        if (!(flash instanceof Map<?, ?>)) {
+            return;
+        }
+        Map<?, ?> flashMap = (Map<?, ?>) flash;
+        for (Map.Entry<?, ?> entry : flashMap.entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String) {
+                req.setAttribute((String) key, entry.getValue());
+            }
+        }
+        session.removeAttribute(FORM_FLASH_KEY);
+    }
+
+    private boolean shouldFlashAttribute(String name) {
+        String key = trim(name);
+        return key.equals("error")
+                || key.equals("success")
+                || key.equals("addModalOpen")
+                || key.equals("editModalOpen")
+                || key.startsWith("add")
+                || key.startsWith("edit");
     }
 
     private String normalizeShiftType(String shiftType) {

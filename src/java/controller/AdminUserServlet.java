@@ -12,7 +12,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +35,7 @@ public class AdminUserServlet extends HttpServlet {
     private static final String SUCCESS_FLASH_KEY = "adminUserSuccess";
     private static final String RESEND_USER_FLASH_KEY = "adminUserResendUserId";
     private static final String APP_PENDING_RESEND_KEY = "adminUserPendingResendPasswordIds";
+    private static final String FORM_FLASH_KEY = "adminUserFormFlash";
     private final AccountProvisionService accountProvisionService = new AccountProvisionService();
     private final AdminUserValidator adminUserValidator = new AdminUserValidator();
 
@@ -71,6 +74,10 @@ public class AdminUserServlet extends HttpServlet {
             }
         } catch (SQLException e) {
             request.setAttribute("error", "Lỗi cơ sở dữ liệu: " + e.getMessage());
+            if ("POST".equalsIgnoreCase(request.getMethod())) {
+                redirectWithFlashState(request, response);
+                return;
+            }
             request.getRequestDispatcher("pages/admin/users.jsp").forward(request, response);
         }
     }
@@ -92,7 +99,7 @@ public class AdminUserServlet extends HttpServlet {
         if (!validationResult.isValid()) {
             keepAddForm(request, fullName, phone, email, roleStr);
             applyValidationResult(request, validationResult);
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -102,7 +109,7 @@ public class AdminUserServlet extends HttpServlet {
                 keepAddForm(request, fullName, phone, email, roleStr);
                 request.setAttribute("addRoleError", "Chỉ được tạo tài khoản nhân sự nội bộ tại trang này");
                 request.setAttribute("error", "Chỉ được tạo tài khoản nhân sự nội bộ tại trang này");
-                loadUsers(request, response);
+                redirectWithFlashState(request, response);
                 return;
             }
             User newUser = new User();
@@ -162,7 +169,7 @@ public class AdminUserServlet extends HttpServlet {
             request.setAttribute("addModalOpen", true);
         }
 
-        loadUsers(request, response);
+        redirectWithFlashState(request, response);
     }
 
     private void handleEditUser(HttpServletRequest request, HttpServletResponse response)
@@ -178,7 +185,7 @@ public class AdminUserServlet extends HttpServlet {
         int userId = parsePositiveId(userIdStr);
         if (userId <= 0) {
             request.setAttribute("error", "Người dùng không hợp lệ");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -188,13 +195,13 @@ public class AdminUserServlet extends HttpServlet {
         User existingUser = userDAO.getUserById(userId);
         if (existingUser == null) {
             request.setAttribute("error", "Người dùng không hợp lệ");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
         if (existingUser.getRole() == Role.admin) {
             request.setAttribute("error", "Không được chỉnh sửa tài khoản admin");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -215,7 +222,7 @@ public class AdminUserServlet extends HttpServlet {
 
             keepEditForm(request, userIdStr, originalRole, fullName, phone, email, editRoleValue);
             applyValidationResult(request, validationResult);
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -225,7 +232,7 @@ public class AdminUserServlet extends HttpServlet {
                 keepEditForm(request, userIdStr, originalRole, fullName, phone, email, roleStr);
                 request.setAttribute("editRoleError", "Tài khoản bệnh nhân được quản lý ở trang riêng");
                 request.setAttribute("error", "Tài khoản bệnh nhân được quản lý ở trang riêng");
-                loadUsers(request, response);
+                redirectWithFlashState(request, response);
                 return;
             }
             User user = new User();
@@ -260,7 +267,7 @@ public class AdminUserServlet extends HttpServlet {
             request.setAttribute("editModalOpen", true);
         }
 
-        loadUsers(request, response);
+        redirectWithFlashState(request, response);
     }
 
     private void handleToggleStatus(HttpServletRequest request, HttpServletResponse response)
@@ -271,7 +278,7 @@ public class AdminUserServlet extends HttpServlet {
 
         if (userId <= 0) {
             request.setAttribute("error", "Người dùng không hợp lệ");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -282,13 +289,13 @@ public class AdminUserServlet extends HttpServlet {
 
             if (user == null) {
                 request.setAttribute("error", "Không tìm thấy người dùng");
-                loadUsers(request, response);
+                redirectWithFlashState(request, response);
                 return;
             }
 
             if (user.getRole() == Role.admin) {
                 request.setAttribute("error", "Không được thay đổi trạng thái tài khoản admin");
-                loadUsers(request, response);
+                redirectWithFlashState(request, response);
                 return;
             }
 
@@ -304,7 +311,7 @@ public class AdminUserServlet extends HttpServlet {
             request.setAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
         }
 
-        loadUsers(request, response);
+        redirectWithFlashState(request, response);
     }
 
     private void handleResendPassword(HttpServletRequest request, HttpServletResponse response)
@@ -315,7 +322,7 @@ public class AdminUserServlet extends HttpServlet {
 
         if (userId <= 0) {
             request.setAttribute("error", "Người dùng không hợp lệ");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -324,13 +331,13 @@ public class AdminUserServlet extends HttpServlet {
 
         if (targetUser == null) {
             request.setAttribute("error", "Người dùng không hợp lệ");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
         if (targetUser.getRole() == Role.admin) {
             request.setAttribute("error", "Không hỗ trợ gửi lại mật khẩu cho tài khoản admin");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -338,7 +345,7 @@ public class AdminUserServlet extends HttpServlet {
 
         if (!provisionResult.isPasswordUpdated()) {
             request.setAttribute("error", "Người dùng không hợp lệ");
-            loadUsers(request, response);
+            redirectWithFlashState(request, response);
             return;
         }
 
@@ -368,6 +375,7 @@ public class AdminUserServlet extends HttpServlet {
         applyPaging(request, users);
         exposeSuccess(request);
         exposeFlashResendUserId(request);
+        consumeFormFlash(request);
 
         request.setAttribute("currentAction", "list");
         request.setAttribute("filterRole", "all");
@@ -680,6 +688,12 @@ public class AdminUserServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/users");
     }
 
+    private void redirectWithFlashState(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        flashCurrentFormState(request);
+        response.sendRedirect(request.getContextPath() + "/users");
+    }
+
     private void redirectToStaffProfile(HttpServletRequest request, HttpServletResponse response, int userId, String message)
             throws IOException {
         String encodedMessage = URLEncoder.encode(message, StandardCharsets.UTF_8);
@@ -712,6 +726,54 @@ public class AdminUserServlet extends HttpServlet {
         if (userId > 0) {
             request.getSession().setAttribute(RESEND_USER_FLASH_KEY, userId);
         }
+    }
+
+    private void flashCurrentFormState(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Map<String, Object> flash = new LinkedHashMap<>();
+        Enumeration<String> attributeNames = request.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String name = attributeNames.nextElement();
+            if (shouldFlashAttribute(name)) {
+                flash.put(name, request.getAttribute(name));
+            }
+        }
+        session.setAttribute(FORM_FLASH_KEY, flash);
+    }
+
+    private void consumeFormFlash(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object flash = session.getAttribute(FORM_FLASH_KEY);
+        if (!(flash instanceof Map<?, ?>)) {
+            return;
+        }
+        Map<?, ?> flashMap = (Map<?, ?>) flash;
+        for (Map.Entry<?, ?> entry : flashMap.entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String) {
+                request.setAttribute((String) key, entry.getValue());
+            }
+        }
+        session.removeAttribute(FORM_FLASH_KEY);
+    }
+
+    private boolean shouldFlashAttribute(String name) {
+        String key = trim(name);
+        return key.equals("error")
+                || key.equals("success")
+                || key.equals("addModalOpen")
+                || key.equals("editModalOpen")
+                || key.equals("editResendAvailable")
+                || key.equals("flashResendUserId")
+                || key.equals("flashResendFullName")
+                || key.equals("flashResendPhone")
+                || key.equals("flashResendEmail")
+                || key.equals("flashResendRole")
+                || key.startsWith("add")
+                || key.startsWith("edit");
     }
 
     private void clearFlashResendUserId(HttpServletRequest request) {

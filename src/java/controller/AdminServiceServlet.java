@@ -9,7 +9,10 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import model.Role;
 import model.ServicePrice;
@@ -19,6 +22,8 @@ import util.SystemLogService;
 
 public class AdminServiceServlet extends HttpServlet {
 
+    private static final String VIEW_PATH = "/pages/admin/services.jsp";
+    private static final String FORM_FLASH_KEY = "adminServiceFormFlash";
     private static final int PAGE_SIZE = 10;
     private static final int MAX_SERVICE_NAME_LENGTH = 100;
     private static final BigDecimal MAX_SERVICE_PRICE = new BigDecimal("1000000000");
@@ -51,9 +56,18 @@ public class AdminServiceServlet extends HttpServlet {
                 handleDelete(req);
             }
 
+            if ("POST".equalsIgnoreCase(req.getMethod())) {
+                redirectWithFlashState(req, resp);
+                return;
+            }
+
             loadPage(req, resp);
         } catch (Exception e) {
             req.setAttribute("error", "Lỗi: " + e.getMessage());
+            if ("POST".equalsIgnoreCase(req.getMethod())) {
+                redirectWithFlashState(req, resp);
+                return;
+            }
             loadPage(req, resp);
         }
     }
@@ -63,6 +77,8 @@ public class AdminServiceServlet extends HttpServlet {
         String search = trim(firstNonBlank(req.getParameter("filterSearch"), req.getParameter("search")));
         String category = trim(firstNonBlank(req.getParameter("filterCategory"), req.getParameter("category")));
         int page = PagingHelper.parsePage(req, "filterPage", PagingHelper.parsePage(req, "page", 1));
+
+        consumeFormFlash(req);
 
         List<ServicePrice> services = serviceDAO.getAllServices();
 
@@ -85,7 +101,7 @@ public class AdminServiceServlet extends HttpServlet {
         req.setAttribute("searchKeyword", search);
         req.setAttribute("filterCategory", category.isEmpty() ? "all" : category);
 
-        req.getRequestDispatcher("/pages/admin/services.jsp").forward(req, resp);
+        req.getRequestDispatcher(VIEW_PATH).forward(req, resp);
     }
 
     private void handleAdd(HttpServletRequest req) {
@@ -399,6 +415,53 @@ public class AdminServiceServlet extends HttpServlet {
             return a;
         }
         return b;
+    }
+
+    private void redirectWithFlashState(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        flashCurrentFormState(req);
+        resp.sendRedirect(req.getContextPath() + "/admin-services");
+    }
+
+    private void flashCurrentFormState(HttpServletRequest req) {
+        HttpSession session = req.getSession();
+        Map<String, Object> flash = new LinkedHashMap<>();
+        Enumeration<String> attributeNames = req.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String name = attributeNames.nextElement();
+            if (shouldFlashAttribute(name)) {
+                flash.put(name, req.getAttribute(name));
+            }
+        }
+        session.setAttribute(FORM_FLASH_KEY, flash);
+    }
+
+    private void consumeFormFlash(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object flash = session.getAttribute(FORM_FLASH_KEY);
+        if (!(flash instanceof Map<?, ?>)) {
+            return;
+        }
+        Map<?, ?> flashMap = (Map<?, ?>) flash;
+        for (Map.Entry<?, ?> entry : flashMap.entrySet()) {
+            Object key = entry.getKey();
+            if (key instanceof String) {
+                req.setAttribute((String) key, entry.getValue());
+            }
+        }
+        session.removeAttribute(FORM_FLASH_KEY);
+    }
+
+    private boolean shouldFlashAttribute(String name) {
+        String key = trim(name);
+        return key.equals("error")
+                || key.equals("success")
+                || key.equals("addModalOpen")
+                || key.equals("editModalOpen")
+                || key.startsWith("add")
+                || key.startsWith("edit");
     }
 
     @Override
