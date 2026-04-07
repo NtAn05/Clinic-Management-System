@@ -574,12 +574,8 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
         }
 
         Map<Integer, Doctor> doctorById = new HashMap<>();
-        Map<String, Integer> doctorIdByName = new HashMap<>();
         for (Doctor doctor : allDoctors) {
             doctorById.put(doctor.getDoctorId(), doctor);
-            if (doctor.getFullName() != null) {
-                doctorIdByName.put(doctor.getFullName().trim().toLowerCase(Locale.ROOT), doctor.getDoctorId());
-            }
         }
         Set<Integer> visibleDoctorIds = filteredDoctors.stream()
                 .map(Doctor::getDoctorId)
@@ -635,7 +631,7 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
             }
 
             Doctor requester = doctorById.get(request.getDoctorId());
-            Integer counterpartDoctorId = findDoctorIdByName(doctorIdByName, request.getNewDoctorName());
+            Integer counterpartDoctorId = request.getCounterpartDoctorId();
             Doctor counterpart = counterpartDoctorId == null ? null : doctorById.get(counterpartDoctorId);
 
             boolean requesterVisible = visibleDoctorIds.contains(request.getDoctorId());
@@ -738,13 +734,6 @@ public class AdminDoctorScheduleServlet extends HttpServlet {
                 }
             }
         }
-    }
-
-    private Integer findDoctorIdByName(Map<String, Integer> doctorIdByName, String doctorName) {
-        if (doctorName == null || doctorName.isBlank()) {
-            return null;
-        }
-        return doctorIdByName.get(doctorName.trim().toLowerCase(Locale.ROOT));
     }
 
     private boolean hasShiftStartedAt(java.sql.Timestamp referenceTimestamp, LocalDate workDate, LocalTime startTime) {
