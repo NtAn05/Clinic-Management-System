@@ -37,6 +37,8 @@ public class ScheduleChangeRequest {
     private LocalTime oldEndTime;
     private String newDoctorName;
     private Date oldWorkDate;
+    private Integer counterpartShiftId;
+    private Integer counterpartDoctorId;
 
     public ScheduleChangeRequest() {
     }
@@ -236,5 +238,21 @@ public class ScheduleChangeRequest {
 
     public void setOldWorkDate(Date oldWorkDate) {
         this.oldWorkDate = oldWorkDate;
+    }
+
+    public Integer getCounterpartShiftId() {
+        return counterpartShiftId;
+    }
+
+    public void setCounterpartShiftId(Integer counterpartShiftId) {
+        this.counterpartShiftId = counterpartShiftId;
+    }
+
+    public Integer getCounterpartDoctorId() {
+        return counterpartDoctorId;
+    }
+
+    public void setCounterpartDoctorId(Integer counterpartDoctorId) {
+        this.counterpartDoctorId = counterpartDoctorId;
     }
 }

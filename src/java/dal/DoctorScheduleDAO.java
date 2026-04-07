@@ -599,7 +599,12 @@ public class DoctorScheduleDAO extends DBContext {
 
                 request.setNewDoctorName(rs.getString("new_doctor_name"));
                 Integer counterpartShiftId = extractCounterpartShiftId(rs.getString("reason"));
+                request.setCounterpartShiftId(counterpartShiftId);
                 if (counterpartShiftId != null) {
+                    DoctorShift counterpartShift = getDoctorShiftById(counterpartShiftId);
+                    if (counterpartShift != null) {
+                        request.setCounterpartDoctorId(counterpartShift.getDoctorId());
+                    }
                     String preferredDoctorName = getDoctorNameByShiftId(counterpartShiftId);
                     if (preferredDoctorName != null && !preferredDoctorName.isBlank()) {
                         request.setNewDoctorName(preferredDoctorName);
@@ -731,7 +736,12 @@ public class DoctorScheduleDAO extends DBContext {
 
                 request.setNewDoctorName(rs.getString("new_doctor_name"));
                 Integer counterpartShiftId = extractCounterpartShiftId(rs.getString("reason"));
+                request.setCounterpartShiftId(counterpartShiftId);
                 if (counterpartShiftId != null) {
+                    DoctorShift counterpartShift = getDoctorShiftById(counterpartShiftId);
+                    if (counterpartShift != null) {
+                        request.setCounterpartDoctorId(counterpartShift.getDoctorId());
+                    }
                     String preferredDoctorName = getDoctorNameByShiftId(counterpartShiftId);
                     if (preferredDoctorName != null && !preferredDoctorName.isBlank()) {
                         request.setNewDoctorName(preferredDoctorName);
@@ -1008,7 +1018,13 @@ public class DoctorScheduleDAO extends DBContext {
                        i.work_date AS new_work_date,
                        CASE
                            WHEN s_old.day_of_week IS NOT NULL AND i.day_of_week IS NOT NULL
-                           THEN DATE_ADD(i.work_date, INTERVAL ((s_old.day_of_week - i.day_of_week + 7) % 7) DAY)
+                           THEN DATE_ADD(
+                               i.work_date,
+                               INTERVAL (
+                                   (CASE WHEN s_old.day_of_week = 0 THEN 7 ELSE s_old.day_of_week END)
+                                   - (CASE WHEN i.day_of_week = 0 THEN 7 ELSE i.day_of_week END)
+                               ) DAY
+                           )
                            ELSE NULL
                        END AS old_work_date
                 FROM schedule_change_requests r
