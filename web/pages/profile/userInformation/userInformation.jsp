@@ -164,37 +164,78 @@
     const otpInputSection = document.getElementById("otpInputSection");
     const otpSuccessBox = document.getElementById("otpSuccessBox");
     let countdownInterval;
+    let otpRequestedEmail = pendingEmailURL ? pendingEmailURL.trim().toLowerCase() : "";
+    let otpFetchController = null;
 
     btn.addEventListener("click", () => {
         page.classList.toggle("edit-mode");
         btn.innerHTML = page.classList.contains("edit-mode") ? "❌ Hủy chỉnh sửa" : "✏ Chỉnh sửa";
     });
 
+    function resetOtpState() {
+        clearInterval(countdownInterval);
+        otpInputSection.style.display = "none";
+        otpSuccessBox.style.display = "none";
+        otpSuccessBox.innerHTML = "";
+        btnSendOtp.disabled = false;
+        btnSendOtp.innerText = "Gửi OTP";
+    }
+
     function toggleEmailState() {
-        if (txtEmail.value.trim() !== currentEmail && txtEmail.value.includes("@")) {
+        const email = txtEmail.value.trim().toLowerCase();
+        if (otpRequestedEmail && email !== otpRequestedEmail) {
+            otpRequestedEmail = "";
+            resetOtpState();
+        }
+
+        if (email !== currentEmail.toLowerCase() && email.includes("@")) {
             btnSendOtp.style.display = "inline-flex";
             if (pendingEmailURL !== "") btnSendOtp.innerText = "Gửi lại OTP";
         } else {
             btnSendOtp.style.display = "none";
-            otpInputSection.style.display = "none";
-            otpSuccessBox.style.display = "none";
+            resetOtpState();
         }
     }
     txtEmail.addEventListener("input", toggleEmailState);
     toggleEmailState();
 
     btnSendOtp.addEventListener("click", () => {
-        const email = txtEmail.value.trim();
+        const email = txtEmail.value.trim().toLowerCase();
+        if (email === currentEmail.toLowerCase()) {
+            alert("Email mới phải khác email hiện tại.");
+            return;
+        }
+
+        if (otpFetchController) {
+            otpFetchController.abort();
+        }
+        otpFetchController = new AbortController();
         btnSendOtp.disabled = true; btnSendOtp.innerText = "Đang gửi...";
         const params = new URLSearchParams(); params.append('action', 'ajaxSendOtp'); params.append('newEmail', email);
 
         fetch('${pageContext.request.contextPath}/userinformationservlet', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params.toString()
+            body: params.toString(),
+            signal: otpFetchController.signal
         }).then(res => res.json()).then(data => {
-            if(data.success) { otpInputSection.style.display = "block"; startCountdown(60); }
-            else { alert(data.message); btnSendOtp.disabled = false; btnSendOtp.innerText = "Gửi lại OTP"; }
-        }).catch(() => { alert("Lỗi kết nối"); btnSendOtp.disabled = false; });
+            if (data.success) {
+                otpRequestedEmail = email;
+                otpInputSection.style.display = "block";
+                startCountdown(60);
+            } else {
+                alert(data.message);
+                btnSendOtp.disabled = false;
+                btnSendOtp.innerText = "Gửi lại OTP";
+            }
+        }).catch((error) => {
+            if (error.name !== "AbortError") {
+                alert("Lỗi kết nối");
+                btnSendOtp.disabled = false;
+                btnSendOtp.innerText = "Gửi lại OTP";
+            }
+        }).finally(() => {
+            otpFetchController = null;
+        });
     });
 
     function startCountdown(seconds) {
